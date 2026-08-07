@@ -40,6 +40,7 @@ INSTALLED_APPS = [
 
     "accounts",
     "dashboard",
+    "learning"
     "subjects",
     "exams",
     "planner",
