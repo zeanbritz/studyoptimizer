@@ -1,90 +1,197 @@
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
 
     <meta charset="UTF-8">
 
-    <title>Practice Formula</title>
+    <title>Formula Recall</title>
+
 
     <style>
 
         body {
+
             font-family: Arial, sans-serif;
+
             max-width: 900px;
+
             margin: 40px auto;
+
             padding: 20px;
+
         }
+
 
         .formula-display {
+
             display: flex;
+
             align-items: center;
+
             gap: 8px;
+
             font-size: 32px;
-            margin: 30px 0;
+
+            margin: 50px 0;
+
         }
+
 
         .formula-element {
+
             display: inline-flex;
+
             align-items: center;
+
         }
 
-        .fraction {
-            display: inline-flex;
-            flex-direction: column;
-            align-items: center;
-            vertical-align: middle;
-            margin: 0 8px;
+
+        .variable {
+
+            font-style: italic;
+
         }
+
+
+        .fraction {
+
+            display: inline-flex;
+
+            flex-direction: column;
+
+            align-items: center;
+
+            vertical-align: middle;
+
+            margin: 0 8px;
+
+        }
+
 
         .fraction-numerator,
         .fraction-denominator {
-            min-height: 35px;
-            padding: 3px 10px;
+
+            min-height: 45px;
+
+            min-width: 60px;
+
+            padding: 5px 12px;
+
             display: flex;
+
             align-items: center;
+
             justify-content: center;
+
             gap: 6px;
+
         }
+
 
         .fraction-line {
+
             width: 100%;
-            min-width: 60px;
+
+            min-width: 70px;
+
             height: 2px;
+
             background: #222;
+
         }
 
-        .fraction-element {
-            display: inline-block;
+
+        .recall-input {
+
+            width: 55px;
+
+            min-width: 55px;
+
+            font-size: 24px;
+
+            text-align: center;
+
+            padding: 4px 6px;
+
+            border: none;
+
+            border-bottom: 3px solid #2563eb;
+
+            outline: none;
+
+            background: #eff6ff;
+
         }
 
-        .variable {
-            font-style: italic;
+
+        .recall-input:focus {
+
+            border-bottom-color: #1d4ed8;
+
+            background: #dbeafe;
+
         }
 
-        .operator {
-            margin: 0 2px;
+
+        .normal-input {
+
+            font-size: 22px;
+
+            padding: 10px;
+
+            width: 180px;
+
         }
 
-        .number {
-            font-style: normal;
-        }
-
-        .symbol {
-            font-style: normal;
-        }
-
-        .progress {
-            margin: 25px 0;
-        }
 
         button {
+
             padding: 10px 18px;
-            margin-right: 10px;
+
+            margin: 5px;
+
             cursor: pointer;
+
             border-radius: 6px;
+
             border: 1px solid #ccc;
+
             background: white;
+
+        }
+
+
+        .result {
+
+            padding: 15px;
+
+            border-radius: 8px;
+
+            margin-top: 20px;
+
+        }
+
+
+        .correct {
+
+            background: #dcfce7;
+
+        }
+
+
+        .incorrect {
+
+            background: #fee2e2;
+
+        }
+
+
+        .progress {
+
+            margin-top: 30px;
+
         }
 
     </style>
@@ -95,200 +202,277 @@
 <body>
 
 
-    <h1>
-        Practice Formula
-    </h1>
+<h1>
+    Formula Recall
+</h1>
 
 
-    <h2>
-        {{ formula.knowledge_unit.title }}
-    </h2>
+<h2>
+    {{ formula.knowledge_unit.title }}
+</h2>
 
 
-    <hr>
+<p>
+    Fill in the missing part of the formula.
+</p>
 
 
-    <h3>
-        Formula
-    </h3>
+<form method="post">
+
+    {% csrf_token %}
+
+    <input
+        type="hidden"
+        name="hidden_element_id"
+        value="{{ hidden_element.id }}"
+    >
 
 
-    <div class="formula-display">
-
-        {% for element in formula_elements %}
-
-            {% if element.type == "variable" %}
-
-                <span class="formula-element variable">
-                    {{ element.value }}
-                </span>
+<div class="formula-display">
 
 
-            {% elif element.type == "number" %}
-
-                <span class="formula-element number">
-                    {{ element.value }}
-                </span>
+{% for element in formula_elements %}
 
 
-            {% elif element.type == "operator" %}
+    {% if element.type == "variable" %}
 
-                <span class="formula-element operator">
-                    {{ element.value }}
-                </span>
+        {% if hidden_element and element.id == hidden_element.id %}
+
+            <input
+                type="text"
+                name="answer"
+                class="recall-input"
+                autofocus
+                autocomplete="off"
+            >
+
+        {% else %}
+
+            <span class="formula-element variable">
+                {{ element.value }}
+            </span>
+
+        {% endif %}
 
 
-            {% elif element.type == "symbol" %}
+    {% elif element.type == "number" %}
 
-                <span class="formula-element symbol">
-                    {{ element.value }}
-                </span>
+        {% if hidden_element and element.id == hidden_element.id %}
+
+            <input
+                type="text"
+                name="answer"
+                class="recall-input"
+                autofocus
+                autocomplete="off"
+            >
+
+        {% else %}
+
+            <span class="formula-element">
+                {{ element.value }}
+            </span>
+
+        {% endif %}
 
 
-            {% elif element.type == "fraction" %}
+    {% elif element.type == "operator" %}
 
-                <span class="formula-element">
+        {% if hidden_element and element.id == hidden_element.id %}
 
-                    <span class="fraction">
+            <input
+                type="text"
+                name="answer"
+                class="recall-input"
+                autofocus
+                autocomplete="off"
+            >
 
-                        <span class="fraction-numerator">
+        {% else %}
 
-                            {% for part in element.numerator %}
+            <span class="formula-element">
+                {{ element.value }}
+            </span>
 
-                                {% if part.type == "variable" %}
+        {% endif %}
 
-                                    <span class="fraction-element variable">
-                                        {{ part.value }}
-                                    </span>
 
-                                {% elif part.type == "number" %}
+    {% elif element.type == "symbol" %}
 
-                                    <span class="fraction-element number">
-                                        {{ part.value }}
-                                    </span>
+        {% if hidden_element and element.id == hidden_element.id %}
 
-                                {% elif part.type == "operator" %}
+            <input
+                type="text"
+                name="answer"
+                class="recall-input"
+                autofocus
+                autocomplete="off"
+            >
 
-                                    <span class="fraction-element operator">
-                                        {{ part.value }}
-                                    </span>
+        {% else %}
 
-                                {% elif part.type == "symbol" %}
+            <span class="formula-element">
+                {{ element.value }}
+            </span>
 
-                                    <span class="fraction-element symbol">
-                                        {{ part.value }}
-                                    </span>
+        {% endif %}
 
-                                {% endif %}
 
-                            {% endfor %}
+    {% elif element.type == "fraction" %}
 
+
+        <span class="fraction">
+
+
+            <!-- NUMERATOR -->
+
+            <span class="fraction-numerator">
+
+                {% for part in element.numerator %}
+
+                    {% if hidden_element and part.id == hidden_element.id %}
+
+                        <input
+                            type="text"
+                            name="answer"
+                            class="recall-input"
+                            autofocus
+                            autocomplete="off"
+                        >
+
+                    {% elif part.type == "variable" %}
+
+                        <span class="variable">
+                            {{ part.value }}
                         </span>
 
+                    {% else %}
 
-                        <span class="fraction-line"></span>
-
-
-                        <span class="fraction-denominator">
-
-                            {% for part in element.denominator %}
-
-                                {% if part.type == "variable" %}
-
-                                    <span class="fraction-element variable">
-                                        {{ part.value }}
-                                    </span>
-
-                                {% elif part.type == "number" %}
-
-                                    <span class="fraction-element number">
-                                        {{ part.value }}
-                                    </span>
-
-                                {% elif part.type == "operator" %}
-
-                                    <span class="fraction-element operator">
-                                        {{ part.value }}
-                                    </span>
-
-                                {% elif part.type == "symbol" %}
-
-                                    <span class="fraction-element symbol">
-                                        {{ part.value }}
-                                    </span>
-
-                                {% endif %}
-
-                            {% endfor %}
-
+                        <span>
+                            {{ part.value }}
                         </span>
 
-                    </span>
+                    {% endif %}
 
-                </span>
+                {% endfor %}
 
-            {% endif %}
+            </span>
 
-        {% endfor %}
+
+            <span class="fraction-line"></span>
+
+
+            <!-- DENOMINATOR -->
+
+            <span class="fraction-denominator">
+
+                {% for part in element.denominator %}
+
+                    {% if hidden_element and part.id == hidden_element.id %}
+
+                        <input
+                            type="text"
+                            name="answer"
+                            class="recall-input"
+                            autofocus
+                            autocomplete="off"
+                        >
+
+                    {% elif part.type == "variable" %}
+
+                        <span class="variable">
+                            {{ part.value }}
+                        </span>
+
+                    {% else %}
+
+                        <span>
+                            {{ part.value }}
+                        </span>
+
+                    {% endif %}
+
+                {% endfor %}
+
+            </span>
+
+
+        </span>
+
+
+    {% endif %}
+
+
+{% endfor %}
+
+
+</div>
+
+
+{% if result is None or result == "next" %}
+
+    <button type="submit">
+        Check Answer
+    </button>
+
+{% elif result == "incorrect" %}
+
+    <div class="result incorrect">
+
+        <strong>
+            ✗ Not quite.
+        </strong>
+
+        <p>
+            Your answer:
+            <strong>
+                {{ user_answer }}
+            </strong>
+        </p>
+
+        <p>
+            Correct answer:
+            <strong>
+                {{ correct_answer }}
+            </strong>
+        </p>
 
     </div>
 
 
-    <hr>
+    <form method="get">
 
-
-    <div class="progress">
-
-        <p>
-            <strong>
-                Mastery:
-            </strong>
-
-            {{ progress.mastery_level }}/6
-        </p>
-
-
-        <p>
-            <strong>
-                Reviews:
-            </strong>
-
-            {{ progress.review_count }}
-        </p>
-
-    </div>
-
-
-    <form method="post">
-
-        {% csrf_token %}
-
-        <button
-            type="submit"
-            name="result"
-            value="correct"
-        >
-            ✓ Correct
-        </button>
-
-
-        <button
-            type="submit"
-            name="result"
-            value="incorrect"
-        >
-            ✗ Incorrect
+        <button type="submit">
+            Next Question
         </button>
 
     </form>
 
+{% endif %}
 
-    <br>
 
+<div class="progress">
+
+    <p>
+        Mastery:
+        {{ progress.mastery_level }}/6
+    </p>
+
+    <p>
+        Reviews:
+        {{ progress.review_count }}
+    </p>
+
+</div>
+
+
+<p>
 
     <a href="{% url 'formula_detail' formula.id %}">
         Back to Formula
     </a>
+
+</p>
 
 
 </body>
