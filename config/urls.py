@@ -20,7 +20,10 @@ from django.urls import path, include
 from django.views.generic import RedirectView
 
 urlpatterns = [
-    path("", RedirectView.as_view(url="/login/", permanent=False)),
+    path("", RedirectView.as_view(
+        url="/login/",
+        permanent=False
+    )),
 
     path("admin/", admin.site.urls),
 
@@ -30,4 +33,6 @@ urlpatterns = [
     path("dashboard/", include("dashboard.urls")),
 
     path("learning/", include("learning.urls")),
+
+    path("practice/", include("practice.urls")),
 ]

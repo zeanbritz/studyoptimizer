@@ -15,22 +15,110 @@
         Welcome, {{ request.user.username }}!
     </h1>
 
-    <h2>
-        Quick Navigation
-    </h2>
 
     <hr>
 
-    <h3>Development</h3>
+
+    <h2>Your Subjects</h2>
+
+    {% for subject in subjects %}
+
+        <h3>
+            {{ subject.name }}
+        </h3>
+
+        {% for topic in subject.topics.all %}
+
+            <div>
+
+                <strong>
+                    {{ topic.name }}
+                </strong>
+
+                &nbsp;
+
+                <a href="{% url 'create_formula' topic.id %}">
+                    + Formula
+                </a>
+
+            </div>
+
+        {% empty %}
+
+            <p>
+                No topics yet.
+            </p>
+
+        {% endfor %}
+
+    {% empty %}
+
+        <p>
+            You don't have any subjects yet.
+        </p>
+
+    {% endfor %}
+
+
+    <hr>
+
+
+    <h2>My Formulas</h2>
+
+    {% for formula in formulas %}
+
+        <div>
+
+            <strong>
+                {{ formula.knowledge_unit.title }}
+            </strong>
+
+            <br>
+
+            Topic:
+            {{ formula.knowledge_unit.topic.name }}
+
+            <br>
+
+            <a href="{% url 'formula_detail' formula.id %}">
+                View
+            </a>
+
+            &nbsp;
+
+            <a href="{% url 'edit_formula' formula.id %}">
+                Edit
+            </a>
+
+            &nbsp;
+
+            <a href="{% url 'practice_formula' formula.id %}">
+                Review
+            </a>
+
+        </div>
+
+        <br>
+
+    {% empty %}
+
+        <p>
+            You haven't created any formulas yet.
+        </p>
+
+    {% endfor %}
+
+
+    <hr>
+
+
+    <h2>Quick Navigation</h2>
 
     <p>
         <a href="{% url 'admin:index' %}">
             Admin
         </a>
     </p>
-
-
-    <h3>Learning</h3>
 
     <p>
         <a href="/admin/learning/subject/add/">
@@ -44,38 +132,6 @@
         </a>
     </p>
 
-
-    <h3>Manage Learning</h3>
-
-    <p>
-        <a href="/admin/learning/subject/">
-            Manage Subjects
-        </a>
-    </p>
-
-    <p>
-        <a href="/admin/learning/topic/">
-            Manage Topics
-        </a>
-    </p>
-
-    <p>
-        <a href="/admin/learning/knowledgeunit/">
-            Manage Knowledge Units
-        </a>
-    </p>
-
-    <p>
-        <a href="/admin/learning/formula/">
-            Manage Formulas
-        </a>
-    </p>
-
-    <p>
-        <a href="/admin/learning/studentknowledge/">
-            Student Progress
-        </a>
-    </p>
 
 </body>
 

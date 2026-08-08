@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>Practice Formula</title>
+
+    <style>
+
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .formula-display {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 32px;
+            margin: 30px 0;
+        }
+
+        .formula-element {
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .fraction {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            vertical-align: middle;
+            margin: 0 8px;
+        }
+
+        .fraction-numerator,
+        .fraction-denominator {
+            min-height: 35px;
+            padding: 3px 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .fraction-line {
+            width: 100%;
+            min-width: 60px;
+            height: 2px;
+            background: #222;
+        }
+
+        .fraction-element {
+            display: inline-block;
+        }
+
+        .variable {
+            font-style: italic;
+        }
+
+        .operator {
+            margin: 0 2px;
+        }
+
+        .number {
+            font-style: normal;
+        }
+
+        .symbol {
+            font-style: normal;
+        }
+
+        .progress {
+            margin: 25px 0;
+        }
+
+        button {
+            padding: 10px 18px;
+            margin-right: 10px;
+            cursor: pointer;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            background: white;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+    <h1>
+        Practice Formula
+    </h1>
+
+
+    <h2>
+        {{ formula.knowledge_unit.title }}
+    </h2>
+
+
+    <hr>
+
+
+    <h3>
+        Formula
+    </h3>
+
+
+    <div class="formula-display">
+
+        {% for element in formula_elements %}
+
+            {% if element.type == "variable" %}
+
+                <span class="formula-element variable">
+                    {{ element.value }}
+                </span>
+
+
+            {% elif element.type == "number" %}
+
+                <span class="formula-element number">
+                    {{ element.value }}
+                </span>
+
+
+            {% elif element.type == "operator" %}
+
+                <span class="formula-element operator">
+                    {{ element.value }}
+                </span>
+
+
+            {% elif element.type == "symbol" %}
+
+                <span class="formula-element symbol">
+                    {{ element.value }}
+                </span>
+
+
+            {% elif element.type == "fraction" %}
+
+                <span class="formula-element">
+
+                    <span class="fraction">
+
+                        <span class="fraction-numerator">
+
+                            {% for part in element.numerator %}
+
+                                {% if part.type == "variable" %}
+
+                                    <span class="fraction-element variable">
+                                        {{ part.value }}
+                                    </span>
+
+                                {% elif part.type == "number" %}
+
+                                    <span class="fraction-element number">
+                                        {{ part.value }}
+                                    </span>
+
+                                {% elif part.type == "operator" %}
+
+                                    <span class="fraction-element operator">
+                                        {{ part.value }}
+                                    </span>
+
+                                {% elif part.type == "symbol" %}
+
+                                    <span class="fraction-element symbol">
+                                        {{ part.value }}
+                                    </span>
+
+                                {% endif %}
+
+                            {% endfor %}
+
+                        </span>
+
+
+                        <span class="fraction-line"></span>
+
+
+                        <span class="fraction-denominator">
+
+                            {% for part in element.denominator %}
+
+                                {% if part.type == "variable" %}
+
+                                    <span class="fraction-element variable">
+                                        {{ part.value }}
+                                    </span>
+
+                                {% elif part.type == "number" %}
+
+                                    <span class="fraction-element number">
+                                        {{ part.value }}
+                                    </span>
+
+                                {% elif part.type == "operator" %}
+
+                                    <span class="fraction-element operator">
+                                        {{ part.value }}
+                                    </span>
+
+                                {% elif part.type == "symbol" %}
+
+                                    <span class="fraction-element symbol">
+                                        {{ part.value }}
+                                    </span>
+
+                                {% endif %}
+
+                            {% endfor %}
+
+                        </span>
+
+                    </span>
+
+                </span>
+
+            {% endif %}
+
+        {% endfor %}
+
+    </div>
+
+
+    <hr>
+
+
+    <div class="progress">
+
+        <p>
+            <strong>
+                Mastery:
+            </strong>
+
+            {{ progress.mastery_level }}/6
+        </p>
+
+
+        <p>
+            <strong>
+                Reviews:
+            </strong>
+
+            {{ progress.review_count }}
+        </p>
+
+    </div>
+
+
+    <form method="post">
+
+        {% csrf_token %}
+
+        <button
+            type="submit"
+            name="result"
+            value="correct"
+        >
+            ✓ Correct
+        </button>
+
+
+        <button
+            type="submit"
+            name="result"
+            value="incorrect"
+        >
+            ✗ Incorrect
+        </button>
+
+    </form>
+
+
+    <br>
+
+
+    <a href="{% url 'formula_detail' formula.id %}">
+        Back to Formula
+    </a>
+
+
+</body>
+
+</html>
