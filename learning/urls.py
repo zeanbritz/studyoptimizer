@@ -21,4 +21,10 @@ urlpatterns = [
         name="edit_formula",
     ),
 
+    path(
+        "formula/<int:formula_id>/review/",
+        views.review_formula,
+        name="review_formula",
+    ),
+
 ]

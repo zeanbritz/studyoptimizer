@@ -154,3 +154,67 @@ class BulletItem(models.Model):
 
     def __str__(self):
         return self.text
+
+
+class StudentKnowledge(models.Model):
+
+    student = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="knowledge_progress",
+    )
+
+    knowledge_unit = models.ForeignKey(
+        KnowledgeUnit,
+        on_delete=models.CASCADE,
+        related_name="student_progress",
+    )
+
+    mastery_level = models.PositiveSmallIntegerField(
+        default=0
+    )
+
+    review_count = models.PositiveIntegerField(
+        default=0
+    )
+
+    correct_count = models.PositiveIntegerField(
+        default=0
+    )
+
+    incorrect_count = models.PositiveIntegerField(
+        default=0
+    )
+
+    last_reviewed = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    next_review = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    created = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    class Meta:
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "student",
+                    "knowledge_unit",
+                ],
+                name="unique_student_knowledge_unit",
+            )
+        ]
+
+    def __str__(self):
+
+        return (
+            f"{self.student} - "
+            f"{self.knowledge_unit.title}"
+        )

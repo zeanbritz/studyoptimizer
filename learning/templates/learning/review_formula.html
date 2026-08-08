@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>
+        Review {{ formula.knowledge_unit.title }}
+    </title>
+
+</head>
+
+<body>
+
+    <h1>
+        Review Formula
+    </h1>
+
+    <h2>
+        {{ formula.knowledge_unit.title }}
+    </h2>
+
+
+    <p>
+        Mastery level:
+        {{ progress.mastery_level }} / 6
+    </p>
+
+
+    <div class="formula-preview">
+
+        {% for element in formula_elements %}
+
+            {% if element.type == "variable" %}
+
+                {{ element.value }}
+
+            {% elif element.type == "operator" %}
+
+                {{ element.value }}
+
+            {% elif element.type == "number" %}
+
+                {{ element.value }}
+
+            {% elif element.type == "symbol" %}
+
+                {{ element.value }}
+
+            {% elif element.type == "fraction" %}
+
+                <span class="fraction">
+
+                    <span class="numerator">
+
+                        {% for item in element.numerator %}
+                            {{ item.value }}
+                        {% endfor %}
+
+                    </span>
+
+                    <span class="line"></span>
+
+                    <span class="denominator">
+
+                        {% for item in element.denominator %}
+                            {{ item.value }}
+                        {% endfor %}
+
+                    </span>
+
+                </span>
+
+            {% endif %}
+
+        {% endfor %}
+
+    </div>
+
+
+    <h3>
+        Did you know this formula?
+    </h3>
+
+
+    <form method="POST">
+
+        {% csrf_token %}
+
+        <button
+            type="submit"
+            name="result"
+            value="correct"
+        >
+            ✓ I knew it
+        </button>
+
+        <button
+            type="submit"
+            name="result"
+            value="incorrect"
+        >
+            ✗ I didn't know it
+        </button>
+
+    </form>
+
+
+</body>
+
+</html>
