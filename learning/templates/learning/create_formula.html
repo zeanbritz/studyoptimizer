@@ -1,0 +1,79 @@
+{% load static %}
+
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <title>Create Formula</title>
+
+    <link
+        rel="stylesheet"
+        href="{% static 'css/formula-editor.css' %}"
+    >
+
+</head>
+
+<body>
+
+<h1>Create Formula</h1>
+
+<form method="post">
+
+    {% csrf_token %}
+
+    {{ form.as_p }}
+
+    <h2>Build your formula</h2>
+
+    <div class="toolbar">
+
+        <button
+            type="button"
+            onclick="addElement('variable')"
+        >
+            + Variable
+        </button>
+
+        <button
+            type="button"
+            onclick="addElement('number')"
+        >
+            + Number
+        </button>
+
+        <button
+            type="button"
+            onclick="addElement('operator', '+')"
+        >
+            + Operator
+        </button>
+
+        <button
+            type="button"
+            onclick="addElement('symbol', '(')"
+        >
+            + Symbol
+        </button>
+
+    </div>
+
+
+    <div id="formula-canvas">
+
+    </div>
+
+
+    <button type="submit">
+        Save Formula
+    </button>
+
+</form>
+
+
+<script src="{% static 'js/formula-editor.js' %}"></script>
+
+</body>
+
+</html>

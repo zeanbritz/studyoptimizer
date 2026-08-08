@@ -76,12 +76,40 @@ class Formula(models.Model):
     knowledge_unit = models.OneToOneField(
         KnowledgeUnit,
         on_delete=models.CASCADE,
+        related_name="formula",
     )
 
-    expression = models.TextField()
+    structure = models.TextField(
+        default="[]"
+    )
+
+    purpose = models.TextField(
+        blank=True
+    )
+
+    when_to_use = models.TextField(
+        blank=True
+    )
 
     def __str__(self):
         return self.knowledge_unit.title
+
+class FormulaVariable(models.Model):
+
+    formula = models.ForeignKey(
+        Formula,
+        on_delete=models.CASCADE,
+        related_name="variables",
+    )
+
+    symbol = models.CharField(max_length=50)
+
+    meaning = models.CharField(max_length=255)
+
+    order = models.PositiveIntegerField(default=1)
+
+    def __str__(self):
+        return f"{self.symbol} - {self.meaning}"
 
 
 class Definition(models.Model):

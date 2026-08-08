@@ -28,4 +28,6 @@ urlpatterns = [
     path("", include("django.contrib.auth.urls")),
 
     path("dashboard/", include("dashboard.urls")),
+
+    path("learning/", include("learning.urls")),
 ]
