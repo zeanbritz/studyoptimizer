@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
@@ -15,67 +16,89 @@
         Welcome, {{ request.user.username }}!
     </h1>
 
+
     <h2>
         Quick Navigation
     </h2>
 
-    <hr>
 
-    <h3>Development</h3>
+    <div>
 
-    <p>
+        <a href="{% url 'dashboard' %}">
+            Dashboard
+        </a>
+
+        <br><br>
+
         <a href="{% url 'admin:index' %}">
             Admin
         </a>
-    </p>
+
+    </div>
 
 
-    <h3>Learning</h3>
+    <hr>
 
-    <p>
+
+    <h2>
+        Learning
+    </h2>
+
+
+    <div>
+
         <a href="/admin/learning/subject/add/">
             + Add Subject
         </a>
-    </p>
 
-    <p>
+        <br><br>
+
         <a href="/admin/learning/topic/add/">
             + Add Topic
         </a>
-    </p>
+
+    </div>
 
 
-    <h3>Manage Learning</h3>
+    <hr>
 
-    <p>
+
+    <h2>
+        Development Links
+    </h2>
+
+
+    <div>
+
         <a href="/admin/learning/subject/">
             Manage Subjects
         </a>
-    </p>
 
-    <p>
+        <br><br>
+
         <a href="/admin/learning/topic/">
             Manage Topics
         </a>
-    </p>
 
-    <p>
+        <br><br>
+
         <a href="/admin/learning/knowledgeunit/">
             Manage Knowledge Units
         </a>
-    </p>
 
-    <p>
+        <br><br>
+
         <a href="/admin/learning/formula/">
             Manage Formulas
         </a>
-    </p>
 
-    <p>
+        <br><br>
+
         <a href="/admin/learning/studentknowledge/">
             Student Progress
         </a>
-    </p>
+
+    </div>
 
 </body>
 
