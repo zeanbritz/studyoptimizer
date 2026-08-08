@@ -1,7 +1,23 @@
-let formulaElements = [];
+let formulaElements =
+    typeof existingFormulaStructure !== "undefined"
+        ? existingFormulaStructure
+        : [];
 
 const formulaCanvas =
     document.getElementById("formula-canvas");
+
+const formulaStructureInput =
+    document.getElementById("formula-structure");
+
+    function updateFormulaStructure() {
+
+    if (!formulaStructureInput) {
+        return;
+    }
+
+    formulaStructureInput.value =
+        JSON.stringify(formulaElements);
+}
 
 
 // =====================================================
@@ -45,6 +61,8 @@ function addElement(type, value = "") {
 // =====================================================
 
 function renderFormula() {
+
+    updateFormulaStructure();
 
     formulaCanvas.innerHTML = "";
 

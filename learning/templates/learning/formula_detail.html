@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>
+        {{ formula.knowledge_unit.title }}
+    </title>
+
+    <style>
+
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .formula-preview {
+            padding: 30px;
+            margin: 20px 0;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background: #f8fafc;
+            font-size: 24px;
+            overflow-x: auto;
+        }
+
+        .variable-card {
+            display: flex;
+            gap: 20px;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .variable-symbol {
+            font-weight: bold;
+            min-width: 60px;
+        }
+
+        .formula-preview span {
+            margin: 0 6px;
+        }
+
+        .formula-item {
+            margin: 0 6px;
+        }
+
+
+        .formula-fraction {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            vertical-align: middle;
+            margin: 0 8px;
+        }
+
+
+        .fraction-top,
+        .fraction-bottom {
+            display: flex;
+            justify-content: center;
+            min-height: 28px;
+            padding: 3px 10px;
+        }
+
+
+        .fraction-line {
+            width: 100%;
+            min-width: 50px;
+            height: 2px;
+            background: #222;
+        }
+
+
+        .fraction-item {
+            margin: 0 4px;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+    <h1>
+        {{ formula.knowledge_unit.title }}
+    </h1>
+
+
+    <h2>
+        Formula
+    </h2>
+
+
+    <div class="formula-preview">
+
+        {% for element in formula_elements %}
+
+            {% if element.type == "variable" %}
+
+                <span class="formula-item">
+                    {{ element.value }}
+                </span>
+
+
+            {% elif element.type == "operator" %}
+
+                <span class="formula-item">
+                    {{ element.value }}
+                </span>
+
+
+            {% elif element.type == "number" %}
+
+                <span class="formula-item">
+                    {{ element.value }}
+                </span>
+
+
+            {% elif element.type == "symbol" %}
+
+                <span class="formula-item">
+                    {{ element.value }}
+                </span>
+
+
+            {% elif element.type == "fraction" %}
+
+                <span class="formula-fraction">
+
+                    <span class="fraction-top">
+
+                        {% for item in element.numerator %}
+
+                            <span class="fraction-item">
+
+                                {{ item.value }}
+
+                            </span>
+
+                        {% endfor %}
+
+                    </span>
+
+
+                    <span class="fraction-line"></span>
+
+
+                    <span class="fraction-bottom">
+
+                        {% for item in element.denominator %}
+
+                            <span class="fraction-item">
+
+                                {{ item.value }}
+
+                            </span>
+
+                        {% endfor %}
+
+                    </span>
+
+                </span>
+
+            {% endif %}
+
+        {% endfor %}
+
+    </div>
+
+    <a href="{% url 'edit_formula' formula.id %}">
+        Edit Formula
+    </a>
+
+
+    {% if variables %}
+
+        <h2>
+            Variables
+        </h2>
+
+
+        <div>
+
+            {% for variable in variables %}
+
+                <div class="variable-card">
+
+                    <div class="variable-symbol">
+                        {{ variable.symbol }}
+                    </div>
+
+                    <div>
+                        {{ variable.meaning }}
+                    </div>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    {% endif %}
+
+
+</body>
+
+</html>

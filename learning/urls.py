@@ -1,11 +1,24 @@
 from django.urls import path
 from . import views
 
-
 urlpatterns = [
+
     path(
         "topic/<int:topic_id>/formula/add/",
         views.create_formula,
         name="create_formula",
     ),
+
+    path(
+        "formula/<int:formula_id>/",
+        views.formula_detail,
+        name="formula_detail",
+    ),
+
+    path(
+        "formula/<int:formula_id>/edit/",
+        views.edit_formula,
+        name="edit_formula",
+    ),
+
 ]

@@ -1,36 +1,24 @@
 {% load static %}
 
-<!DOCTYPE html>
+<title>Edit Formula</title>
 
-<html>
+<link
+    rel="stylesheet"
+    href="{% static 'css/formula-editor.css' %}"
+>
 
-<head>
-
-    <title>Create Formula</title>
-
-    <link
-        rel="stylesheet"
-        href="{% static 'css/formula-editor.css' %}"
-    >
-
-</head>
-
-<body>
-
-<h1>Create Formula</h1>
-
-<form method="post">
+<form method="POST">
 
     {% csrf_token %}
 
     {{ form.as_p }}
 
     <input
-    type="hidden"
-    name="formula_structure"
-    id="formula-structure"
-    value="[]"
->
+        type="hidden"
+        name="formula_structure"
+        id="formula-structure"
+        value="{{ formula.structure }}"
+    >
 
     <h2>Build your formula</h2>
 
@@ -51,6 +39,7 @@
         </button>
 
         <select id="operator-select">
+
             <option value="">+ Operator</option>
             <option value="+">+</option>
             <option value="-">−</option>
@@ -59,6 +48,7 @@
             <option value="=">=</option>
             <option value="<">&lt;</option>
             <option value=">">&gt;</option>
+
         </select>
 
         <button
@@ -85,20 +75,22 @@
     </div>
 
 
-    <div id="formula-canvas">
-
-    </div>
+    <div id="formula-canvas"></div>
 
 
     <button type="submit">
-        Save Formula
+        Save Changes
     </button>
 
 </form>
 
 
+<script>
+
+    const existingFormulaStructure =
+        {{ formula.structure|safe }};
+
+</script>
+
+
 <script src="{% static 'js/formula-editor.js' %}"></script>
-
-</body>
-
-</html>
