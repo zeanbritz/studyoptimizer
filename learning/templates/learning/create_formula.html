@@ -43,11 +43,22 @@
             + Number
         </button>
 
+        <select id="operator-select">
+            <option value="">+ Operator</option>
+            <option value="+">+</option>
+            <option value="-">−</option>
+            <option value="×">×</option>
+            <option value="÷">÷</option>
+            <option value="=">=</option>
+            <option value="<">&lt;</option>
+            <option value=">">&gt;</option>
+        </select>
+
         <button
             type="button"
-            onclick="addElement('operator', '+')"
+            onclick="addSelectedOperator()"
         >
-            + Operator
+            Add
         </button>
 
         <button
@@ -55,6 +66,13 @@
             onclick="addElement('symbol', '(')"
         >
             + Symbol
+        </button>
+
+        <button
+            type="button"
+            onclick="addFraction()"
+        >
+            + Fraction
         </button>
 
     </div>

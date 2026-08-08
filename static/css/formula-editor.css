@@ -1,144 +1,74 @@
 #formula-canvas {
-
     min-height: 100px;
-
     border: 2px solid #ddd;
-
     padding: 20px;
-
     margin: 20px 0;
-
     display: flex;
-
     align-items: center;
-
     gap: 8px;
-
     font-size: 24px;
-
 }
 
 
-.formula-element {
+/* =========================
+   FORMULA CONTAINERS
+   ========================= */
 
+.formula-container {
+    min-height: 35px;
+    min-width: 40px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 4px;
+    padding: 4px;
+
+    border-radius: 6px;
+}
+
+.formula-container:hover {
+    background: #f8fafc;
+}
+
+.active-container {
+    outline: 2px solid #2563eb;
+}
+
+
+/* Empty container */
+
+.container-placeholder {
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 5px 12px;
+}
+
+
+/* =========================
+   FORMULA ELEMENTS
+   ========================= */
+
+.formula-element {
     padding: 8px 12px;
 
     border: 1px solid #ccc;
-
     border-radius: 6px;
 
     background: #f5f5f5;
 
-    cursor: pointer;
-
-}
-
-
-.formula-element:hover {
-
-    background: #e5e5e5;
-
-}
-
-
-.toolbar {
-
-    display: flex;
-
-    gap: 10px;
-
-    margin: 15px 0;
-
-}
-
-
-.toolbar button {
-
-    padding: 8px 12px;
-
-    cursor: pointer;
-
-}
-
-#element-editor {
-
-    position: fixed;
-
-    top: 50%;
-
-    left: 50%;
-
-    transform: translate(-50%, -50%);
-
-    background: white;
-
-    border: 1px solid #ccc;
-
-    border-radius: 10px;
-
-    padding: 25px;
-
-    width: 300px;
-
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-
-    z-index: 1000;
-
-}
-
-
-#element-editor label {
-
-    display: block;
-
-    margin-top: 10px;
-
-    margin-bottom: 5px;
-
-}
-
-
-#element-editor input {
-
-    width: 100%;
-
-    box-sizing: border-box;
-
-    padding: 8px;
-
-    margin-bottom: 10px;
-
-}
-
-
-#element-editor button {
-
-    padding: 8px 12px;
-
-    margin-right: 5px;
-
-    cursor: pointer;
-
-}
-
-.formula-element {
     user-select: none;
+
     cursor: grab;
-}
 
-.formula-element:active {
-    cursor: grabbing;
-}
-
-.formula-element:hover {
-    transform: translateY(-2px);
-}
-
-.formula-element {
-    user-select: none;
-    cursor: grab;
     position: relative;
+
     transition: transform 0.1s;
+}
+
+.formula-element:hover {
+    background: #e5e5e5;
+    transform: translateY(-2px);
 }
 
 .formula-element:active {
@@ -149,22 +79,288 @@
     opacity: 0.4;
 }
 
+
+/* =========================
+   DRAG INDICATORS
+   ========================= */
+
 .formula-element.drop-left::before {
     content: "";
+
     position: absolute;
+
     left: -6px;
     top: 0;
     bottom: 0;
+
     width: 3px;
+
     background: #2563eb;
 }
 
 .formula-element.drop-right::after {
     content: "";
+
     position: absolute;
+
     right: -6px;
     top: 0;
     bottom: 0;
+
     width: 3px;
+
     background: #2563eb;
+}
+
+
+/* =========================
+   TOOLBAR
+   ========================= */
+
+.toolbar {
+    display: flex;
+
+    gap: 10px;
+
+    margin: 15px 0;
+}
+
+.toolbar button,
+.toolbar select {
+    padding: 8px 12px;
+
+    border: 1px solid #ccc;
+    border-radius: 6px;
+
+    background: white;
+
+    cursor: pointer;
+}
+
+.toolbar button:hover {
+    background: #f5f5f5;
+}
+
+#operator-select {
+    padding: 8px 10px;
+    font-size: 14px;
+}
+
+
+/* =========================
+   ELEMENT EDITOR
+   ========================= */
+
+#element-editor {
+    position: fixed;
+
+    top: 50%;
+    left: 50%;
+
+    transform: translate(-50%, -50%);
+
+    background: white;
+
+    border: 1px solid #ccc;
+    border-radius: 10px;
+
+    padding: 25px;
+
+    width: 300px;
+
+    box-shadow:
+        0 10px 40px rgba(0, 0, 0, 0.2);
+
+    z-index: 1000;
+}
+
+#element-editor h3 {
+    margin-top: 0;
+}
+
+#element-editor label {
+    display: block;
+
+    margin-top: 10px;
+    margin-bottom: 5px;
+}
+
+#element-editor input {
+    width: 100%;
+
+    box-sizing: border-box;
+
+    padding: 8px;
+
+    margin-bottom: 10px;
+}
+
+#element-editor button {
+    padding: 8px 12px;
+
+    margin: 4px;
+
+    cursor: pointer;
+}
+
+
+/* =========================
+   FRACTIONS
+   ========================= */
+
+.fraction {
+    display: inline-flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    min-width: 60px;
+
+    padding: 5px;
+}
+
+
+/* Numerator + denominator */
+
+.fraction-numerator,
+.fraction-denominator {
+
+    min-height: 35px;
+
+    min-width: 60px;
+
+    padding: 5px 12px;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    cursor: pointer;
+
+    border-radius: 5px;
+}
+
+.fraction-numerator:hover,
+.fraction-denominator:hover {
+    background: #f1f5f9;
+}
+
+
+/* Fraction line */
+
+.fraction-line {
+    width: 100%;
+
+    height: 2px;
+
+    background: #222;
+}
+
+
+/* Empty fraction */
+
+.fraction-placeholder {
+    color: #999;
+}
+
+
+/* Elements inside numerator/denominator */
+
+.fraction-part-element {
+    margin: 0 3px;
+}
+
+
+/* Selected fraction area */
+
+.fraction-selected {
+    background: #eff6ff;
+
+    outline: 2px solid #2563eb;
+
+    border-radius: 5px;
+}
+
+.formula-insertion-zone {
+    width: 6px;
+    min-width: 6px;
+    height: 45px;
+    margin: 0 2px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 0.1s, width 0.1s;
+}
+
+.formula-insertion-zone:hover {
+    background: #bfdbfe;
+}
+
+.formula-insertion-zone.active {
+    background: #2563eb;
+    width: 3px;
+    min-width: 3px;
+}
+
+.fraction-numerator,
+.fraction-denominator {
+    position: relative;
+}
+
+.fraction-numerator .formula-container,
+.fraction-denominator .formula-container {
+    min-height: 40px;
+    min-width: 70px;
+}
+
+.formula-empty-zone {
+    width: 100%;
+    min-width: 70px;
+    min-height: 40px;
+
+    cursor: pointer;
+
+    border-radius: 5px;
+
+    position: relative;
+}
+
+.formula-empty-zone:hover {
+    background: #f1f5f9;
+}
+
+.formula-empty-zone.active {
+    background: #eff6ff;
+    outline: 2px solid #2563eb;
+}
+
+
+/* Make the numerator and denominator
+   much easier to click */
+
+.fraction-numerator,
+.fraction-denominator {
+    min-height: 45px;
+    min-width: 90px;
+
+    padding: 6px 15px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 6px;
+
+    cursor: pointer;
+}
+
+
+/* When hovering anywhere over
+   an empty fraction area */
+
+.fraction-numerator:hover,
+.fraction-denominator:hover {
+    background: #f1f5f9;
 }

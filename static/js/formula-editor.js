@@ -1,7 +1,20 @@
 let formulaElements = [];
 
-const formulaCanvas = document.getElementById("formula-canvas");
+const formulaCanvas =
+    document.getElementById("formula-canvas");
 
+
+// =====================================================
+// ACTIVE INSERTION LOCATION
+// =====================================================
+
+let activeContainer = formulaElements;
+let insertionIndex = 0;
+
+
+// =====================================================
+// ADD ELEMENT
+// =====================================================
 
 function addElement(type, value = "") {
 
@@ -12,211 +25,792 @@ function addElement(type, value = "") {
         meaning: ""
     };
 
-    formulaElements.push(element);
+    activeContainer.splice(
+        insertionIndex,
+        0,
+        element
+    );
+
+    insertionIndex++;
 
     renderFormula();
 }
 
+
+// =====================================================
+// RENDER FORMULA
+// =====================================================
 
 function renderFormula() {
 
     formulaCanvas.innerHTML = "";
 
-    formulaElements.forEach((element, index) => {
-
-        const box = document.createElement("div");
-
-        box.className = "formula-element";
-
-        box.dataset.id = element.id;
-
-        box.draggable = true;
-
-        box.textContent = element.value || "?";
-
-
-        // Edit
-        box.addEventListener("click", () => {
-
-            showEditor(element);
-
-        });
-
-
-        // Start dragging
-        box.addEventListener("dragstart", (event) => {
-
-            event.dataTransfer.effectAllowed = "move";
-
-            event.dataTransfer.setData(
-                "text/plain",
-                element.id
-            );
-
-            box.classList.add("dragging");
-
-        });
-
-
-        // Stop dragging
-        box.addEventListener("dragend", () => {
-
-            box.classList.remove("dragging");
-
-            removeDropIndicators();
-
-        });
-
-
-        // Dragging over an element
-        box.addEventListener("dragover", (event) => {
-
-            event.preventDefault();
-
-            event.dataTransfer.dropEffect = "move";
-
-            removeDropIndicators();
-
-            const rect = box.getBoundingClientRect();
-
-            const middle =
-                rect.left + rect.width / 2;
-
-            if (event.clientX < middle) {
-
-                box.classList.add("drop-left");
-
-            } else {
-
-                box.classList.add("drop-right");
-
-            }
-
-        });
-
-
-        // Drop
-        box.addEventListener("drop", (event) => {
-
-            event.preventDefault();
-
-            const draggedId =
-                event.dataTransfer.getData("text/plain");
-
-            const rect =
-                box.getBoundingClientRect();
-
-            const middle =
-                rect.left + rect.width / 2;
-
-            const insertAfter =
-                event.clientX >= middle;
-
-            moveElement(
-                draggedId,
-                element.id,
-                insertAfter
-            );
-
-            removeDropIndicators();
-
-        });
-
-
-        formulaCanvas.appendChild(box);
-
-    });
+    renderContainer(
+        formulaCanvas,
+        formulaElements
+    );
 }
 
 
+// =====================================================
+// RENDER CONTAINER
+// =====================================================
+
+function renderContainer(
+    parent,
+    elements
+) {
+
+    const container =
+        document.createElement("div");
+
+    container.className =
+        "formula-container";
+
+
+    // =================================================
+    // EMPTY CONTAINER
+    // =================================================
+
+    if (elements.length === 0) {
+
+        const emptyZone =
+            document.createElement("div");
+
+        emptyZone.className =
+            "formula-empty-zone";
+
+        emptyZone.title =
+            "Click to insert here";
+
+
+        emptyZone.addEventListener(
+            "click",
+            function(event) {
+
+                event.preventDefault();
+                event.stopPropagation();
+
+
+                selectInsertionPoint(
+                    elements,
+                    0,
+                    emptyZone
+                );
+
+            }
+        );
+
+
+        container.appendChild(
+            emptyZone
+        );
+
+    }
+
+
+    // =================================================
+    // INSERTION ZONE BEFORE FIRST ELEMENT
+    // =================================================
+
+    if (elements.length > 0) {
+
+        addInsertionZone(
+            container,
+            elements,
+            0
+        );
+
+    }
+
+
+    // =================================================
+    // ELEMENTS
+    // =================================================
+
+    elements.forEach(
+        function(element, index) {
+
+            const box =
+                document.createElement(
+                    "div"
+                );
+
+            box.className =
+                "formula-element";
+
+            box.dataset.id =
+                element.id;
+
+            box.draggable = true;
+
+
+            // =================================================
+            // FRACTION
+            // =================================================
+
+            if (
+                element.type ===
+                "fraction"
+            ) {
+
+                renderFraction(
+                    box,
+                    element
+                );
+
+            }
+
+            // =================================================
+            // NORMAL ELEMENT
+            // =================================================
+
+            else {
+
+                box.textContent =
+                    element.value ||
+                    "?";
+
+            }
+
+
+            // =================================================
+            // DOUBLE CLICK EDIT
+            // =================================================
+
+            box.addEventListener(
+                "dblclick",
+                function(event) {
+
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    showEditor(
+                        element
+                    );
+
+                }
+            );
+
+
+            // =================================================
+            // DRAG START
+            // =================================================
+
+            box.addEventListener(
+                "dragstart",
+                function(event) {
+
+                    event.stopPropagation();
+
+                    event.dataTransfer
+                        .effectAllowed =
+                        "move";
+
+                    event.dataTransfer
+                        .setData(
+                            "text/plain",
+                            element.id
+                        );
+
+                    box.classList.add(
+                        "dragging"
+                    );
+
+                }
+            );
+
+
+            // =================================================
+            // DRAG END
+            // =================================================
+
+            box.addEventListener(
+                "dragend",
+                function() {
+
+                    box.classList.remove(
+                        "dragging"
+                    );
+
+                    removeDropIndicators();
+
+                }
+            );
+
+
+            // =================================================
+            // DRAG OVER
+            // =================================================
+
+            box.addEventListener(
+                "dragover",
+                function(event) {
+
+                    event.preventDefault();
+
+                    event.stopPropagation();
+
+                    removeDropIndicators();
+
+
+                    const rect =
+                        box.getBoundingClientRect();
+
+                    const middle =
+                        rect.left +
+                        rect.width / 2;
+
+
+                    if (
+                        event.clientX <
+                        middle
+                    ) {
+
+                        box.classList.add(
+                            "drop-left"
+                        );
+
+                    }
+
+                    else {
+
+                        box.classList.add(
+                            "drop-right"
+                        );
+
+                    }
+
+                }
+            );
+
+
+            // =================================================
+            // DROP
+            // =================================================
+
+            box.addEventListener(
+                "drop",
+                function(event) {
+
+                    event.preventDefault();
+
+                    event.stopPropagation();
+
+
+                    const draggedId =
+                        event.dataTransfer
+                            .getData(
+                                "text/plain"
+                            );
+
+
+                    const rect =
+                        box.getBoundingClientRect();
+
+                    const middle =
+                        rect.left +
+                        rect.width / 2;
+
+
+                    const insertAfter =
+                        event.clientX >=
+                        middle;
+
+
+                    moveElement(
+                        draggedId,
+                        elements,
+                        element.id,
+                        insertAfter
+                    );
+
+
+                    removeDropIndicators();
+
+                }
+            );
+
+
+            container.appendChild(
+                box
+            );
+
+
+            // =================================================
+            // INSERTION ZONE AFTER ELEMENT
+            // =================================================
+
+            addInsertionZone(
+                container,
+                elements,
+                index + 1
+            );
+
+        }
+    );
+
+
+    parent.appendChild(
+        container
+    );
+}
+
+// =====================================================
+// INSERTION ZONE
+// =====================================================
+
+function addInsertionZone(
+    container,
+    elements,
+    index
+) {
+
+    const zone =
+        document.createElement("div");
+
+    zone.className =
+        "formula-insertion-zone";
+
+    zone.title =
+        "Insert here";
+
+
+    zone.addEventListener(
+        "click",
+        function(event) {
+
+            event.preventDefault();
+            event.stopPropagation();
+
+
+            // Set the active container
+
+            activeContainer =
+                elements;
+
+
+            // Set exact insertion position
+
+            insertionIndex =
+                index;
+
+
+            // Remove all previous
+            // insertion highlights
+
+            document
+                .querySelectorAll(
+                    ".formula-insertion-zone.active"
+                )
+                .forEach(
+                    function(element) {
+
+                        element.classList.remove(
+                            "active"
+                        );
+
+                    }
+                );
+
+
+            // Highlight this position
+
+            zone.classList.add(
+                "active"
+            );
+
+        }
+    );
+
+
+    container.appendChild(
+        zone
+    );
+}
+
+
+// =====================================================
+// SELECT INSERTION POINT
+// =====================================================
+
+function selectInsertionPoint(
+    elements,
+    index,
+    zone
+) {
+
+    activeContainer =
+        elements;
+
+    insertionIndex =
+        index;
+
+
+    /*
+     * Remove previous blue line.
+     */
+
+    document
+        .querySelectorAll(
+            ".formula-insertion-zone.active"
+        )
+        .forEach(
+            function(element) {
+
+                element.classList.remove(
+                    "active"
+                );
+
+            }
+        );
+
+
+    /*
+     * Show blue insertion line.
+     */
+
+    zone.classList.add(
+        "active"
+    );
+
+}
+
+
+// =====================================================
+// FRACTION
+// =====================================================
+
+function renderFraction(box, fraction) {
+
+    const wrapper =
+        document.createElement("div");
+
+    wrapper.className = "fraction";
+
+
+    // =================================================
+    // NUMERATOR
+    // =================================================
+
+    const numerator =
+        document.createElement("div");
+
+    numerator.className =
+        "fraction-numerator";
+
+
+    renderContainer(
+        numerator,
+        fraction.numerator
+    );
+
+
+    // =================================================
+    // FRACTION LINE
+    // =================================================
+
+    const line =
+        document.createElement("div");
+
+    line.className =
+        "fraction-line";
+
+
+    // =================================================
+    // DENOMINATOR
+    // =================================================
+
+    const denominator =
+        document.createElement("div");
+
+    denominator.className =
+        "fraction-denominator";
+
+
+    renderContainer(
+        denominator,
+        fraction.denominator
+    );
+
+
+    // =================================================
+    // ADD EVERYTHING
+    // =================================================
+
+    wrapper.appendChild(
+        numerator
+    );
+
+    wrapper.appendChild(
+        line
+    );
+
+    wrapper.appendChild(
+        denominator
+    );
+
+
+    // =================================================
+    // STOP EVENTS ESCAPING FRACTION
+    // =================================================
+
+    box.appendChild(
+        wrapper
+    );
+}
+
+
+// =====================================================
+// ADD FRACTION
+// =====================================================
+
+function addFraction() {
+
+    const fraction = {
+
+        id:
+            crypto.randomUUID(),
+
+        type:
+            "fraction",
+
+        value:
+            "",
+
+        meaning:
+            "",
+
+        numerator:
+            [],
+
+        denominator:
+            []
+
+    };
+
+
+    // Add fraction at current position
+
+    activeContainer.splice(
+        insertionIndex,
+        0,
+        fraction
+    );
+
+
+    /*
+     * Remember where the fraction
+     * was inserted.
+     */
+
+    const fractionContainer =
+        activeContainer;
+
+
+    /*
+     * Move the insertion point
+     * inside the numerator.
+     */
+
+    activeContainer =
+        fraction.numerator;
+
+    insertionIndex = 0;
+
+
+    renderFormula();
+
+
+    /*
+     * Find the first insertion zone
+     * inside the newly created fraction.
+     */
+
+    const numeratorZone =
+        document.querySelector(
+            ".fraction-numerator .formula-insertion-zone"
+        );
+
+
+    if (numeratorZone) {
+
+        numeratorZone.classList.add(
+            "active"
+        );
+
+    }
+
+}
+
+// =====================================================
+// OPERATOR
+// =====================================================
+
+function addSelectedOperator() {
+
+    const select =
+        document.getElementById(
+            "operator-select"
+        );
+
+    const operator =
+        select.value;
+
+
+    if (!operator) {
+        return;
+    }
+
+
+    addElement(
+        "operator",
+        operator
+    );
+
+
+    select.value = "";
+}
+
+
+// =====================================================
+// MOVE ELEMENT
+// =====================================================
+
 function moveElement(
     draggedId,
+    targetContainer,
     targetId,
     insertAfter
 ) {
 
-    if (draggedId === targetId) {
-        return;
-    }
-
-
-    const draggedIndex =
-        formulaElements.findIndex(
-            element =>
-                element.id === draggedId
+    const dragged =
+        findAndRemoveElement(
+            formulaElements,
+            draggedId
         );
 
 
-    if (draggedIndex === -1) {
+    if (!dragged) {
         return;
     }
 
 
-    const draggedElement =
-        formulaElements[draggedIndex];
-
-
-    // Remove dragged element first
-    formulaElements.splice(
-        draggedIndex,
-        1
-    );
-
-
     let targetIndex =
-        formulaElements.findIndex(
-            element =>
-                element.id === targetId
+        targetContainer.findIndex(
+            function(element) {
+
+                return element.id ===
+                    targetId;
+
+            }
         );
 
 
     if (targetIndex === -1) {
 
-        formulaElements.push(
-            draggedElement
+        targetContainer.push(
+            dragged
         );
 
-        renderFormula();
-
-        return;
     }
+    else {
 
+        if (insertAfter) {
 
-    if (insertAfter) {
+            targetIndex++;
 
-        targetIndex++;
+        }
+
+        targetContainer.splice(
+            targetIndex,
+            0,
+            dragged
+        );
 
     }
-
-
-    formulaElements.splice(
-        targetIndex,
-        0,
-        draggedElement
-    );
 
 
     renderFormula();
 }
 
 
-function removeDropIndicators() {
+// =====================================================
+// FIND AND REMOVE ELEMENT
+// =====================================================
 
-    document
-        .querySelectorAll(
-            ".drop-left, .drop-right"
-        )
-        .forEach(element => {
+function findAndRemoveElement(
+    elements,
+    id
+) {
 
-            element.classList.remove(
-                "drop-left",
-                "drop-right"
-            );
+    const index =
+        elements.findIndex(
+            function(element) {
 
-        });
+                return element.id === id;
 
+            }
+        );
+
+
+    if (index !== -1) {
+
+        return elements.splice(
+            index,
+            1
+        )[0];
+
+    }
+
+
+    for (
+        const element of elements
+    ) {
+
+        if (
+            element.type === "fraction"
+        ) {
+
+            const numeratorResult =
+                findAndRemoveElement(
+                    element.numerator,
+                    id
+                );
+
+
+            if (numeratorResult) {
+
+                return numeratorResult;
+
+            }
+
+
+            const denominatorResult =
+                findAndRemoveElement(
+                    element.denominator,
+                    id
+                );
+
+
+            if (denominatorResult) {
+
+                return denominatorResult;
+
+            }
+
+        }
+
+    }
+
+
+    return null;
 }
 
+
+// =====================================================
+// EDITOR
+// =====================================================
 
 function showEditor(element) {
 
@@ -225,68 +819,89 @@ function showEditor(element) {
             "element-editor"
         );
 
+
     if (existing) {
+
         existing.remove();
+
     }
 
 
     const editor =
         document.createElement("div");
 
-    editor.id = "element-editor";
+
+    editor.id =
+        "element-editor";
 
 
     editor.innerHTML = `
 
         <label>
+
             ${
                 element.type === "variable"
-                ? "Variable"
-                : "Value"
+                    ? "Variable"
+                    : "Value"
             }
+
         </label>
+
 
         <input
             id="element-value"
             type="text"
-            value="${element.value}"
+            value="${element.value || ""}"
             autofocus
         >
 
 
         ${
             element.type === "variable"
-            ? `
+                ? `
 
-                <label>
-                    Meaning
-                </label>
+                    <label>
+                        Meaning
+                    </label>
 
-                <input
-                    id="element-meaning"
-                    type="text"
-                    value="${element.meaning}"
-                    placeholder="What does this variable mean?"
-                >
+                    <input
+                        id="element-meaning"
+                        type="text"
+                        value="${element.meaning || ""}"
+                        placeholder="What does this variable mean?"
+                    >
 
-            `
-            : ""
+                `
+                : ""
         }
 
 
-        <button id="save-element">
+        <button
+            id="save-element"
+            type="button"
+        >
             Save
         </button>
 
-        <button id="delete-element">
+
+        <button
+            id="delete-element"
+            type="button"
+        >
             Delete
         </button>
 
     `;
 
 
-    document.body.appendChild(editor);
+    document.body.appendChild(
+        editor
+    );
 
+
+    // =================================================
+    // SAVE
+    // =================================================
 
     document
         .getElementById(
@@ -294,7 +909,7 @@ function showEditor(element) {
         )
         .addEventListener(
             "click",
-            () => {
+            function() {
 
                 element.value =
                     document
@@ -327,20 +942,22 @@ function showEditor(element) {
         );
 
 
+    // =================================================
+    // DELETE
+    // =================================================
+
     document
         .getElementById(
             "delete-element"
         )
         .addEventListener(
             "click",
-            () => {
+            function() {
 
-                formulaElements =
-                    formulaElements.filter(
-                        item =>
-                            item.id !==
-                            element.id
-                    );
+                removeElement(
+                    formulaElements,
+                    element.id
+                );
 
 
                 editor.remove();
@@ -349,5 +966,105 @@ function showEditor(element) {
 
             }
         );
-
 }
+
+
+// =====================================================
+// REMOVE ELEMENT
+// =====================================================
+
+function removeElement(
+    elements,
+    id
+) {
+
+    const index =
+        elements.findIndex(
+            function(element) {
+
+                return element.id === id;
+
+            }
+        );
+
+
+    if (index !== -1) {
+
+        elements.splice(
+            index,
+            1
+        );
+
+        return true;
+
+    }
+
+
+    for (
+        const element of elements
+    ) {
+
+        if (
+            element.type === "fraction"
+        ) {
+
+            if (
+                removeElement(
+                    element.numerator,
+                    id
+                )
+            ) {
+
+                return true;
+
+            }
+
+
+            if (
+                removeElement(
+                    element.denominator,
+                    id
+                )
+            ) {
+
+                return true;
+
+            }
+
+        }
+
+    }
+
+
+    return false;
+}
+
+
+// =====================================================
+// REMOVE DROP INDICATORS
+// =====================================================
+
+function removeDropIndicators() {
+
+    document
+        .querySelectorAll(
+            ".drop-left, .drop-right"
+        )
+        .forEach(
+            function(element) {
+
+                element.classList.remove(
+                    "drop-left",
+                    "drop-right"
+                );
+
+            }
+        );
+}
+
+
+// =====================================================
+// INITIAL RENDER
+// =====================================================
+
+renderFormula();
