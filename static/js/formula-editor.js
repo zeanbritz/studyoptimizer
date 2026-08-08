@@ -34,8 +34,11 @@ function addElement(type, value = "") {
     insertionIndex++;
 
     renderFormula();
-}
 
+    if (type === "variable") {
+        showEditor(element);
+    }
+}
 
 // =====================================================
 // RENDER FORMULA
@@ -815,14 +818,71 @@ function findAndRemoveElement(
 function showEditor(element) {
 
     const existing =
-        document.getElementById(
-            "element-editor"
-        );
-
+        document.getElementById("element-editor");
 
     if (existing) {
-
         existing.remove();
+    }
+
+
+    /*
+     * Remember the ORIGINAL values.
+     *
+     * This lets us know whether the student
+     * actually changed anything.
+     */
+
+    const originalValue =
+        element.value || "";
+
+    const originalMeaning =
+        element.meaning || "";
+
+
+    /*
+     * Is this a brand-new element?
+     */
+
+    const isNewVariable =
+        element.type === "variable" &&
+        !element.value;
+
+
+    /*
+     * If this is a new variable, see if the
+     * currently supplied symbol already exists.
+     */
+
+    let existingVariable = null;
+
+    if (
+        element.type === "variable" &&
+        element.value
+    ) {
+
+        existingVariable =
+            formulaElements.find(
+                item =>
+                    item.type === "variable" &&
+                    item.id !== element.id &&
+                    item.value === element.value
+            );
+
+    }
+
+
+    /*
+     * Automatically inherit the meaning
+     * from an existing symbol.
+     */
+
+    if (
+        existingVariable &&
+        !element.meaning
+    ) {
+
+        element.meaning =
+            existingVariable.meaning;
 
     }
 
@@ -830,21 +890,27 @@ function showEditor(element) {
     const editor =
         document.createElement("div");
 
-
     editor.id =
         "element-editor";
 
 
     editor.innerHTML = `
 
-        <label>
-
+        <h3>
             ${
                 element.type === "variable"
-                    ? "Variable"
+                    ? "Define Variable"
+                    : "Edit Element"
+            }
+        </h3>
+
+
+        <label>
+            ${
+                element.type === "variable"
+                    ? "Symbol"
                     : "Value"
             }
-
         </label>
 
 
@@ -852,6 +918,11 @@ function showEditor(element) {
             id="element-value"
             type="text"
             value="${element.value || ""}"
+            placeholder="${
+                element.type === "variable"
+                    ? "e.g. PV"
+                    : "Enter value"
+            }"
             autofocus
         >
 
@@ -868,7 +939,7 @@ function showEditor(element) {
                         id="element-meaning"
                         type="text"
                         value="${element.meaning || ""}"
-                        placeholder="What does this variable mean?"
+                        placeholder="e.g. Present Value"
                     >
 
                 `
@@ -876,60 +947,326 @@ function showEditor(element) {
         }
 
 
-        <button
-            id="save-element"
-            type="button"
-        >
-            Save
-        </button>
+        <div style="margin-top: 15px;">
 
+            <button
+                id="save-element"
+                type="button"
+            >
+                Save
+            </button>
 
-        <button
-            id="delete-element"
-            type="button"
-        >
-            Delete
-        </button>
+            <button
+                id="delete-element"
+                type="button"
+            >
+                Delete
+            </button>
+
+        </div>
 
     `;
 
 
-    document.body.appendChild(
-        editor
-    );
+    document.body.appendChild(editor);
 
 
-    // =================================================
-    // SAVE
-    // =================================================
+    /*
+     * SAVE
+     */
 
     document
-        .getElementById(
-            "save-element"
-        )
+        .getElementById("save-element")
         .addEventListener(
             "click",
             function() {
 
-                element.value =
+                const newValue =
                     document
                         .getElementById(
                             "element-value"
                         )
-                        .value;
+                        .value
+                        .trim();
 
+
+                if (!newValue) {
+                    return;
+                }
+
+
+                // =====================================================
+                // VARIABLE
+                // =====================================================
 
                 if (
-                    element.type ===
-                    "variable"
+                    element.type === "variable"
                 ) {
 
+                    const meaningInput =
+                        document.getElementById(
+                            "element-meaning"
+                        );
+
+
+                    let newMeaning =
+                        meaningInput.value.trim();
+
+
+                    /*
+                     * Check whether the NEW symbol
+                     * already exists elsewhere.
+                     */
+
+                    const variableWithNewSymbol =
+                        formulaElements.find(
+                            item =>
+                                item.type === "variable" &&
+                                item.id !== element.id &&
+                                item.value === newValue
+                        );
+
+
+                    // =================================================
+                    // NEW VARIABLE
+                    // =================================================
+
+                    if (isNewVariable) {
+
+                        /*
+                         * If this symbol already exists,
+                         * automatically adopt its meaning.
+                         */
+
+                        if (
+                            variableWithNewSymbol
+                        ) {
+
+                            element.value =
+                                variableWithNewSymbol.value;
+
+                            element.meaning =
+                                variableWithNewSymbol.meaning;
+
+                        }
+
+                        else {
+
+                            element.value =
+                                newValue;
+
+                            element.meaning =
+                                newMeaning;
+
+                        }
+
+
+                        editor.remove();
+
+                        renderFormula();
+
+                        return;
+                    }
+
+
+                    // =================================================
+                    // EXISTING VARIABLE
+                    // =================================================
+
+                    const symbolChanged =
+                        originalValue !== newValue;
+
+                    const meaningChanged =
+                        originalMeaning !== newMeaning;
+
+
+                    /*
+                     * Nothing changed.
+                     *
+                     * No popup.
+                     */
+
+                    if (
+                        !symbolChanged &&
+                        !meaningChanged
+                    ) {
+
+                        editor.remove();
+
+                        renderFormula();
+
+                        return;
+                    }
+
+
+                    // =================================================
+                    // SYMBOL CHANGED TO EXISTING SYMBOL
+                    // =================================================
+
+                    if (
+                        symbolChanged &&
+                        variableWithNewSymbol
+                    ) {
+
+                        const confirmed =
+                            window.confirm(
+
+                                `The symbol "${newValue}" is already used ` +
+                                `elsewhere in this formula.\n\n` +
+
+                                `Its meaning is:\n\n` +
+
+                                `"${variableWithNewSymbol.meaning}"\n\n` +
+
+                                `Changing this occurrence to "${newValue}" ` +
+                                `will make it use that meaning instead.\n\n` +
+
+                                `Do you want to continue?`
+
+                            );
+
+
+                        if (!confirmed) {
+                            return;
+                        }
+
+
+                        /*
+                         * Adopt the existing symbol's meaning.
+                         */
+
+                        element.value =
+                            variableWithNewSymbol.value;
+
+                        element.meaning =
+                            variableWithNewSymbol.meaning;
+
+
+                        editor.remove();
+
+                        renderFormula();
+
+                        return;
+                    }
+
+
+                    // =================================================
+                    // MEANING CHANGED
+                    // =================================================
+
+                    if (
+                        meaningChanged
+                    ) {
+
+                        const otherOccurrences =
+                            formulaElements.filter(
+                                item =>
+                                    item.type === "variable" &&
+                                    item.id !== element.id &&
+                                    item.value === originalValue
+                            );
+
+
+                        if (
+                            otherOccurrences.length > 0
+                        ) {
+
+                            const confirmed =
+                                window.confirm(
+
+                                    `The variable "${originalValue}" ` +
+                                    `is used elsewhere in this formula.\n\n` +
+
+                                    `Changing its meaning from:\n\n` +
+
+                                    `"${originalMeaning || "(not defined)"}"\n\n` +
+
+                                    `to:\n\n` +
+
+                                    `"${newMeaning || "(not defined)"}"\n\n` +
+
+                                    `will also change the meaning of the ` +
+                                    `other "${originalValue}" occurrences.\n\n` +
+
+                                    `Do you want to continue?`
+
+                                );
+
+
+                            if (!confirmed) {
+                                return;
+                            }
+
+
+                            /*
+                             * Update the meaning of every
+                             * occurrence with the same symbol.
+                             */
+
+                            otherOccurrences.forEach(
+                                item => {
+
+                                    item.meaning =
+                                        newMeaning;
+
+                                }
+                            );
+
+                        }
+
+                    }
+
+
+                    // =================================================
+                    // SYMBOL CHANGED TO A NEW SYMBOL
+                    // =================================================
+
+                    if (
+                        symbolChanged &&
+                        !variableWithNewSymbol
+                    ) {
+
+                        const confirmed =
+                            window.confirm(
+
+                                `You are changing this occurrence from ` +
+                                `"${originalValue}" to "${newValue}".\n\n` +
+
+                                `Only this occurrence will change.\n\n` +
+
+                                `Do you want to continue?`
+
+                            );
+
+
+                        if (!confirmed) {
+                            return;
+                        }
+
+                    }
+
+
+                    // =================================================
+                    // SAVE THIS VARIABLE
+                    // =================================================
+
+                    element.value =
+                        newValue;
+
                     element.meaning =
-                        document
-                            .getElementById(
-                                "element-meaning"
-                            )
-                            .value;
+                        newMeaning;
+
+                }
+
+
+                // =====================================================
+                // NON-VARIABLE ELEMENT
+                // =====================================================
+
+                else {
+
+                    element.value =
+                        newValue;
 
                 }
 
@@ -942,14 +1279,12 @@ function showEditor(element) {
         );
 
 
-    // =================================================
-    // DELETE
-    // =================================================
+    /*
+     * DELETE
+     */
 
     document
-        .getElementById(
-            "delete-element"
-        )
+        .getElementById("delete-element")
         .addEventListener(
             "click",
             function() {
@@ -959,16 +1294,46 @@ function showEditor(element) {
                     element.id
                 );
 
-
                 editor.remove();
 
                 renderFormula();
 
             }
         );
+
+
+    /*
+     * ENTER TO SAVE
+     */
+
+    editor
+        .querySelectorAll("input")
+        .forEach(
+            function(input) {
+
+                input.addEventListener(
+                    "keydown",
+                    function(event) {
+
+                        if (
+                            event.key === "Enter"
+                        ) {
+
+                            document
+                                .getElementById(
+                                    "save-element"
+                                )
+                                .click();
+
+                        }
+
+                    }
+                );
+
+            }
+        );
+
 }
-
-
 // =====================================================
 // REMOVE ELEMENT
 // =====================================================
@@ -1060,6 +1425,19 @@ function removeDropIndicators() {
 
             }
         );
+}
+
+function getVariableBySymbol(symbol) {
+
+    if (!symbol) {
+        return null;
+    }
+
+    return formulaElements.find(
+        element =>
+            element.type === "variable" &&
+            element.value === symbol
+    );
 }
 
 
