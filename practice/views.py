@@ -946,3 +946,100 @@ def practice_formula(
         }
 
     )
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, get_object_or_404
+
+import json
+
+from learning.models import Formula
+
+
+def get_reconstruction_elements(elements):
+    """
+    Keep every top-level formula element intact.
+
+    Normal formula elements become draggable pieces.
+    Fractions remain complete structures containing
+    their numerator and denominator.
+    """
+
+    return list(elements)
+
+
+@login_required
+def formula_reconstruction(request, formula_id):
+
+    formula = get_object_or_404(
+        Formula,
+        id=formula_id,
+        knowledge_unit__topic__subject__user=request.user
+    )
+
+    try:
+
+        formula_elements = json.loads(
+            formula.structure
+        )
+
+    except (json.JSONDecodeError, TypeError):
+
+        formula_elements = []
+
+
+    reconstruction_elements = (
+        get_reconstruction_elements(
+            formula_elements
+        )
+    )
+
+
+    return render(
+        request,
+        "practice/formula_reconstructions.html",
+        {
+            "formula": formula,
+            "formula_elements": formula_elements,
+            "reconstruction_elements": (
+                reconstruction_elements
+            ),
+        }
+    )
+
+
+
+    formula = get_object_or_404(
+        Formula,
+        id=formula_id,
+        knowledge_unit__topic__subject__user=request.user
+    )
+
+    try:
+
+        formula_elements = json.loads(
+            formula.structure
+        )
+
+    except (json.JSONDecodeError, TypeError):
+
+        formula_elements = []
+
+
+    reconstruction_elements = (
+        get_reconstruction_elements(
+            formula_elements
+        )
+    )
+
+
+    return render(
+        request,
+        "practice/formula_reconstructions.html",
+        {
+            "formula": formula,
+            "formula_elements": formula_elements,
+            "reconstruction_elements": (
+                reconstruction_elements
+            ),
+        }
+    )

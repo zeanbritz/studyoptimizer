@@ -9,4 +9,10 @@ urlpatterns = [
         views.practice_formula,
         name="practice_formula",
     ),
+
+    path(
+        "formula/<int:formula_id>/reconstruct/",
+        views.formula_reconstruction,
+        name="formula_reconstruction",
+    ),
 ]

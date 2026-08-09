@@ -1,0 +1,999 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>Formula Reconstruction</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f6f8;
+            margin: 0;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        /* =====================================
+           FORMULA BUILDER
+        ===================================== */
+
+        .formula-builder {
+
+            min-height: 130px;
+
+            border: 2px dashed #bbb;
+
+            border-radius: 10px;
+
+            padding: 20px;
+
+            display: flex;
+
+            align-items: center;
+
+            flex-wrap: wrap;
+
+            gap: 8px;
+
+            background: #fafafa;
+
+        }
+
+
+        /* =====================================
+           PIECE POOL
+        ===================================== */
+
+        .pieces {
+
+            min-height: 100px;
+
+            display: flex;
+
+            align-items: center;
+
+            flex-wrap: wrap;
+
+            gap: 10px;
+
+        }
+
+
+        /* =====================================
+           NORMAL PIECES
+        ===================================== */
+
+        .piece {
+
+            min-width: 55px;
+
+            min-height: 50px;
+
+            padding: 9px 14px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            border: 2px solid #aaa;
+
+            border-radius: 9px;
+
+            background: white;
+
+            font-size: 19px;
+
+            cursor: grab;
+
+            user-select: none;
+
+            flex-shrink: 0;
+
+            transition:
+                transform 0.1s,
+                box-shadow 0.1s;
+
+        }
+
+
+        .piece:hover {
+
+            box-shadow:
+                0 3px 8px
+                rgba(0,0,0,0.12);
+
+        }
+
+
+        .piece.dragging {
+
+            opacity: 0.45;
+
+            cursor: grabbing;
+
+        }
+
+
+        /* =====================================
+           DROP INDICATOR
+        ===================================== */
+
+        .drop-indicator {
+
+            width: 4px;
+
+            height: 55px;
+
+            border-radius: 4px;
+
+            background: #333;
+
+            flex-shrink: 0;
+
+        }
+
+
+        /* =====================================
+           FRACTION
+        ===================================== */
+
+        .fraction-piece {
+
+            display: flex;
+
+            flex-direction: column;
+
+            align-items: center;
+
+            justify-content: center;
+
+            min-width: 120px;
+
+            min-height: 95px;
+
+            padding: 6px;
+
+            cursor: grab;
+
+        }
+
+
+        .fraction-zone {
+
+            width: 105px;
+
+            min-height: 32px;
+
+            padding: 4px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            flex-wrap: wrap;
+
+            gap: 4px;
+
+            border: 2px dashed #aaa;
+
+            border-radius: 6px;
+
+            background: #fafafa;
+
+        }
+
+
+        .fraction-zone.drag-over {
+
+            background: #e8e8e8;
+
+            border-color: #555;
+
+        }
+
+
+        .fraction-line {
+
+            width: 105px;
+
+            border-top: 2px solid #222;
+
+            margin: 5px 0;
+
+        }
+
+
+        /*
+         * Smaller pieces when placed
+         * inside a fraction.
+         */
+
+        .fraction-zone .piece {
+
+            min-width: 30px;
+
+            min-height: 28px;
+
+            padding: 3px 6px;
+
+            font-size: 15px;
+
+            border-width: 1px;
+
+        }
+
+
+        /* =====================================
+           POOL DROP AREA
+        ===================================== */
+
+        #pieces {
+
+            border: 2px dashed transparent;
+
+            border-radius: 8px;
+
+            padding: 10px;
+
+        }
+
+
+        #pieces.drag-over {
+
+            border-color: #aaa;
+
+            background: #fafafa;
+
+        }
+
+
+        /* =====================================
+           BUTTONS
+        ===================================== */
+
+        .actions {
+
+            margin-top: 20px;
+
+            display: flex;
+
+            gap: 10px;
+
+        }
+
+
+        button {
+
+            padding: 11px 20px;
+
+            border: none;
+
+            border-radius: 7px;
+
+            cursor: pointer;
+
+            font-size: 15px;
+
+        }
+
+
+        .check-button {
+
+            background: #222;
+
+            color: white;
+
+        }
+
+
+        .reset-button {
+
+            background: #ddd;
+
+            color: #222;
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+    <h1>
+        Formula Reconstruction
+    </h1>
+
+
+    <p>
+        Drag the pieces into the correct order
+        to reconstruct the formula.
+    </p>
+
+
+    <!-- =====================================
+         ANSWER AREA
+    ====================================== -->
+
+    <div class="section">
+
+        <h3>
+            Reconstruct the Formula
+        </h3>
+
+
+        <div
+            id="formula-builder"
+            class="formula-builder"
+        >
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================
+         ALL PIECES
+    ====================================== -->
+
+    <div class="section">
+
+        <h3>
+            Formula Pieces
+        </h3>
+
+
+        <div
+            id="pieces"
+            class="pieces"
+        >
+
+
+            {% for element in reconstruction_elements %}
+
+
+                {% if element.type == "fraction" %}
+
+
+                    <!-- FRACTION -->
+
+                    <div
+                        class="piece fraction-piece"
+
+                        draggable="true"
+
+                        data-id="{{ element.id }}"
+
+                        data-type="fraction"
+                    >
+
+                        <div
+                            class="fraction-zone"
+
+                            data-fraction-id="{{ element.id }}"
+
+                            data-part="numerator"
+                        >
+                        </div>
+
+
+                        <div
+                            class="fraction-line"
+                        >
+                        </div>
+
+
+                        <div
+                            class="fraction-zone"
+
+                            data-fraction-id="{{ element.id }}"
+
+                            data-part="denominator"
+                        >
+                        </div>
+
+                    </div>
+
+
+                    <!-- FRACTION CONTENT -->
+
+                    {% for part in element.numerator %}
+
+                        <div
+                            class="piece"
+
+                            draggable="true"
+
+                            data-id="{{ part.id }}"
+
+                            data-type="{{ part.type }}"
+                        >
+
+                            {{ part.value }}
+
+                        </div>
+
+                    {% endfor %}
+
+
+                    {% for part in element.denominator %}
+
+                        <div
+                            class="piece"
+
+                            draggable="true"
+
+                            data-id="{{ part.id }}"
+
+                            data-type="{{ part.type }}"
+                        >
+
+                            {{ part.value }}
+
+                        </div>
+
+                    {% endfor %}
+
+
+                {% else %}
+
+
+                    <!-- NORMAL PIECE -->
+
+                    <div
+                        class="piece"
+
+                        draggable="true"
+
+                        data-id="{{ element.id }}"
+
+                        data-type="{{ element.type }}"
+                    >
+
+                        {{ element.value }}
+
+                    </div>
+
+
+                {% endif %}
+
+
+            {% endfor %}
+
+
+        </div>
+
+
+        <div class="actions">
+
+            <button
+                type="button"
+                class="check-button"
+                onclick="checkFormula()"
+            >
+
+                Check Formula
+
+            </button>
+
+
+            <button
+                type="button"
+                class="reset-button"
+                onclick="resetFormula()"
+            >
+
+                Reset
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+</div>
+
+
+<script>
+
+
+let draggedPiece = null;
+
+
+/* =========================================
+   INITIALISE DRAGGING
+========================================= */
+
+function initialisePiece(piece) {
+
+    piece.addEventListener(
+        "dragstart",
+        function(event) {
+
+            draggedPiece = this;
+
+            this.classList.add(
+                "dragging"
+            );
+
+            event.dataTransfer.effectAllowed =
+                "move";
+
+        }
+    );
+
+
+    piece.addEventListener(
+        "dragend",
+        function() {
+
+            this.classList.remove(
+                "dragging"
+            );
+
+            draggedPiece = null;
+
+            document
+                .querySelectorAll(
+                    ".drag-over"
+                )
+                .forEach(
+                    function(element) {
+
+                        element.classList.remove(
+                            "drag-over"
+                        );
+
+                    }
+                );
+
+        }
+    );
+
+}
+
+
+document
+    .querySelectorAll(
+        ".piece"
+    )
+    .forEach(
+        initialisePiece
+    );
+
+
+/* =========================================
+   INSERT PIECE AT CORRECT POSITION
+========================================= */
+
+function insertAtPosition(
+    container,
+    piece,
+    mouseX
+) {
+
+    const children = [
+
+        ...container.children
+
+    ].filter(
+        function(child) {
+
+            return (
+                child !== piece
+                &&
+                !child.classList.contains(
+                    "drop-indicator"
+                )
+            );
+
+        }
+    );
+
+
+    let inserted = false;
+
+
+    for (
+        let i = 0;
+        i < children.length;
+        i++
+    ) {
+
+        const child =
+            children[i];
+
+
+        const rect =
+            child.getBoundingClientRect();
+
+
+        const middle =
+            rect.left
+            +
+            rect.width / 2;
+
+
+        if (
+            mouseX < middle
+        ) {
+
+            container.insertBefore(
+                piece,
+                child
+            );
+
+            inserted = true;
+
+            break;
+
+        }
+
+    }
+
+
+    if (!inserted) {
+
+        container.appendChild(
+            piece
+        );
+
+    }
+
+}
+
+
+/* =========================================
+   MAIN FORMULA AREA
+========================================= */
+
+const formulaBuilder =
+    document.getElementById(
+        "formula-builder"
+    );
+
+
+formulaBuilder.addEventListener(
+    "dragover",
+    function(event) {
+
+        event.preventDefault();
+
+        if (!draggedPiece) {
+            return;
+        }
+
+        /*
+         * Don't allow a fraction
+         * to be dropped inside itself.
+         */
+
+        if (
+            draggedPiece ===
+            formulaBuilder
+        ) {
+
+            return;
+
+        }
+
+        insertAtPosition(
+            formulaBuilder,
+            draggedPiece,
+            event.clientX
+        );
+
+    }
+);
+
+
+/* =========================================
+   FRACTION DROP ZONES
+========================================= */
+
+document
+    .querySelectorAll(
+        ".fraction-zone"
+    )
+    .forEach(
+        function(zone) {
+
+            zone.addEventListener(
+                "dragover",
+                function(event) {
+
+                    event.preventDefault();
+
+                    event.stopPropagation();
+
+                    if (!draggedPiece) {
+                        return;
+                    }
+
+
+                    /*
+                     * Don't allow the fraction
+                     * itself inside itself.
+                     */
+
+                    if (
+                        draggedPiece ===
+                        zone.closest(
+                            ".fraction-piece"
+                        )
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    zone.classList.add(
+                        "drag-over"
+                    );
+
+
+                    insertAtPosition(
+                        zone,
+                        draggedPiece,
+                        event.clientX
+                    );
+
+                }
+            );
+
+
+            zone.addEventListener(
+                "dragleave",
+                function() {
+
+                    this.classList.remove(
+                        "drag-over"
+                    );
+
+                }
+            );
+
+
+            zone.addEventListener(
+                "drop",
+                function(event) {
+
+                    event.preventDefault();
+
+                    event.stopPropagation();
+
+                    this.classList.remove(
+                        "drag-over"
+                    );
+
+                }
+            );
+
+        }
+    );
+
+
+/* =========================================
+   PIECE POOL
+========================================= */
+
+const pieces =
+    document.getElementById(
+        "pieces"
+    );
+
+
+pieces.addEventListener(
+    "dragover",
+    function(event) {
+
+        event.preventDefault();
+
+        if (!draggedPiece) {
+            return;
+        }
+
+        this.classList.add(
+            "drag-over"
+        );
+
+
+        insertAtPosition(
+            this,
+            draggedPiece,
+            event.clientX
+        );
+
+    }
+);
+
+
+pieces.addEventListener(
+    "dragleave",
+    function() {
+
+        this.classList.remove(
+            "drag-over"
+        );
+
+    }
+);
+
+
+pieces.addEventListener(
+    "drop",
+    function(event) {
+
+        event.preventDefault();
+
+        this.classList.remove(
+            "drag-over"
+        );
+
+    }
+);
+
+
+/* =========================================
+   RESET
+========================================= */
+
+function resetFormula() {
+
+    const allPieces = [
+
+        ...document.querySelectorAll(
+            ".piece"
+        )
+
+    ];
+
+
+    allPieces.forEach(
+        function(piece) {
+
+            pieces.appendChild(
+                piece
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================
+   CHECK FORMULA
+========================================= */
+
+function checkFormula() {
+
+    const topLevelPieces = [
+
+        ...formulaBuilder.children
+
+    ];
+
+
+    const reconstruction = [];
+
+
+    topLevelPieces.forEach(
+        function(piece) {
+
+            const data = {
+
+                id:
+                    piece.dataset.id,
+
+                type:
+                    piece.dataset.type
+
+            };
+
+
+            if (
+                piece.dataset.type ===
+                "fraction"
+            ) {
+
+                const numerator =
+                    piece.querySelector(
+                        '[data-part="numerator"]'
+                    );
+
+
+                const denominator =
+                    piece.querySelector(
+                        '[data-part="denominator"]'
+                    );
+
+
+                data.numerator = [
+
+                    ...numerator.children
+
+                ].map(
+                    function(child) {
+
+                        return child.dataset.id;
+
+                    }
+                );
+
+
+                data.denominator = [
+
+                    ...denominator.children
+
+                ].map(
+                    function(child) {
+
+                        return child.dataset.id;
+
+                    }
+                );
+
+            }
+
+
+            reconstruction.push(
+                data
+            );
+
+        }
+    );
+
+
+    console.log(
+        "Student reconstruction:",
+        reconstruction
+    );
+
+
+    alert(
+        "Reconstruction captured."
+    );
+
+}
+
+
+</script>
+
+
+</body>
+
+</html>
