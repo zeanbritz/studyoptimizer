@@ -4,7 +4,13 @@ from django.shortcuts import render, get_object_or_404
 import json
 import random
 
-from learning.models import Formula, StudentKnowledge
+from django.utils import timezone
+
+from learning.models import (
+    Formula,
+    StudentKnowledge,
+    FormulaElementPerformance,
+)
 
 
 def get_all_elements(elements):
@@ -223,6 +229,61 @@ def choose_hidden_elements(
         number_to_hide
     )
 
+def record_element_performance(
+    formula,
+    element,
+    is_correct
+):
+    """
+    Record whether the student got a specific
+    formula element correct or incorrect.
+    """
+
+    element_id = str(
+        element.get("id", "")
+    )
+
+    element_type = element.get(
+        "type",
+        ""
+    )
+
+    value = str(
+        element.get(
+            "value",
+            ""
+        )
+    )
+
+    if not element_id:
+        return
+
+    performance, created = (
+        FormulaElementPerformance.objects.get_or_create(
+            formula=formula,
+            element_id=element_id,
+            defaults={
+                "element_type": element_type,
+                "value": value,
+            }
+        )
+    )
+
+    # Keep the stored information up to date.
+    performance.element_type = element_type
+    performance.value = value
+    performance.last_reviewed = timezone.now()
+
+    if is_correct:
+
+        performance.correct_count += 1
+
+    else:
+
+        performance.incorrect_count += 1
+
+    performance.save()
+
 
 @login_required
 def practice_formula(request, formula_id):
@@ -311,22 +372,17 @@ def practice_formula(request, formula_id):
                 hidden_id
             )
 
-
             if not element:
-
                 continue
-
 
             element_id = str(
                 element.get("id")
             )
 
-
             user_answer = request.POST.get(
                 "answer_" + element_id,
                 ""
             ).strip()
-
 
             correct_answer = str(
                 element.get(
@@ -335,16 +391,25 @@ def practice_formula(request, formula_id):
                 )
             ).strip()
 
+            is_correct = (
+                user_answer == correct_answer
+            )
 
             user_answers[element_id] = (
                 user_answer
             )
 
-
             correct_answers[element_id] = (
                 correct_answer
             )
 
+            # Record performance for this
+            # specific formula element.
+            record_element_performance(
+                formula,
+                element,
+                is_correct
+            )
 
         # ==================================================
         # CHECK ALL ANSWERS

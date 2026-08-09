@@ -111,6 +111,46 @@ class FormulaVariable(models.Model):
     def __str__(self):
         return f"{self.symbol} - {self.meaning}"
 
+class FormulaElementPerformance(models.Model):
+
+    formula = models.ForeignKey(
+        Formula,
+        on_delete=models.CASCADE,
+        related_name="element_performance",
+    )
+
+    element_id = models.CharField(
+        max_length=100
+    )
+
+    element_type = models.CharField(
+        max_length=50
+    )
+
+    value = models.CharField(
+        max_length=255,
+        blank=True
+    )
+
+    correct_count = models.PositiveIntegerField(
+        default=0
+    )
+
+    incorrect_count = models.PositiveIntegerField(
+        default=0
+    )
+
+    last_reviewed = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    def __str__(self):
+        return (
+            f"{self.value} "
+            f"({self.element_type})"
+        )
+
 
 class Definition(models.Model):
 
