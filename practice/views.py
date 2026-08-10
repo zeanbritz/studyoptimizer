@@ -1,5 +1,5 @@
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 
 import json
@@ -969,6 +969,124 @@ def get_reconstruction_elements(elements):
 
 @login_required
 def formula_reconstruction(request, formula_id):
+
+    formula = get_object_or_404(
+        Formula,
+        id=formula_id,
+        knowledge_unit__topic__subject__user=request.user
+    )
+
+    knowledge_unit = formula.knowledge_unit
+
+    progress, created = StudentKnowledge.objects.get_or_create(
+        student=request.user,
+        knowledge_unit=knowledge_unit,
+    )
+
+    try:
+
+        formula_elements = json.loads(
+            formula.structure
+        )
+
+    except (json.JSONDecodeError, TypeError):
+
+        formula_elements = []
+
+
+    reconstruction_elements = (
+        get_reconstruction_elements(
+            formula_elements
+        )
+    )
+
+
+    result = None
+
+
+    # ==========================================
+    # REVIEW RESULT
+    # ==========================================
+
+    if request.method == "POST":
+
+        result = request.POST.get(
+            "result"
+        )
+
+
+        # ======================================
+        # CORRECT
+        # ======================================
+
+        if result == "correct":
+
+            progress.review_count += 1
+            progress.correct_count += 1
+
+            if progress.mastery_level < 6:
+                progress.mastery_level += 1
+
+            progress.last_reviewed = timezone.now()
+            progress.next_review = timezone.now()
+
+            progress.save()
+
+            return redirect(
+                "formula_reconstruction",
+                formula_id=formula.id
+            )
+
+        # ======================================
+        # INCORRECT
+        # ======================================
+
+        elif result == "incorrect":
+
+            progress.review_count += 1
+
+            progress.incorrect_count += 1
+
+            if progress.mastery_level > 0:
+                progress.mastery_level -= 1
+
+            progress.last_reviewed = timezone.now()
+            progress.next_review = timezone.now()
+
+            progress.save()
+
+            return render(
+                request,
+                "practice/formula_reconstructions.html",
+                {
+                    "formula": formula,
+                    "formula_elements": formula_elements,
+                    "reconstruction_elements": reconstruction_elements,
+                    "progress": progress,
+                    "result": "incorrect",
+                }
+            )
+
+    return render(
+        request,
+        "practice/formula_reconstructions.html",
+        {
+            "formula": formula,
+
+            "formula_elements":
+                formula_elements,
+
+            "reconstruction_elements":
+                reconstruction_elements,
+
+            "progress":
+                progress,
+
+            "result":
+                result,
+        }
+    )
+
 
     formula = get_object_or_404(
         Formula,

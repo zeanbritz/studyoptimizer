@@ -78,6 +78,21 @@
 
             gap: 10px;
 
+            border: 2px dashed transparent;
+
+            border-radius: 8px;
+
+            padding: 10px;
+
+        }
+
+
+        .pieces.drag-over {
+
+            border-color: #aaa;
+
+            background: #fafafa;
+
         }
 
 
@@ -139,25 +154,6 @@
 
 
         /* =====================================
-           DROP INDICATOR
-        ===================================== */
-
-        .drop-indicator {
-
-            width: 4px;
-
-            height: 55px;
-
-            border-radius: 4px;
-
-            background: #333;
-
-            flex-shrink: 0;
-
-        }
-
-
-        /* =====================================
            FRACTION
         ===================================== */
 
@@ -176,8 +172,6 @@
             min-height: 95px;
 
             padding: 6px;
-
-            cursor: grab;
 
         }
 
@@ -230,8 +224,8 @@
 
 
         /*
-         * Smaller pieces when placed
-         * inside a fraction.
+         * Pieces become smaller when
+         * placed inside a fraction.
          */
 
         .fraction-zone .piece {
@@ -245,30 +239,6 @@
             font-size: 15px;
 
             border-width: 1px;
-
-        }
-
-
-        /* =====================================
-           POOL DROP AREA
-        ===================================== */
-
-        #pieces {
-
-            border: 2px dashed transparent;
-
-            border-radius: 8px;
-
-            padding: 10px;
-
-        }
-
-
-        #pieces.drag-over {
-
-            border-color: #aaa;
-
-            background: #fafafa;
 
         }
 
@@ -320,6 +290,87 @@
 
         }
 
+
+        /* =====================================
+           RESULT
+        ===================================== */
+
+        #result {
+
+            margin-top: 20px;
+
+            padding: 15px;
+
+            border-radius: 8px;
+
+            display: none;
+
+        }
+
+
+        #result.correct {
+
+            display: block;
+
+            background: #e7f6e7;
+
+            border: 1px solid #8bc48b;
+
+        }
+
+
+        #result.incorrect {
+
+            display: block;
+
+            background: #fce8e8;
+
+            border: 1px solid #d88;
+
+        }
+
+        .incorrect-result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            background: #fce8e8;
+            border: 1px solid #d88;
+        }
+
+        .correct-formula {
+            margin: 15px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .next-button {
+            background: #222;
+            color: white;
+            margin-top: 10px;
+        }
+
+        .fraction {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            vertical-align: middle;
+        }
+
+        .fraction-numerator,
+        .fraction-denominator {
+            padding: 2px 8px;
+        }
+
+        .fraction-line {
+            width: 100%;
+            border-top: 2px solid #222;
+        }
+
     </style>
 
 </head>
@@ -337,7 +388,7 @@
 
 
     <p>
-        Drag the pieces into the correct order
+        Drag all the pieces into the correct order
         to reconstruct the formula.
     </p>
 
@@ -359,6 +410,81 @@
         >
 
         </div>
+
+
+
+<div
+    id="result"
+    class="{% if result == 'incorrect' %}incorrect{% endif %}"
+>
+
+    {% if result == "incorrect" %}
+
+        <div class="incorrect-result">
+
+            <h3>✗ Incorrect</h3>
+
+            <p>
+                Here's the correct formula:
+            </p>
+
+            <div class="correct-formula">
+
+                {% for element in formula_elements %}
+
+                    {% if element.type == "fraction" %}
+
+                        <span class="fraction">
+
+                            <span class="fraction-numerator">
+
+                                {% for part in element.numerator %}
+
+                                    {{ part.value }}
+
+                                {% endfor %}
+
+                            </span>
+
+                            <span class="fraction-line"></span>
+
+                            <span class="fraction-denominator">
+
+                                {% for part in element.denominator %}
+
+                                    {{ part.value }}
+
+                                {% endfor %}
+
+                            </span>
+
+                        </span>
+
+                    {% else %}
+
+                        {{ element.value }}
+
+                    {% endif %}
+
+                {% endfor %}
+
+            </div>
+
+
+            <a
+                href="{% url 'formula_reconstruction' formula.id %}"
+                class="next-button"
+            >
+                Next Question →
+            </a>
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+
 
     </div>
 
@@ -386,7 +512,7 @@
                 {% if element.type == "fraction" %}
 
 
-                    <!-- FRACTION -->
+                    <!-- FRACTION PIECE -->
 
                     <div
                         class="piece fraction-piece"
@@ -408,9 +534,7 @@
                         </div>
 
 
-                        <div
-                            class="fraction-line"
-                        >
+                        <div class="fraction-line">
                         </div>
 
 
@@ -426,7 +550,12 @@
                     </div>
 
 
-                    <!-- FRACTION CONTENT -->
+                    <!--
+                        The fraction's numerator
+                        and denominator pieces
+                        are also placed in the
+                        SAME piece pool.
+                    -->
 
                     {% for part in element.numerator %}
 
@@ -494,12 +623,17 @@
 
         </div>
 
+        <form style="display:none;">
+            {% csrf_token %}
+        </form>
 
         <div class="actions">
 
             <button
                 type="button"
+
                 class="check-button"
+
                 onclick="checkFormula()"
             >
 
@@ -510,7 +644,9 @@
 
             <button
                 type="button"
+
                 class="reset-button"
+
                 onclick="resetFormula()"
             >
 
@@ -526,10 +662,33 @@
 </div>
 
 
+<!-- =========================================
+     ORIGINAL FORMULA DATA
+========================================= -->
+
+{{ formula_elements|json_script:"correct-formula-data" }}
+
+
 <script>
 
 
 let draggedPiece = null;
+
+
+/* =========================================
+   FORMULA BUILDER
+========================================= */
+
+const formulaBuilder =
+    document.getElementById(
+        "formula-builder"
+    );
+
+
+const pieces =
+    document.getElementById(
+        "pieces"
+    );
 
 
 /* =========================================
@@ -565,6 +724,7 @@ function initialisePiece(piece) {
 
             draggedPiece = null;
 
+
             document
                 .querySelectorAll(
                     ".drag-over"
@@ -595,7 +755,7 @@ document
 
 
 /* =========================================
-   INSERT PIECE AT CORRECT POSITION
+   INSERT PIECE AT POSITION
 ========================================= */
 
 function insertAtPosition(
@@ -611,19 +771,10 @@ function insertAtPosition(
     ].filter(
         function(child) {
 
-            return (
-                child !== piece
-                &&
-                !child.classList.contains(
-                    "drop-indicator"
-                )
-            );
+            return child !== piece;
 
         }
     );
-
-
-    let inserted = false;
 
 
     for (
@@ -655,35 +806,23 @@ function insertAtPosition(
                 child
             );
 
-            inserted = true;
-
-            break;
+            return;
 
         }
 
     }
 
 
-    if (!inserted) {
-
-        container.appendChild(
-            piece
-        );
-
-    }
+    container.appendChild(
+        piece
+    );
 
 }
 
 
 /* =========================================
-   MAIN FORMULA AREA
+   MAIN FORMULA DROP AREA
 ========================================= */
-
-const formulaBuilder =
-    document.getElementById(
-        "formula-builder"
-    );
-
 
 formulaBuilder.addEventListener(
     "dragover",
@@ -695,9 +834,10 @@ formulaBuilder.addEventListener(
             return;
         }
 
+
         /*
-         * Don't allow a fraction
-         * to be dropped inside itself.
+         * Prevent a fraction from
+         * being placed inside itself.
          */
 
         if (
@@ -709,6 +849,7 @@ formulaBuilder.addEventListener(
 
         }
 
+
         insertAtPosition(
             formulaBuilder,
             draggedPiece,
@@ -719,90 +860,108 @@ formulaBuilder.addEventListener(
 );
 
 
+formulaBuilder.addEventListener(
+    "drop",
+    function(event) {
+
+        event.preventDefault();
+
+    }
+);
+
+
 /* =========================================
    FRACTION DROP ZONES
 ========================================= */
+
+function initialiseFractionZone(zone) {
+
+    zone.addEventListener(
+        "dragover",
+        function(event) {
+
+            event.preventDefault();
+
+            event.stopPropagation();
+
+
+            if (!draggedPiece) {
+                return;
+            }
+
+
+            const fraction =
+                zone.closest(
+                    ".fraction-piece"
+                );
+
+
+            /*
+             * Don't allow the fraction
+             * to be placed inside itself.
+             */
+
+            if (
+                draggedPiece ===
+                fraction
+            ) {
+
+                return;
+
+            }
+
+
+            zone.classList.add(
+                "drag-over"
+            );
+
+
+            insertAtPosition(
+                zone,
+                draggedPiece,
+                event.clientX
+            );
+
+        }
+    );
+
+
+    zone.addEventListener(
+        "dragleave",
+        function() {
+
+            this.classList.remove(
+                "drag-over"
+            );
+
+        }
+    );
+
+
+    zone.addEventListener(
+        "drop",
+        function(event) {
+
+            event.preventDefault();
+
+            event.stopPropagation();
+
+            this.classList.remove(
+                "drag-over"
+            );
+
+        }
+    );
+
+}
+
 
 document
     .querySelectorAll(
         ".fraction-zone"
     )
     .forEach(
-        function(zone) {
-
-            zone.addEventListener(
-                "dragover",
-                function(event) {
-
-                    event.preventDefault();
-
-                    event.stopPropagation();
-
-                    if (!draggedPiece) {
-                        return;
-                    }
-
-
-                    /*
-                     * Don't allow the fraction
-                     * itself inside itself.
-                     */
-
-                    if (
-                        draggedPiece ===
-                        zone.closest(
-                            ".fraction-piece"
-                        )
-                    ) {
-
-                        return;
-
-                    }
-
-
-                    zone.classList.add(
-                        "drag-over"
-                    );
-
-
-                    insertAtPosition(
-                        zone,
-                        draggedPiece,
-                        event.clientX
-                    );
-
-                }
-            );
-
-
-            zone.addEventListener(
-                "dragleave",
-                function() {
-
-                    this.classList.remove(
-                        "drag-over"
-                    );
-
-                }
-            );
-
-
-            zone.addEventListener(
-                "drop",
-                function(event) {
-
-                    event.preventDefault();
-
-                    event.stopPropagation();
-
-                    this.classList.remove(
-                        "drag-over"
-                    );
-
-                }
-            );
-
-        }
+        initialiseFractionZone
     );
 
 
@@ -810,21 +969,17 @@ document
    PIECE POOL
 ========================================= */
 
-const pieces =
-    document.getElementById(
-        "pieces"
-    );
-
-
 pieces.addEventListener(
     "dragover",
     function(event) {
 
         event.preventDefault();
 
+
         if (!draggedPiece) {
             return;
         }
+
 
         this.classList.add(
             "drag-over"
@@ -896,34 +1051,37 @@ function resetFormula() {
 
 
 /* =========================================
-   CHECK FORMULA
+   GET STUDENT STRUCTURE
 ========================================= */
 
-function checkFormula() {
+function getPieceStructure(
+    container
+) {
 
-    const topLevelPieces = [
-
-        ...formulaBuilder.children
-
-    ];
+    const result = [];
 
 
-    const reconstruction = [];
+    const pieces =
+        [
+            ...container.children
+        ];
 
 
-    topLevelPieces.forEach(
+    pieces.forEach(
         function(piece) {
 
             const data = {
 
                 id:
-                    piece.dataset.id,
-
-                type:
-                    piece.dataset.type
+                    piece.dataset.id
 
             };
 
+
+            /*
+             * Fractions contain
+             * nested structures.
+             */
 
             if (
                 piece.dataset.type ===
@@ -942,35 +1100,21 @@ function checkFormula() {
                     );
 
 
-                data.numerator = [
-
-                    ...numerator.children
-
-                ].map(
-                    function(child) {
-
-                        return child.dataset.id;
-
-                    }
-                );
+                data.numerator =
+                    getPieceStructure(
+                        numerator
+                    );
 
 
-                data.denominator = [
-
-                    ...denominator.children
-
-                ].map(
-                    function(child) {
-
-                        return child.dataset.id;
-
-                    }
-                );
+                data.denominator =
+                    getPieceStructure(
+                        denominator
+                    );
 
             }
 
 
-            reconstruction.push(
+            result.push(
                 data
             );
 
@@ -978,15 +1122,307 @@ function checkFormula() {
     );
 
 
-    console.log(
-        "Student reconstruction:",
-        reconstruction
+    return result;
+
+}
+
+
+/* =========================================
+   GET CORRECT STRUCTURE
+========================================= */
+
+function getCorrectStructure(
+    elements
+) {
+
+    return elements.map(
+        function(element) {
+
+            const data = {
+
+                id:
+                    element.id
+
+            };
+
+
+            if (
+                element.type ===
+                "fraction"
+            ) {
+
+                data.numerator =
+                    getCorrectStructure(
+                        element.numerator || []
+                    );
+
+
+                data.denominator =
+                    getCorrectStructure(
+                        element.denominator || []
+                    );
+
+            }
+
+
+            return data;
+
+        }
+    );
+
+}
+
+
+/* =========================================
+   COMPARE STRUCTURES
+========================================= */
+
+function structuresMatch(
+    student,
+    correct
+) {
+
+    /*
+     * Different number of pieces.
+     */
+
+    if (
+        student.length !==
+        correct.length
+    ) {
+
+        return false;
+
+    }
+
+
+    for (
+        let i = 0;
+        i < student.length;
+        i++
+    ) {
+
+        /*
+         * Wrong element or wrong order.
+         */
+
+        if (
+            student[i].id !==
+            correct[i].id
+        ) {
+
+            return false;
+
+        }
+
+
+        /*
+         * Compare fractions recursively.
+         */
+
+        if (
+            student[i].numerator ||
+            correct[i].numerator
+        ) {
+
+            if (
+                !student[i].numerator ||
+                !correct[i].numerator
+            ) {
+
+                return false;
+
+            }
+
+
+            if (
+                !structuresMatch(
+                    student[i].numerator,
+                    correct[i].numerator
+                )
+            ) {
+
+                return false;
+
+            }
+
+
+            if (
+                !structuresMatch(
+                    student[i].denominator,
+                    correct[i].denominator
+                )
+            ) {
+
+                return false;
+
+            }
+
+        }
+
+    }
+
+
+    return true;
+
+}
+
+
+/* =========================================
+   CHECK FORMULA
+========================================= */
+
+
+function checkFormula() {
+
+    /*
+     * Get original formula.
+     */
+
+    const correctData =
+        JSON.parse(
+            document
+                .getElementById(
+                    "correct-formula-data"
+                )
+                .textContent
+        );
+
+
+    /*
+     * Convert original formula
+     * to ID-only structure.
+     */
+
+    const correctStructure =
+        getCorrectStructure(
+            correctData
+        );
+
+
+    /*
+     * Get student's structure.
+     */
+
+    const studentStructure =
+        getPieceStructure(
+            formulaBuilder
+        );
+
+
+    /*
+     * Compare the student's
+     * reconstruction with the
+     * correct formula.
+     */
+
+    const correct =
+        structuresMatch(
+            studentStructure,
+            correctStructure
+        );
+
+
+    /*
+     * CORRECT
+     *
+     * Send the result to Django.
+     * Django will automatically
+     * give us a new question.
+     */
+
+    if (correct) {
+
+        submitResult("correct");
+
+        return;
+
+    }
+
+
+    /*
+     * INCORRECT
+     *
+     * Send the result to Django.
+     *
+     * Django will render the same
+     * question with the correct
+     * answer visible.
+     */
+
+    submitResult("incorrect");
+
+    return;
+
+}
+
+
+function submitResult(resultValue) {
+
+    const form =
+        document.createElement("form");
+
+    form.method = "POST";
+
+    form.action = window.location.href;
+
+
+    /*
+     * Django CSRF protection.
+     */
+
+    const csrfToken =
+        document.querySelector(
+            "[name=csrfmiddlewaretoken]"
+        );
+
+
+    if (csrfToken) {
+
+        const csrfInput =
+            document.createElement("input");
+
+        csrfInput.type = "hidden";
+
+        csrfInput.name =
+            "csrfmiddlewaretoken";
+
+        csrfInput.value =
+            csrfToken.value;
+
+        form.appendChild(
+            csrfInput
+        );
+
+    }
+
+
+    /*
+     * Tell Django whether the
+     * reconstruction was correct.
+     */
+
+    const resultInput =
+        document.createElement("input");
+
+    resultInput.type = "hidden";
+
+    resultInput.name = "result";
+
+    resultInput.value =
+        resultValue;
+
+    form.appendChild(
+        resultInput
     );
 
 
-    alert(
-        "Reconstruction captured."
+    document.body.appendChild(
+        form
     );
+
+
+    form.submit();
 
 }
 
@@ -997,3 +1433,4 @@ function checkFormula() {
 </body>
 
 </html>
+
