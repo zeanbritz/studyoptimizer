@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Set Up Subjects - StudyOptimizer</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5f6f8;
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Arial,
+                sans-serif;
+            color: #222;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+            padding: 30px;
+        }
+
+        .progress {
+            color: #777;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e5e5e5;
+            border-radius: 14px;
+            padding: 40px;
+        }
+
+        h1 {
+            margin: 0 0 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            margin: 0 0 30px;
+            color: #777;
+        }
+
+        .subject {
+            border: 1px solid #e5e5e5;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .subject-number {
+            font-size: 14px;
+            font-weight: 600;
+            color: #777;
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+            padding: 13px 14px;
+            border: 1px solid #d8d8d8;
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #222;
+        }
+
+        .button {
+            width: 100%;
+            margin-top: 15px;
+            padding: 13px;
+            border: none;
+            border-radius: 8px;
+            background: #222;
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .button:hover {
+            background: #333;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="progress">
+        Step 2 of 5
+    </div>
+
+    <div class="card">
+
+        <h1>
+            Tell us about your subjects.
+        </h1>
+
+        <p class="subtitle">
+            We'll use this information to build
+            your personalized study plan.
+        </p>
+
+        <form method="POST">
+
+            {% csrf_token %}
+
+            {% for i in subject_range %}
+
+                <div class="subject">
+
+                    <div class="subject-number">
+                        Subject {{ forloop.counter }}
+                    </div>
+
+                    <label>
+                        Subject name
+                    </label>
+
+                    <input
+                        type="text"
+                        name="subject_{{ i }}"
+                        placeholder="e.g. Financial Management"
+                        required
+                    >
+
+                    <label style="margin-top: 20px;">
+                        Target grade
+                    </label>
+
+                    <input
+                        type="number"
+                        name="target_grade_{{ i }}"
+                        min="0"
+                        max="100"
+                        placeholder="e.g. 75"
+                        required
+                    >
+
+                    <label style="margin-top: 20px;">
+                        Exam date
+                    </label>
+
+                    <input
+                        type="date"
+                        name="exam_date_{{ i }}"
+                        required
+                    >
+
+                </div>
+
+            {% endfor %}
+
+            <button
+                type="submit"
+                class="button"
+            >
+                Continue →
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+</body>
+
+</html>

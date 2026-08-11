@@ -271,6 +271,19 @@
             background: #333;
         }
 
+        .get-started-button {
+            display: inline-block;
+            text-decoration: none;
+            border: none;
+            background: #222;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
     </style>
 
 </head>
@@ -382,12 +395,12 @@
 
                 <div class="empty-plan">
 
-                    <button
-                        type="button"
+                    <a
+                        href="{% url 'onboarding' %}"
                         class="get-started-button"
                     >
                         Get Started
-                    </button>
+                    </a>
 
                 </div>
 
