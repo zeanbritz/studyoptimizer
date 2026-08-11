@@ -957,15 +957,99 @@ from learning.models import Formula
 
 def get_reconstruction_elements(elements):
     """
-    Keep every top-level formula element intact.
+    Flatten the formula into individual reconstructable pieces.
 
-    Normal formula elements become draggable pieces.
-    Fractions remain complete structures containing
-    their numerator and denominator.
+    Fraction containers are kept as structural elements,
+    while their numerator and denominator pieces are also
+    included individually.
     """
 
-    return list(elements)
+    result = []
 
+    for element in elements:
+
+        if element.get("type") == "fraction":
+
+            # The fraction container itself
+            result.append(element)
+
+            # Numerator pieces
+            for part in element.get(
+                "numerator",
+                []
+            ):
+                result.append(part)
+
+            # Denominator pieces
+            for part in element.get(
+                "denominator",
+                []
+            ):
+                result.append(part)
+
+        else:
+
+            result.append(element)
+
+    return result
+
+
+def get_reconstruction_percentage(mastery_level):
+    """
+    Determines how much of the formula must be reconstructed.
+    """
+
+    percentages = {
+        0: 15,
+        1: 15,
+        2: 30,
+        3: 45,
+        4: 60,
+        5: 80,
+        6: 100,
+    }
+
+    return percentages.get(
+        mastery_level,
+        15
+    )
+
+def choose_reconstruction_elements(
+    elements,
+    mastery_level
+):
+    """
+    Randomly selects the elements that the
+    student must reconstruct.
+    """
+
+    if not elements:
+        return []
+
+    percentage = get_reconstruction_percentage(
+        mastery_level
+    )
+
+    number_to_reconstruct = round(
+        len(elements)
+        * percentage
+        / 100
+    )
+
+    number_to_reconstruct = max(
+        1,
+        number_to_reconstruct
+    )
+
+    number_to_reconstruct = min(
+        number_to_reconstruct,
+        len(elements)
+    )
+
+    return random.sample(
+        elements,
+        number_to_reconstruct
+    )
 
 @login_required
 def formula_reconstruction(request, formula_id):
@@ -1000,6 +1084,58 @@ def formula_reconstruction(request, formula_id):
         )
     )
 
+
+    hidden_reconstruction_elements = (
+        choose_reconstruction_elements(
+            reconstruction_elements,
+            progress.mastery_level
+        )
+    )
+
+    hidden_reconstruction_ids = [
+        str(element.get("id"))
+        for element in hidden_reconstruction_elements
+    ]
+
+
+    result = None
+
+    formula = get_object_or_404(
+        Formula,
+        id=formula_id,
+        knowledge_unit__topic__subject__user=request.user
+    )
+
+    knowledge_unit = formula.knowledge_unit
+
+    progress, created = StudentKnowledge.objects.get_or_create(
+        student=request.user,
+        knowledge_unit=knowledge_unit,
+    )
+
+    try:
+
+        formula_elements = json.loads(
+            formula.structure
+        )
+
+    except (json.JSONDecodeError, TypeError):
+
+        formula_elements = []
+
+
+    reconstruction_elements = (
+        get_reconstruction_elements(
+            formula_elements
+        )
+    )
+
+    hidden_reconstruction_elements = (
+    choose_reconstruction_elements(
+        reconstruction_elements,
+        progress.mastery_level
+    )
+)
 
     result = None
 
@@ -1159,5 +1295,10 @@ def formula_reconstruction(request, formula_id):
             "reconstruction_elements": (
                 reconstruction_elements
             ),
+            "hidden_reconstruction_elements":
+            hidden_reconstruction_elements,
+
+            "hidden_reconstruction_ids":
+            hidden_reconstruction_ids,
         }
     )

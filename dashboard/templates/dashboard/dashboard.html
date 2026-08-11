@@ -1,105 +1,664 @@
+{% load static %}
+
 <!DOCTYPE html>
 
 <html lang="en">
 
 <head>
 
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
 
-    <title>StudyOptimizer Dashboard</title>
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>StudyOptimizer</title>
+
+
+<style>
+
+    * {
+        box-sizing: border-box;
+    }
+
+
+    body {
+
+        margin: 0;
+
+        font-family:
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            Arial,
+            sans-serif;
+
+        background: #f5f6f8;
+
+        color: #222;
+
+    }
+
+
+    /* =========================================
+       APP
+    ========================================= */
+
+    .app {
+
+        display: flex;
+
+        min-height: 100vh;
+
+    }
+
+
+    /* =========================================
+       SIDEBAR
+    ========================================= */
+
+    .sidebar {
+
+        width: 240px;
+
+        min-height: 100vh;
+
+        background: #ffffff;
+
+        border-right: 1px solid #e5e5e5;
+
+        padding: 24px 16px;
+
+        display: flex;
+
+        flex-direction: column;
+
+        transition: width 0.25s ease;
+
+        overflow: hidden;
+
+        flex-shrink: 0;
+
+    }
+
+
+    .sidebar.closed {
+
+        width: 0;
+
+        padding-left: 0;
+
+        padding-right: 0;
+
+        border-right: none;
+
+    }
+
+
+    .logo {
+
+        font-size: 22px;
+
+        font-weight: 700;
+
+        padding: 8px 12px 28px;
+
+        letter-spacing: -0.5px;
+
+        white-space: nowrap;
+
+    }
+
+
+    .nav {
+
+        display: flex;
+
+        flex-direction: column;
+
+        gap: 6px;
+
+    }
+
+
+    .nav-link {
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 12px;
+
+        padding: 12px 14px;
+
+        border-radius: 8px;
+
+        text-decoration: none;
+
+        color: #555;
+
+        font-size: 15px;
+
+        font-weight: 500;
+
+        white-space: nowrap;
+
+        transition:
+            background 0.15s,
+            color 0.15s;
+
+    }
+
+
+    .nav-link:hover {
+
+        background: #f1f2f4;
+
+        color: #222;
+
+    }
+
+
+    .nav-link.active {
+
+        background: #222;
+
+        color: white;
+
+    }
+
+
+    .nav-icon {
+
+        width: 20px;
+
+        min-width: 20px;
+
+        text-align: center;
+
+        font-size: 16px;
+
+    }
+
+
+    /* =========================================
+       TOP BAR
+    ========================================= */
+
+    .top-bar {
+
+        display: flex;
+
+        align-items: center;
+
+        margin-bottom: 30px;
+
+    }
+
+
+    .menu-button {
+
+        width: 42px;
+
+        height: 42px;
+
+        border: 1px solid #e1e1e1;
+
+        border-radius: 9px;
+
+        background: white;
+
+        cursor: pointer;
+
+        display: flex;
+
+        flex-direction: column;
+
+        justify-content: center;
+
+        align-items: center;
+
+        gap: 5px;
+
+        transition:
+            background 0.15s,
+            border 0.15s;
+
+    }
+
+
+    .menu-button:hover {
+
+        background: #f1f2f4;
+
+    }
+
+
+    .menu-line {
+
+        width: 18px;
+
+        height: 2px;
+
+        background: #333;
+
+        border-radius: 2px;
+
+    }
+
+
+    /* =========================================
+       MAIN
+    ========================================= */
+
+    .main {
+
+        flex: 1;
+
+        padding: 28px 40px 40px;
+
+        min-width: 0;
+
+    }
+
+
+    .page-header {
+
+        margin-bottom: 30px;
+
+    }
+
+
+    .page-header h1 {
+
+        margin: 0 0 8px;
+
+        font-size: 32px;
+
+        letter-spacing: -0.8px;
+
+    }
+
+
+    .page-header p {
+
+        margin: 0;
+
+        color: #777;
+
+        font-size: 15px;
+
+    }
+
+
+    /* =========================================
+       DASHBOARD
+    ========================================= */
+
+    .dashboard-grid {
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(
+                3,
+                minmax(0, 1fr)
+            );
+
+        gap: 20px;
+
+    }
+
+
+    .card {
+
+        background: white;
+
+        border: 1px solid #e5e5e5;
+
+        border-radius: 12px;
+
+        padding: 24px;
+
+        min-height: 150px;
+
+    }
+
+
+    .card h3 {
+
+        margin: 0 0 8px;
+
+        font-size: 18px;
+
+    }
+
+
+    .card p {
+
+        margin: 0;
+
+        color: #777;
+
+        line-height: 1.5;
+
+        font-size: 14px;
+
+    }
+
+
+    /* =========================================
+       TODAY'S PLAN
+    ========================================= */
+
+    .today-plan {
+
+        grid-column: 1 / -1;
+
+        min-height: 240px;
+
+        margin-bottom: 0;
+
+    }
+
+
+    .today-plan-header {
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+
+        margin-bottom: 20px;
+
+    }
+
+
+    .today-plan-header h2 {
+
+        margin: 0;
+
+        font-size: 21px;
+
+    }
+
+
+    .today-date {
+
+        color: #777;
+
+        font-size: 14px;
+
+    }
+
+
+    .empty-plan {
+
+        border: 1px dashed #d5d5d5;
+
+        border-radius: 9px;
+
+        padding: 30px;
+
+        text-align: center;
+
+        color: #888;
+
+    }
+
+
+    /* =========================================
+       RESPONSIVE
+    ========================================= */
+
+    @media (max-width: 900px) {
+
+        .dashboard-grid {
+
+            grid-template-columns: 1fr;
+
+        }
+
+        .today-plan {
+
+            grid-column: auto;
+
+        }
+
+    }
+
+
+    @media (max-width: 700px) {
+
+        .main {
+
+            padding: 20px;
+
+        }
+
+    }
+
+</style>
 
 </head>
 
 <body>
 
-    <h1>
-        Welcome, {{ request.user.username }}!
-    </h1>
+<div class="app">
+
+<!-- SIDEBAR -->
+
+<aside
+    id="sidebar"
+    class="sidebar"
+>
+
+    <div class="logo">
+        StudyOptimizer
+    </div>
 
 
-    <h2>
-        Quick Navigation
-    </h2>
+    <nav class="nav">
 
 
-    <div>
+        <a
+            href="{% url 'dashboard' %}"
+            class="nav-link active"
+        >
 
-        <a href="{% url 'dashboard' %}">
+            <span class="nav-icon">
+                ▦
+            </span>
+
             Dashboard
+
         </a>
 
-        <br><br>
 
-        <a href="{% url 'admin:index' %}">
-            Admin
+        <a
+            href="/planner/"
+            class="nav-link"
+        >
+
+            <span class="nav-icon">
+                ◷
+            </span>
+
+            Planner
+
         </a>
+
+
+        <a
+            href="/practice/"
+            class="nav-link"
+        >
+
+            <span class="nav-icon">
+                ↻
+            </span>
+
+            Review
+
+        </a>
+
+
+        <a
+            href="/summarize/"
+            class="nav-link"
+        >
+
+            <span class="nav-icon">
+                ≡
+            </span>
+
+            Summarize
+
+        </a>
+
+
+        <a
+            href="/progress/"
+            class="nav-link"
+        >
+
+            <span class="nav-icon">
+                ↗
+            </span>
+
+            Progress
+
+        </a>
+
+
+    </nav>
+
+</aside>
+
+
+<!-- MAIN -->
+
+<main class="main">
+
+
+    <div class="top-bar">
+
+
+        <button
+            id="menuButton"
+            class="menu-button"
+            type="button"
+            aria-label="Toggle navigation"
+        >
+
+            <span class="menu-line"></span>
+
+            <span class="menu-line"></span>
+
+            <span class="menu-line"></span>
+
+        </button>
+
 
     </div>
 
 
-    <hr>
+    <header class="page-header">
+
+        <h1>
+            Welcome back, {{ request.user.first_name|default:request.user.username }}
+        </h1>
+
+        <p>
+            Your study workspace.
+        </p>
+
+    </header>
 
 
-    <h2>
-        Learning
-    </h2>
+    <section class="dashboard-grid">
 
 
-    <div>
+        <!-- TODAY'S PLAN -->
 
-        <a href="/admin/learning/subject/add/">
-            + Add Subject
-        </a>
-
-        <br><br>
-
-        <a href="/admin/learning/topic/add/">
-            + Add Topic
-        </a>
-
-    </div>
+        <div class="card today-plan">
 
 
-    <hr>
+            <div class="today-plan-header">
+
+                <h2>
+                    Today's Plan
+                </h2>
+
+                <span class="today-date">
+                    Today
+                </span>
+
+            </div>
 
 
-    <h2>
-        Development Links
-    </h2>
+            <div class="empty-plan">
+
+                Your study plan for today
+                will appear here.
+
+            </div>
 
 
-    <div>
+        </div>
 
-        <a href="/admin/learning/subject/">
-            Manage Subjects
-        </a>
 
-        <br><br>
+        <!-- REVIEW -->
 
-        <a href="/admin/learning/topic/">
-            Manage Topics
-        </a>
+        <div class="card">
 
-        <br><br>
+            <h3>
+                Review
+            </h3>
 
-        <a href="/admin/learning/knowledgeunit/">
-            Manage Knowledge Units
-        </a>
+            <p>
+                Formulas and other knowledge
+                due for revision will appear here.
+            </p>
 
-        <br><br>
+        </div>
 
-        <a href="/admin/learning/formula/">
-            Manage Formulas
-        </a>
 
-        <br><br>
+        <!-- PROGRESS -->
 
-        <a href="/admin/learning/studentknowledge/">
-            Student Progress
-        </a>
+        <div class="card">
 
-    </div>
+            <h3>
+                Progress
+            </h3>
 
-</body>
+            <p>
+                Track your mastery, study time,
+                and performance over time.
+            </p>
 
-</html>
+        </div>
+
+
+        <!-- UPCOMING -->
+
+        <div class="card">
+
+            <h3>
+                Upcoming Exams
+            </h3>
+
+            <p>
+                Your upcoming assessments and
+                deadlines will appear here.
+            </p>
+
+        </div>
+
+
+    </section>
+
+
+</main>

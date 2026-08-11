@@ -508,117 +508,128 @@
 
             {% for element in reconstruction_elements %}
 
+    {% if element.type == "fraction" %}
 
-                {% if element.type == "fraction" %}
+        <!-- FRACTION PIECE -->
 
+        <div
+            class="piece fraction-piece"
 
-                    <!-- FRACTION PIECE -->
+            draggable="true"
 
-                    <div
-                        class="piece fraction-piece"
+            data-id="{{ element.id }}"
 
-                        draggable="true"
+            data-type="fraction"
 
-                        data-id="{{ element.id }}"
+            {% if element.id not in hidden_reconstruction_ids %}
+                data-preplaced="true"
+            {% endif %}
+        >
 
-                        data-type="fraction"
-                    >
+            <div
+                class="fraction-zone"
 
-                        <div
-                            class="fraction-zone"
+                data-fraction-id="{{ element.id }}"
 
-                            data-fraction-id="{{ element.id }}"
-
-                            data-part="numerator"
-                        >
-                        </div>
-
-
-                        <div class="fraction-line">
-                        </div>
+                data-part="numerator"
+            >
+            </div>
 
 
-                        <div
-                            class="fraction-zone"
-
-                            data-fraction-id="{{ element.id }}"
-
-                            data-part="denominator"
-                        >
-                        </div>
-
-                    </div>
+            <div class="fraction-line">
+            </div>
 
 
-                    <!--
-                        The fraction's numerator
-                        and denominator pieces
-                        are also placed in the
-                        SAME piece pool.
-                    -->
+            <div
+                class="fraction-zone"
 
-                    {% for part in element.numerator %}
+                data-fraction-id="{{ element.id }}"
 
-                        <div
-                            class="piece"
+                data-part="denominator"
+            >
+            </div>
 
-                            draggable="true"
-
-                            data-id="{{ part.id }}"
-
-                            data-type="{{ part.type }}"
-                        >
-
-                            {{ part.value }}
-
-                        </div>
-
-                    {% endfor %}
+        </div>
 
 
-                    {% for part in element.denominator %}
+        <!-- NUMERATOR PIECES -->
 
-                        <div
-                            class="piece"
+        {% for part in element.numerator %}
 
-                            draggable="true"
+            <div
+                class="piece"
 
-                            data-id="{{ part.id }}"
+                draggable="true"
 
-                            data-type="{{ part.type }}"
-                        >
+                data-id="{{ part.id }}"
 
-                            {{ part.value }}
+                data-type="{{ part.type }}"
 
-                        </div>
-
-                    {% endfor %}
-
-
-                {% else %}
-
-
-                    <!-- NORMAL PIECE -->
-
-                    <div
-                        class="piece"
-
-                        draggable="true"
-
-                        data-id="{{ element.id }}"
-
-                        data-type="{{ element.type }}"
-                    >
-
-                        {{ element.value }}
-
-                    </div>
-
-
+                {% if part.id not in hidden_reconstruction_ids %}
+                    data-preplaced="true"
                 {% endif %}
+            >
+
+                {{ part.value }}
+
+            </div>
+
+        {% endfor %}
 
 
-            {% endfor %}
+        <!-- DENOMINATOR PIECES -->
+
+        {% for part in element.denominator %}
+
+            <div
+                class="piece"
+
+                draggable="true"
+
+                data-id="{{ part.id }}"
+
+                data-type="{{ part.type }}"
+
+                {% if part.id not in hidden_reconstruction_ids %}
+                    data-preplaced="true"
+                {% endif %}
+            >
+
+                {{ part.value }}
+
+            </div>
+
+        {% endfor %}
+
+
+    {% else %}
+
+
+        <!-- NORMAL PIECE -->
+
+        <div
+            class="piece"
+
+            draggable="true"
+
+            data-id="{{ element.id }}"
+
+            data-type="{{ element.type }}"
+
+            {% if element.id not in hidden_reconstruction_ids %}
+                data-preplaced="true"
+            {% endif %}
+        >
+
+            {{ element.value }}
+
+        </div>
+
+
+    {% endif %}
+
+
+{% endfor %}
 
 
         </div>

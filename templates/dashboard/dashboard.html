@@ -2,136 +2,433 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
 
-    <title>StudyOptimizer Dashboard</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>StudyOptimizer</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Arial,
+                sans-serif;
+            background: #f5f6f8;
+            color: #222;
+        }
+
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 240px;
+            min-height: 100vh;
+            background: #ffffff;
+            border-right: 1px solid #e5e5e5;
+            padding: 18px 16px;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            transition: width 0.25s ease,
+                        padding 0.25s ease;
+            overflow: hidden;
+        }
+
+        .sidebar.closed {
+            width: 64px;
+            padding-left: 11px;
+            padding-right: 11px;
+        }
+
+        .sidebar-top {
+            display: flex;
+            align-items: center;
+            height: 42px;
+            margin-bottom: 22px;
+        }
+
+        .menu-button {
+            width: 42px;
+            height: 42px;
+            border: 1px solid #e1e1e1;
+            border-radius: 9px;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+
+        .menu-button:hover {
+            background: #f1f2f4;
+        }
+
+        .menu-line {
+            width: 18px;
+            height: 2px;
+            background: #333;
+            border-radius: 2px;
+        }
+
+        .logo {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            padding: 0 12px;
+            white-space: nowrap;
+            opacity: 1;
+            transition: opacity 0.15s ease;
+        }
+
+        .sidebar.closed .logo {
+            opacity: 0;
+            width: 0;
+            padding: 0;
+        }
+
+        .nav {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #555;
+            font-size: 15px;
+            font-weight: 500;
+            white-space: nowrap;
+            transition:
+                background 0.15s,
+                color 0.15s;
+        }
+
+        .nav-link:hover {
+            background: #f1f2f4;
+            color: #222;
+        }
+
+        .nav-link.active {
+            background: #222;
+            color: white;
+        }
+
+        .nav-icon {
+            width: 20px;
+            min-width: 20px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .nav-text {
+            opacity: 1;
+            transition: opacity 0.15s ease;
+        }
+
+        .sidebar.closed .nav-text {
+            opacity: 0;
+            width: 0;
+            overflow: hidden;
+        }
+
+        .main {
+            flex: 1;
+            min-width: 0;
+            padding: 40px;
+        }
+
+        .page-header {
+            margin-bottom: 30px;
+        }
+
+        .page-header h1 {
+            margin: 0 0 8px;
+            font-size: 32px;
+            letter-spacing: -0.8px;
+        }
+
+        .page-header p {
+            margin: 0;
+            color: #777;
+            font-size: 15px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns:
+                repeat(3, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e5e5e5;
+            border-radius: 12px;
+            padding: 24px;
+            min-height: 150px;
+        }
+
+        .today-plan {
+            grid-column: 1 / -1;
+            min-height: 240px;
+        }
+
+        .today-plan-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .today-plan-header h2 {
+            margin: 0;
+            font-size: 21px;
+        }
+
+        .today-date {
+            color: #777;
+            font-size: 14px;
+        }
+
+        .empty-plan {
+            border: 1px dashed #d5d5d5;
+            border-radius: 9px;
+            padding: 30px;
+            text-align: center;
+            color: #888;
+        }
+
+        .card h3 {
+            margin: 0 0 8px;
+            font-size: 18px;
+        }
+
+        .card p {
+            margin: 0;
+            color: #777;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        @media (max-width: 900px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .today-plan {
+                grid-column: auto;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .main {
+                padding: 25px 20px;
+            }
+        }
+
+    </style>
 
 </head>
 
 <body>
 
-    <h1>
-        Welcome, {{ request.user.username }}!
-    </h1>
+<div class="app">
 
+    <aside
+        id="sidebar"
+        class="sidebar"
+    >
 
-    <hr>
+        <div class="sidebar-top">
 
+            <button
+                id="menuButton"
+                class="menu-button"
+                type="button"
+                aria-label="Toggle sidebar"
+            >
 
-    <h2>Your Subjects</h2>
+                <span class="menu-line"></span>
+                <span class="menu-line"></span>
+                <span class="menu-line"></span>
 
-    {% for subject in subjects %}
+            </button>
 
-        <h3>
-            {{ subject.name }}
-        </h3>
-
-        {% for topic in subject.topics.all %}
-
-            <div>
-
-                <strong>
-                    {{ topic.name }}
-                </strong>
-
-                &nbsp;
-
-                <a href="{% url 'create_formula' topic.id %}">
-                    + Formula
-                </a>
-
+            <div class="logo">
+                StudyOptimizer
             </div>
-
-        {% empty %}
-
-            <p>
-                No topics yet.
-            </p>
-
-        {% endfor %}
-
-    {% empty %}
-
-        <p>
-            You don't have any subjects yet.
-        </p>
-
-    {% endfor %}
-
-
-    <hr>
-
-
-    <h2>My Formulas</h2>
-
-    {% for formula in formulas %}
-
-        <div>
-
-            <strong>
-                {{ formula.knowledge_unit.title }}
-            </strong>
-
-            <br>
-
-            Topic:
-            {{ formula.knowledge_unit.topic.name }}
-
-            <br>
-
-            <a href="{% url 'formula_detail' formula.id %}">
-                View
-            </a>
-
-            &nbsp;
-
-            <a href="{% url 'edit_formula' formula.id %}">
-                Edit
-            </a>
-
-            &nbsp;
-
-            <a href="{% url 'practice_formula' formula.id %}">
-                Review
-            </a>
 
         </div>
 
-        <br>
+        <nav class="nav">
 
-    {% empty %}
+            <a
+                href="{% url 'dashboard' %}"
+                class="nav-link active"
+            >
+                <span class="nav-icon">▦</span>
+                <span class="nav-text">Dashboard</span>
+            </a>
 
-        <p>
-            You haven't created any formulas yet.
-        </p>
+            <a
+                href="/planner/"
+                class="nav-link"
+            >
+                <span class="nav-icon">◷</span>
+                <span class="nav-text">Planner</span>
+            </a>
 
-    {% endfor %}
+            <a
+                href="/practice/"
+                class="nav-link"
+            >
+                <span class="nav-icon">↻</span>
+                <span class="nav-text">Review</span>
+            </a>
 
+            <a
+                href="/summarize/"
+                class="nav-link"
+            >
+                <span class="nav-icon">≡</span>
+                <span class="nav-text">Summarize</span>
+            </a>
 
-    <hr>
+            <a
+                href="/progress/"
+                class="nav-link"
+            >
+                <span class="nav-icon">↗</span>
+                <span class="nav-text">Progress</span>
+            </a>
 
+        </nav>
 
-    <h2>Quick Navigation</h2>
+    </aside>
 
-    <p>
-        <a href="{% url 'admin:index' %}">
-            Admin
-        </a>
-    </p>
+    <main class="main">
 
-    <p>
-        <a href="/admin/learning/subject/add/">
-            + Add Subject
-        </a>
-    </p>
+        <header class="page-header">
 
-    <p>
-        <a href="/admin/learning/topic/add/">
-            + Add Topic
-        </a>
-    </p>
+            <h1>
+                Welcome back,
+                {{ request.user.first_name|default:request.user.username }}
+            </h1>
 
+            <p>
+                Your study workspace.
+            </p>
+
+        </header>
+
+        <section class="dashboard-grid">
+
+            <div class="card today-plan">
+
+                <div class="today-plan-header">
+
+                    <h2>
+                        Today's Plan
+                    </h2>
+
+                    <span class="today-date">
+                        Today
+                    </span>
+
+                </div>
+
+                <div class="empty-plan">
+                    Your study plan for today
+                    will appear here.
+                </div>
+
+            </div>
+
+            <div class="card">
+
+                <h3>
+                    Review
+                </h3>
+
+                <p>
+                    Formulas and other knowledge
+                    due for revision will appear here.
+                </p>
+
+            </div>
+
+            <div class="card">
+
+                <h3>
+                    Progress
+                </h3>
+
+                <p>
+                    Track your mastery, study time,
+                    and performance over time.
+                </p>
+
+            </div>
+
+            <div class="card">
+
+                <h3>
+                    Upcoming Exams
+                </h3>
+
+                <p>
+                    Your upcoming assessments and
+                    deadlines will appear here.
+                </p>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<script>
+
+    const sidebar =
+        document.getElementById("sidebar");
+
+    const menuButton =
+        document.getElementById("menuButton");
+
+    menuButton.addEventListener(
+        "click",
+        function () {
+
+            sidebar.classList.toggle("closed");
+
+        }
+    );
+
+</script>
 
 </body>
 
