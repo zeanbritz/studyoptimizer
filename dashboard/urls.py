@@ -1,13 +1,13 @@
 from django.urls import path
-
 from . import views
 
 
 urlpatterns = [
+
     path(
         "",
         views.dashboard,
-        name="dashboard",
+        name="dashboard"
     ),
 
     path(
@@ -16,9 +16,4 @@ urlpatterns = [
         name="onboarding"
     ),
 
-    path(
-        "onboarding/subjects/",
-        views.onboarding_subjects,
-        name="onboarding_subjects"
-    ),
 ]

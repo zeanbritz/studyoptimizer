@@ -40,16 +40,8 @@ def onboarding(request):
     if request.method == "POST":
 
         request.session["onboarding_profile"] = {
-            "qualification": request.POST.get(
-                "qualification",
-                ""
-            ),
-            "qualification_name": request.POST.get(
-                "qualification_name",
-                ""
-            ),
-            "subject_count": request.POST.get(
-                "subject_count",
+            "workspace_name": request.POST.get(
+                "workspace_name",
                 ""
             ),
             "target_grade": request.POST.get(
@@ -62,18 +54,14 @@ def onboarding(request):
             ),
         }
 
-        return redirect(
-            "onboarding_subjects"
-        )
+        request.session["onboarding_complete"] = True
+
+        return redirect("dashboard")
 
     return render(
         request,
         "dashboard/onboarding.html"
     )
-
-
-@login_required
-def onboarding_subjects(request):
 
     profile = request.session.get(
         "onboarding_profile"
