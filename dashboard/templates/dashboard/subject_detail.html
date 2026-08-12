@@ -1,5 +1,6 @@
-<!DOCTYPE html>
+{% load static %}
 
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -11,7 +12,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Subject - StudyOptimizer</title>
+    <title>{{ subject.name }} - StudyOptimizer</title>
 
     <style>
 
@@ -22,15 +23,9 @@
         body {
             margin: 0;
 
-            min-height: 100vh;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
             background: #f5f6f8;
+
+            color: #222;
 
             font-family:
                 -apple-system,
@@ -38,146 +33,456 @@
                 "Segoe UI",
                 Arial,
                 sans-serif;
-
-            color: #222;
         }
 
-        .container {
-            width: 100%;
 
-            max-width: 600px;
+        /* =========================================
+           PAGE
+        ========================================= */
 
-            padding: 30px;
+        .page {
+            min-height: 100vh;
+
+            padding: 30px 40px 50px;
         }
 
-        .back {
-            display: inline-block;
 
-            margin-bottom: 20px;
+        /* =========================================
+           HEADER
+        ========================================= */
 
-            color: #666;
+        .header {
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            margin-bottom: 30px;
+        }
+
+
+        .header-left {
+            display: flex;
+
+            align-items: center;
+
+            gap: 18px;
+        }
+
+
+        .back-button {
+            width: 40px;
+
+            height: 40px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            border: 1px solid #dedede;
+
+            border-radius: 9px;
+
+            background: white;
+
+            color: #333;
 
             text-decoration: none;
+
+            font-size: 20px;
+
+            transition:
+                background 0.15s ease;
+        }
+
+
+        .back-button:hover {
+            background: #f0f0f0;
+        }
+
+
+        .subject-title h1 {
+            margin: 0 0 4px;
+
+            font-size: 30px;
+
+            letter-spacing: -0.6px;
+        }
+
+
+        .subject-title p {
+            margin: 0;
+
+            color: #777;
 
             font-size: 14px;
         }
 
-        .back:hover {
-            color: #222;
-        }
 
-        .card {
+        /* =========================================
+           SUBJECT INFORMATION
+        ========================================= */
+
+        .subject-information {
             background: white;
 
             border: 1px solid #e5e5e5;
 
             border-radius: 14px;
 
-            padding: 40px;
+            padding: 25px;
+
+            margin-bottom: 25px;
         }
 
-        h1 {
-            margin: 0 0 8px;
 
-            font-size: 28px;
+        .information-grid {
+            display: grid;
+
+            grid-template-columns:
+                minmax(0, 2fr)
+                minmax(160px, 1fr)
+                minmax(180px, 1fr);
+
+            gap: 20px;
         }
 
-        .subtitle {
-            margin: 0 0 30px;
 
-            color: #777;
+        .field {
+            display: flex;
 
-            line-height: 1.5;
+            flex-direction: column;
+
+            gap: 8px;
         }
 
-        label {
-            display: block;
+
+        .field label {
+            font-size: 13px;
 
             font-weight: 600;
 
-            margin-bottom: 9px;
+            color: #555;
         }
 
-        input,
-        select {
+
+        .field input {
             width: 100%;
 
-            padding: 13px 14px;
+            padding: 12px 13px;
 
             border: 1px solid #d8d8d8;
 
             border-radius: 8px;
+
+            background: white;
 
             font-size: 15px;
 
             outline: none;
         }
 
-        input:focus,
-        select:focus {
+
+        .field input:focus {
             border-color: #222;
         }
 
-        .field {
+
+        /* =========================================
+           WORKSPACE
+        ========================================= */
+
+        .workspace {
+            display: grid;
+
+            grid-template-columns:
+                minmax(0, 1fr)
+                minmax(0, 1fr);
+
+            gap: 20px;
+
+            align-items: stretch;
+        }
+
+
+        .workspace-box {
+            background: white;
+
+            border: 1px solid #e5e5e5;
+
+            border-radius: 14px;
+
+            padding: 25px;
+
+            min-height: 500px;
+        }
+
+
+        .workspace-header {
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
             margin-bottom: 22px;
         }
 
-        .button {
-            width: 100%;
 
-            margin-top: 8px;
+        .workspace-header h2 {
+            margin: 0;
 
-            padding: 13px;
-
-            border: none;
-
-            border-radius: 8px;
-
-            background: #222;
-
-            color: white;
-
-            font-size: 15px;
-
-            font-weight: 600;
-
-            cursor: pointer;
+            font-size: 21px;
         }
 
-        .button:hover {
-            background: #333;
+
+        .workspace-header p {
+            margin: 4px 0 0;
+
+            color: #888;
+
+            font-size: 13px;
+        }
+
+
+        /* =========================================
+           SUMMARIZE
+        ========================================= */
+
+        .summary-options {
+            display: grid;
+
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+
+            gap: 12px;
+        }
+
+
+        .summary-option {
+            min-height: 100px;
+
+            padding: 18px;
+
+            border: 1px solid #e1e1e1;
+
+            border-radius: 10px;
+
+            background: white;
+
+            cursor: pointer;
+
+            text-align: left;
+
+            transition:
+                background 0.15s ease,
+                border-color 0.15s ease,
+                transform 0.15s ease;
+        }
+
+
+        .summary-option:hover {
+            background: #f7f7f7;
+
+            border-color: #cfcfcf;
+
+            transform: translateY(-1px);
+        }
+
+
+        .summary-option h3 {
+            margin: 0 0 6px;
+
+            font-size: 15px;
+        }
+
+
+        .summary-option p {
+            margin: 0;
+
+            color: #888;
+
+            font-size: 13px;
+
+            line-height: 1.4;
+        }
+
+
+        /* =========================================
+           REVIEW
+        ========================================= */
+
+        .review-list {
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 12px;
+        }
+
+
+        .review-item {
+            border: 1px solid #e2e2e2;
+
+            border-radius: 10px;
+
+            padding: 17px;
+
+            transition:
+                background 0.15s ease;
+        }
+
+
+        .review-item:hover {
+            background: #fafafa;
+        }
+
+
+        .review-item h3 {
+            margin: 0 0 6px;
+
+            font-size: 15px;
+        }
+
+
+        .review-item p {
+            margin: 0;
+
+            color: #888;
+
+            font-size: 13px;
+
+            line-height: 1.4;
+        }
+
+
+        .review-date {
+            display: inline-block;
+
+            margin-top: 10px;
+
+            color: #666;
+
+            font-size: 12px;
+
+            font-weight: 600;
+        }
+
+
+        .empty-review {
+            min-height: 300px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            text-align: center;
+
+            color: #888;
+
+            border: 1px dashed #d5d5d5;
+
+            border-radius: 10px;
+        }
+
+
+        /* =========================================
+           RESPONSIVE
+        ========================================= */
+
+        @media (max-width: 900px) {
+
+            .page {
+                padding: 25px 20px 40px;
+            }
+
+
+            .information-grid {
+                grid-template-columns: 1fr;
+            }
+
+
+            .workspace {
+                grid-template-columns: 1fr;
+            }
+
+        }
+
+
+        @media (max-width: 600px) {
+
+            .summary-options {
+                grid-template-columns: 1fr;
+            }
+
+
+            .header {
+                align-items: flex-start;
+            }
+
+
+            .subject-title h1 {
+                font-size: 24px;
+            }
+
         }
 
     </style>
 
 </head>
 
+
 <body>
 
-<div class="container">
 
-    <a
-        href="{% url 'goals' %}"
-        class="back"
-    >
-        ← Goals
-    </a>
+<div class="page">
 
 
-    <div class="card">
+    <!-- =========================================
+         HEADER
+    ========================================= -->
 
-        <h1>
-            Subject {{ subject_index|add:"1" }}
-        </h1>
+    <header class="header">
 
-        <p class="subtitle">
-            Set the details and academic targets for this subject.
-        </p>
+        <div class="header-left">
+
+            <a
+                href="{% url 'goals' %}"
+                class="back-button"
+            >
+                ←
+            </a>
 
 
-        <form method="POST">
+            <div class="subject-title">
 
-            {% csrf_token %}
+                <h1>
+                    {{ subject.name }}
+                </h1>
+
+                <p>
+                    Subject workspace
+                </p>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <!-- =========================================
+         SUBJECT INFORMATION
+    ========================================= -->
+
+    <section class="subject-information">
+
+        <div class="information-grid">
 
 
             <div class="field">
@@ -188,10 +493,8 @@
 
                 <input
                     type="text"
-                    name="name"
                     value="{{ subject.name }}"
-                    placeholder="e.g. Financial Management"
-                    required
+                    name="subject_name"
                 >
 
             </div>
@@ -203,72 +506,13 @@
                     Target grade
                 </label>
 
-                <select
+                <input
+                    type="number"
+                    value="{{ subject.target_grade }}"
                     name="target_grade"
-                    required
+                    min="0"
+                    max="100"
                 >
-
-                    <option value="">
-                        Select a target
-                    </option>
-
-                    <option
-                        value="50"
-                        {% if subject.target_grade == "50" %}selected{% endif %}
-                    >
-                        50%
-                    </option>
-
-                    <option
-                        value="60"
-                        {% if subject.target_grade == "60" %}selected{% endif %}
-                    >
-                        60%
-                    </option>
-
-                    <option
-                        value="70"
-                        {% if subject.target_grade == "70" %}selected{% endif %}
-                    >
-                        70%
-                    </option>
-
-                    <option
-                        value="75"
-                        {% if subject.target_grade == "75" %}selected{% endif %}
-                    >
-                        75%
-                    </option>
-
-                    <option
-                        value="80"
-                        {% if subject.target_grade == "80" %}selected{% endif %}
-                    >
-                        80%
-                    </option>
-
-                    <option
-                        value="85"
-                        {% if subject.target_grade == "85" %}selected{% endif %}
-                    >
-                        85%
-                    </option>
-
-                    <option
-                        value="90"
-                        {% if subject.target_grade == "90" %}selected{% endif %}
-                    >
-                        90%
-                    </option>
-
-                    <option
-                        value="95"
-                        {% if subject.target_grade == "95" %}selected{% endif %}
-                    >
-                        95%
-                    </option>
-
-                </select>
 
             </div>
 
@@ -281,25 +525,225 @@
 
                 <input
                     type="date"
+                    value="{{ subject.exam_date|date:'Y-m-d' }}"
                     name="exam_date"
-                    value="{{ subject.exam_date }}"
                 >
 
             </div>
 
 
-            <button
-                type="submit"
-                class="button"
-            >
-                Save Subject
-            </button>
+        </div>
 
-        </form>
+    </section>
 
-    </div>
+
+    <!-- =========================================
+         MAIN WORKSPACE
+    ========================================= -->
+
+    <section class="workspace">
+
+
+        <!-- =====================================
+             SUMMARIZE
+        ===================================== -->
+
+        <div class="workspace-box">
+
+            <div class="workspace-header">
+
+                <div>
+
+                    <h2>
+                        Summarize
+                    </h2>
+
+                    <p>
+                        Choose what you want to summarize.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="summary-options">
+
+
+                <button
+                    type="button"
+                    class="summary-option"
+                >
+
+                    <h3>
+                        Definition
+                    </h3>
+
+                    <p>
+                        Capture the meaning of an important concept.
+                    </p>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="summary-option"
+                >
+
+                    <h3>
+                        Formula
+                    </h3>
+
+                    <p>
+                        Record a formula and what each variable means.
+                    </p>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="summary-option"
+                >
+
+                    <h3>
+                        List
+                    </h3>
+
+                    <p>
+                        Summarize important items or characteristics.
+                    </p>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="summary-option"
+                >
+
+                    <h3>
+                        Steps
+                    </h3>
+
+                    <p>
+                        Record a process or procedure step by step.
+                    </p>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="summary-option"
+                >
+
+                    <h3>
+                        Key Idea
+                    </h3>
+
+                    <p>
+                        Capture the central idea of a topic.
+                    </p>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="summary-option"
+                >
+
+                    <h3>
+                        Comparison
+                    </h3>
+
+                    <p>
+                        Summarize the differences between concepts.
+                    </p>
+
+                </button>
+
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================
+             REVIEW
+        ===================================== -->
+
+        <div class="workspace-box">
+
+            <div class="workspace-header">
+
+                <div>
+
+                    <h2>
+                        Review
+                    </h2>
+
+                    <p>
+                        Reviews scheduled for this subject.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="review-list">
+
+
+                {% if reviews %}
+
+
+                    {% for review in reviews %}
+
+                        <div class="review-item">
+
+                            <h3>
+                                {{ review.title }}
+                            </h3>
+
+                            <p>
+                                {{ review.description }}
+                            </p>
+
+                            <span class="review-date">
+                                Due {{ review.due_date }}
+                            </span>
+
+                        </div>
+
+                    {% endfor %}
+
+
+                {% else %}
+
+
+                    <div class="empty-review">
+
+                        No reviews scheduled yet.
+
+                    </div>
+
+
+                {% endif %}
+
+
+            </div>
+
+        </div>
+
+
+    </section>
+
 
 </div>
+
 
 </body>
 
