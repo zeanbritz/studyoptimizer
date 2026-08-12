@@ -20,63 +20,92 @@
 
         body {
             margin: 0;
+
             min-height: 100vh;
+
             display: flex;
+
             align-items: center;
+
             justify-content: center;
+
             background: #f5f6f8;
+
             font-family:
                 -apple-system,
                 BlinkMacSystemFont,
                 "Segoe UI",
                 Arial,
                 sans-serif;
+
             color: #222;
         }
 
         .container {
             width: 100%;
+
             max-width: 600px;
+
             padding: 30px;
         }
 
         .progress {
             color: #777;
+
             font-size: 14px;
+
             margin-bottom: 25px;
         }
 
         .card {
             background: white;
+
             border: 1px solid #e5e5e5;
+
             border-radius: 14px;
+
             padding: 40px;
         }
 
         h1 {
             margin: 0 0 10px;
+
             font-size: 28px;
         }
 
         .subtitle {
             margin: 0 0 30px;
+
             color: #777;
+
             line-height: 1.5;
+        }
+
+        .field {
+            margin-bottom: 25px;
         }
 
         label {
             display: block;
+
             font-weight: 600;
+
             margin-bottom: 10px;
         }
 
         input,
         select {
             width: 100%;
+
             padding: 13px 14px;
-            border: 1px solid #d8d8d8;
+
+            border:
+                1px solid #d8d8d8;
+
             border-radius: 8px;
+
             font-size: 15px;
+
             outline: none;
         }
 
@@ -87,19 +116,42 @@
 
         .button {
             width: 100%;
-            margin-top: 30px;
+
+            margin-top: 5px;
+
             padding: 13px;
+
             border: none;
+
             border-radius: 8px;
+
             background: #222;
+
             color: white;
+
             font-size: 15px;
+
             font-weight: 600;
+
             cursor: pointer;
         }
 
         .button:hover {
             background: #333;
+        }
+
+        .error {
+            margin-bottom: 20px;
+
+            padding: 12px 14px;
+
+            border-radius: 8px;
+
+            background: #fff0f0;
+
+            color: #b00020;
+
+            font-size: 14px;
         }
 
     </style>
@@ -111,7 +163,7 @@
 <div class="container">
 
     <div class="progress">
-        Step 1 of 3
+        Get Started
     </div>
 
     <div class="card">
@@ -125,80 +177,124 @@
             your StudyOptimizer workspace.
         </p>
 
+
+        {% if error %}
+
+            <div class="error">
+                {{ error }}
+            </div>
+
+        {% endif %}
+
+
         <form method="POST">
 
             {% csrf_token %}
 
-            <label>
-                What should we call your study workspace?
-            </label>
 
-            <input
-                type="text"
-                name="workspace_name"
-                placeholder="e.g. Business Informatics"
-                required
-            >
+            <div class="field">
 
-            <label style="margin-top: 25px;">
-                What overall grade are you aiming for?
-            </label>
+                <label>
+                    What should we call your study workspace?
+                </label>
 
-            <select
-                name="target_grade"
-                required
-            >
+                <input
+                    type="text"
+                    name="workspace_name"
+                    placeholder="e.g. Business Informatics"
+                    required
+                >
 
-                <option value="">
-                    Select a target
-                </option>
+            </div>
 
-                <option value="50">
-                    50%
-                </option>
 
-                <option value="60">
-                    60%
-                </option>
+            <div class="field">
 
-                <option value="70">
-                    70%
-                </option>
+                <label>
+                    What overall grade are you aiming for?
+                </label>
 
-                <option value="75">
-                    75%
-                </option>
+                <select
+                    name="target_grade"
+                    required
+                >
 
-                <option value="80">
-                    80%
-                </option>
+                    <option value="">
+                        Select a target
+                    </option>
 
-                <option value="85">
-                    85%
-                </option>
+                    <option value="50">
+                        50%
+                    </option>
 
-                <option value="90">
-                    90%
-                </option>
+                    <option value="60">
+                        60%
+                    </option>
 
-                <option value="95">
-                    95%
-                </option>
+                    <option value="70">
+                        70%
+                    </option>
 
-            </select>
+                    <option value="75">
+                        75%
+                    </option>
 
-            <label style="margin-top: 25px;">
-                How many hours can you usually study per week?
-            </label>
+                    <option value="80">
+                        80%
+                    </option>
 
-            <input
-                type="number"
-                name="study_hours"
-                min="1"
-                max="168"
-                placeholder="e.g. 15"
-                required
-            >
+                    <option value="85">
+                        85%
+                    </option>
+
+                    <option value="90">
+                        90%
+                    </option>
+
+                    <option value="95">
+                        95%
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="field">
+
+                <label>
+                    How many subjects do you have?
+                </label>
+
+                <input
+                    type="number"
+                    name="subject_count"
+                    min="1"
+                    max="30"
+                    placeholder="e.g. 6"
+                    required
+                >
+
+            </div>
+
+
+            <div class="field">
+
+                <label>
+                    How many hours can you usually study per week?
+                </label>
+
+                <input
+                    type="number"
+                    name="study_hours"
+                    min="1"
+                    max="168"
+                    placeholder="e.g. 15"
+                    required
+                >
+
+            </div>
+
 
             <button
                 type="submit"

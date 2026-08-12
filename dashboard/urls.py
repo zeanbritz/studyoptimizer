@@ -16,4 +16,10 @@ urlpatterns = [
         name="onboarding"
     ),
 
+    path(
+        "goals/",
+        views.goals,
+        name="goals"
+    ),
+
 ]

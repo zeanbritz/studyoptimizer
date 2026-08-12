@@ -52,59 +52,48 @@ def onboarding(request):
                 "study_hours",
                 ""
             ),
+            "subject_count": request.POST.get(
+                "subject_count",
+                ""
+            ),
         }
 
         request.session["onboarding_complete"] = True
 
-        return redirect("dashboard")
+        return redirect("goals")
 
     return render(
         request,
         "dashboard/onboarding.html"
     )
 
+@login_required
+def goals(request):
+
+    profile = request.session.get(
+        "onboarding_profile",
+        {}
+    )
+
+    return render(
+        request,
+        "dashboard/goals.html",
+        {
+            "profile": profile,
+        }
+    )
+
+@login_required
+def goals(request):
+
     profile = request.session.get(
         "onboarding_profile"
     )
 
-    if not profile:
-        return redirect("onboarding")
-
-    subject_count = int(
-        profile.get("subject_count", 1)
-    )
-
-    if request.method == "POST":
-
-        subjects = []
-
-        for i in range(subject_count):
-
-            subjects.append({
-                "name": request.POST.get(
-                    f"subject_{i}",
-                    ""
-                ),
-                "target_grade": request.POST.get(
-                    f"target_grade_{i}",
-                    ""
-                ),
-                "exam_date": request.POST.get(
-                    f"exam_date_{i}",
-                    ""
-                ),
-            })
-
-        request.session["onboarding_subjects"] = subjects
-
-        return redirect("dashboard")
-
     return render(
         request,
-        "dashboard/onboarding_subjects.html",
+        "dashboard/goals.html",
         {
             "profile": profile,
-            "subject_count": subject_count,
-            "subject_range": range(subject_count),
         }
     )
