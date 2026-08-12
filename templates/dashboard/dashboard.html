@@ -564,6 +564,30 @@
 
     }
 
+    .goals-card {
+        text-decoration: none;
+        color: inherit;
+        cursor: pointer;
+        transition:
+            border-color 0.15s,
+            box-shadow 0.15s,
+            transform 0.15s;
+    }
+
+    .goals-card:hover {
+        border-color: #cfcfcf;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        transform: translateY(-1px);
+    }
+
+    .goals-card h3 {
+        color: #222;
+    }
+
+    .goals-card p {
+        color: #777;
+    }
+
 </style>
 
 </head>
@@ -725,7 +749,10 @@
 
         </div>
 
-        <div class="card">
+        <a
+            href="{% url 'goals' %}"
+            class="card goals-card"
+        >
 
             <h3>
                 Goals
@@ -736,7 +763,7 @@
                 subject targets, and study objectives.
             </p>
 
-        </div>
+        </a>
 
     </section>
 

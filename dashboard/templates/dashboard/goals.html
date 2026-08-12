@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
@@ -20,8 +21,8 @@
 
         body {
             margin: 0;
-
             background: #f5f6f8;
+            color: #222;
 
             font-family:
                 -apple-system,
@@ -29,78 +30,196 @@
                 "Segoe UI",
                 Arial,
                 sans-serif;
-
-            color: #222;
         }
 
         .container {
             max-width: 1000px;
-
             margin: 0 auto;
-
             padding: 50px 30px;
         }
 
-        h1 {
+        .back {
+            display: inline-block;
+
+            margin-bottom: 25px;
+
+            color: #666;
+            text-decoration: none;
+
+            font-size: 14px;
+        }
+
+        .back:hover {
+            color: #222;
+        }
+
+        .header {
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
             margin: 0 0 8px;
 
             font-size: 32px;
+
+            letter-spacing: -0.8px;
         }
 
-        .subtitle {
-            margin: 0 0 30px;
+        .header p {
+            margin: 0;
 
             color: #777;
+
+            font-size: 15px;
         }
 
-        .card {
+        .profile-card {
             background: white;
 
             border: 1px solid #e5e5e5;
 
             border-radius: 12px;
 
-            padding: 30px;
+            padding: 24px;
 
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
 
-        .card h2 {
-            margin: 0 0 10px;
+        .profile-card h2 {
+            margin: 0 0 8px;
 
             font-size: 20px;
         }
 
-        .card p {
+        .profile-card p {
             margin: 0;
 
             color: #777;
-
-            line-height: 1.5;
         }
 
-        .add-button {
-            margin-top: 20px;
+        .subjects-header {
+            display: flex;
 
-            padding: 11px 20px;
+            justify-content: space-between;
 
-            border: none;
+            align-items: center;
 
-            border-radius: 8px;
+            margin-bottom: 15px;
+        }
 
-            background: #222;
+        .subjects-header h2 {
+            margin: 0;
 
-            color: white;
+            font-size: 21px;
+        }
+
+        .subject-count {
+            color: #777;
 
             font-size: 14px;
+        }
+
+        .subjects {
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, minmax(0, 1fr));
+
+            gap: 15px;
+        }
+
+        .subject {
+            display: block;
+
+            background: white;
+
+            border: 1px solid #e5e5e5;
+
+            border-radius: 12px;
+
+            padding: 22px;
+
+            text-decoration: none;
+
+            color: #222;
+
+            transition:
+                border-color 0.15s,
+                box-shadow 0.15s,
+                transform 0.15s;
+        }
+
+        .subject:hover {
+            border-color: #cfcfcf;
+
+            box-shadow:
+                0 4px 12px rgba(0, 0, 0, 0.06);
+
+            transform: translateY(-1px);
+        }
+
+        .subject-number {
+            color: #999;
+
+            font-size: 13px;
+
+            margin-bottom: 12px;
+        }
+
+        .subject-name {
+            font-size: 17px;
 
             font-weight: 600;
 
-            cursor: pointer;
+            margin-bottom: 15px;
         }
 
-        .add-button:hover {
-            background: #333;
+        .empty-subject {
+            color: #999;
+
+            font-weight: 400;
+        }
+
+        .subject-info {
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 6px;
+
+            color: #777;
+
+            font-size: 13px;
+        }
+
+        .edit {
+            margin-top: 18px;
+
+            color: #222;
+
+            font-size: 13px;
+
+            font-weight: 600;
+        }
+
+        @media (max-width: 800px) {
+
+            .subjects {
+                grid-template-columns: 1fr 1fr;
+            }
+
+        }
+
+        @media (max-width: 550px) {
+
+            .container {
+                padding: 30px 20px;
+            }
+
+            .subjects {
+                grid-template-columns: 1fr;
+            }
+
         }
 
     </style>
@@ -111,85 +230,130 @@
 
 <div class="container">
 
-    <h1>
-        Goals
-    </h1>
+    <a
+        href="{% url 'dashboard' %}"
+        class="back"
+    >
+        ← Dashboard
+    </a>
 
-    <p class="subtitle">
-        Manage your academic goals and targets.
-    </p>
 
+    <div class="header">
 
-    <div class="card">
+        <h1>
+            Goals
+        </h1>
 
-        <h2>
-            Your Academic Profile
-        </h2>
-
-        {% if profile %}
-
-            <p>
-                {{ profile.workspace_name }}
-            </p>
-
-            <p>
-                Target overall grade:
-                {{ profile.target_grade }}%
-            </p>
-
-            <p>
-                Subjects:
-                {{ profile.subject_count }}
-            </p>
-
-            <p>
-                Study time:
-                {{ profile.study_hours }}
-                hours per week
-            </p>
-
-        {% endif %}
+        <p>
+            Manage your academic goals and subject targets.
+        </p>
 
     </div>
 
 
-    <div class="card">
+    <div class="profile-card">
+
+        <h2>
+            {{ profile.workspace_name }}
+        </h2>
+
+        <p>
+            Overall target:
+            {{ profile.target_grade }}%
+        </p>
+
+    </div>
+
+
+    <div class="subjects-header">
 
         <h2>
             Subjects
         </h2>
 
-        <p>
-            You will be able to add and manage
-            your subjects here.
-        </p>
+        <span class="subject-count">
 
-        <button
-            type="button"
-            class="add-button"
-        >
-            + Add / Manage Subjects
-        </button>
+            {{ subjects|length }} subject{{ subjects|length|pluralize }}
+
+        </span>
 
     </div>
 
 
-    <div class="card">
+    <div class="subjects">
 
-        <h2>
-            Academic Goals
-        </h2>
+        {% for subject in subjects %}
 
-        <p>
-            Set and manage your academic goals here.
-        </p>
+            <a
+                href="{% url 'subject_detail' forloop.counter0 %}"
+                class="subject"
+            >
 
-        <button
-            type="button"
-            class="add-button"
-        >
-            + Add Goal
-        </button>
+                <div class="subject-number">
+                    Subject {{ forloop.counter }}
+                </div>
+
+
+                <div class="subject-name">
+
+                    {% if subject.name %}
+
+                        {{ subject.name }}
+
+                    {% else %}
+
+                        <span class="empty-subject">
+                            Add subject details
+                        </span>
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="subject-info">
+
+                    {% if subject.target_grade %}
+
+                        <span>
+                            Target:
+                            {{ subject.target_grade }}%
+                        </span>
+
+                    {% else %}
+
+                        <span>
+                            Target grade not set
+                        </span>
+
+                    {% endif %}
+
+
+                    {% if subject.exam_date %}
+
+                        <span>
+                            Exam:
+                            {{ subject.exam_date }}
+                        </span>
+
+                    {% else %}
+
+                        <span>
+                            Exam date not set
+                        </span>
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="edit">
+                    Edit subject →
+                </div>
+
+            </a>
+
+        {% endfor %}
 
     </div>
 
