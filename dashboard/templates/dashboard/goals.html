@@ -226,9 +226,12 @@
 
 </head>
 
+
 <body>
 
+
 <div class="container">
+
 
     <a
         href="{% url 'dashboard' %}"
@@ -273,7 +276,8 @@
 
         <span class="subject-count">
 
-            {{ subjects|length }} subject{{ subjects|length|pluralize }}
+            {{ subjects|length }}
+            subject{{ subjects|length|pluralize }}
 
         </span>
 
@@ -282,19 +286,25 @@
 
     <div class="subjects">
 
+
         {% for subject in subjects %}
 
+
             <a
-                href="{% url 'subject_detail' forloop.counter0 %}"
+                href="{% url 'subject_detail' subject_index=forloop.counter0 %}"
                 class="subject"
             >
 
+
                 <div class="subject-number">
+
                     Subject {{ forloop.counter }}
+
                 </div>
 
 
                 <div class="subject-name">
+
 
                     {% if subject.name %}
 
@@ -303,27 +313,35 @@
                     {% else %}
 
                         <span class="empty-subject">
+
                             Add subject details
+
                         </span>
 
                     {% endif %}
+
 
                 </div>
 
 
                 <div class="subject-info">
 
+
                     {% if subject.target_grade %}
 
                         <span>
+
                             Target:
                             {{ subject.target_grade }}%
+
                         </span>
 
                     {% else %}
 
                         <span>
+
                             Target grade not set
+
                         </span>
 
                     {% endif %}
@@ -332,32 +350,44 @@
                     {% if subject.exam_date %}
 
                         <span>
+
                             Exam:
                             {{ subject.exam_date }}
+
                         </span>
 
                     {% else %}
 
                         <span>
+
                             Exam date not set
+
                         </span>
 
                     {% endif %}
+
 
                 </div>
 
 
                 <div class="edit">
+
                     Edit subject →
+
                 </div>
+
 
             </a>
 
+
         {% endfor %}
+
 
     </div>
 
+
 </div>
+
 
 </body>
 

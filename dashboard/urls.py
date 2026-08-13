@@ -1,5 +1,4 @@
 from django.urls import path
-
 from . import views
 
 
@@ -24,9 +23,15 @@ urlpatterns = [
     ),
 
     path(
-        "goals/subject/<int:subject_index>/",
+        "subjects/<int:subject_index>/",
         views.subject_detail,
         name="subject_detail"
+    ),
+
+    path(
+        "subjects/<int:subject_index>/definition/",
+        views.definition,
+        name="definition"
     ),
 
 ]

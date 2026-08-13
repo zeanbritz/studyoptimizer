@@ -253,6 +253,11 @@
             line-height: 1.4;
         }
 
+        .summary-option {
+            text-decoration: none;
+            color: inherit;
+        }
+
         /* =========================================
            REVIEW
         ========================================= */
@@ -509,8 +514,8 @@
             <div class="summary-options">
 
 
-                <button
-                    type="button"
+                <a
+                    href="{% url 'definition' subject_index=subject_index %}"
                     class="summary-option"
                 >
 
@@ -522,7 +527,7 @@
                         Capture the meaning of an important concept.
                     </p>
 
-                </button>
+                </a>
 
 
                 <button

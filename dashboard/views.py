@@ -41,7 +41,6 @@ def onboarding(request):
         except (ValueError, TypeError):
             subject_count = 1
 
-        # Never allow more than 20 subjects.
         subject_count = max(
             1,
             min(subject_count, 20)
@@ -54,7 +53,6 @@ def onboarding(request):
             "subject_count": subject_count,
         }
 
-        # Create empty subject slots.
         subjects = []
 
         for i in range(subject_count):
@@ -63,6 +61,7 @@ def onboarding(request):
                 "name": "",
                 "target_grade": "",
                 "exam_date": "",
+                "definitions": [],
             })
 
         request.session["onboarding_subjects"] = subjects
@@ -127,6 +126,11 @@ def subject_detail(request, subject_index):
 
     subject = subjects[subject_index]
 
+    # Make sure older subjects that were created before
+    # definitions existed still have a definitions list.
+    if "definitions" not in subject:
+        subject["definitions"] = []
+
     if request.method == "POST":
 
         subject["name"] = request.POST.get(
@@ -158,5 +162,75 @@ def subject_detail(request, subject_index):
         {
             "subject": subject,
             "subject_index": subject_index,
+        }
+    )
+
+
+@login_required
+def definition(request, subject_index):
+
+    profile = request.session.get(
+        "onboarding_profile"
+    )
+
+    if not profile:
+        return redirect("onboarding")
+
+    subjects = request.session.get(
+        "onboarding_subjects",
+        []
+    )
+
+    try:
+        subject_index = int(subject_index)
+    except (ValueError, TypeError):
+        return redirect("goals")
+
+    if subject_index < 0 or subject_index >= len(subjects):
+        return redirect("goals")
+
+    subject = subjects[subject_index]
+
+    # Make sure the definitions list exists.
+    if "definitions" not in subject:
+        subject["definitions"] = []
+
+    if request.method == "POST":
+
+        term = request.POST.get(
+            "term",
+            ""
+        ).strip()
+
+        meaning = request.POST.get(
+            "meaning",
+            ""
+        ).strip()
+
+        if term and meaning:
+
+            subject["definitions"].append({
+                "term": term,
+                "meaning": meaning,
+            })
+
+            subjects[subject_index] = subject
+
+            request.session["onboarding_subjects"] = subjects
+
+            request.session.modified = True
+
+        return redirect(
+            "definition",
+            subject_index=subject_index
+        )
+
+    return render(
+        request,
+        "dashboard/definition.html",
+        {
+            "subject": subject,
+            "subject_index": subject_index,
+            "definitions": subject["definitions"],
         }
     )
