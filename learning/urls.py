@@ -1,10 +1,12 @@
 from django.urls import path
+
 from . import views
+
 
 urlpatterns = [
 
     path(
-        "topic/<int:topic_id>/formula/add/",
+        "subjects/<int:subject_id>/formula/create/",
         views.create_formula,
         name="create_formula",
     ),

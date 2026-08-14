@@ -529,16 +529,16 @@
 
 
                 <a
-                    href="{% url 'add_formula' subject_index=subject_index %}"
+                    href="{% url 'create_formula' subject_id=subject.database_id %}"
                     class="summary-option"
                 >
-                    <div class="summary-option-title">
+                    <h3>
                         Formula
-                    </div>
+                    </h3>
 
-                    <div class="summary-option-description">
+                    <p>
                         Add important formulas for this subject.
-                    </div>
+                    </p>
                 </a>
 
 

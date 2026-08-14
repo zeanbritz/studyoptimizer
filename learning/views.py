@@ -46,109 +46,236 @@ def extract_variables(elements):
 
 
 @login_required
-def create_formula(request, topic_id):
+def create_formula(request, subject_id):
 
-    topic = get_object_or_404(
-        Topic,
-        id=topic_id,
-        subject__user=request.user
+    # =====================================================
+    # GET THE SUBJECT
+    # =====================================================
+
+    subject = get_object_or_404(
+
+        Subject,
+
+        id=subject_id,
+
+        user=request.user
+
     )
+
+
+    # =====================================================
+    # POST
+    # =====================================================
 
     if request.method == "POST":
 
-        form = FormulaForm(request.POST)
+        form = FormulaForm(
+            request.POST
+        )
+
 
         if form.is_valid():
 
-            knowledge_unit = KnowledgeUnit.objects.create(
-                topic=topic,
-                title=form.cleaned_data["title"],
-                knowledge_type=KnowledgeUnit.KnowledgeType.FORMULA,
-                difficulty=form.cleaned_data["difficulty"],
-                estimated_minutes=form.cleaned_data["estimated_minutes"],
+
+            # =============================================
+            # CREATE KNOWLEDGE UNIT
+            # =============================================
+
+            knowledge_unit = (
+                KnowledgeUnit.objects.create(
+
+                    subject=subject,
+
+                    title=form.cleaned_data[
+                        "title"
+                    ],
+
+                    knowledge_type=(
+                        KnowledgeUnit
+                        .KnowledgeType
+                        .FORMULA
+                    ),
+
+                    difficulty=(
+                        form.cleaned_data[
+                            "difficulty"
+                        ]
+                    ),
+
+                    estimated_minutes=(
+                        form.cleaned_data[
+                            "estimated_minutes"
+                        ]
+                    ),
+
+                )
             )
+
+
+            # =============================================
+            # GET FORMULA STRUCTURE
+            # =============================================
 
             structure = request.POST.get(
+
                 "formula_structure",
+
                 "[]"
+
             )
 
-            try:
-                structure_data = json.loads(structure)
 
-            except (json.JSONDecodeError, TypeError):
+            try:
+
+                structure_data = json.loads(
+                    structure
+                )
+
+            except (
+                json.JSONDecodeError,
+                TypeError
+            ):
+
                 structure_data = []
 
 
+            # =============================================
+            # CREATE FORMULA
+            # =============================================
+
             formula = Formula.objects.create(
-                knowledge_unit=knowledge_unit,
-                structure=structure,
-                purpose=form.cleaned_data["purpose"],
-                when_to_use=form.cleaned_data["when_to_use"],
+
+                knowledge_unit=
+                    knowledge_unit,
+
+                structure=
+                    structure,
+
+                purpose=(
+                    form.cleaned_data[
+                        "purpose"
+                    ]
+                ),
+
+                when_to_use=(
+                    form.cleaned_data[
+                        "when_to_use"
+                    ]
+                ),
+
             )
 
 
-            # Create variables from the entire formula,
-            # including variables inside fractions.
+            # =============================================
+            # CREATE FORMULA VARIABLES
+            # =============================================
+
             seen_symbols = set()
+
             variable_order = 1
 
-            for element in extract_variables(structure_data):
+
+            for element in extract_variables(
+                structure_data
+            ):
 
                 symbol = element.get(
+
                     "value",
+
                     ""
+
                 ).strip()
 
+
                 meaning = element.get(
+
                     "meaning",
+
                     ""
+
                 ).strip()
 
 
                 if not symbol:
+
                     continue
 
 
-                # Only create one database variable
-                # for each unique symbol.
                 if symbol in seen_symbols:
+
                     continue
 
 
-                seen_symbols.add(symbol)
+                seen_symbols.add(
+                    symbol
+                )
 
 
                 FormulaVariable.objects.create(
-                    formula=formula,
-                    symbol=symbol,
-                    meaning=meaning,
-                    order=variable_order,
+
+                    formula=
+                        formula,
+
+                    symbol=
+                        symbol,
+
+                    meaning=
+                        meaning,
+
+                    order=
+                        variable_order,
+
                 )
+
 
                 variable_order += 1
 
 
+            # =============================================
+            # SUCCESS
+            # =============================================
+
             return redirect(
+
                 "formula_detail",
-                formula_id=formula.id
+
+                formula_id=
+                    formula.id
+
             )
 
+
+    # =====================================================
+    # GET
+    # =====================================================
 
     else:
 
         form = FormulaForm()
 
 
-    return render(
-        request,
-        "learning/create_formula.html",
-        {
-            "form": form,
-            "topic": topic,
-        }
-    )
+    # =====================================================
+    # DISPLAY FORMULA BUILDER
+    # =====================================================
 
+    return render(
+
+        request,
+
+        "learning/create_formula.html",
+
+        {
+
+            "form":
+                form,
+
+            "subject":
+                subject,
+
+        }
+
+    )
 
 @login_required
 def formula_detail(request, formula_id):
@@ -156,7 +283,7 @@ def formula_detail(request, formula_id):
     formula = get_object_or_404(
         Formula,
         id=formula_id,
-        knowledge_unit__topic__subject__user=request.user
+        knowledge_unit__subject__user=request.user
     )
 
 
@@ -191,7 +318,7 @@ def edit_formula(request, formula_id):
     formula = get_object_or_404(
         Formula,
         id=formula_id,
-        knowledge_unit__topic__subject__user=request.user
+        knowledge_unit__subject__user=request.user
     )
 
 
@@ -333,7 +460,7 @@ def review_formula(request, formula_id):
     formula = get_object_or_404(
         Formula,
         id=formula_id,
-        knowledge_unit__topic__subject__user=request.user
+        knowledge_unit__subject__user=request.user
     )
 
     knowledge_unit = formula.knowledge_unit

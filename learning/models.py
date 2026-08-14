@@ -41,33 +41,48 @@ class Topic(models.Model):
 
 class KnowledgeUnit(models.Model):
 
-    topic = models.ForeignKey(
-    Topic,
-    on_delete=models.CASCADE,
-    related_name="knowledge_units",
-)
+    subject = models.ForeignKey(
+        Subject,
+        on_delete=models.CASCADE,
+        related_name="knowledge_units",
+    )
 
     class KnowledgeType(models.TextChoices):
+
         FORMULA = "FORMULA", "Formula"
+
         DEFINITION = "DEFINITION", "Definition"
+
         BULLET_LIST = "BULLET_LIST", "Bullet List"
 
-    title = models.CharField(max_length=255)
+
+    title = models.CharField(
+        max_length=255
+    )
 
     knowledge_type = models.CharField(
         max_length=20,
         choices=KnowledgeType.choices,
     )
 
-    difficulty = models.PositiveSmallIntegerField(default=1)
+    difficulty = models.PositiveSmallIntegerField(
+        default=1
+    )
 
-    estimated_minutes = models.PositiveSmallIntegerField(default=2)
+    estimated_minutes = models.PositiveSmallIntegerField(
+        default=2
+    )
 
-    active = models.BooleanField(default=True)
+    active = models.BooleanField(
+        default=True
+    )
 
-    created = models.DateTimeField(auto_now_add=True)
+    created = models.DateTimeField(
+        auto_now_add=True
+    )
 
     def __str__(self):
+
         return self.title
 
 
