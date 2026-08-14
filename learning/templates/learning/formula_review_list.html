@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>Formula Review</title>
+
+</head>
+
+<body>
+
+<h1>Formulas to Review</h1>
+
+<p>
+    {{ subject.name }}
+</p>
+
+{% if formulas %}
+
+    {% for formula in formulas %}
+
+        <div style="
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+        ">
+
+            <h2>
+                {{ formula.knowledge_unit.title }}
+            </h2>
+
+            <a
+                href="{% url 'review_formula' formula_id=formula.id %}"
+            >
+                Review Formula
+            </a>
+
+        </div>
+
+    {% endfor %}
+
+{% else %}
+
+    <p>
+        No formulas are due for review.
+    </p>
+
+{% endif %}
+
+</body>
+
+</html>

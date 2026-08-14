@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>Definition Review</title>
+
+</head>
+
+<body>
+
+<h1>Definitions to Review</h1>
+
+<p>
+    {{ subject.name }}
+</p>
+
+{% if definitions %}
+
+    {% for definition in definitions %}
+
+        <div style="
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+        ">
+
+            <h2>
+                {{ definition.term }}
+            </h2>
+
+            <p>
+                {{ definition.definition }}
+            </p>
+
+            <a
+                href="{% url 'review_definition' definition_id=definition.id %}"
+            >
+                Review Definition
+            </a>
+
+        </div>
+
+    {% endfor %}
+
+{% else %}
+
+    <p>
+        No definitions are due for review.
+    </p>
+
+{% endif %}
+
+</body>
+
+</html>

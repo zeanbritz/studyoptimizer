@@ -1,6 +1,7 @@
 {% load static %}
 
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
@@ -12,7 +13,10 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>{{ subject.name }} - StudyOptimizer</title>
+    <title>
+        {{ subject.name }} - StudyOptimizer
+    </title>
+
 
     <style>
 
@@ -20,295 +24,721 @@
             box-sizing: border-box;
         }
 
+
         body {
+
             margin: 0;
+
             background: #f5f6f8;
+
             color: #222;
+
             font-family:
                 -apple-system,
                 BlinkMacSystemFont,
                 "Segoe UI",
                 Arial,
                 sans-serif;
+
         }
+
 
         /* =========================================
            PAGE
         ========================================= */
 
         .page {
+
             min-height: 100vh;
-            padding: 30px 40px 50px;
+
+            padding:
+                30px
+                40px
+                50px;
+
         }
+
 
         /* =========================================
            HEADER
         ========================================= */
 
         .header {
+
             display: flex;
+
             align-items: center;
+
             justify-content: space-between;
+
             margin-bottom: 30px;
+
         }
+
 
         .header-left {
+
             display: flex;
+
             align-items: center;
+
             gap: 18px;
+
         }
+
 
         .back-button {
+
             width: 40px;
+
             height: 40px;
+
             display: flex;
+
             align-items: center;
+
             justify-content: center;
-            border: 1px solid #dedede;
+
+            border:
+                1px solid
+                #dedede;
+
             border-radius: 9px;
+
             background: white;
+
             color: #333;
+
             text-decoration: none;
+
             font-size: 20px;
-            transition: background 0.15s ease;
+
+            transition:
+                background 0.15s ease;
+
         }
+
 
         .back-button:hover {
+
             background: #f0f0f0;
+
         }
+
 
         .subject-title h1 {
-            margin: 0 0 4px;
+
+            margin:
+                0
+                0
+                4px;
+
             font-size: 30px;
+
             letter-spacing: -0.6px;
+
         }
 
+
         .subject-title p {
+
             margin: 0;
+
             color: #777;
+
             font-size: 14px;
+
         }
+
 
         /* =========================================
            SUBJECT INFORMATION
         ========================================= */
 
         .subject-information {
+
             background: white;
-            border: 1px solid #e5e5e5;
+
+            border:
+                1px solid
+                #e5e5e5;
+
             border-radius: 14px;
+
             padding: 25px;
+
             margin-bottom: 25px;
+
         }
 
+
         .information-grid {
+
             display: grid;
+
             grid-template-columns:
                 minmax(0, 2fr)
                 minmax(160px, 1fr)
                 minmax(180px, 1fr);
+
             gap: 20px;
+
         }
+
 
         .field {
+
             display: flex;
+
             flex-direction: column;
+
             gap: 8px;
+
         }
+
 
         .field label {
+
             font-size: 13px;
+
             font-weight: 600;
+
             color: #555;
+
         }
+
 
         .field input {
+
             width: 100%;
-            padding: 12px 13px;
-            border: 1px solid #d8d8d8;
+
+            padding:
+                12px
+                13px;
+
+            border:
+                1px solid
+                #d8d8d8;
+
             border-radius: 8px;
+
             background: white;
+
             font-size: 15px;
+
             outline: none;
+
         }
 
+
         .field input:focus {
+
             border-color: #222;
+
         }
+
 
         /* =========================================
            SAVE BUTTON
         ========================================= */
 
         .information-footer {
+
             display: flex;
+
             justify-content: flex-end;
+
             margin-top: 22px;
+
             padding-top: 20px;
-            border-top: 1px solid #eeeeee;
+
+            border-top:
+                1px solid
+                #eeeeee;
+
         }
 
+
         .save-button {
+
             border: none;
+
             border-radius: 8px;
+
             background: #222;
+
             color: white;
-            padding: 11px 22px;
+
+            padding:
+                11px
+                22px;
+
             font-size: 14px;
+
             font-weight: 600;
+
             cursor: pointer;
+
             transition:
                 background 0.15s ease,
                 transform 0.15s ease;
+
         }
+
 
         .save-button:hover {
+
             background: #333;
-            transform: translateY(-1px);
+
+            transform:
+                translateY(-1px);
+
         }
 
-        .save-button:active {
-            transform: translateY(0);
-        }
 
         /* =========================================
            WORKSPACE
         ========================================= */
 
         .workspace {
+
             display: grid;
+
             grid-template-columns:
                 minmax(0, 1fr)
                 minmax(0, 1fr);
+
             gap: 20px;
+
             align-items: stretch;
+
         }
+
 
         .workspace-box {
+
             background: white;
-            border: 1px solid #e5e5e5;
+
+            border:
+                1px solid
+                #e5e5e5;
+
             border-radius: 14px;
+
             padding: 25px;
+
             min-height: 500px;
+
         }
+
 
         .workspace-header {
+
             display: flex;
+
             align-items: center;
+
             justify-content: space-between;
+
             margin-bottom: 22px;
+
         }
+
 
         .workspace-header h2 {
+
             margin: 0;
+
             font-size: 21px;
+
         }
 
+
         .workspace-header p {
-            margin: 4px 0 0;
+
+            margin:
+                4px
+                0
+                0;
+
             color: #888;
+
             font-size: 13px;
+
         }
+
 
         /* =========================================
            SUMMARIZE
         ========================================= */
 
         .summary-options {
+
             display: grid;
+
             grid-template-columns:
-                repeat(2, minmax(0, 1fr));
+                repeat(
+                    2,
+                    minmax(0, 1fr)
+                );
+
             gap: 12px;
+
         }
 
+
         .summary-option {
+
             min-height: 100px;
+
             padding: 18px;
-            border: 1px solid #e1e1e1;
+
+            border:
+                1px solid
+                #e1e1e1;
+
             border-radius: 10px;
+
             background: white;
+
             cursor: pointer;
+
             text-align: left;
+
             transition:
                 background 0.15s ease,
                 border-color 0.15s ease,
                 transform 0.15s ease;
+
+            text-decoration: none;
+
+            color: inherit;
+
         }
+
 
         .summary-option:hover {
+
             background: #f7f7f7;
+
             border-color: #cfcfcf;
-            transform: translateY(-1px);
+
+            transform:
+                translateY(-1px);
+
         }
+
 
         .summary-option h3 {
-            margin: 0 0 6px;
+
+            margin:
+                0
+                0
+                6px;
+
             font-size: 15px;
+
         }
+
 
         .summary-option p {
+
             margin: 0;
+
             color: #888;
+
             font-size: 13px;
+
             line-height: 1.4;
+
         }
 
-        .summary-option {
-            text-decoration: none;
-            color: inherit;
-        }
 
         /* =========================================
-           REVIEW
+           REVIEW CATEGORIES
         ========================================= */
 
-        .review-list {
+        .review-categories {
+
             display: flex;
+
             flex-direction: column;
+
             gap: 12px;
+
         }
+
+
+        /* =========================================
+           REVIEW CATEGORY
+        ========================================= */
+
+        .review-category {
+
+            width: 100%;
+
+            padding: 18px;
+
+            border:
+                1px solid
+                #e1e1e1;
+
+            border-radius: 10px;
+
+            background: white;
+
+            cursor: pointer;
+
+            text-align: left;
+
+            transition:
+                background 0.15s ease,
+                border-color 0.15s ease;
+
+        }
+
+
+        .review-category:hover {
+
+            background: #f7f7f7;
+
+            border-color: #cfcfcf;
+
+        }
+
+
+        .review-category-header {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+        }
+
+
+        .review-category-title {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+        }
+
+
+        .review-category-title h3 {
+
+            margin: 0;
+
+            font-size: 16px;
+
+        }
+
+
+        .review-count {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            min-width: 26px;
+
+            height: 26px;
+
+            padding:
+                0
+                7px;
+
+            border-radius: 20px;
+
+            background: #f0f0f0;
+
+            color: #555;
+
+            font-size: 12px;
+
+            font-weight: 700;
+
+        }
+
+
+        .review-arrow {
+
+            font-size: 18px;
+
+            color: #777;
+
+            transition:
+                transform 0.2s ease;
+
+        }
+
+
+        .review-category.open
+        .review-arrow {
+
+            transform:
+                rotate(180deg);
+
+        }
+
+
+        .review-description {
+
+            margin:
+                7px
+                0
+                0;
+
+            color: #888;
+
+            font-size: 13px;
+
+        }
+
+
+        /* =========================================
+           REVIEW CONTENT
+        ========================================= */
+
+        .review-content {
+
+            display: none;
+
+            margin-top: 15px;
+
+            padding-top: 15px;
+
+            border-top:
+                1px solid
+                #eeeeee;
+
+            flex-direction: column;
+
+            gap: 10px;
+
+        }
+
+
+        .review-category.open
+        .review-content {
+
+            display: flex;
+
+        }
+
+
+        /* =========================================
+           REVIEW ITEM
+        ========================================= */
 
         .review-item {
-            border: 1px solid #e2e2e2;
-            border-radius: 10px;
-            padding: 17px;
-            transition: background 0.15s ease;
+
+            display: block;
+
+            padding: 15px;
+
+            border:
+                1px solid
+                #e2e2e2;
+
+            border-radius: 9px;
+
+            background: white;
+
+            text-decoration: none;
+
+            color: inherit;
+
+            transition:
+                background 0.15s ease,
+                border-color 0.15s ease;
+
         }
+
 
         .review-item:hover {
+
             background: #fafafa;
+
+            border-color: #cfcfcf;
+
         }
 
-        .review-item h3 {
-            margin: 0 0 6px;
-            font-size: 15px;
+
+        .review-item h4 {
+
+            margin:
+                0
+                0
+                5px;
+
+            font-size: 14px;
+
         }
+
 
         .review-item p {
+
             margin: 0;
-            color: #888;
+
+            color: #777;
+
             font-size: 13px;
+
             line-height: 1.4;
+
         }
+
 
         .review-date {
+
             display: inline-block;
-            margin-top: 10px;
+
+            margin-top: 8px;
+
             color: #666;
+
             font-size: 12px;
+
             font-weight: 600;
+
         }
 
+
+        /* =========================================
+           EMPTY REVIEW
+        ========================================= */
+
         .empty-review {
-            min-height: 300px;
+
+            padding:
+                35px
+                20px;
+
             display: flex;
+
             align-items: center;
+
             justify-content: center;
+
             text-align: center;
+
             color: #888;
-            border: 1px dashed #d5d5d5;
+
+            border:
+                1px dashed
+                #d5d5d5;
+
             border-radius: 10px;
+
         }
+
 
         /* =========================================
            RESPONSIVE
@@ -317,39 +747,58 @@
         @media (max-width: 900px) {
 
             .page {
-                padding: 25px 20px 40px;
+
+                padding:
+                    25px
+                    20px
+                    40px;
+
             }
+
 
             .information-grid {
+
                 grid-template-columns: 1fr;
+
             }
 
+
             .workspace {
+
                 grid-template-columns: 1fr;
+
             }
 
         }
 
+
         @media (max-width: 600px) {
 
             .summary-options {
+
                 grid-template-columns: 1fr;
+
             }
 
-            .header {
-                align-items: flex-start;
-            }
 
             .subject-title h1 {
+
                 font-size: 24px;
+
             }
+
 
             .information-footer {
+
                 justify-content: stretch;
+
             }
 
+
             .save-button {
+
                 width: 100%;
+
             }
 
         }
@@ -365,7 +814,9 @@
 <div class="page">
 
 
-    <!-- HEADER -->
+    <!-- =========================================
+         HEADER
+    ========================================= -->
 
     <header class="header">
 
@@ -396,13 +847,16 @@
     </header>
 
 
-    <!-- SUBJECT INFORMATION -->
+    <!-- =========================================
+         SUBJECT INFORMATION
+    ========================================= -->
 
     <section class="subject-information">
 
         <form method="POST">
 
             {% csrf_token %}
+
 
             <div class="information-grid">
 
@@ -467,8 +921,6 @@
             </div>
 
 
-            <!-- SAVE -->
-
             <div class="information-footer">
 
                 <button
@@ -485,12 +937,16 @@
     </section>
 
 
-    <!-- MAIN WORKSPACE -->
+    <!-- =========================================
+         MAIN WORKSPACE
+    ========================================= -->
 
     <section class="workspace">
 
 
-        <!-- SUMMARIZE -->
+        <!-- =========================================
+             LEFT SIDE — SUMMARIZE
+        ========================================= -->
 
         <div class="workspace-box">
 
@@ -514,10 +970,13 @@
             <div class="summary-options">
 
 
+                <!-- DEFINITION -->
+
                 <a
                     href="{% url 'practice_definition' subject_index=subject_index %}"
                     class="summary-option"
                 >
+
                     <h3>
                         Definition
                     </h3>
@@ -525,13 +984,17 @@
                     <p>
                         Define important terms and concepts.
                     </p>
+
                 </a>
 
 
+                <!-- FORMULA -->
+
                 <a
-                    href="{% url 'create_formula' subject_id=subject.database_id %}"
+                    href="{% url 'create_formula' subject_id=database_subject.id %}"
                     class="summary-option"
                 >
+
                     <h3>
                         Formula
                     </h3>
@@ -539,8 +1002,11 @@
                     <p>
                         Add important formulas for this subject.
                     </p>
+
                 </a>
 
+
+                <!-- LIST -->
 
                 <button
                     type="button"
@@ -558,6 +1024,8 @@
                 </button>
 
 
+                <!-- STEPS -->
+
                 <button
                     type="button"
                     class="summary-option"
@@ -574,6 +1042,8 @@
                 </button>
 
 
+                <!-- KEY IDEA -->
+
                 <button
                     type="button"
                     class="summary-option"
@@ -589,6 +1059,8 @@
 
                 </button>
 
+
+                <!-- COMPARISON -->
 
                 <button
                     type="button"
@@ -611,9 +1083,12 @@
         </div>
 
 
-        <!-- REVIEW -->
+        <!-- =========================================
+             RIGHT SIDE — REVIEW
+        ========================================= -->
 
         <div class="workspace-box">
+
 
             <div class="workspace-header">
 
@@ -632,41 +1107,209 @@
             </div>
 
 
-            <div class="review-list">
+            <div class="review-categories">
 
-                {% if reviews %}
 
-                    {% for review in reviews %}
+                <!-- =====================================
+                     FORMULAS TO REVIEW
+                ====================================== -->
 
-                        <div class="review-item">
+                {% if due_formulas %}
 
-                            <h3>
-                                {{ review.title }}
-                            </h3>
+                    <div
+                        class="review-category"
+                        onclick="toggleReview(this)"
+                    >
 
-                            <p>
-                                {{ review.description }}
-                            </p>
 
-                            <span class="review-date">
-                                Due {{ review.due_date }}
+                        <div class="review-category-header">
+
+
+                            <div class="review-category-title">
+
+                                <h3>
+                                    Formulas to Review
+                                </h3>
+
+
+                                <span class="review-count">
+
+                                    {{ due_formula_count }}
+
+                                </span>
+
+                            </div>
+
+
+                            <span class="review-arrow">
+                                ▼
                             </span>
+
 
                         </div>
 
-                    {% endfor %}
 
-                {% else %}
+                        <p class="review-description">
 
-                    <div class="empty-review">
+                            Formulas you need to review today.
 
-                        No reviews scheduled yet.
+                        </p>
+
+
+                        <div class="review-content">
+
+
+                            {% for formula in due_formulas %}
+
+                                <a
+                                    href="{% url 'review_formula' formula_id=formula.id %}"
+                                    class="review-item"
+                                    onclick="event.stopPropagation();"
+                                >
+
+
+                                    <h4>
+
+                                        {{ formula.knowledge_unit.title }}
+
+                                    </h4>
+
+
+                                    <p>
+
+                                        Formula
+
+                                    </p>
+
+
+                                    <span class="review-date">
+
+                                        Review today →
+
+                                    </span>
+
+
+                                </a>
+
+                            {% endfor %}
+
+
+                        </div>
+
 
                     </div>
 
                 {% endif %}
 
+
+                <!-- =====================================
+                     DEFINITIONS TO REVIEW
+                ====================================== -->
+
+                {% if due_definitions %}
+
+                    <div
+                        class="review-category"
+                        onclick="toggleReview(this)"
+                    >
+
+
+                        <div class="review-category-header">
+
+
+                            <div class="review-category-title">
+
+                                <h3>
+                                    Definitions to Review
+                                </h3>
+
+
+                                <span class="review-count">
+
+                                    {{ due_definition_count }}
+
+                                </span>
+
+                            </div>
+
+
+                            <span class="review-arrow">
+                                ▼
+                            </span>
+
+
+                        </div>
+
+
+                        <p class="review-description">
+
+                            Definitions you need to review today.
+
+                        </p>
+
+
+                        <div class="review-content">
+
+
+                            {% for definition in due_definitions %}
+
+                                <div
+                                    class="review-item"
+                                    onclick="event.stopPropagation();"
+                                >
+
+
+                                    <h4>
+
+                                        {{ definition.term }}
+
+                                    </h4>
+
+
+                                    <p>
+
+                                        {{ definition.definition }}
+
+                                    </p>
+
+
+                                    <span class="review-date">
+
+                                        Review today
+
+                                    </span>
+
+
+                                </div>
+
+                            {% endfor %}
+
+
+                        </div>
+
+
+                    </div>
+
+                {% endif %}
+
+
+                <!-- =====================================
+                     NOTHING TO REVIEW
+                ====================================== -->
+
+                {% if not due_formulas and not due_definitions %}
+
+                    <div class="empty-review">
+
+                        No reviews due today.
+
+                    </div>
+
+                {% endif %}
+
+
             </div>
+
 
         </div>
 
@@ -675,6 +1318,17 @@
 
 
 </div>
+
+
+<script>
+
+    function toggleReview(element) {
+
+        element.classList.toggle("open");
+
+    }
+
+</script>
 
 
 </body>
