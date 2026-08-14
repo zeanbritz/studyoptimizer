@@ -1,8 +1,6 @@
 from django.urls import path
 
 from . import views
-from . import definition_views
-
 
 urlpatterns = [
 
@@ -20,8 +18,7 @@ urlpatterns = [
 
     path(
         "subjects/<int:subject_index>/definition/",
-        definition_views.definition,
+        views.definition,
         name="practice_definition",
     ),
-
 ]

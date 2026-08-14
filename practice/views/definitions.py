@@ -21,17 +21,47 @@ def definition(request, subject_index):
         subject_index = int(subject_index)
 
     except (ValueError, TypeError):
-
         return redirect("goals")
-
 
     if subject_index < 0 or subject_index >= len(subjects):
-
         return redirect("goals")
-
 
     subject = subjects[subject_index]
 
+    # Make sure the subject has a definitions list.
+    if "definitions" not in subject:
+
+        subject["definitions"] = []
+
+    if request.method == "POST":
+
+        term = request.POST.get(
+            "term",
+            ""
+        ).strip()
+
+        meaning = request.POST.get(
+            "meaning",
+            ""
+        ).strip()
+
+        if term and meaning:
+
+            subject["definitions"].append({
+                "term": term,
+                "meaning": meaning,
+            })
+
+            subjects[subject_index] = subject
+
+            request.session["onboarding_subjects"] = subjects
+
+            request.session.modified = True
+
+        return redirect(
+            "practice_definition",
+            subject_index=subject_index
+        )
 
     return render(
         request,
@@ -39,5 +69,6 @@ def definition(request, subject_index):
         {
             "subject": subject,
             "subject_index": subject_index,
+            "definitions": subject["definitions"],
         }
     )
