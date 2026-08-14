@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>
+        Add Formula - {{ subject.name }}
+    </title>
+
+</head>
+
+<body>
+
+    <h1>
+        Add Formula
+    </h1>
+
+    <h2>
+        {{ subject.name }}
+    </h2>
+
+    <p>
+        You are adding a formula to:
+        <strong>{{ subject.name }}</strong>
+    </p>
+
+
+    <form method="POST">
+
+        {% csrf_token %}
+
+        <p>
+
+            <label>
+                Formula name
+            </label>
+
+            <input
+                type="text"
+                name="name"
+                required
+            >
+
+        </p>
+
+
+        <p>
+
+            <label>
+                Formula
+            </label>
+
+            <input
+                type="text"
+                name="formula"
+                required
+            >
+
+        </p>
+
+
+        <p>
+
+            <label>
+                Description
+            </label>
+
+            <textarea
+                name="description"
+            ></textarea>
+
+        </p>
+
+
+        <button type="submit">
+            Save Formula
+        </button>
+
+    </form>
+
+
+    <hr>
+
+
+    <h2>
+        Existing Formulas
+    </h2>
+
+
+    {% if formulas %}
+
+        {% for formula in formulas %}
+
+            <div>
+
+                <h3>
+                    {{ formula.name }}
+                </h3>
+
+                <p>
+                    {{ formula.formula }}
+                </p>
+
+                <p>
+                    {{ formula.description }}
+                </p>
+
+            </div>
+
+        {% endfor %}
+
+    {% else %}
+
+        <p>
+            No formulas added yet.
+        </p>
+
+    {% endif %}
+
+
+</body>
+
+</html>

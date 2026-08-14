@@ -1302,3 +1302,78 @@ def formula_reconstruction(request, formula_id):
             hidden_reconstruction_ids,
         }
     )
+
+@login_required
+def add_formula(request, subject_index):
+
+    profile = request.session.get(
+        "onboarding_profile"
+    )
+
+    if not profile:
+        return redirect("onboarding")
+
+    subjects = request.session.get(
+        "onboarding_subjects",
+        []
+    )
+
+    try:
+        subject_index = int(subject_index)
+    except (ValueError, TypeError):
+        return redirect("goals")
+
+    if subject_index < 0 or subject_index >= len(subjects):
+        return redirect("goals")
+
+    subject = subjects[subject_index]
+
+    # Make sure the subject has a formulas list.
+    if "formulas" not in subject:
+        subject["formulas"] = []
+
+    if request.method == "POST":
+
+        name = request.POST.get(
+            "name",
+            ""
+        ).strip()
+
+        formula = request.POST.get(
+            "formula",
+            ""
+        ).strip()
+
+        description = request.POST.get(
+            "description",
+            ""
+        ).strip()
+
+        if name and formula:
+
+            subject["formulas"].append({
+                "name": name,
+                "formula": formula,
+                "description": description,
+            })
+
+            subjects[subject_index] = subject
+
+            request.session["onboarding_subjects"] = subjects
+
+            request.session.modified = True
+
+            return redirect(
+                "add_formula",
+                subject_index=subject_index
+            )
+
+    return render(
+        request,
+        "practice/formulas.html",
+        {
+            "subject": subject,
+            "subject_index": subject_index,
+            "formulas": subject["formulas"],
+        }
+    )

@@ -528,20 +528,18 @@
                 </a>
 
 
-                <button
-                    type="button"
+                <a
+                    href="{% url 'add_formula' subject_index=subject_index %}"
                     class="summary-option"
                 >
-
-                    <h3>
+                    <div class="summary-option-title">
                         Formula
-                    </h3>
+                    </div>
 
-                    <p>
-                        Record a formula and what each variable means.
-                    </p>
-
-                </button>
+                    <div class="summary-option-description">
+                        Add important formulas for this subject.
+                    </div>
+                </a>
 
 
                 <button
