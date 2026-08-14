@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Edit Definition - StudyOptimizer
+    </title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+
+            min-height: 100vh;
+
+            background: #f5f6f8;
+
+            color: #222;
+
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Arial,
+                sans-serif;
+        }
+
+        .page {
+            min-height: 100vh;
+
+            padding:
+                35px 40px 50px;
+        }
+
+        .header {
+            display: flex;
+
+            align-items: center;
+
+            gap: 18px;
+
+            margin-bottom: 30px;
+        }
+
+        .back-button {
+            width: 40px;
+            height: 40px;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            border:
+                1px solid #dedede;
+
+            border-radius: 9px;
+
+            background: white;
+
+            color: #333;
+
+            text-decoration: none;
+
+            font-size: 20px;
+        }
+
+        .back-button:hover {
+            background: #f0f0f0;
+        }
+
+        .header h1 {
+            margin:
+                0 0 4px;
+
+            font-size: 30px;
+        }
+
+        .header p {
+            margin: 0;
+
+            color: #777;
+
+            font-size: 14px;
+        }
+
+        .content {
+            max-width: 900px;
+        }
+
+        .card {
+            background: white;
+
+            border:
+                1px solid #e5e5e5;
+
+            border-radius: 14px;
+
+            padding: 28px;
+        }
+
+        .card h2 {
+            margin:
+                0 0 6px;
+
+            font-size: 21px;
+        }
+
+        .subtitle {
+            margin:
+                0 0 24px;
+
+            color: #888;
+
+            font-size: 14px;
+        }
+
+        .field {
+            margin-bottom: 20px;
+        }
+
+        .field label {
+            display: block;
+
+            margin-bottom: 8px;
+
+            font-size: 13px;
+
+            font-weight: 600;
+
+            color: #555;
+        }
+
+        .field input,
+        .field textarea {
+            width: 100%;
+
+            padding:
+                12px 13px;
+
+            border:
+                1px solid #d8d8d8;
+
+            border-radius: 8px;
+
+            background: white;
+
+            font-family: inherit;
+
+            font-size: 15px;
+
+            outline: none;
+        }
+
+        .field textarea {
+            min-height: 180px;
+
+            resize: vertical;
+
+            line-height: 1.6;
+        }
+
+        .field input:focus,
+        .field textarea:focus {
+            border-color: #222;
+        }
+
+        .actions {
+            display: flex;
+
+            gap: 10px;
+
+            margin-top: 25px;
+        }
+
+        .save-button {
+            border: none;
+
+            border-radius: 8px;
+
+            background: #222;
+
+            color: white;
+
+            padding:
+                12px 22px;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+        }
+
+        .save-button:hover {
+            background: #333;
+        }
+
+        .cancel-button {
+            display: inline-flex;
+
+            align-items: center;
+            justify-content: center;
+
+            border:
+                1px solid #d8d8d8;
+
+            border-radius: 8px;
+
+            background: white;
+
+            color: #333;
+
+            padding:
+                12px 22px;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            text-decoration: none;
+        }
+
+        .cancel-button:hover {
+            background: #f1f1f1;
+        }
+
+        @media (max-width: 700px) {
+
+            .page {
+                padding:
+                    25px 20px 40px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="page">
+
+    <header class="header">
+
+        <a
+            href="{% url 'practice_definition' subject_index=subject_index %}"
+            class="back-button"
+        >
+            ←
+        </a>
+
+        <div>
+
+            <h1>
+                Edit Definition
+            </h1>
+
+            <p>
+                {{ subject.name }}
+            </p>
+
+        </div>
+
+    </header>
+
+
+    <div class="content">
+
+        <section class="card">
+
+            <h2>
+                Edit Definition
+            </h2>
+
+            <p class="subtitle">
+                Update the term or rewrite the definition.
+            </p>
+
+
+            <form method="POST">
+
+                {% csrf_token %}
+
+
+                <div class="field">
+
+                    <label>
+                        Term
+                    </label>
+
+                    <input
+                        type="text"
+                        name="term"
+                        value="{{ definition.term }}"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="field">
+
+                    <label>
+                        Definition
+                    </label>
+
+                    <textarea
+                        name="meaning"
+                        required
+                    >{{ definition.meaning }}</textarea>
+
+                </div>
+
+
+                <div class="actions">
+
+                    <button
+                        type="submit"
+                        class="save-button"
+                    >
+                        Save Changes
+                    </button>
+
+
+                    <a
+                        href="{% url 'practice_definition' subject_index=subject_index %}"
+                        class="cancel-button"
+                    >
+                        Cancel
+                    </a>
+
+                </div>
+
+            </form>
+
+        </section>
+
+    </div>
+
+</div>
+
+</body>
+
+</html>

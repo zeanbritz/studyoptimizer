@@ -61,6 +61,8 @@
 
             text-decoration: none;
             font-size: 20px;
+
+            flex-shrink: 0;
         }
 
         .back-button:hover {
@@ -81,6 +83,10 @@
         .content {
             max-width: 900px;
         }
+
+        /* =========================================
+           ADD DEFINITION
+        ========================================= */
 
         .add-definition {
             background: white;
@@ -160,6 +166,10 @@
             background: #333;
         }
 
+        /* =========================================
+           SAVED DEFINITIONS
+        ========================================= */
+
         .definitions {
             background: white;
             border: 1px solid #e5e5e5;
@@ -173,31 +183,52 @@
         }
 
         .definition-item {
-            padding: 18px 0;
+            padding: 18px 10px;
+
             border-bottom: 1px solid #eeeeee;
+
+            border-radius: 8px;
+
+            cursor: pointer;
+
+            transition:
+                background 0.15s ease;
+        }
+
+        .definition-item:hover {
+            background: #fafafa;
         }
 
         .definition-item:first-child {
-            padding-top: 0;
+            padding-top: 10px;
         }
 
         .definition-item:last-child {
             border-bottom: none;
-            padding-bottom: 0;
+            padding-bottom: 10px;
         }
 
         .definition-term {
             margin: 0 0 7px;
+
             font-size: 16px;
+
             font-weight: 700;
         }
 
         .definition-meaning {
             margin: 0;
+
             color: #666;
+
             line-height: 1.6;
+
             font-size: 14px;
         }
+
+        /* =========================================
+           EMPTY STATE
+        ========================================= */
 
         .empty {
             min-height: 140px;
@@ -207,11 +238,17 @@
             justify-content: center;
 
             border: 1px dashed #d5d5d5;
+
             border-radius: 10px;
 
             color: #888;
+
             text-align: center;
         }
+
+        /* =========================================
+           MOBILE
+        ========================================= */
 
         @media (max-width: 700px) {
 
@@ -231,6 +268,10 @@
 
 <div class="page">
 
+
+    <!-- =========================================
+         HEADER
+    ========================================= -->
 
     <header class="header">
 
@@ -259,7 +300,9 @@
     <div class="content">
 
 
-        <!-- ADD DEFINITION -->
+        <!-- =========================================
+             ADD DEFINITION
+        ========================================= -->
 
         <section class="add-definition">
 
@@ -320,7 +363,9 @@
         </section>
 
 
-        <!-- SAVED DEFINITIONS -->
+        <!-- =========================================
+             SAVED DEFINITIONS
+        ========================================= -->
 
         <section class="definitions">
 
@@ -333,7 +378,12 @@
 
                 {% for item in definitions %}
 
-                    <div class="definition-item">
+                    <div
+                        class="definition-item"
+                        ondblclick="editDefinition(this)"
+                        data-edit-url="{% url 'edit_definition' subject_index=subject_index definition_index=forloop.counter0 %}"
+                        title="Double-click to edit"
+                    >
 
                         <h3 class="definition-term">
                             {{ item.term }}
@@ -365,6 +415,25 @@
 
 
 </div>
+
+
+<script>
+
+    function editDefinition(element) {
+
+        const editUrl =
+            element.dataset.editUrl;
+
+        if (editUrl) {
+
+            window.location.href =
+                editUrl;
+
+        }
+
+    }
+
+</script>
 
 
 </body>
