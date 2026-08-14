@@ -1,9 +1,11 @@
 from django.urls import path
 
 from . import views
+from . import definition_views
 
 
 urlpatterns = [
+
     path(
         "formula/<int:formula_id>/",
         views.practice_formula,
@@ -15,4 +17,11 @@ urlpatterns = [
         views.formula_reconstruction,
         name="formula_reconstruction",
     ),
+
+    path(
+        "subjects/<int:subject_index>/definition/",
+        definition_views.definition,
+        name="practice_definition",
+    ),
+
 ]
