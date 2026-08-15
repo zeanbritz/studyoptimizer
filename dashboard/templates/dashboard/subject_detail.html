@@ -475,19 +475,46 @@
 
         .review-category {
 
-            width: 100%;
+    display: block;
 
-            border:
-                1px solid
-                #e1e1e1;
+    width: 100%;
 
-            border-radius: 10px;
+    padding: 18px;
 
-            background: white;
+    border:
+        1px solid
+        #e1e1e1;
 
-            overflow: hidden;
+    border-radius: 10px;
 
-        }
+    background: white;
+
+    cursor: pointer;
+
+    text-align: left;
+
+    text-decoration: none;
+
+    color: inherit;
+
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        transform 0.15s ease;
+
+}
+
+
+.review-category:hover {
+
+    background: #f7f7f7;
+
+    border-color: #cfcfcf;
+
+    transform:
+        translateY(-1px);
+
+}
 
 
         .review-category-header {
@@ -1129,176 +1156,84 @@
 
 
                 <!-- =====================================
-                     FORMULAS TO REVIEW
-                ====================================== -->
+     FORMULAS TO REVIEW
+====================================== -->
 
-                {% if due_formulas %}
+{% if due_formulas %}
 
-                    <div class="review-category">
+    <a
+        href="{% url 'formula_review_list' subject_index=subject_index %}"
+        class="review-category"
+    >
 
+        <div class="review-category-header">
 
-                        <div
-                            class="review-category-header"
-                            onclick="toggleReview(this)"
-                        >
+            <div class="review-category-title">
 
-                            <div class="review-category-title">
+                <h3>
+                    Formulas to Review
+                </h3>
 
-                                <h3>
-                                    Formulas to Review
-                                </h3>
+                <span class="review-count">
+                    {{ due_formula_count }}
+                </span>
 
-                                <span class="review-count">
+            </div>
 
-                                    {{ due_formula_count }}
+            <span class="review-arrow">
+                →
+            </span>
 
-                                </span>
+        </div>
 
-                            </div>
+        <p class="review-description">
+            Formulas you need to review today.
+        </p>
 
+    </a>
 
-                            <span class="review-arrow">
-                                ▼
-                            </span>
-
-                        </div>
-
-
-                        <p class="review-description">
-
-                            Formulas you need to review today.
-
-                        </p>
-
-
-                        <div class="review-content">
-
-
-                            {% for formula in due_formulas %}
-
-                                <a
-                                    href="{% url 'review_formula' formula_id=formula.id %}"
-                                    class="review-item"
-                                >
-
-                                    <h4>
-
-                                        {{ formula.knowledge_unit.title }}
-
-                                    </h4>
-
-
-                                    <p>
-
-                                        Formula
-
-                                    </p>
-
-
-                                    <span class="review-date">
-
-                                        Review today →
-
-                                    </span>
-
-                                </a>
-
-                            {% endfor %}
-
-
-                        </div>
-
-
-                    </div>
-
-                {% endif %}
+{% endif %}
 
 
                 <!-- =====================================
-                     DEFINITIONS TO REVIEW
-                ====================================== -->
+     DEFINITIONS TO REVIEW
+====================================== -->
 
-                {% if due_definitions %}
+{% if due_definitions %}
 
-                    <div class="review-category">
+    <a
+        href="{% url 'definition_review_list' subject_index=subject_index %}"
+        class="review-category"
+    >
 
+        <div class="review-category-header">
 
-                        <div
-                            class="review-category-header"
-                            onclick="toggleReview(this)"
-                        >
+            <div class="review-category-title">
 
-                            <div class="review-category-title">
+                <h3>
+                    Definitions to Review
+                </h3>
 
-                                <h3>
-                                    Definitions to Review
-                                </h3>
+                <span class="review-count">
+                    {{ due_definition_count }}
+                </span>
 
+            </div>
 
-                                <span class="review-count">
+            <span class="review-arrow">
+                →
+            </span>
 
-                                    {{ due_definition_count }}
+        </div>
 
-                                </span>
+        <p class="review-description">
+            Definitions you need to review today.
+        </p>
 
-                            </div>
+    </a>
 
+{% endif %}
 
-                            <span class="review-arrow">
-                                ▼
-                            </span>
-
-                        </div>
-
-
-                        <p class="review-description">
-
-                            Definitions you need to review today.
-
-                        </p>
-
-
-                        <div class="review-content">
-
-
-                            {% for definition in due_definitions %}
-
-                                <a
-                                    href="{% url 'review_definition' definition_id=definition.id %}"
-                                    class="review-item"
-                                >
-
-                                    <h4>
-
-                                        {{ definition.term }}
-
-                                    </h4>
-
-
-                                    <p>
-
-                                        {{ definition.definition }}
-
-                                    </p>
-
-
-                                    <span class="review-date">
-
-                                        Review today →
-
-                                    </span>
-
-                                </a>
-
-                            {% endfor %}
-
-
-                        </div>
-
-
-                    </div>
-
-                {% endif %}
 
                 <!-- =====================================
      BULLET LISTS TO REVIEW
@@ -1414,22 +1349,6 @@
 
 
 </div>
-
-
-<script>
-
-    function toggleReview(header) {
-
-        const category =
-            header.parentElement;
-
-        category.classList.toggle(
-            "open"
-        );
-
-    }
-
-</script>
 
 
 </body>

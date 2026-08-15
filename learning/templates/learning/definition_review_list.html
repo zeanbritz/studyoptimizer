@@ -1,3 +1,5 @@
+{% load static %}
+
 <!DOCTYPE html>
 
 <html lang="en">
@@ -6,54 +8,356 @@
 
     <meta charset="UTF-8">
 
-    <title>Definition Review</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Definitions to Review - StudyOptimizer
+    </title>
+
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        body {
+
+            margin: 0;
+
+            background: #f5f6f8;
+
+            color: #222;
+
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Arial,
+                sans-serif;
+
+        }
+
+
+        .page {
+
+            min-height: 100vh;
+
+            padding:
+                30px
+                40px
+                50px;
+
+        }
+
+
+        .container {
+
+            max-width: 850px;
+
+            margin: 0 auto;
+
+        }
+
+
+        /* =========================================
+           HEADER
+        ========================================= */
+
+        .header {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 18px;
+
+            margin-bottom: 30px;
+
+        }
+
+
+        .back-button {
+
+            width: 40px;
+
+            height: 40px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            border:
+                1px solid
+                #dedede;
+
+            border-radius: 9px;
+
+            background: white;
+
+            color: #333;
+
+            text-decoration: none;
+
+            font-size: 20px;
+
+        }
+
+
+        .back-button:hover {
+
+            background: #f0f0f0;
+
+        }
+
+
+        .header h1 {
+
+            margin: 0 0 5px;
+
+            font-size: 30px;
+
+        }
+
+
+        .header p {
+
+            margin: 0;
+
+            color: #777;
+
+            font-size: 14px;
+
+        }
+
+
+        /* =========================================
+           REVIEW LIST
+        ========================================= */
+
+        .review-list {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 12px;
+
+        }
+
+
+        .review-item {
+
+            display: block;
+
+            padding: 20px;
+
+            background: white;
+
+            border:
+                1px solid
+                #e1e1e1;
+
+            border-radius: 12px;
+
+            text-decoration: none;
+
+            color: inherit;
+
+            transition:
+                background 0.15s ease,
+                border-color 0.15s ease,
+                transform 0.15s ease;
+
+        }
+
+
+        .review-item:hover {
+
+            background: #fafafa;
+
+            border-color: #cfcfcf;
+
+            transform:
+                translateY(-1px);
+
+        }
+
+
+        .review-item-header {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            gap: 15px;
+
+        }
+
+
+        .review-item h2 {
+
+            margin: 0;
+
+            font-size: 17px;
+
+        }
+
+
+        .arrow {
+
+            font-size: 18px;
+
+            color: #777;
+
+        }
+
+
+        .review-item p {
+
+            margin:
+                8px
+                0
+                0;
+
+            color: #888;
+
+            font-size: 13px;
+
+            line-height: 1.5;
+
+        }
+
+
+        /* =========================================
+           EMPTY
+        ========================================= */
+
+        .empty {
+
+            padding: 40px 20px;
+
+            background: white;
+
+            border:
+                1px dashed
+                #d5d5d5;
+
+            border-radius: 12px;
+
+            text-align: center;
+
+            color: #888;
+
+        }
+
+
+    </style>
 
 </head>
 
+
 <body>
 
-<h1>Definitions to Review</h1>
 
-<p>
-    {{ subject.name }}
-</p>
+<div class="page">
 
-{% if definitions %}
 
-    {% for definition in definitions %}
+    <div class="container">
 
-        <div style="
-            padding: 20px;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-        ">
 
-            <h2>
-                {{ definition.term }}
-            </h2>
+        <!-- HEADER -->
 
-            <p>
-                {{ definition.definition }}
-            </p>
+        <header class="header">
+
 
             <a
-                href="{% url 'review_definition' definition_id=definition.id %}"
+                href="{% url 'subject_detail' subject_index=subject_index %}"
+                class="back-button"
             >
-                Review Definition
+                ←
             </a>
 
-        </div>
 
-    {% endfor %}
+            <div>
 
-{% else %}
+                <h1>
+                    Definitions to Review
+                </h1>
 
-    <p>
-        No definitions are due for review.
-    </p>
+                <p>
+                    Select a definition to begin your review.
+                </p>
 
-{% endif %}
+            </div>
+
+
+        </header>
+
+
+        <!-- LIST -->
+
+        {% if definitions %}
+
+            <div class="review-list">
+
+
+                {% for definition in definitions %}
+
+                    <a
+                        href="{% url 'review_definition' definition_id=definition.id %}"
+                        class="review-item"
+                    >
+
+                        <div class="review-item-header">
+
+                            <h2>
+                                {{ definition.term }}
+                            </h2>
+
+                            <span class="arrow">
+                                →
+                            </span>
+
+                        </div>
+
+
+                        <p>
+                            Definition · Review now
+                        </p>
+
+
+                    </a>
+
+                {% endfor %}
+
+
+            </div>
+
+        {% else %}
+
+            <div class="empty">
+
+                No definitions are due for review today.
+
+            </div>
+
+        {% endif %}
+
+
+    </div>
+
+
+</div>
+
 
 </body>
 
