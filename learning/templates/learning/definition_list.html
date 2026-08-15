@@ -82,7 +82,7 @@
 
             gap: 20px;
 
-            margin-bottom: 30px;
+            margin-bottom: 25px;
 
         }
 
@@ -204,6 +204,149 @@
 
             transform:
                 translateY(-1px);
+
+        }
+
+
+        /* =========================================
+           SEARCH
+        ========================================= */
+
+        .search-container {
+
+            margin-bottom: 25px;
+
+        }
+
+
+        .search-form {
+
+            display: flex;
+
+            gap: 10px;
+
+        }
+
+
+        .search-input {
+
+            flex: 1;
+
+            min-width: 0;
+
+            padding:
+                12px
+                14px;
+
+            border:
+                1px solid
+                #d8d8d8;
+
+            border-radius: 8px;
+
+            background: white;
+
+            color: #222;
+
+            font-family: inherit;
+
+            font-size: 14px;
+
+            outline: none;
+
+        }
+
+
+        .search-input:focus {
+
+            border-color: #222;
+
+        }
+
+
+        .search-button {
+
+            padding:
+                11px
+                20px;
+
+            border: none;
+
+            border-radius: 8px;
+
+            background: #222;
+
+            color: white;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+
+            transition:
+                background 0.15s ease;
+
+        }
+
+
+        .search-button:hover {
+
+            background: #333;
+
+        }
+
+
+        .clear-search {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            margin-left: 8px;
+
+            padding:
+                10px
+                14px;
+
+            border:
+                1px solid
+                #d8d8d8;
+
+            border-radius: 8px;
+
+            background: white;
+
+            color: #444;
+
+            text-decoration: none;
+
+            font-size: 13px;
+
+            font-weight: 600;
+
+        }
+
+
+        .clear-search:hover {
+
+            background: #f5f5f5;
+
+        }
+
+
+        .search-result-text {
+
+            margin:
+                10px
+                0
+                0;
+
+            color: #888;
+
+            font-size: 13px;
 
         }
 
@@ -569,6 +712,32 @@
             }
 
 
+            .search-form {
+
+                flex-direction: column;
+
+            }
+
+
+            .search-button {
+
+                width: 100%;
+
+            }
+
+
+            .clear-search {
+
+                margin:
+                    8px
+                    0
+                    0;
+
+                width: 100%;
+
+            }
+
+
             .definition-actions {
 
                 flex-direction: column;
@@ -641,6 +810,78 @@
 
 
         </header>
+
+
+        <!-- =========================================
+             SEARCH BAR
+        ========================================= -->
+
+        <div class="search-container">
+
+
+            <form
+                method="GET"
+                class="search-form"
+            >
+
+
+                <input
+                    type="text"
+                    name="q"
+                    value="{{ search_query }}"
+                    class="search-input"
+                    placeholder="Search definitions by title..."
+                    autocomplete="off"
+                >
+
+
+                <button
+                    type="submit"
+                    class="search-button"
+                >
+                    Search
+                </button>
+
+
+            </form>
+
+
+            {% if search_query %}
+
+                <div>
+
+                    <p class="search-result-text">
+
+                        {% if definitions %}
+
+                            Found
+                            {{ definitions|length }}
+                            definition{{ definitions|length|pluralize }}
+                            matching "{{ search_query }}".
+
+                        {% else %}
+
+                            No definitions found matching
+                            "{{ search_query }}".
+
+                        {% endif %}
+
+
+                        <a
+                            href="{% url 'definition_list' subject_id=subject.id %}"
+                            class="clear-search"
+                        >
+                            Clear Search
+                        </a>
+
+                    </p>
+
+                </div>
+
+            {% endif %}
+
+
+        </div>
 
 
         <!-- =========================================
@@ -769,21 +1010,47 @@
 
             <div class="empty-state">
 
-                <h2>
-                    No definitions yet
-                </h2>
 
-                <p>
-                    Create your first definition for {{ subject.name }}.
-                </p>
+                {% if search_query %}
+
+                    <h2>
+                        No definitions found
+                    </h2>
+
+                    <p>
+                        No definition titles match "{{ search_query }}".
+                        Try a different search term.
+                    </p>
 
 
-                <a
-                    href="{% url 'create_definition' subject_id=subject.id %}?subject_index={{ subject_index }}"
-                    class="create-button"
-                >
-                    + Create Definition
-                </a>
+                    <a
+                        href="{% url 'definition_list' subject_id=subject.id %}"
+                        class="create-button"
+                    >
+                        Clear Search
+                    </a>
+
+
+                {% else %}
+
+                    <h2>
+                        No definitions yet
+                    </h2>
+
+                    <p>
+                        Create your first definition for {{ subject.name }}.
+                    </p>
+
+
+                    <a
+                        href="{% url 'create_definition' subject_id=subject.id %}?subject_index={{ subject_index }}"
+                        class="create-button"
+                    >
+                        + Create Definition
+                    </a>
+
+                {% endif %}
+
 
             </div>
 

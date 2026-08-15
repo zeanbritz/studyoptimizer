@@ -1384,6 +1384,10 @@ def reset_today_reviews(request):
 # VIEW ALL DEFINITIONS
 # ============================================================
 
+# ============================================================
+# VIEW ALL DEFINITIONS
+# ============================================================
+
 @login_required
 def definition_list(
     request,
@@ -1392,11 +1396,15 @@ def definition_list(
     """
     Display every definition that belongs to
     the selected subject.
+
+    The search only looks at the definition
+    term/title. It does NOT search the
+    definition description.
     """
 
-    # ========================================================
+    # --------------------------------------------------------
     # GET SUBJECT
-    # ========================================================
+    # --------------------------------------------------------
 
     subject = get_object_or_404(
         Subject,
@@ -1404,9 +1412,9 @@ def definition_list(
         user=request.user
     )
 
-    # ========================================================
+    # --------------------------------------------------------
     # FIND SUBJECT INDEX
-    # ========================================================
+    # --------------------------------------------------------
 
     subjects = request.session.get(
         "onboarding_subjects",
@@ -1419,10 +1427,14 @@ def definition_list(
     # FIRST: MATCH DATABASE ID
     # --------------------------------------------------------
 
-    for index, subject_data in enumerate(subjects):
+    for index, subject_data in enumerate(
+        subjects
+    ):
 
         if (
-            subject_data.get("database_id")
+            subject_data.get(
+                "database_id"
+            )
             == subject.id
         ):
 
@@ -1436,7 +1448,9 @@ def definition_list(
 
     if subject_index is None:
 
-        for index, subject_data in enumerate(subjects):
+        for index, subject_data in enumerate(
+            subjects
+        ):
 
             if (
                 subject_data.get(
@@ -1458,9 +1472,18 @@ def definition_list(
 
         subject_index = 0
 
-    # ========================================================
+    # --------------------------------------------------------
+    # SEARCH
+    # --------------------------------------------------------
+
+    search_query = request.GET.get(
+        "q",
+        ""
+    ).strip()
+
+    # --------------------------------------------------------
     # GET ALL DEFINITION KNOWLEDGE UNITS
-    # ========================================================
+    # --------------------------------------------------------
 
     knowledge_units = (
         KnowledgeUnit.objects
@@ -1483,9 +1506,19 @@ def definition_list(
         )
     )
 
-    # ========================================================
+    # --------------------------------------------------------
+    # SEARCH ONLY TITLE / TERM
+    # --------------------------------------------------------
+
+    if search_query:
+
+        knowledge_units = knowledge_units.filter(
+            title__icontains=search_query
+        )
+
+    # --------------------------------------------------------
     # GET ACTUAL DEFINITIONS
-    # ========================================================
+    # --------------------------------------------------------
 
     definitions = []
 
@@ -1503,25 +1536,28 @@ def definition_list(
                 definition
             )
 
-    # ========================================================
+    # --------------------------------------------------------
     # RENDER
-    # ========================================================
+    # --------------------------------------------------------
 
     return render(
         request,
         "learning/definition_list.html",
         {
-            "subject": subject,
+            "subject":
+                subject,
+
+            "definitions":
+                definitions,
 
             "subject_index":
                 subject_index,
 
-            "definitions":
-                definitions,
+            "search_query":
+                search_query,
         }
     )
 
-    # ============================================================
 # EDIT DEFINITION
 # ============================================================
 
