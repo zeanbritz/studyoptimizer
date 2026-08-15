@@ -1377,3 +1377,146 @@ def reset_today_reviews(request):
         )
 
     return redirect("dashboard")
+
+
+
+# ============================================================
+# VIEW ALL DEFINITIONS
+# ============================================================
+
+@login_required
+def definition_list(
+    request,
+    subject_id
+):
+    """
+    Display every definition that belongs to
+    the selected subject.
+    """
+
+    # ========================================================
+    # GET SUBJECT
+    # ========================================================
+
+    subject = get_object_or_404(
+        Subject,
+        id=subject_id,
+        user=request.user
+    )
+
+    # ========================================================
+    # FIND SUBJECT INDEX
+    # ========================================================
+
+    subjects = request.session.get(
+        "onboarding_subjects",
+        []
+    )
+
+    subject_index = None
+
+    # --------------------------------------------------------
+    # FIRST: MATCH DATABASE ID
+    # --------------------------------------------------------
+
+    for index, subject_data in enumerate(subjects):
+
+        if (
+            subject_data.get("database_id")
+            == subject.id
+        ):
+
+            subject_index = index
+
+            break
+
+    # --------------------------------------------------------
+    # FALLBACK: MATCH SUBJECT NAME
+    # --------------------------------------------------------
+
+    if subject_index is None:
+
+        for index, subject_data in enumerate(subjects):
+
+            if (
+                subject_data.get(
+                    "name",
+                    ""
+                ).strip()
+                == subject.name
+            ):
+
+                subject_index = index
+
+                break
+
+    # --------------------------------------------------------
+    # FINAL FALLBACK
+    # --------------------------------------------------------
+
+    if subject_index is None:
+
+        subject_index = 0
+
+    # ========================================================
+    # GET ALL DEFINITION KNOWLEDGE UNITS
+    # ========================================================
+
+    knowledge_units = (
+        KnowledgeUnit.objects
+        .filter(
+            subject=subject,
+
+            knowledge_type=(
+                KnowledgeUnit
+                .KnowledgeType
+                .DEFINITION
+            ),
+
+            active=True,
+        )
+        .select_related(
+            "definition"
+        )
+        .order_by(
+            "title"
+        )
+    )
+
+    # ========================================================
+    # GET ACTUAL DEFINITIONS
+    # ========================================================
+
+    definitions = []
+
+    for knowledge_unit in knowledge_units:
+
+        definition = getattr(
+            knowledge_unit,
+            "definition",
+            None
+        )
+
+        if definition:
+
+            definitions.append(
+                definition
+            )
+
+    # ========================================================
+    # RENDER
+    # ========================================================
+
+    return render(
+        request,
+        "learning/definition_list.html",
+        {
+            "subject": subject,
+
+            "subject_index":
+                subject_index,
+
+            "definitions":
+                definitions,
+        }
+    )

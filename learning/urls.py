@@ -68,4 +68,10 @@ urlpatterns = [
         name="reset_today_reviews",
     ),
 
+    path(
+        "subjects/<int:subject_id>/definitions/",
+        views.definition_list,
+        name="definition_list",
+    ),
+
 ]
