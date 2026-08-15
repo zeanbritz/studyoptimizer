@@ -1068,11 +1068,6 @@ def review_definition(
 
     words = definition_text.split()
 
-    # --------------------------------------------------------
-    # Very short definitions cannot safely have a word removed.
-    # In that case, use the full definition as the answer.
-    # --------------------------------------------------------
-
     if len(words) < 4:
 
         missing_text = definition_text
@@ -1082,21 +1077,6 @@ def review_definition(
         after_text = ""
 
     else:
-
-        # ----------------------------------------------------
-        # Start with a simple middle section.
-        #
-        # Example:
-        #
-        # The value of the next best alternative that is
-        # forgone when making a choice.
-        #
-        # becomes something like:
-        #
-        # The value of the next best alternative
-        # [________]
-        # when making a choice.
-        # ----------------------------------------------------
 
         missing_index = len(words) // 2
 
@@ -1124,8 +1104,7 @@ def review_definition(
         ).strip()
 
         # ----------------------------------------------------
-        # Compare answers without worrying about
-        # capitalization or extra spaces.
+        # CHECK ANSWER
         # ----------------------------------------------------
 
         is_correct = (
@@ -1181,12 +1160,85 @@ def review_definition(
         progress.save()
 
         # ====================================================
-        # FIND SUBJECT INDEX
+        # FIND SUBJECT
         # ====================================================
 
-        subject_id = (
-            knowledge_unit.subject.id
+        subject = knowledge_unit.subject
+
+        subject_id = subject.id
+
+        # ====================================================
+        # FIND NEXT DUE DEFINITION
+        # ====================================================
+
+        now = timezone.now()
+
+        due_definitions = (
+            Definition.objects
+            .filter(
+                knowledge_unit__subject=subject,
+
+                knowledge_unit__knowledge_type=(
+                    KnowledgeUnit
+                    .KnowledgeType
+                    .DEFINITION
+                ),
+
+                knowledge_unit__active=True,
+            )
+            .exclude(
+                id=definition.id
+            )
+            .order_by(
+                "id"
+            )
         )
+
+        next_definition = None
+
+        for next_item in due_definitions:
+
+            next_progress = (
+                StudentKnowledge.objects
+                .filter(
+                    student=request.user,
+
+                    knowledge_unit=(
+                        next_item.knowledge_unit
+                    )
+                )
+                .first()
+            )
+
+            # ------------------------------------------------
+            # Never reviewed = due
+            # ------------------------------------------------
+
+            if next_progress is None:
+
+                next_definition = next_item
+
+                break
+
+            # ------------------------------------------------
+            # Already reviewed but due again
+            # ------------------------------------------------
+
+            if (
+                next_progress.next_review
+                is not None
+                and
+                next_progress.next_review
+                <= now
+            ):
+
+                next_definition = next_item
+
+                break
+
+        # ====================================================
+        # FIND SUBJECT INDEX
+        # ====================================================
 
         subjects = request.session.get(
             "onboarding_subjects",
@@ -1225,7 +1277,7 @@ def review_definition(
                         "name",
                         ""
                     ).strip()
-                    == knowledge_unit.subject.name
+                    == subject.name
                 ):
 
                     subject_index = index
@@ -1241,30 +1293,42 @@ def review_definition(
             subject_index = 0
 
         # ====================================================
-        # SHOW RESULT BEFORE LEAVING
+        # SHOW RESULT
         # ====================================================
 
         return render(
             request,
             "learning/review_definition.html",
             {
-                "definition": definition,
+                "definition":
+                    definition,
 
-                "progress": progress,
+                "progress":
+                    progress,
 
-                "before_text": before_text,
+                "before_text":
+                    before_text,
 
-                "missing_text": missing_text,
+                "missing_text":
+                    missing_text,
 
-                "after_text": after_text,
+                "after_text":
+                    after_text,
 
-                "answer": answer,
+                "answer":
+                    answer,
 
-                "is_correct": is_correct,
+                "is_correct":
+                    is_correct,
 
-                "submitted": True,
+                "submitted":
+                    True,
 
-                "subject_index": subject_index,
+                "subject_index":
+                    subject_index,
+
+                "next_definition":
+                    next_definition,
             }
         )
 

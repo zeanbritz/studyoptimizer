@@ -549,14 +549,29 @@
         {% endif %}
 
 
-        <a
-            href="{% url 'subject_detail' subject_index=subject_index %}"
-            class="continue-button"
-        >
+        {% if next_definition %}
 
-            Continue
+    <a
+        href="{% url 'review_definition' definition_id=next_definition.id %}"
+        class="continue-button"
+    >
 
-        </a>
+        Continue
+
+    </a>
+
+{% else %}
+
+    <a
+        href="{% url 'subject_detail' subject_index=subject_index %}"
+        class="continue-button"
+    >
+
+        Finish Review
+
+    </a>
+
+{% endif %}
 
 
     {% endif %}
