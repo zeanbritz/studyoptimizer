@@ -40,4 +40,10 @@ urlpatterns = [
         name="definition"
     ),
 
+    path(
+        "review/definitions/",
+        views.review_definitions,
+        name="review_definitions"
+    ),
+
 ]

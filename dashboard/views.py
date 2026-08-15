@@ -840,3 +840,53 @@ def definition(
                 definitions,
         }
     )
+
+# ============================================================
+# REVIEW DEFINITIONS
+# ============================================================
+
+@login_required
+def review_definitions(request):
+
+    definition_knowledge_units = (
+        KnowledgeUnit.objects
+        .filter(
+            subject__user=request.user,
+            knowledge_type=KnowledgeUnit.KnowledgeType.DEFINITION,
+            active=True,
+        )
+        .select_related(
+            "definition",
+            "subject",
+        )
+        .order_by(
+            "subject__name",
+            "definition__term",
+        )
+    )
+
+    definitions = []
+
+    for knowledge_unit in definition_knowledge_units:
+
+        definition = getattr(
+            knowledge_unit,
+            "definition",
+            None
+        )
+
+        if definition:
+
+            definitions.append({
+                "definition": definition,
+                "subject": knowledge_unit.subject,
+            })
+
+    return render(
+        request,
+        "dashboard/review_definitions.html",
+        {
+            "definitions": definitions,
+            "definition_count": len(definitions),
+        }
+    )
