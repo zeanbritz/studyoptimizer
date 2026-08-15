@@ -1198,3 +1198,21 @@ def review_definition(
                 progress,
         }
     )
+
+
+# ============================================================
+# RESET TODAY'S REVIEWS
+# ============================================================
+
+@login_required
+def reset_today_reviews(request):
+
+    if request.method == "POST":
+
+        StudentKnowledge.objects.filter(
+            student=request.user
+        ).update(
+            next_review=timezone.now()
+        )
+
+    return redirect("dashboard")
