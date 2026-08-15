@@ -6,11 +6,33 @@
 
     <meta charset="UTF-8">
 
-    <title>Review Definition</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Review Definition
+    </title>
+
 
     <style>
 
+        * {
+            box-sizing: border-box;
+        }
+
+
         body {
+
+            margin: 0;
+
+            min-height: 100vh;
+
+            background: #f5f6f8;
+
+            color: #222;
+
             font-family:
                 -apple-system,
                 BlinkMacSystemFont,
@@ -18,22 +40,32 @@
                 Arial,
                 sans-serif;
 
-            background: #f5f6f8;
+            display: flex;
 
-            margin: 0;
+            align-items: center;
 
-            padding: 40px;
+            justify-content: center;
+
+            padding: 30px;
+
         }
+
+
+        /* =========================================
+           CONTAINER
+        ========================================= */
 
         .container {
 
-            max-width: 700px;
+            width: 100%;
 
-            margin: 0 auto;
+            max-width: 700px;
 
             background: white;
 
-            border: 1px solid #e5e5e5;
+            border:
+                1px solid
+                #e5e5e5;
 
             border-radius: 14px;
 
@@ -41,9 +73,44 @@
 
         }
 
-        h1 {
-            margin-top: 0;
+
+        /* =========================================
+           HEADER
+        ========================================= */
+
+        .header {
+
+            margin-bottom: 30px;
+
         }
+
+
+        .header h1 {
+
+            margin:
+                0
+                0
+                6px;
+
+            font-size: 24px;
+
+        }
+
+
+        .header p {
+
+            margin: 0;
+
+            color: #888;
+
+            font-size: 14px;
+
+        }
+
+
+        /* =========================================
+           TERM
+        ========================================= */
 
         .term {
 
@@ -51,35 +118,78 @@
 
             font-weight: 700;
 
-            margin-bottom: 25px;
+            margin-bottom: 30px;
 
         }
 
-        .definition {
 
-            padding: 20px;
+        /* =========================================
+           DEFINITION QUESTION
+        ========================================= */
+
+        .definition-question {
+
+            padding: 25px;
 
             background: #f7f7f7;
 
             border-radius: 10px;
 
-            margin-bottom: 30px;
+            margin-bottom: 25px;
 
-            line-height: 1.6;
+            font-size: 18px;
 
-        }
-
-        .buttons {
-
-            display: flex;
-
-            gap: 15px;
+            line-height: 1.8;
 
         }
 
-        button {
 
-            flex: 1;
+        .missing-input {
+
+            display: inline-block;
+
+            width: 180px;
+
+            padding:
+                5px
+                8px;
+
+            margin:
+                0
+                4px;
+
+            border:
+                none;
+
+            border-bottom:
+                2px solid
+                #222;
+
+            background: white;
+
+            font-size: 17px;
+
+            text-align: center;
+
+            outline: none;
+
+        }
+
+
+        .missing-input:focus {
+
+            border-bottom-color: #555;
+
+        }
+
+
+        /* =========================================
+           SUBMIT BUTTON
+        ========================================= */
+
+        .submit-button {
+
+            width: 100%;
 
             padding: 14px;
 
@@ -87,35 +197,208 @@
 
             border-radius: 8px;
 
+            background: #222;
+
+            color: white;
+
             font-size: 15px;
 
             font-weight: 600;
 
             cursor: pointer;
 
+            transition:
+                background 0.15s ease,
+                transform 0.15s ease;
+
         }
 
-        .wrong {
-            background: #eee;
+
+        .submit-button:hover {
+
+            background: #333;
+
+            transform:
+                translateY(-1px);
+
         }
 
-        .correct {
-            background: #222;
 
-            color: white;
+        /* =========================================
+           RESULT
+        ========================================= */
+
+        .result {
+
+            margin-top: 25px;
+
+            padding: 20px;
+
+            border-radius: 10px;
+
+        }
+
+
+        .result.correct {
+
+            background: #f0f7f0;
+
+            border:
+                1px solid
+                #cfe3cf;
+
+        }
+
+
+        .result.incorrect {
+
+            background: #f7f3f3;
+
+            border:
+                1px solid
+                #e4d4d4;
+
+        }
+
+
+        .result-title {
+
+            font-size: 17px;
+
+            font-weight: 700;
+
+            margin-bottom: 8px;
+
+        }
+
+
+        .result-answer {
+
+            color: #555;
+
+            line-height: 1.5;
+
+        }
+
+
+        /* =========================================
+           CONTINUE
+        ========================================= */
+
+        .continue-button {
+
+            display: block;
+
+            width: 100%;
+
+            margin-top: 15px;
+
+            padding: 14px;
+
+            border:
+                1px solid
+                #d8d8d8;
+
+            border-radius: 8px;
+
+            background: white;
+
+            color: #333;
+
+            text-align: center;
+
+            text-decoration: none;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            transition:
+                background 0.15s ease;
+
+        }
+
+
+        .continue-button:hover {
+
+            background: #f5f5f5;
+
+        }
+
+
+        /* =========================================
+           RESPONSIVE
+        ========================================= */
+
+        @media (max-width: 600px) {
+
+            body {
+
+                padding: 15px;
+
+            }
+
+
+            .container {
+
+                padding: 25px;
+
+            }
+
+
+            .term {
+
+                font-size: 24px;
+
+            }
+
+
+            .definition-question {
+
+                font-size: 16px;
+
+            }
+
+
+            .missing-input {
+
+                width: 140px;
+
+            }
+
         }
 
     </style>
 
 </head>
 
+
 <body>
+
 
 <div class="container">
 
-    <h1>
-        Review Definition
-    </h1>
+
+    <!-- =========================================
+         HEADER
+    ========================================= -->
+
+    <div class="header">
+
+        <h1>
+            Review Definition
+        </h1>
+
+        <p>
+            Fill in the missing part.
+        </p>
+
+    </div>
+
+
+    <!-- =========================================
+         TERM
+    ========================================= -->
 
     <div class="term">
 
@@ -123,41 +406,164 @@
 
     </div>
 
-    <div class="definition">
 
-        {{ definition.definition }}
+    <!-- =========================================
+         QUESTION
+    ========================================= -->
 
-    </div>
+    {% if not submitted %}
 
-    <form method="post">
+        <form method="post">
 
-        {% csrf_token %}
+            {% csrf_token %}
 
-        <div class="buttons">
+
+            <div class="definition-question">
+
+                {{ before_text }}
+
+                {% if before_text %}
+                    &nbsp;
+                {% endif %}
+
+
+                <input
+                    type="text"
+                    name="answer"
+                    class="missing-input"
+                    autocomplete="off"
+                    autofocus
+                    required
+                >
+
+
+                {% if after_text %}
+                    &nbsp;
+                {% endif %}
+
+                {{ after_text }}
+
+            </div>
+
 
             <button
                 type="submit"
-                name="result"
-                value="incorrect"
-                class="wrong"
+                class="submit-button"
             >
-                I didn't know
+
+                Check Answer
+
             </button>
 
-            <button
-                type="submit"
-                name="result"
-                value="correct"
-                class="correct"
-            >
-                I knew it
-            </button>
+        </form>
+
+
+    {% else %}
+
+
+        <!-- =====================================
+             SHOW THE ANSWER AFTER SUBMISSION
+        ====================================== -->
+
+        <div class="definition-question">
+
+            {{ before_text }}
+
+            {% if before_text %}
+                &nbsp;
+            {% endif %}
+
+
+            <strong>
+                {{ missing_text }}
+            </strong>
+
+
+            {% if after_text %}
+                &nbsp;
+            {% endif %}
+
+            {{ after_text }}
 
         </div>
 
-    </form>
+
+        <!-- =====================================
+             CORRECT
+        ====================================== -->
+
+        {% if is_correct %}
+
+            <div class="result correct">
+
+                <div class="result-title">
+
+                    ✓ Correct
+
+                </div>
+
+                <div class="result-answer">
+
+                    You remembered the missing part correctly.
+
+                </div>
+
+            </div>
+
+
+        {% else %}
+
+
+            <!-- =================================
+                 INCORRECT
+            ================================== -->
+
+            <div class="result incorrect">
+
+                <div class="result-title">
+
+                    ✗ Not quite
+
+                </div>
+
+                <div class="result-answer">
+
+                    Your answer:
+
+                    <strong>
+                        {{ answer|default:"No answer" }}
+                    </strong>
+
+                    <br><br>
+
+                    Correct answer:
+
+                    <strong>
+                        {{ missing_text }}
+                    </strong>
+
+                </div>
+
+            </div>
+
+        {% endif %}
+
+
+        <a
+            href="{% url 'subject_detail' subject_index=subject_index %}"
+            class="continue-button"
+        >
+
+            Continue
+
+        </a>
+
+
+    {% endif %}
+
 
 </div>
+
 
 </body>
 

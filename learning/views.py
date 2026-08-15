@@ -1061,13 +1061,76 @@ def review_definition(
     )
 
     # ========================================================
-    # SUBMIT REVIEW
+    # CREATE THE MISSING PART
+    # ========================================================
+
+    definition_text = definition.definition.strip()
+
+    words = definition_text.split()
+
+    # --------------------------------------------------------
+    # Very short definitions cannot safely have a word removed.
+    # In that case, use the full definition as the answer.
+    # --------------------------------------------------------
+
+    if len(words) < 4:
+
+        missing_text = definition_text
+
+        before_text = ""
+
+        after_text = ""
+
+    else:
+
+        # ----------------------------------------------------
+        # Start with a simple middle section.
+        #
+        # Example:
+        #
+        # The value of the next best alternative that is
+        # forgone when making a choice.
+        #
+        # becomes something like:
+        #
+        # The value of the next best alternative
+        # [________]
+        # when making a choice.
+        # ----------------------------------------------------
+
+        missing_index = len(words) // 2
+
+        missing_text = words[
+            missing_index
+        ]
+
+        before_text = " ".join(
+            words[:missing_index]
+        )
+
+        after_text = " ".join(
+            words[missing_index + 1:]
+        )
+
+    # ========================================================
+    # REVIEW SUBMISSION
     # ========================================================
 
     if request.method == "POST":
 
-        result = request.POST.get(
-            "result"
+        answer = request.POST.get(
+            "answer",
+            ""
+        ).strip()
+
+        # ----------------------------------------------------
+        # Compare answers without worrying about
+        # capitalization or extra spaces.
+        # ----------------------------------------------------
+
+        is_correct = (
+            answer.casefold()
+            == missing_text.casefold()
         )
 
         progress.review_count += 1
@@ -1080,7 +1143,7 @@ def review_definition(
         # CORRECT
         # ====================================================
 
-        if result == "correct":
+        if is_correct:
 
             progress.correct_count += 1
 
@@ -1148,8 +1211,7 @@ def review_definition(
                 break
 
         # ----------------------------------------------------
-        # If database_id wasn't saved in the session,
-        # fall back to matching by name.
+        # FALLBACK: MATCH SUBJECT NAME
         # ----------------------------------------------------
 
         if subject_index is None:
@@ -1171,20 +1233,43 @@ def review_definition(
                     break
 
         # ----------------------------------------------------
-        # Final fallback.
+        # FINAL FALLBACK
         # ----------------------------------------------------
 
         if subject_index is None:
 
             subject_index = 0
 
-        return redirect(
-            "subject_detail",
-            subject_index=subject_index
+        # ====================================================
+        # SHOW RESULT BEFORE LEAVING
+        # ====================================================
+
+        return render(
+            request,
+            "learning/review_definition.html",
+            {
+                "definition": definition,
+
+                "progress": progress,
+
+                "before_text": before_text,
+
+                "missing_text": missing_text,
+
+                "after_text": after_text,
+
+                "answer": answer,
+
+                "is_correct": is_correct,
+
+                "submitted": True,
+
+                "subject_index": subject_index,
+            }
         )
 
     # ========================================================
-    # DISPLAY DEFINITION REVIEW
+    # DISPLAY REVIEW
     # ========================================================
 
     return render(
@@ -1196,6 +1281,18 @@ def review_definition(
 
             "progress":
                 progress,
+
+            "before_text":
+                before_text,
+
+            "missing_text":
+                missing_text,
+
+            "after_text":
+                after_text,
+
+            "submitted":
+                False,
         }
     )
 
