@@ -1520,3 +1520,224 @@ def definition_list(
                 definitions,
         }
     )
+
+    # ============================================================
+# EDIT DEFINITION
+# ============================================================
+
+@login_required
+def edit_definition(
+    request,
+    definition_id
+):
+
+    definition = get_object_or_404(
+        Definition,
+        id=definition_id,
+        knowledge_unit__subject__user=request.user
+    )
+
+    knowledge_unit = (
+        definition.knowledge_unit
+    )
+
+    # ========================================================
+    # FIND SUBJECT INDEX
+    # ========================================================
+
+    subjects = request.session.get(
+        "onboarding_subjects",
+        []
+    )
+
+    subject = knowledge_unit.subject
+
+    subject_index = None
+
+    # --------------------------------------------------------
+    # MATCH DATABASE ID
+    # --------------------------------------------------------
+
+    for index, subject_data in enumerate(subjects):
+
+        if (
+            subject_data.get("database_id")
+            == subject.id
+        ):
+
+            subject_index = index
+
+            break
+
+    # --------------------------------------------------------
+    # FALLBACK: MATCH SUBJECT NAME
+    # --------------------------------------------------------
+
+    if subject_index is None:
+
+        for index, subject_data in enumerate(subjects):
+
+            if (
+                subject_data.get(
+                    "name",
+                    ""
+                ).strip()
+                == subject.name
+            ):
+
+                subject_index = index
+
+                break
+
+    # --------------------------------------------------------
+    # FINAL FALLBACK
+    # --------------------------------------------------------
+
+    if subject_index is None:
+
+        subject_index = 0
+
+    # ========================================================
+    # POST
+    # ========================================================
+
+    if request.method == "POST":
+
+        term = request.POST.get(
+            "term",
+            ""
+        ).strip()
+
+        definition_text = request.POST.get(
+            "definition",
+            ""
+        ).strip()
+
+        difficulty = request.POST.get(
+            "difficulty",
+            knowledge_unit.difficulty
+        )
+
+        estimated_minutes = request.POST.get(
+            "estimated_minutes",
+            knowledge_unit.estimated_minutes
+        )
+
+        # ====================================================
+        # VALIDATION
+        # ====================================================
+
+        if term and definition_text:
+
+            # ------------------------------------------------
+            # UPDATE KNOWLEDGE UNIT
+            # ------------------------------------------------
+
+            knowledge_unit.title = term
+
+            try:
+                knowledge_unit.difficulty = int(
+                    difficulty
+                )
+            except (
+                ValueError,
+                TypeError
+            ):
+                knowledge_unit.difficulty = 1
+
+            try:
+                knowledge_unit.estimated_minutes = int(
+                    estimated_minutes
+                )
+            except (
+                ValueError,
+                TypeError
+            ):
+                knowledge_unit.estimated_minutes = 2
+
+            knowledge_unit.save()
+
+            # ------------------------------------------------
+            # UPDATE DEFINITION
+            # ------------------------------------------------
+
+            definition.term = term
+
+            definition.definition = (
+                definition_text
+            )
+
+            definition.save()
+
+            return redirect(
+                "definition_list",
+                subject_id=subject.id
+            )
+
+    # ========================================================
+    # DISPLAY EDIT PAGE
+    # ========================================================
+
+    return render(
+        request,
+        "learning/edit_definition.html",
+        {
+            "definition":
+                definition,
+
+            "subject":
+                subject,
+
+            "subject_index":
+                subject_index,
+        }
+    )
+
+
+# ============================================================
+# DELETE DEFINITION
+# ============================================================
+
+@login_required
+def delete_definition(
+    request,
+    definition_id
+):
+
+    definition = get_object_or_404(
+        Definition,
+        id=definition_id,
+        knowledge_unit__subject__user=request.user
+    )
+
+    subject = definition.knowledge_unit.subject
+
+    # ========================================================
+    # ONLY DELETE THROUGH POST
+    # ========================================================
+
+    if request.method == "POST":
+
+        knowledge_unit = (
+            definition.knowledge_unit
+        )
+
+        # Deleting the KnowledgeUnit will also
+        # remove the Definition because the
+        # Definition belongs to it.
+
+        knowledge_unit.delete()
+
+        return redirect(
+            "definition_list",
+            subject_id=subject.id
+        )
+
+    # ========================================================
+    # GET REQUEST
+    # ========================================================
+
+    return redirect(
+        "definition_list",
+        subject_id=subject.id
+    )

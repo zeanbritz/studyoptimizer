@@ -74,4 +74,16 @@ urlpatterns = [
         name="definition_list",
     ),
 
+    path(
+        "definitions/<int:definition_id>/edit/",
+        views.edit_definition,
+        name="edit_definition",
+    ),
+
+    path(
+        "definitions/<int:definition_id>/delete/",
+        views.delete_definition,
+        name="delete_definition",
+    ),
+
 ]
