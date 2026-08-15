@@ -660,135 +660,21 @@ def get_review_interval(
 # ============================================================
 
 @login_required
-def review_formula(
-    request,
-    formula_id
-):
+def review_formula(request, formula_id):
 
     formula = get_object_or_404(
-
         Formula,
-
         id=formula_id,
-
         knowledge_unit__subject__user=request.user
-
     )
 
-    knowledge_unit = (
-        formula.knowledge_unit
-    )
+    # --------------------------------------------------------
+    # The Practice app handles the actual formula review.
+    # --------------------------------------------------------
 
-    progress, created = (
-        StudentKnowledge.objects.get_or_create(
-
-            student=request.user,
-
-            knowledge_unit=knowledge_unit,
-
-        )
-    )
-
-    # ========================================================
-    # LOAD FORMULA STRUCTURE
-    # ========================================================
-
-    try:
-
-        formula_elements = json.loads(
-            formula.structure
-        )
-
-    except (
-        json.JSONDecodeError,
-        TypeError
-    ):
-
-        formula_elements = []
-
-    # ========================================================
-    # SUBMIT REVIEW
-    # ========================================================
-
-    if request.method == "POST":
-
-        result = request.POST.get(
-            "result"
-        )
-
-        progress.review_count += 1
-
-        progress.last_reviewed = (
-            timezone.now()
-        )
-
-        # ====================================================
-        # CORRECT
-        # ====================================================
-
-        if result == "correct":
-
-            progress.correct_count += 1
-
-            if progress.mastery_level < 6:
-
-                progress.mastery_level += 1
-
-        # ====================================================
-        # INCORRECT
-        # ====================================================
-
-        else:
-
-            progress.incorrect_count += 1
-
-            if progress.mastery_level > 0:
-
-                progress.mastery_level -= 1
-
-        # ====================================================
-        # NEXT REVIEW
-        # ====================================================
-
-        interval = get_review_interval(
-            progress.mastery_level
-        )
-
-        progress.next_review = (
-            timezone.now()
-            + timedelta(
-                days=interval
-            )
-        )
-
-        progress.save()
-
-        # ====================================================
-        # RETURN TO FORMULA DETAIL
-        # ====================================================
-
-        return redirect(
-            "formula_detail",
-            formula_id=formula.id
-        )
-
-    # ========================================================
-    # DISPLAY REVIEW
-    # ========================================================
-
-    return render(
-        request,
-        "learning/review_formula.html",
-        {
-            "formula":
-                formula,
-
-            "formula_elements":
-                formula_elements,
-
-            "progress":
-                progress,
-        }
+    return redirect(
+        "practice_formula",
+        formula_id=formula.id
     )
 
 
