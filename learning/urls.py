@@ -39,6 +39,12 @@ urlpatterns = [
         name="formula_review_list",
     ),
 
+    path(
+        "subjects/<int:subject_id>/formulas/",
+        views.formula_list,
+        name="formula_list",
+    ),
+
 
     # ========================================================
     # DEFINITION

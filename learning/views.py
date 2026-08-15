@@ -63,13 +63,84 @@ def extract_variables(elements):
 # ============================================================
 
 @login_required
-def create_formula(request, subject_id):
+def create_formula(
+    request,
+    subject_id
+):
+
+    # ========================================================
+    # GET SUBJECT
+    # ========================================================
 
     subject = get_object_or_404(
         Subject,
         id=subject_id,
         user=request.user
     )
+
+    # ========================================================
+    # FIND SUBJECT INDEX
+    # ========================================================
+
+    subjects = request.session.get(
+        "onboarding_subjects",
+        []
+    )
+
+    subject_index = None
+
+    # --------------------------------------------------------
+    # FIRST: MATCH DATABASE ID
+    # --------------------------------------------------------
+
+    for index, subject_data in enumerate(
+        subjects
+    ):
+
+        if (
+            subject_data.get(
+                "database_id"
+            )
+            == subject.id
+        ):
+
+            subject_index = index
+
+            break
+
+    # --------------------------------------------------------
+    # FALLBACK: MATCH SUBJECT NAME
+    # --------------------------------------------------------
+
+    if subject_index is None:
+
+        for index, subject_data in enumerate(
+            subjects
+        ):
+
+            if (
+                subject_data.get(
+                    "name",
+                    ""
+                ).strip()
+                == subject.name
+            ):
+
+                subject_index = index
+
+                break
+
+    # --------------------------------------------------------
+    # FINAL FALLBACK
+    # --------------------------------------------------------
+
+    if subject_index is None:
+
+        subject_index = 0
+
+    # ========================================================
+    # POST
+    # ========================================================
 
     if request.method == "POST":
 
@@ -110,6 +181,7 @@ def create_formula(request, subject_id):
                 ),
 
                 active=True,
+
             )
 
             # =================================================
@@ -185,9 +257,11 @@ def create_formula(request, subject_id):
                 ).strip()
 
                 if not symbol:
+
                     continue
 
                 if symbol in seen_symbols:
+
                     continue
 
                 seen_symbols.add(
@@ -221,12 +295,172 @@ def create_formula(request, subject_id):
 
         form = FormulaForm()
 
+    # ========================================================
+    # DISPLAY CREATE PAGE
+    # ========================================================
+
     return render(
         request,
         "learning/create_formula.html",
         {
-            "form": form,
-            "subject": subject,
+            "form":
+                form,
+
+            "subject":
+                subject,
+
+            "subject_index":
+                subject_index,
+        }
+    )
+
+
+
+# ============================================================
+# VIEW ALL FORMULAS
+# ============================================================
+
+@login_required
+def formula_list(
+    request,
+    subject_id
+):
+    """
+    Display every formula that belongs to
+    the selected subject.
+    """
+
+    # --------------------------------------------------------
+    # GET SUBJECT
+    # --------------------------------------------------------
+
+    subject = get_object_or_404(
+        Subject,
+        id=subject_id,
+        user=request.user
+    )
+
+    # --------------------------------------------------------
+    # FIND SUBJECT INDEX
+    # --------------------------------------------------------
+
+    subjects = request.session.get(
+        "onboarding_subjects",
+        []
+    )
+
+    subject_index = None
+
+    # --------------------------------------------------------
+    # FIRST: MATCH DATABASE ID
+    # --------------------------------------------------------
+
+    for index, subject_data in enumerate(
+        subjects
+    ):
+
+        if (
+            subject_data.get(
+                "database_id"
+            )
+            == subject.id
+        ):
+
+            subject_index = index
+
+            break
+
+    # --------------------------------------------------------
+    # FALLBACK: MATCH SUBJECT NAME
+    # --------------------------------------------------------
+
+    if subject_index is None:
+
+        for index, subject_data in enumerate(
+            subjects
+        ):
+
+            if (
+                subject_data.get(
+                    "name",
+                    ""
+                ).strip()
+                == subject.name
+            ):
+
+                subject_index = index
+
+                break
+
+    # --------------------------------------------------------
+    # FINAL FALLBACK
+    # --------------------------------------------------------
+
+    if subject_index is None:
+
+        subject_index = 0
+
+    # --------------------------------------------------------
+    # GET FORMULAS
+    # --------------------------------------------------------
+
+    knowledge_units = (
+        KnowledgeUnit.objects
+        .filter(
+            subject=subject,
+
+            knowledge_type=(
+                KnowledgeUnit
+                .KnowledgeType
+                .FORMULA
+            ),
+
+            active=True,
+        )
+        .select_related(
+            "formula"
+        )
+        .order_by(
+            "title"
+        )
+    )
+
+    # --------------------------------------------------------
+    # GET ACTUAL FORMULAS
+    # --------------------------------------------------------
+
+    formulas = []
+
+    for knowledge_unit in knowledge_units:
+
+        formula = getattr(
+            knowledge_unit,
+            "formula",
+            None
+        )
+
+        if formula:
+
+            formulas.append(
+                formula
+            )
+
+    # --------------------------------------------------------
+    # RENDER
+    # --------------------------------------------------------
+
+    return render(
+        request,
+        "learning/formula_list.html",
+        {
+            "subject":
+                subject,
+
+            "subject_index":
+                subject_index,
+
+            "formulas":
+                formulas,
         }
     )
 
