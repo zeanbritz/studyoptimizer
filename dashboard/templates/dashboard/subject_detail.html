@@ -477,8 +477,6 @@
 
             width: 100%;
 
-            padding: 18px;
-
             border:
                 1px solid
                 #e1e1e1;
@@ -487,33 +485,34 @@
 
             background: white;
 
-            cursor: pointer;
-
-            text-align: left;
-
-            transition:
-                background 0.15s ease,
-                border-color 0.15s ease;
-
-        }
-
-
-        .review-category:hover {
-
-            background: #f7f7f7;
-
-            border-color: #cfcfcf;
+            overflow: hidden;
 
         }
 
 
         .review-category-header {
 
+            width: 100%;
+
+            padding: 18px;
+
             display: flex;
 
             align-items: center;
 
             justify-content: space-between;
+
+            cursor: pointer;
+
+            transition:
+                background 0.15s ease;
+
+        }
+
+
+        .review-category-header:hover {
+
+            background: #f7f7f7;
 
         }
 
@@ -591,9 +590,9 @@
         .review-description {
 
             margin:
-                7px
                 0
-                0;
+                18px
+                18px;
 
             color: #888;
 
@@ -610,13 +609,10 @@
 
             display: none;
 
-            margin-top: 15px;
-
-            padding-top: 15px;
-
-            border-top:
-                1px solid
-                #eeeeee;
+            padding:
+                0
+                18px
+                18px;
 
             flex-direction: column;
 
@@ -657,7 +653,8 @@
 
             transition:
                 background 0.15s ease,
-                border-color 0.15s ease;
+                border-color 0.15s ease,
+                transform 0.15s ease;
 
         }
 
@@ -668,6 +665,9 @@
 
             border-color: #cfcfcf;
 
+            transform:
+                translateY(-1px);
+
         }
 
 
@@ -676,7 +676,7 @@
             margin:
                 0
                 0
-                5px;
+                7px;
 
             font-size: 14px;
 
@@ -691,7 +691,7 @@
 
             font-size: 13px;
 
-            line-height: 1.4;
+            line-height: 1.5;
 
         }
 
@@ -973,7 +973,7 @@
                 <!-- DEFINITION -->
 
                 <a
-                    href="{% url 'practice_definition' subject_index=subject_index %}"
+                    href="{% url 'create_definition' subject_id=database_subject.id %}?subject_index={{ subject_index }}"
                     class="summary-option"
                 >
 
@@ -990,20 +990,38 @@
 
                 <!-- FORMULA -->
 
-                <a
-                    href="{% url 'create_formula' subject_id=database_subject.id %}"
-                    class="summary-option"
-                >
+                {% if database_subject %}
 
-                    <h3>
-                        Formula
-                    </h3>
+                    <a
+                        href="{% url 'create_formula' subject_id=database_subject.id %}"
+                        class="summary-option"
+                    >
 
-                    <p>
-                        Add important formulas for this subject.
-                    </p>
+                        <h3>
+                            Formula
+                        </h3>
 
-                </a>
+                        <p>
+                            Add important formulas for this subject.
+                        </p>
+
+                    </a>
+
+                {% else %}
+
+                    <div class="summary-option">
+
+                        <h3>
+                            Formula
+                        </h3>
+
+                        <p>
+                            Save the subject first before adding formulas.
+                        </p>
+
+                    </div>
+
+                {% endif %}
 
 
                 <!-- LIST -->
@@ -1116,21 +1134,19 @@
 
                 {% if due_formulas %}
 
-                    <div
-                        class="review-category"
-                        onclick="toggleReview(this)"
-                    >
+                    <div class="review-category">
 
 
-                        <div class="review-category-header">
-
+                        <div
+                            class="review-category-header"
+                            onclick="toggleReview(this)"
+                        >
 
                             <div class="review-category-title">
 
                                 <h3>
                                     Formulas to Review
                                 </h3>
-
 
                                 <span class="review-count">
 
@@ -1144,7 +1160,6 @@
                             <span class="review-arrow">
                                 ▼
                             </span>
-
 
                         </div>
 
@@ -1164,9 +1179,7 @@
                                 <a
                                     href="{% url 'review_formula' formula_id=formula.id %}"
                                     class="review-item"
-                                    onclick="event.stopPropagation();"
                                 >
-
 
                                     <h4>
 
@@ -1188,7 +1201,6 @@
 
                                     </span>
 
-
                                 </a>
 
                             {% endfor %}
@@ -1208,14 +1220,13 @@
 
                 {% if due_definitions %}
 
-                    <div
-                        class="review-category"
-                        onclick="toggleReview(this)"
-                    >
+                    <div class="review-category">
 
 
-                        <div class="review-category-header">
-
+                        <div
+                            class="review-category-header"
+                            onclick="toggleReview(this)"
+                        >
 
                             <div class="review-category-title">
 
@@ -1237,7 +1248,6 @@
                                 ▼
                             </span>
 
-
                         </div>
 
 
@@ -1253,11 +1263,10 @@
 
                             {% for definition in due_definitions %}
 
-                                <div
+                                <a
+                                    href="{% url 'review_definition' definition_id=definition.id %}"
                                     class="review-item"
-                                    onclick="event.stopPropagation();"
                                 >
-
 
                                     <h4>
 
@@ -1275,12 +1284,11 @@
 
                                     <span class="review-date">
 
-                                        Review today
+                                        Review today →
 
                                     </span>
 
-
-                                </div>
+                                </a>
 
                             {% endfor %}
 
@@ -1292,12 +1300,100 @@
 
                 {% endif %}
 
+                <!-- =====================================
+     BULLET LISTS TO REVIEW
+====================================== -->
+
+{% if due_bullet_lists %}
+
+    <div class="review-category">
+
+
+        <div
+            class="review-category-header"
+            onclick="toggleReview(this)"
+        >
+
+            <div class="review-category-title">
+
+                <h3>
+                    Lists to Review
+                </h3>
+
+                <span class="review-count">
+
+                    {{ due_bullet_list_count }}
+
+                </span>
+
+            </div>
+
+
+            <span class="review-arrow">
+                ▼
+            </span>
+
+        </div>
+
+
+        <p class="review-description">
+
+            Lists you need to review today.
+
+        </p>
+
+
+        <div class="review-content">
+
+
+            {% for bullet_list in due_bullet_lists %}
+
+                <div class="review-item">
+
+
+                    <h4>
+
+                        {{ bullet_list.question }}
+
+                    </h4>
+
+
+                    {% for item in bullet_list.items.all %}
+
+                        <p>
+
+                            • {{ item.text }}
+
+                        </p>
+
+                    {% endfor %}
+
+
+                    <span class="review-date">
+
+                        Review today
+
+                    </span>
+
+
+                </div>
+
+            {% endfor %}
+
+
+        </div>
+
+
+    </div>
+
+{% endif %}
+
 
                 <!-- =====================================
                      NOTHING TO REVIEW
                 ====================================== -->
 
-                {% if not due_formulas and not due_definitions %}
+                {% if not due_formulas and not due_definitions and not due_bullet_lists %}
 
                     <div class="empty-review">
 
@@ -1322,9 +1418,14 @@
 
 <script>
 
-    function toggleReview(element) {
+    function toggleReview(header) {
 
-        element.classList.toggle("open");
+        const category =
+            header.parentElement;
+
+        category.classList.toggle(
+            "open"
+        );
 
     }
 

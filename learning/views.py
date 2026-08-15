@@ -79,6 +79,10 @@ def create_formula(request, subject_id):
 
         if form.is_valid():
 
+            # =================================================
+            # CREATE KNOWLEDGE UNIT
+            # =================================================
+
             knowledge_unit = KnowledgeUnit.objects.create(
 
                 subject=subject,
@@ -105,7 +109,12 @@ def create_formula(request, subject_id):
                     ]
                 ),
 
+                active=True,
             )
+
+            # =================================================
+            # GET FORMULA STRUCTURE
+            # =================================================
 
             structure = request.POST.get(
                 "formula_structure",
@@ -124,6 +133,10 @@ def create_formula(request, subject_id):
             ):
 
                 structure_data = []
+
+            # =================================================
+            # CREATE FORMULA
+            # =================================================
 
             formula = Formula.objects.create(
 
@@ -145,9 +158,9 @@ def create_formula(request, subject_id):
 
             )
 
-            # ------------------------------------------------
-            # CREATE VARIABLES
-            # ------------------------------------------------
+            # =================================================
+            # CREATE FORMULA VARIABLES
+            # =================================================
 
             seen_symbols = set()
 
@@ -177,7 +190,9 @@ def create_formula(request, subject_id):
                 if symbol in seen_symbols:
                     continue
 
-                seen_symbols.add(symbol)
+                seen_symbols.add(
+                    symbol
+                )
 
                 FormulaVariable.objects.create(
 
@@ -192,6 +207,10 @@ def create_formula(request, subject_id):
                 )
 
                 variable_order += 1
+
+            # =================================================
+            # FORMULA CREATED
+            # =================================================
 
             return redirect(
                 "formula_detail",
@@ -213,11 +232,152 @@ def create_formula(request, subject_id):
 
 
 # ============================================================
+# CREATE DEFINITION
+# ============================================================
+
+@login_required
+def create_definition(
+    request,
+    subject_id
+):
+
+    # ========================================================
+    # GET SUBJECT
+    # ========================================================
+
+    subject = get_object_or_404(
+        Subject,
+        id=subject_id,
+        user=request.user
+    )
+
+    # ========================================================
+    # SUBJECT INDEX
+    # ========================================================
+
+    subject_index = request.GET.get(
+        "subject_index",
+        request.POST.get(
+            "subject_index",
+            0
+        )
+    )
+
+    try:
+
+        subject_index = int(
+            subject_index
+        )
+
+    except (
+        ValueError,
+        TypeError
+    ):
+
+        subject_index = 0
+
+    # ========================================================
+    # POST
+    # ========================================================
+
+    if request.method == "POST":
+
+        term = request.POST.get(
+            "term",
+            ""
+        ).strip()
+
+        definition_text = request.POST.get(
+            "definition",
+            ""
+        ).strip()
+
+        # ====================================================
+        # VALIDATION
+        # ====================================================
+
+        if term and definition_text:
+
+            # =================================================
+            # CREATE KNOWLEDGE UNIT
+            # =================================================
+
+            knowledge_unit = KnowledgeUnit.objects.create(
+
+                subject=subject,
+
+                title=term,
+
+                knowledge_type=(
+                    KnowledgeUnit
+                    .KnowledgeType
+                    .DEFINITION
+                ),
+
+                difficulty=1,
+
+                estimated_minutes=2,
+
+                active=True,
+
+            )
+
+            # =================================================
+            # CREATE DEFINITION
+            # =================================================
+
+            Definition.objects.create(
+
+                knowledge_unit=knowledge_unit,
+
+                term=term,
+
+                definition=definition_text,
+
+            )
+
+            # =================================================
+            # NEW DEFINITIONS ARE IMMEDIATELY DUE
+            # =================================================
+            #
+            # We deliberately do NOT create StudentKnowledge
+            # here.
+            #
+            # When the review page sees that there is no
+            # StudentKnowledge record, it treats the definition
+            # as never reviewed and therefore due immediately.
+            #
+            # This is exactly how formulas work.
+            # =================================================
+
+        return redirect(
+            "subject_detail",
+            subject_index=subject_index
+        )
+
+    # ========================================================
+    # DISPLAY CREATE PAGE
+    # ========================================================
+
+    return render(
+        request,
+        "learning/create_definition.html",
+        {
+            "subject": subject,
+            "subject_index": subject_index,
+        }
+    )
+
+
+# ============================================================
 # FORMULA DETAIL
 # ============================================================
 
 @login_required
-def formula_detail(request, formula_id):
+def formula_detail(
+    request,
+    formula_id
+):
 
     formula = get_object_or_404(
 
@@ -253,8 +413,11 @@ def formula_detail(request, formula_id):
         "learning/formula_detail.html",
         {
             "formula": formula,
+
             "variables": variables,
-            "formula_elements": formula_elements,
+
+            "formula_elements":
+                formula_elements,
         }
     )
 
@@ -264,7 +427,10 @@ def formula_detail(request, formula_id):
 # ============================================================
 
 @login_required
-def edit_formula(request, formula_id):
+def edit_formula(
+    request,
+    formula_id
+):
 
     formula = get_object_or_404(
 
@@ -276,7 +442,13 @@ def edit_formula(request, formula_id):
 
     )
 
-    knowledge_unit = formula.knowledge_unit
+    knowledge_unit = (
+        formula.knowledge_unit
+    )
+
+    # ========================================================
+    # POST
+    # ========================================================
 
     if request.method == "POST":
 
@@ -285,6 +457,10 @@ def edit_formula(request, formula_id):
         )
 
         if form.is_valid():
+
+            # ================================================
+            # UPDATE KNOWLEDGE UNIT
+            # ================================================
 
             knowledge_unit.title = (
                 form.cleaned_data[
@@ -306,6 +482,10 @@ def edit_formula(request, formula_id):
 
             knowledge_unit.save()
 
+            # ================================================
+            # UPDATE FORMULA
+            # ================================================
+
             formula.structure = request.POST.get(
                 "formula_structure",
                 "[]"
@@ -325,6 +505,10 @@ def edit_formula(request, formula_id):
 
             formula.save()
 
+            # ================================================
+            # READ STRUCTURE
+            # ================================================
+
             try:
 
                 structure_data = json.loads(
@@ -338,7 +522,15 @@ def edit_formula(request, formula_id):
 
                 structure_data = []
 
+            # ================================================
+            # DELETE OLD VARIABLES
+            # ================================================
+
             formula.variables.all().delete()
+
+            # ================================================
+            # REBUILD VARIABLES
+            # ================================================
 
             seen_symbols = set()
 
@@ -368,7 +560,9 @@ def edit_formula(request, formula_id):
                 if symbol in seen_symbols:
                     continue
 
-                seen_symbols.add(symbol)
+                seen_symbols.add(
+                    symbol
+                )
 
                 FormulaVariable.objects.create(
 
@@ -388,6 +582,10 @@ def edit_formula(request, formula_id):
                 "formula_detail",
                 formula_id=formula.id
             )
+
+    # ========================================================
+    # GET
+    # ========================================================
 
     else:
 
@@ -419,6 +617,7 @@ def edit_formula(request, formula_id):
         "learning/edit_formula.html",
         {
             "form": form,
+
             "formula": formula,
         }
     )
@@ -428,7 +627,9 @@ def edit_formula(request, formula_id):
 # REVIEW INTERVAL
 # ============================================================
 
-def get_review_interval(mastery_level):
+def get_review_interval(
+    mastery_level
+):
 
     intervals = {
 
@@ -459,7 +660,10 @@ def get_review_interval(mastery_level):
 # ============================================================
 
 @login_required
-def review_formula(request, formula_id):
+def review_formula(
+    request,
+    formula_id
+):
 
     formula = get_object_or_404(
 
@@ -471,7 +675,9 @@ def review_formula(request, formula_id):
 
     )
 
-    knowledge_unit = formula.knowledge_unit
+    knowledge_unit = (
+        formula.knowledge_unit
+    )
 
     progress, created = (
         StudentKnowledge.objects.get_or_create(
@@ -482,6 +688,10 @@ def review_formula(request, formula_id):
 
         )
     )
+
+    # ========================================================
+    # LOAD FORMULA STRUCTURE
+    # ========================================================
 
     try:
 
@@ -496,6 +706,10 @@ def review_formula(request, formula_id):
 
         formula_elements = []
 
+    # ========================================================
+    # SUBMIT REVIEW
+    # ========================================================
+
     if request.method == "POST":
 
         result = request.POST.get(
@@ -508,6 +722,10 @@ def review_formula(request, formula_id):
             timezone.now()
         )
 
+        # ====================================================
+        # CORRECT
+        # ====================================================
+
         if result == "correct":
 
             progress.correct_count += 1
@@ -515,6 +733,10 @@ def review_formula(request, formula_id):
             if progress.mastery_level < 6:
 
                 progress.mastery_level += 1
+
+        # ====================================================
+        # INCORRECT
+        # ====================================================
 
         else:
 
@@ -524,29 +746,48 @@ def review_formula(request, formula_id):
 
                 progress.mastery_level -= 1
 
+        # ====================================================
+        # NEXT REVIEW
+        # ====================================================
+
         interval = get_review_interval(
             progress.mastery_level
         )
 
         progress.next_review = (
             timezone.now()
-            + timedelta(days=interval)
+            + timedelta(
+                days=interval
+            )
         )
 
         progress.save()
+
+        # ====================================================
+        # RETURN TO FORMULA DETAIL
+        # ====================================================
 
         return redirect(
             "formula_detail",
             formula_id=formula.id
         )
 
+    # ========================================================
+    # DISPLAY REVIEW
+    # ========================================================
+
     return render(
         request,
         "learning/review_formula.html",
         {
-            "formula": formula,
-            "formula_elements": formula_elements,
-            "progress": progress,
+            "formula":
+                formula,
+
+            "formula_elements":
+                formula_elements,
+
+            "progress":
+                progress,
         }
     )
 
@@ -577,22 +818,26 @@ def formula_review_list(
         TypeError
     ):
 
-        return redirect("goals")
+        return redirect(
+            "goals"
+        )
 
     if (
         subject_index < 0
         or subject_index >= len(subjects)
     ):
 
-        return redirect("goals")
+        return redirect(
+            "goals"
+        )
 
     subject_data = subjects[
         subject_index
     ]
 
-    # --------------------------------------------------------
+    # ========================================================
     # FIND DATABASE SUBJECT
-    # --------------------------------------------------------
+    # ========================================================
 
     database_subject = None
 
@@ -604,10 +849,12 @@ def formula_review_list(
 
     if database_subject_id:
 
-        database_subject = Subject.objects.filter(
-            id=database_subject_id,
-            user=request.user
-        ).first()
+        database_subject = (
+            Subject.objects.filter(
+                id=database_subject_id,
+                user=request.user
+            ).first()
+        )
 
     if not database_subject:
 
@@ -618,14 +865,16 @@ def formula_review_list(
 
         if subject_name:
 
-            database_subject = Subject.objects.filter(
-                user=request.user,
-                name=subject_name
-            ).first()
+            database_subject = (
+                Subject.objects.filter(
+                    user=request.user,
+                    name=subject_name
+                ).first()
+            )
 
-    # --------------------------------------------------------
+    # ========================================================
     # FIND DUE FORMULAS
-    # --------------------------------------------------------
+    # ========================================================
 
     due_formulas = []
 
@@ -637,11 +886,13 @@ def formula_review_list(
             KnowledgeUnit.objects
             .filter(
                 subject=database_subject,
+
                 knowledge_type=(
                     KnowledgeUnit
                     .KnowledgeType
                     .FORMULA
                 ),
+
                 active=True,
             )
             .select_related(
@@ -664,12 +915,18 @@ def formula_review_list(
                 StudentKnowledge.objects
                 .filter(
                     student=request.user,
-                    knowledge_unit=knowledge_unit
+
+                    knowledge_unit=(
+                        knowledge_unit
+                    )
                 )
                 .first()
             )
 
-            # Never reviewed = due immediately.
+            # ------------------------------------------------
+            # NEVER REVIEWED
+            # ------------------------------------------------
+
             if progress is None:
 
                 due_formulas.append(
@@ -678,10 +935,14 @@ def formula_review_list(
 
                 continue
 
-            # Reviewed before, check next review.
+            # ------------------------------------------------
+            # REVIEW DUE
+            # ------------------------------------------------
+
             if (
                 progress.next_review is not None
-                and progress.next_review.date()
+                and
+                progress.next_review.date()
                 <= today
             ):
 
@@ -693,9 +954,14 @@ def formula_review_list(
         request,
         "learning/formula_review_list.html",
         {
-            "subject": subject_data,
-            "subject_index": subject_index,
-            "formulas": due_formulas,
+            "subject":
+                subject_data,
+
+            "subject_index":
+                subject_index,
+
+            "formulas":
+                due_formulas,
         }
     )
 
@@ -726,22 +992,26 @@ def definition_review_list(
         TypeError
     ):
 
-        return redirect("goals")
+        return redirect(
+            "goals"
+        )
 
     if (
         subject_index < 0
         or subject_index >= len(subjects)
     ):
 
-        return redirect("goals")
+        return redirect(
+            "goals"
+        )
 
     subject_data = subjects[
         subject_index
     ]
 
-    # --------------------------------------------------------
+    # ========================================================
     # FIND DATABASE SUBJECT
-    # --------------------------------------------------------
+    # ========================================================
 
     database_subject = None
 
@@ -753,10 +1023,12 @@ def definition_review_list(
 
     if database_subject_id:
 
-        database_subject = Subject.objects.filter(
-            id=database_subject_id,
-            user=request.user
-        ).first()
+        database_subject = (
+            Subject.objects.filter(
+                id=database_subject_id,
+                user=request.user
+            ).first()
+        )
 
     if not database_subject:
 
@@ -767,14 +1039,16 @@ def definition_review_list(
 
         if subject_name:
 
-            database_subject = Subject.objects.filter(
-                user=request.user,
-                name=subject_name
-            ).first()
+            database_subject = (
+                Subject.objects.filter(
+                    user=request.user,
+                    name=subject_name
+                ).first()
+            )
 
-    # --------------------------------------------------------
+    # ========================================================
     # FIND DUE DEFINITIONS
-    # --------------------------------------------------------
+    # ========================================================
 
     due_definitions = []
 
@@ -786,11 +1060,13 @@ def definition_review_list(
             KnowledgeUnit.objects
             .filter(
                 subject=database_subject,
+
                 knowledge_type=(
                     KnowledgeUnit
                     .KnowledgeType
                     .DEFINITION
                 ),
+
                 active=True,
             )
             .select_related(
@@ -813,12 +1089,18 @@ def definition_review_list(
                 StudentKnowledge.objects
                 .filter(
                     student=request.user,
-                    knowledge_unit=knowledge_unit
+
+                    knowledge_unit=(
+                        knowledge_unit
+                    )
                 )
                 .first()
             )
 
-            # Never reviewed = due immediately.
+            # ------------------------------------------------
+            # NEVER REVIEWED
+            # ------------------------------------------------
+
             if progress is None:
 
                 due_definitions.append(
@@ -827,10 +1109,14 @@ def definition_review_list(
 
                 continue
 
-            # Reviewed before and due again.
+            # ------------------------------------------------
+            # REVIEW DUE
+            # ------------------------------------------------
+
             if (
                 progress.next_review is not None
-                and progress.next_review.date()
+                and
+                progress.next_review.date()
                 <= today
             ):
 
@@ -842,9 +1128,14 @@ def definition_review_list(
         request,
         "learning/definition_review_list.html",
         {
-            "subject": subject_data,
-            "subject_index": subject_index,
-            "definitions": due_definitions,
+            "subject":
+                subject_data,
+
+            "subject_index":
+                subject_index,
+
+            "definitions":
+                due_definitions,
         }
     )
 
@@ -899,6 +1190,10 @@ def review_definition(
             timezone.now()
         )
 
+        # ====================================================
+        # CORRECT
+        # ====================================================
+
         if result == "correct":
 
             progress.correct_count += 1
@@ -906,6 +1201,10 @@ def review_definition(
             if progress.mastery_level < 6:
 
                 progress.mastery_level += 1
+
+        # ====================================================
+        # INCORRECT
+        # ====================================================
 
         else:
 
@@ -915,20 +1214,26 @@ def review_definition(
 
                 progress.mastery_level -= 1
 
+        # ====================================================
+        # CALCULATE NEXT REVIEW
+        # ====================================================
+
         interval = get_review_interval(
             progress.mastery_level
         )
 
         progress.next_review = (
             timezone.now()
-            + timedelta(days=interval)
+            + timedelta(
+                days=interval
+            )
         )
 
         progress.save()
 
-        # ----------------------------------------------------
-        # Return to the definition review list.
-        # ----------------------------------------------------
+        # ====================================================
+        # FIND SUBJECT INDEX
+        # ====================================================
 
         subject_id = (
             knowledge_unit.subject.id
@@ -939,34 +1244,71 @@ def review_definition(
             []
         )
 
-        subject_index = 0
+        subject_index = None
 
-        for index, subject in enumerate(
+        for index, subject_data in enumerate(
             subjects
         ):
 
-            if subject.get(
-                "database_id"
-            ) == subject_id:
+            if (
+                subject_data.get(
+                    "database_id"
+                )
+                == subject_id
+            ):
 
                 subject_index = index
 
                 break
 
+        # ----------------------------------------------------
+        # If database_id wasn't saved in the session,
+        # fall back to matching by name.
+        # ----------------------------------------------------
+
+        if subject_index is None:
+
+            for index, subject_data in enumerate(
+                subjects
+            ):
+
+                if (
+                    subject_data.get(
+                        "name",
+                        ""
+                    ).strip()
+                    == knowledge_unit.subject.name
+                ):
+
+                    subject_index = index
+
+                    break
+
+        # ----------------------------------------------------
+        # Final fallback.
+        # ----------------------------------------------------
+
+        if subject_index is None:
+
+            subject_index = 0
+
         return redirect(
-            "definition_review_list",
+            "subject_detail",
             subject_index=subject_index
         )
 
     # ========================================================
-    # DISPLAY DEFINITION
+    # DISPLAY DEFINITION REVIEW
     # ========================================================
 
     return render(
         request,
         "learning/review_definition.html",
         {
-            "definition": definition,
-            "progress": progress,
+            "definition":
+                definition,
+
+            "progress":
+                progress,
         }
     )

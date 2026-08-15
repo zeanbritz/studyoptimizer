@@ -5,6 +5,10 @@ from . import views
 
 urlpatterns = [
 
+    # ========================================================
+    # FORMULA
+    # ========================================================
+
     path(
         "subjects/<int:subject_id>/formula/create/",
         views.create_formula,
@@ -33,6 +37,17 @@ urlpatterns = [
         "subjects/<int:subject_index>/formulas/review/",
         views.formula_review_list,
         name="formula_review_list",
+    ),
+
+
+    # ========================================================
+    # DEFINITION
+    # ========================================================
+
+    path(
+        "subjects/<int:subject_id>/definition/create/",
+        views.create_definition,
+        name="create_definition",
     ),
 
     path(
