@@ -486,16 +486,26 @@ def practice_formula(
     formula_id
 ):
     """
-    Main formula recall practice page.
+    Formula recall practice.
 
-    The student fills in the hidden formula elements.
-    Performance is recorded both at the element level
-    and at the overall knowledge-unit level.
+    Flow:
+
+        Question
+            ↓
+        Submit Answer
+            ↓
+        Show Correct / Incorrect
+            ↓
+        Continue
+            ↓
+        Find next due formula
+            ↓
+        New Question
     """
 
-    # --------------------------------------------------------
-    # GET FORMULA
-    # --------------------------------------------------------
+    # ========================================================
+    # GET CURRENT FORMULA
+    # ========================================================
 
     formula = get_object_or_404(
         Formula,
@@ -507,9 +517,9 @@ def practice_formula(
         formula.knowledge_unit
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # GET OR CREATE STUDENT PROGRESS
-    # --------------------------------------------------------
+    # ========================================================
 
     progress, created = (
         StudentKnowledge.objects.get_or_create(
@@ -521,9 +531,9 @@ def practice_formula(
         )
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # LOAD FORMULA STRUCTURE
-    # --------------------------------------------------------
+    # ========================================================
 
     try:
 
@@ -542,17 +552,124 @@ def practice_formula(
         formula_elements
     )
 
-    # --------------------------------------------------------
-    # DEFAULT VALUES
-    # --------------------------------------------------------
+    # ========================================================
+    # CONTINUE TO NEXT FORMULA
+    # ========================================================
 
-    hidden_elements = []
+    if (
+        request.method == "POST"
+        and
+        request.POST.get("action") == "continue"
+    ):
 
-    result = None
+        today = timezone.localdate()
 
-    correct_answers = {}
+        due_formulas = []
 
-    user_answers = {}
+        # ----------------------------------------------------
+        # GET ALL ACTIVE FORMULAS FOR THIS SUBJECT
+        # ----------------------------------------------------
+
+        knowledge_units = (
+            Formula.objects
+            .filter(
+                knowledge_unit__subject=(
+                    knowledge_unit.subject
+                ),
+
+                knowledge_unit__active=True,
+            )
+            .select_related(
+                "knowledge_unit"
+            )
+        )
+
+        # ----------------------------------------------------
+        # FIND A DIFFERENT DUE FORMULA
+        # ----------------------------------------------------
+
+        for next_formula in knowledge_units:
+
+            # Don't show the formula we just reviewed.
+            if next_formula.id == formula.id:
+
+                continue
+
+            next_knowledge_unit = (
+                next_formula.knowledge_unit
+            )
+
+            # ------------------------------------------------
+            # GET STUDENT PROGRESS
+            # ------------------------------------------------
+
+            next_progress = (
+                StudentKnowledge.objects
+                .filter(
+                    student=request.user,
+
+                    knowledge_unit=(
+                        next_knowledge_unit
+                    ),
+                )
+                .first()
+            )
+
+            # ------------------------------------------------
+            # NEVER REVIEWED
+            # ------------------------------------------------
+
+            if next_progress is None:
+
+                due_formulas.append(
+                    next_formula
+                )
+
+                continue
+
+            # ------------------------------------------------
+            # PREVIOUSLY REVIEWED AND DUE
+            # ------------------------------------------------
+
+            if (
+                next_progress.next_review is not None
+                and
+                next_progress.next_review.date()
+                <= today
+            ):
+
+                due_formulas.append(
+                    next_formula
+                )
+
+        # ====================================================
+        # ANOTHER FORMULA IS DUE
+        # ====================================================
+
+        if due_formulas:
+
+            next_formula = (
+                due_formulas[0]
+            )
+
+            return redirect(
+                "practice_formula",
+                formula_id=next_formula.id
+            )
+
+        # ====================================================
+        # NO MORE FORMULAS ARE DUE
+        # ====================================================
+
+        return redirect(
+            "subject_detail",
+            subject_index=(
+                request.POST.get(
+                    "subject_index",
+                    0
+                )
+            )
+        )
 
     # ========================================================
     # SUBMIT ANSWER
@@ -564,9 +681,15 @@ def practice_formula(
             "hidden_element_id"
         )
 
-        # ----------------------------------------------------
-        # CHECK EACH HIDDEN ELEMENT
-        # ----------------------------------------------------
+        correct_answers = {}
+
+        user_answers = {}
+
+        all_correct = True
+
+        # ====================================================
+        # CHECK EVERY HIDDEN ELEMENT
+        # ====================================================
 
         for hidden_id in hidden_ids:
 
@@ -576,16 +699,25 @@ def practice_formula(
             )
 
             if not element:
+
                 continue
 
             element_id = str(
                 element.get("id")
             )
 
+            # ------------------------------------------------
+            # STUDENT ANSWER
+            # ------------------------------------------------
+
             user_answer = request.POST.get(
                 "answer_" + element_id,
                 ""
             ).strip()
+
+            # ------------------------------------------------
+            # CORRECT ANSWER
+            # ------------------------------------------------
 
             correct_answer = str(
                 element.get(
@@ -593,6 +725,10 @@ def practice_formula(
                     ""
                 )
             ).strip()
+
+            # ------------------------------------------------
+            # CHECK ANSWER
+            # ------------------------------------------------
 
             is_correct = (
                 user_answer
@@ -617,27 +753,9 @@ def practice_formula(
                 is_correct
             )
 
-        # ----------------------------------------------------
-        # DETERMINE WHETHER ALL ANSWERS WERE CORRECT
-        # ----------------------------------------------------
-
-        all_correct = True
-
-        for element_id in correct_answers:
-
-            if (
-                user_answers.get(
-                    element_id,
-                    ""
-                )
-                !=
-                correct_answers[
-                    element_id
-                ]
-            ):
+            if not is_correct:
 
                 all_correct = False
-                break
 
         # ====================================================
         # CORRECT
@@ -650,45 +768,52 @@ def practice_formula(
 
             progress.correct_count += 1
 
+            progress.review_count += 1
+
             if progress.mastery_level < 6:
 
                 progress.mastery_level += 1
-
-            progress.review_count += 1
 
             progress.last_reviewed = (
                 timezone.now()
             )
 
-            # The student has just successfully
-            # reviewed the formula.
+            # ------------------------------------------------
+            # CALCULATE NEXT REVIEW
+            # ------------------------------------------------
+            #
+            # Use the same review interval system
+            # as definitions.
+            #
+            # This prevents the formula from immediately
+            # becoming due again.
+            # ------------------------------------------------
+
+            intervals = {
+                0: 0,
+                1: 1,
+                2: 2,
+                3: 4,
+                4: 7,
+                5: 14,
+                6: 30,
+            }
+
+            interval = intervals.get(
+                progress.mastery_level,
+                0
+            )
+
             progress.next_review = (
                 timezone.now()
+                + timezone.timedelta(
+                    days=interval
+                )
             )
 
             progress.save()
 
-            # Avoid immediately selecting the same
-            # elements when generating the next question.
-            previous_ids = list(
-                correct_answers.keys()
-            )
-
-            hidden_elements = (
-                choose_hidden_elements(
-
-                    all_elements,
-
-                    progress.mastery_level,
-
-                    formula,
-
-                    previous_ids
-
-                )
-            )
-
-            result = "next"
+            result = "correct"
 
         # ====================================================
         # INCORRECT
@@ -698,64 +823,101 @@ def practice_formula(
 
             progress.incorrect_count += 1
 
+            progress.review_count += 1
+
             if progress.mastery_level > 0:
 
                 progress.mastery_level -= 1
-
-            progress.review_count += 1
 
             progress.last_reviewed = (
                 timezone.now()
             )
 
+            # ------------------------------------------------
+            # INCORRECT ANSWERS SHOULD COME BACK SOON
+            # ------------------------------------------------
+
             progress.next_review = (
                 timezone.now()
+                + timezone.timedelta(
+                    days=1
+                )
             )
 
             progress.save()
 
-            # Keep the incorrectly answered elements
-            # hidden so the template can show the
-            # correct answers.
-            hidden_elements = [
-                find_element(
-                    formula_elements,
-                    element_id
-                )
-                for element_id
-                in correct_answers
-            ]
-
-            hidden_elements = [
-                element
-                for element
-                in hidden_elements
-                if element
-            ]
-
             result = "incorrect"
+
+        # ====================================================
+        # SHOW RESULT
+        # ========================================================
+
+        hidden_elements = []
+
+        for element_id in correct_answers:
+
+            element = find_element(
+                formula_elements,
+                element_id
+            )
+
+            if element:
+
+                hidden_elements.append(
+                    element
+                )
+
+        hidden_ids = [
+            str(
+                element.get("id")
+            )
+            for element
+            in hidden_elements
+        ]
+
+        return render(
+            request,
+            "practice/practice_formula.html",
+            {
+                "formula":
+                    formula,
+
+                "formula_elements":
+                    formula_elements,
+
+                "hidden_elements":
+                    hidden_elements,
+
+                "hidden_ids":
+                    hidden_ids,
+
+                "progress":
+                    progress,
+
+                "result":
+                    result,
+
+                "correct_answers":
+                    correct_answers,
+
+                "user_answers":
+                    user_answers,
+            }
+        )
 
     # ========================================================
     # FIRST QUESTION
     # ========================================================
 
-    else:
+    hidden_elements = choose_hidden_elements(
 
-        hidden_elements = (
-            choose_hidden_elements(
+        all_elements,
 
-                all_elements,
+        progress.mastery_level,
 
-                progress.mastery_level,
+        formula,
 
-                formula
-
-            )
-        )
-
-    # ========================================================
-    # HIDDEN IDS
-    # ========================================================
+    )
 
     hidden_ids = [
         str(
@@ -766,14 +928,15 @@ def practice_formula(
     ]
 
     # ========================================================
-    # RENDER
+    # RENDER QUESTION
     # ========================================================
 
     return render(
         request,
         "practice/practice_formula.html",
         {
-            "formula": formula,
+            "formula":
+                formula,
 
             "formula_elements":
                 formula_elements,
@@ -788,13 +951,13 @@ def practice_formula(
                 progress,
 
             "result":
-                result,
+                None,
 
             "correct_answers":
-                correct_answers,
+                {},
 
             "user_answers":
-                user_answers,
+                {},
         }
     )
 
