@@ -23,6 +23,12 @@ urlpatterns = [
     ),
 
     path(
+        "review/",
+        views.review,
+        name="review"
+    ),
+
+    path(
         "subjects/<int:subject_index>/",
         views.subject_detail,
         name="subject_detail"
