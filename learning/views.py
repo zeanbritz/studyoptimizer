@@ -315,7 +315,6 @@ def create_formula(
     )
 
 
-
 # ============================================================
 # VIEW ALL FORMULAS
 # ============================================================
@@ -341,67 +340,29 @@ def formula_list(
     )
 
     # --------------------------------------------------------
-    # FIND SUBJECT INDEX
+    # SUBJECT INDEX
     # --------------------------------------------------------
 
-    subjects = request.session.get(
-        "onboarding_subjects",
-        []
+    subject_index = request.GET.get(
+        "subject_index",
+        ""
     )
 
-    subject_index = None
+    try:
 
-    # --------------------------------------------------------
-    # FIRST: MATCH DATABASE ID
-    # --------------------------------------------------------
+        subject_index = int(
+            subject_index
+        )
 
-    for index, subject_data in enumerate(
-        subjects
+    except (
+        ValueError,
+        TypeError
     ):
-
-        if (
-            subject_data.get(
-                "database_id"
-            )
-            == subject.id
-        ):
-
-            subject_index = index
-
-            break
-
-    # --------------------------------------------------------
-    # FALLBACK: MATCH SUBJECT NAME
-    # --------------------------------------------------------
-
-    if subject_index is None:
-
-        for index, subject_data in enumerate(
-            subjects
-        ):
-
-            if (
-                subject_data.get(
-                    "name",
-                    ""
-                ).strip()
-                == subject.name
-            ):
-
-                subject_index = index
-
-                break
-
-    # --------------------------------------------------------
-    # FINAL FALLBACK
-    # --------------------------------------------------------
-
-    if subject_index is None:
 
         subject_index = 0
 
     # --------------------------------------------------------
-    # GET FORMULAS
+    # GET ALL FORMULA KNOWLEDGE UNITS
     # --------------------------------------------------------
 
     knowledge_units = (
@@ -419,6 +380,9 @@ def formula_list(
         )
         .select_related(
             "formula"
+        )
+        .prefetch_related(
+            "formula__variables"
         )
         .order_by(
             "title"
@@ -439,11 +403,37 @@ def formula_list(
             None
         )
 
-        if formula:
+        if not formula:
+            continue
 
-            formulas.append(
-                formula
+        # ----------------------------------------------------
+        # PARSE FORMULA STRUCTURE
+        # ----------------------------------------------------
+
+        try:
+
+            formula_elements = json.loads(
+                formula.structure
             )
+
+        except (
+            json.JSONDecodeError,
+            TypeError
+        ):
+
+            formula_elements = []
+
+        # ----------------------------------------------------
+        # ATTACH PARSED STRUCTURE TO FORMULA
+        # ----------------------------------------------------
+
+        formula.formula_elements = (
+            formula_elements
+        )
+
+        formulas.append(
+            formula
+        )
 
     # --------------------------------------------------------
     # RENDER
@@ -453,8 +443,7 @@ def formula_list(
         request,
         "learning/formula_list.html",
         {
-            "subject":
-                subject,
+            "subject": subject,
 
             "subject_index":
                 subject_index,
@@ -463,6 +452,37 @@ def formula_list(
                 formulas,
         }
     )
+
+
+# ============================================================
+# DELETE FORMULA
+# ============================================================
+
+@login_required
+def delete_formula(request, formula_id):
+
+    formula = get_object_or_404(
+        Formula,
+        id=formula_id,
+        knowledge_unit__subject__user=request.user,
+    )
+
+    subject_id = formula.knowledge_unit.subject.id
+
+    if request.method == "POST":
+
+        formula.delete()
+
+        return redirect(
+            "formula_list",
+            subject_id=subject_id
+        )
+
+    return redirect(
+        "formula_list",
+        subject_id=subject_id
+    )
+
 
 
 # ============================================================

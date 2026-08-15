@@ -45,6 +45,12 @@ urlpatterns = [
         name="formula_list",
     ),
 
+    path(
+        "formulas/<int:formula_id>/delete/",
+        views.delete_formula,
+        name="delete_formula",
+    ),
+
 
     # ========================================================
     # DEFINITION

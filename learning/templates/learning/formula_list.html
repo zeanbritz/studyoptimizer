@@ -61,7 +61,7 @@
 
         .container {
 
-            max-width: 850px;
+            max-width: 900px;
 
             margin: 0 auto;
 
@@ -379,22 +379,159 @@
 
         .formula-display {
 
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            min-height: 100px;
+
             padding:
+                25px
                 20px;
 
-            border-radius: 9px;
+            border:
+                1px solid
+                #eeeeee;
 
-            background: #f7f7f7;
+            border-radius: 10px;
 
-            color: #333;
-
-            font-size: 20px;
-
-            line-height: 1.7;
+            background: #fafafa;
 
             overflow-x: auto;
 
-            white-space: normal;
+        }
+
+
+        .formula-row {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            gap: 8px;
+
+            min-width: max-content;
+
+        }
+
+
+        .formula-element {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            min-width: 24px;
+
+            min-height: 32px;
+
+            padding:
+                2px
+                4px;
+
+            color: #222;
+
+            font-size: 22px;
+
+            line-height: 1;
+
+        }
+
+
+        .formula-variable {
+
+            font-weight: 600;
+
+        }
+
+
+        .formula-operator {
+
+            font-weight: 400;
+
+        }
+
+
+        .formula-number {
+
+            font-weight: 400;
+
+        }
+
+
+        .formula-symbol {
+
+            font-weight: 400;
+
+        }
+
+
+        /* =========================================
+           FRACTION
+        ========================================= */
+
+        .formula-fraction {
+
+            display: inline-flex;
+
+            flex-direction: column;
+
+            align-items: stretch;
+
+            justify-content: center;
+
+            min-width: 60px;
+
+            margin:
+                0
+                6px;
+
+            vertical-align: middle;
+
+        }
+
+
+        .fraction-numerator,
+        .fraction-denominator {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            min-height: 30px;
+
+            padding:
+                2px
+                8px;
+
+            gap: 5px;
+
+            white-space: nowrap;
+
+        }
+
+
+        .fraction-numerator {
+
+            border-bottom:
+                2px
+                solid
+                #222;
+
+        }
+
+
+        .fraction-denominator {
+
+            padding-top: 5px;
 
         }
 
@@ -403,59 +540,38 @@
            INFORMATION
         ========================================= */
 
-        .formula-information {
+        .info-section {
 
-            display: flex;
-
-            flex-direction: column;
-
-            gap: 12px;
-
-            margin-top: 15px;
+            margin-top: 20px;
 
         }
 
 
-        .information-box {
-
-            padding:
-                15px
-                18px;
-
-            border:
-                1px solid
-                #e5e5e5;
-
-            border-radius: 9px;
-
-            background: white;
-
-        }
-
-
-        .information-box h3 {
+        .info-section h3 {
 
             margin:
                 0
                 0
-                6px;
+                7px;
 
-            font-size: 14px;
+            font-size: 13px;
+
+            font-weight: 600;
+
+            color: #555;
 
         }
 
 
-        .information-box p {
+        .info-text {
 
             margin: 0;
 
-            color: #666;
+            color: #555;
 
             font-size: 14px;
 
             line-height: 1.6;
-
-            white-space: pre-wrap;
 
         }
 
@@ -466,18 +582,11 @@
 
         .variables {
 
-            margin-top: 15px;
+            display: flex;
 
-        }
+            flex-direction: column;
 
-
-        .variables h3 {
-
-            margin:
-                0
-                10px;
-
-            font-size: 14px;
+            gap: 7px;
 
         }
 
@@ -486,32 +595,28 @@
 
             display: flex;
 
-            gap: 12px;
+            align-items: baseline;
+
+            gap: 10px;
 
             padding:
-                11px
-                14px;
+                8px
+                10px;
 
-            border:
-                1px solid
-                #e5e5e5;
+            border-radius: 7px;
 
-            border-radius: 8px;
-
-            background: white;
-
-            margin-bottom: 7px;
+            background: #f7f7f7;
 
         }
 
 
         .variable-symbol {
 
-            min-width: 45px;
+            min-width: 35px;
+
+            font-size: 15px;
 
             font-weight: 700;
-
-            color: #222;
 
         }
 
@@ -520,9 +625,7 @@
 
             color: #666;
 
-            font-size: 13px;
-
-            line-height: 1.5;
+            font-size: 14px;
 
         }
 
@@ -535,9 +638,18 @@
 
             display: flex;
 
+            flex-wrap: wrap;
+
             gap: 10px;
 
-            margin-top: 15px;
+            margin-top: 22px;
+
+            padding-top: 20px;
+
+            border-top:
+                1px
+                solid
+                #eeeeee;
 
         }
 
@@ -557,7 +669,8 @@
                 16px;
 
             border:
-                1px solid
+                1px
+                solid
                 #d8d8d8;
 
             border-radius: 8px;
@@ -622,7 +735,8 @@
             background: white;
 
             border:
-                1px solid
+                1px
+                solid
                 #e5e5e5;
 
             border-radius: 12px;
@@ -721,15 +835,6 @@
 
             }
 
-
-            .variable {
-
-                flex-direction: column;
-
-                gap: 4px;
-
-            }
-
         }
 
     </style>
@@ -811,7 +916,7 @@
 
 
                         <!-- =================================
-                             FORMULA HEADER
+                             HEADER
                         ================================== -->
 
                         <div class="formula-header">
@@ -846,12 +951,85 @@
 
 
                             <!-- =================================
-                                 FORMULA
+                                 FORMULA DISPLAY
                             ================================== -->
 
                             <div class="formula-display">
 
-                                {{ formula.structure }}
+                                <div class="formula-row">
+
+                                    {% for element in formula.formula_elements %}
+
+
+                                        {% if element.type == "fraction" %}
+
+
+                                            <div class="formula-fraction">
+
+
+                                                <div class="fraction-numerator">
+
+                                                    {% for item in element.numerator %}
+
+                                                        <span class="formula-element">
+
+                                                            {{ item.value }}
+
+                                                        </span>
+
+                                                    {% endfor %}
+
+                                                </div>
+
+
+                                                <div class="fraction-denominator">
+
+                                                    {% for item in element.denominator %}
+
+                                                        <span class="formula-element">
+
+                                                            {{ item.value }}
+
+                                                        </span>
+
+                                                    {% endfor %}
+
+                                                </div>
+
+
+                                            </div>
+
+
+                                        {% else %}
+
+
+                                            <span
+                                                class="
+                                                    formula-element
+
+                                                    {% if element.type == 'variable' %}
+                                                        formula-variable
+                                                    {% elif element.type == 'operator' %}
+                                                        formula-operator
+                                                    {% elif element.type == 'number' %}
+                                                        formula-number
+                                                    {% else %}
+                                                        formula-symbol
+                                                    {% endif %}
+                                                "
+                                            >
+
+                                                {{ element.value }}
+
+                                            </span>
+
+
+                                        {% endif %}
+
+
+                                    {% endfor %}
+
+                                </div>
 
                             </div>
 
@@ -862,19 +1040,15 @@
 
                             {% if formula.purpose %}
 
-                                <div class="formula-information">
+                                <div class="info-section">
 
-                                    <div class="information-box">
+                                    <h3>
+                                        Purpose
+                                    </h3>
 
-                                        <h3>
-                                            Purpose
-                                        </h3>
-
-                                        <p>
-                                            {{ formula.purpose }}
-                                        </p>
-
-                                    </div>
+                                    <p class="info-text">
+                                        {{ formula.purpose }}
+                                    </p>
 
                                 </div>
 
@@ -887,19 +1061,15 @@
 
                             {% if formula.when_to_use %}
 
-                                <div class="formula-information">
+                                <div class="info-section">
 
-                                    <div class="information-box">
+                                    <h3>
+                                        When to Use
+                                    </h3>
 
-                                        <h3>
-                                            When to Use
-                                        </h3>
-
-                                        <p>
-                                            {{ formula.when_to_use }}
-                                        </p>
-
-                                    </div>
+                                    <p class="info-text">
+                                        {{ formula.when_to_use }}
+                                    </p>
 
                                 </div>
 
@@ -912,36 +1082,36 @@
 
                             {% if formula.variables.all %}
 
-                                <div
-                                    class="variables"
-                                    onclick="event.stopPropagation()"
-                                >
+                                <div class="info-section">
 
                                     <h3>
                                         Variables
                                     </h3>
 
 
-                                    {% for variable in formula.variables.all %}
+                                    <div class="variables">
 
-                                        <div class="variable">
 
-                                            <div class="variable-symbol">
+                                        {% for variable in formula.variables.all %}
 
-                                                {{ variable.symbol }}
+
+                                            <div class="variable">
+
+                                                <span class="variable-symbol">
+                                                    {{ variable.symbol }}
+                                                </span>
+
+                                                <span class="variable-meaning">
+                                                    {{ variable.meaning }}
+                                                </span>
 
                                             </div>
 
 
-                                            <div class="variable-meaning">
+                                        {% endfor %}
 
-                                                {{ variable.meaning }}
 
-                                            </div>
-
-                                        </div>
-
-                                    {% endfor %}
+                                    </div>
 
                                 </div>
 
@@ -972,6 +1142,32 @@
                                 >
                                     Edit
                                 </a>
+
+
+                                <form
+                                    method="POST"
+                                    action="{% url 'delete_formula' formula_id=formula.id %}"
+                                    class="delete-form"
+                                    onsubmit="
+                                        return confirm(
+                                            'Are you sure you want to delete this formula? This cannot be undone.'
+                                        );
+                                    "
+                                >
+
+                                    {% csrf_token %}
+
+                                    <button
+                                        type="submit"
+                                        class="
+                                            action-button
+                                            delete-button
+                                        "
+                                    >
+                                        Delete
+                                    </button>
+
+                                </form>
 
 
                             </div>
