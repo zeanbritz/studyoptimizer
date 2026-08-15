@@ -1054,25 +1054,47 @@
             <div class="summary-options">
 
 
-                <!-- DEFINITION -->
+                <!-- =====================================
+                     DEFINITION
+                ====================================== -->
 
-                <a
-                    href="{% url 'create_definition' subject_id=database_subject.id %}?subject_index={{ subject_index }}"
-                    class="summary-option"
-                >
+                {% if database_subject %}
 
-                    <h3>
-                        Definition
-                    </h3>
+                    <a
+                        href="{% url 'create_definition' subject_id=database_subject.id %}?subject_index={{ subject_index }}"
+                        class="summary-option"
+                    >
 
-                    <p>
-                        Define important terms and concepts.
-                    </p>
+                        <h3>
+                            Definition
+                        </h3>
 
-                </a>
+                        <p>
+                            Define important terms and concepts.
+                        </p>
+
+                    </a>
+
+                {% else %}
+
+                    <div class="summary-option">
+
+                        <h3>
+                            Definition
+                        </h3>
+
+                        <p>
+                            Save the subject first before adding definitions.
+                        </p>
+
+                    </div>
+
+                {% endif %}
 
 
-                <!-- FORMULA -->
+                <!-- =====================================
+                     FORMULA
+                ====================================== -->
 
                 {% if database_subject %}
 
@@ -1108,7 +1130,9 @@
                 {% endif %}
 
 
-                <!-- LIST -->
+                <!-- =====================================
+                     LIST
+                ====================================== -->
 
                 <button
                     type="button"
@@ -1126,7 +1150,9 @@
                 </button>
 
 
-                <!-- STEPS -->
+                <!-- =====================================
+                     STEPS
+                ====================================== -->
 
                 <button
                     type="button"
@@ -1144,7 +1170,9 @@
                 </button>
 
 
-                <!-- KEY IDEA -->
+                <!-- =====================================
+                     KEY IDEA
+                ====================================== -->
 
                 <button
                     type="button"
@@ -1162,7 +1190,9 @@
                 </button>
 
 
-                <!-- COMPARISON -->
+                <!-- =====================================
+                     COMPARISON
+                ====================================== -->
 
                 <button
                     type="button"
