@@ -831,7 +831,7 @@
 
 
         <a
-            href="/progress/"
+            href="{% url 'progress' %}"
             class="nav-link"
         >
 
@@ -910,14 +910,22 @@
 
             <div class="empty-plan">
 
+                {% if not onboarding_complete %}
 
-                <a
-                    href="{% url 'onboarding' %}"
-                    class="get-started-button"
-                >
-                    Get Started
-                </a>
+                    <a
+                        href="{% url 'onboarding' %}"
+                        class="get-started-button"
+                    >
+                        Get Started
+                    </a>
 
+                {% else %}
+
+                    <p>
+                        Your study plan will appear here.
+                    </p>
+
+                {% endif %}
 
             </div>
 
@@ -950,22 +958,24 @@
 
 
         <!-- =================================
-             PROGRESS
+            PROGRESS
         ================================= -->
 
-        <div class="card">
+        <a
+            href="{% url 'progress' %}"
+            class="card clickable-card"
+        >
 
             <h3>
                 Progress
             </h3>
-
 
             <p>
                 Track your mastery, study time,
                 and performance over time.
             </p>
 
-        </div>
+        </a>
 
 
         <!-- =================================

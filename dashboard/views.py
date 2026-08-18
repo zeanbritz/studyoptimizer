@@ -17,9 +17,19 @@ from learning.models import (
 
 @login_required
 def dashboard(request):
+
+    onboarding_complete = request.session.get(
+        "onboarding_complete",
+        False
+    )
+
     return render(
         request,
-        "dashboard/dashboard.html"
+        "dashboard/dashboard.html",
+        {
+            "onboarding_complete":
+                onboarding_complete,
+        }
     )
 
 
@@ -173,41 +183,89 @@ def onboarding(request):
         )
 
         try:
+
             subject_count = int(
                 subject_count
             )
 
-        except (ValueError, TypeError):
+        except (
+            ValueError,
+            TypeError
+        ):
+
             subject_count = 1
+
+        # ----------------------------------------------------
+        # NEVER ALLOW MORE THAN 20 SUBJECTS
+        # ----------------------------------------------------
 
         subject_count = max(
             1,
-            min(subject_count, 20)
+            min(
+                subject_count,
+                20
+            )
         )
 
-        request.session["onboarding_profile"] = {
-            "workspace_name": workspace_name,
-            "target_grade": target_grade,
-            "study_hours": study_hours,
-            "subject_count": subject_count,
+        # ----------------------------------------------------
+        # SAVE PROFILE
+        # ----------------------------------------------------
+
+        request.session[
+            "onboarding_profile"
+        ] = {
+
+            "workspace_name":
+                workspace_name,
+
+            "target_grade":
+                target_grade,
+
+            "study_hours":
+                study_hours,
+
+            "subject_count":
+                subject_count,
+
         }
+
+        # ----------------------------------------------------
+        # CREATE EMPTY SUBJECT SLOTS
+        # ----------------------------------------------------
 
         subjects = []
 
-        for i in range(subject_count):
+        for i in range(
+            subject_count
+        ):
 
             subjects.append({
+
                 "name": "",
+
                 "target_grade": "",
+
                 "exam_date": "",
+
                 "definitions": [],
+
                 "formulas": [],
+
                 "database_id": None,
+
             })
 
         request.session[
             "onboarding_subjects"
         ] = subjects
+
+        # ----------------------------------------------------
+        # MARK ONBOARDING AS COMPLETE
+        # ----------------------------------------------------
+
+        request.session[
+            "onboarding_complete"
+        ] = True
 
         request.session.modified = True
 
@@ -233,6 +291,7 @@ def goals(request):
     )
 
     if not profile:
+
         return redirect(
             "onboarding"
         )
@@ -271,6 +330,7 @@ def subject_detail(
     )
 
     if not profile:
+
         return redirect(
             "onboarding"
         )
@@ -289,6 +349,7 @@ def subject_detail(
     # --------------------------------------------------------
 
     try:
+
         subject_index = int(
             subject_index
         )
@@ -297,6 +358,7 @@ def subject_detail(
         ValueError,
         TypeError
     ):
+
         return redirect(
             "goals"
         )
@@ -305,6 +367,7 @@ def subject_detail(
         subject_index < 0
         or subject_index >= len(subjects)
     ):
+
         return redirect(
             "goals"
         )
@@ -318,13 +381,22 @@ def subject_detail(
     # --------------------------------------------------------
 
     if "definitions" not in subject_data:
-        subject_data["definitions"] = []
+
+        subject_data[
+            "definitions"
+        ] = []
 
     if "formulas" not in subject_data:
-        subject_data["formulas"] = []
+
+        subject_data[
+            "formulas"
+        ] = []
 
     if "database_id" not in subject_data:
-        subject_data["database_id"] = None
+
+        subject_data[
+            "database_id"
+        ] = None
 
     # --------------------------------------------------------
     # SAVE SUBJECT INFORMATION
@@ -449,6 +521,7 @@ def subject_detail(
     # --------------------------------------------------------
 
     due_formulas = []
+
     due_definitions = []
 
     # --------------------------------------------------------
@@ -475,7 +548,9 @@ def subject_detail(
             )
         )
 
-        for knowledge_unit in formula_knowledge_units:
+        for knowledge_unit in (
+            formula_knowledge_units
+        ):
 
             formula = getattr(
                 knowledge_unit,
@@ -484,6 +559,7 @@ def subject_detail(
             )
 
             if not formula:
+
                 continue
 
             progress = (
@@ -536,7 +612,9 @@ def subject_detail(
             )
         )
 
-        for knowledge_unit in definition_knowledge_units:
+        for knowledge_unit in (
+            definition_knowledge_units
+        ):
 
             definition = getattr(
                 knowledge_unit,
@@ -545,6 +623,7 @@ def subject_detail(
             )
 
             if not definition:
+
                 continue
 
             progress = (
@@ -608,9 +687,11 @@ def subject_detail(
         {
             "subject": subject_data,
 
-            "subject_index": subject_index,
+            "subject_index":
+                subject_index,
 
-            "database_subject": database_subject,
+            "database_subject":
+                database_subject,
 
             "subject_id":
                 database_subject.id
@@ -650,6 +731,7 @@ def definition(
     )
 
     if not profile:
+
         return redirect(
             "onboarding"
         )
@@ -664,6 +746,7 @@ def definition(
     # --------------------------------------------------------
 
     try:
+
         subject_index = int(
             subject_index
         )
@@ -672,6 +755,7 @@ def definition(
         ValueError,
         TypeError
     ):
+
         return redirect(
             "goals"
         )
@@ -680,6 +764,7 @@ def definition(
         subject_index < 0
         or subject_index >= len(subjects)
     ):
+
         return redirect(
             "goals"
         )
@@ -815,12 +900,17 @@ def definition(
         )
 
         definitions = [
+
             knowledge_unit.definition
-            for knowledge_unit in knowledge_units
+
+            for knowledge_unit
+            in knowledge_units
+
             if hasattr(
                 knowledge_unit,
                 "definition"
             )
+
         ]
 
     # --------------------------------------------------------
@@ -831,7 +921,8 @@ def definition(
         request,
         "dashboard/definition.html",
         {
-            "subject": subject_data,
+            "subject":
+                subject_data,
 
             "subject_index":
                 subject_index,
@@ -840,6 +931,7 @@ def definition(
                 definitions,
         }
     )
+
 
 # ============================================================
 # REVIEW DEFINITIONS
@@ -867,7 +959,9 @@ def review_definitions(request):
 
     definitions = []
 
-    for knowledge_unit in definition_knowledge_units:
+    for knowledge_unit in (
+        definition_knowledge_units
+    ):
 
         definition = getattr(
             knowledge_unit,
@@ -878,15 +972,324 @@ def review_definitions(request):
         if definition:
 
             definitions.append({
-                "definition": definition,
-                "subject": knowledge_unit.subject,
+                "definition":
+                    definition,
+
+                "subject":
+                    knowledge_unit.subject,
             })
 
     return render(
         request,
         "dashboard/review_definitions.html",
         {
-            "definitions": definitions,
-            "definition_count": len(definitions),
+            "definitions":
+                definitions,
+
+            "definition_count":
+                len(definitions),
+        }
+    )
+
+
+# ============================================================
+# PROGRESS
+# ============================================================
+
+@login_required
+def progress(request):
+
+    # --------------------------------------------------------
+    # GET ALL SUBJECTS FOR THIS STUDENT
+    # --------------------------------------------------------
+
+    subjects = (
+        Subject.objects
+        .filter(
+            user=request.user
+        )
+        .order_by("name")
+    )
+
+    # --------------------------------------------------------
+    # GET ALL KNOWLEDGE UNITS
+    # --------------------------------------------------------
+    # KnowledgeUnit is directly linked to Subject.
+    # There is NO topic relationship on KnowledgeUnit.
+    # --------------------------------------------------------
+
+    knowledge_units = (
+        KnowledgeUnit.objects
+        .filter(
+            subject__user=request.user,
+            active=True,
+        )
+        .select_related(
+            "subject",
+        )
+    )
+
+    # --------------------------------------------------------
+    # GET STUDENT PROGRESS
+    # --------------------------------------------------------
+
+    progress_records = (
+        StudentKnowledge.objects
+        .filter(
+            student=request.user,
+            knowledge_unit__in=knowledge_units,
+        )
+        .select_related(
+            "knowledge_unit",
+            "knowledge_unit__subject",
+        )
+    )
+
+    # --------------------------------------------------------
+    # OVERALL STATISTICS
+    # --------------------------------------------------------
+
+    total_knowledge = (
+        knowledge_units.count()
+    )
+
+    reviewed_count = (
+        progress_records.count()
+    )
+
+    mastered_count = (
+        progress_records
+        .filter(
+            mastery_level__gte=6
+        )
+        .count()
+    )
+
+    total_correct = sum(
+        record.correct_count
+        for record in progress_records
+    )
+
+    total_incorrect = sum(
+        record.incorrect_count
+        for record in progress_records
+    )
+
+    total_reviews = (
+        total_correct
+        + total_incorrect
+    )
+
+    # --------------------------------------------------------
+    # ACCURACY
+    # --------------------------------------------------------
+
+    if total_reviews > 0:
+
+        accuracy = round(
+            (
+                total_correct
+                / total_reviews
+            ) * 100
+        )
+
+    else:
+
+        accuracy = 0
+
+    # --------------------------------------------------------
+    # OVERALL MASTERY
+    # --------------------------------------------------------
+
+    if total_knowledge > 0:
+
+        overall_mastery = round(
+            (
+                mastered_count
+                / total_knowledge
+            ) * 100
+        )
+
+    else:
+
+        overall_mastery = 0
+
+    # --------------------------------------------------------
+    # SUBJECT PROGRESS
+    # --------------------------------------------------------
+
+    subject_progress = []
+
+    for subject in subjects:
+
+        # KnowledgeUnit belongs directly to Subject.
+        subject_units = (
+            knowledge_units
+            .filter(
+                subject=subject
+            )
+        )
+
+        subject_unit_count = (
+            subject_units.count()
+        )
+
+        # Skip subjects with no knowledge units.
+        if subject_unit_count == 0:
+            continue
+
+        # ----------------------------------------------------
+        # PROGRESS RECORDS FOR THIS SUBJECT
+        # ----------------------------------------------------
+
+        subject_progress_records = (
+            progress_records
+            .filter(
+                knowledge_unit__in=subject_units
+            )
+        )
+
+        # ----------------------------------------------------
+        # MASTERED
+        # ----------------------------------------------------
+
+        subject_mastered = (
+            subject_progress_records
+            .filter(
+                mastery_level__gte=6
+            )
+            .count()
+        )
+
+        # ----------------------------------------------------
+        # REVIEWS
+        # ----------------------------------------------------
+
+        subject_reviews = sum(
+            record.review_count
+            for record
+            in subject_progress_records
+        )
+
+        # ----------------------------------------------------
+        # CORRECT / INCORRECT
+        # ----------------------------------------------------
+
+        subject_correct = sum(
+            record.correct_count
+            for record
+            in subject_progress_records
+        )
+
+        subject_incorrect = sum(
+            record.incorrect_count
+            for record
+            in subject_progress_records
+        )
+
+        subject_total_answers = (
+            subject_correct
+            + subject_incorrect
+        )
+
+        # ----------------------------------------------------
+        # SUBJECT ACCURACY
+        # ----------------------------------------------------
+
+        if subject_total_answers > 0:
+
+            subject_accuracy = round(
+                (
+                    subject_correct
+                    / subject_total_answers
+                ) * 100
+            )
+
+        else:
+
+            subject_accuracy = 0
+
+        # ----------------------------------------------------
+        # SUBJECT MASTERY
+        # ----------------------------------------------------
+
+        subject_mastery = round(
+            (
+                subject_mastered
+                / subject_unit_count
+            ) * 100
+        )
+
+        # ----------------------------------------------------
+        # ADD SUBJECT RESULT
+        # ----------------------------------------------------
+
+        subject_progress.append({
+
+            "subject":
+                subject,
+
+            "total_units":
+                subject_unit_count,
+
+            "reviewed":
+                subject_progress_records.count(),
+
+            "mastered":
+                subject_mastered,
+
+            "reviews":
+                subject_reviews,
+
+            "correct":
+                subject_correct,
+
+            "incorrect":
+                subject_incorrect,
+
+            "accuracy":
+                subject_accuracy,
+
+            "mastery":
+                subject_mastery,
+
+        })
+
+    # --------------------------------------------------------
+    # RENDER
+    # --------------------------------------------------------
+
+    return render(
+        request,
+        "dashboard/progress.html",
+        {
+
+            "total_knowledge":
+                total_knowledge,
+
+            "reviewed_count":
+                reviewed_count,
+
+            "mastered_count":
+                mastered_count,
+
+            "total_correct":
+                total_correct,
+
+            "total_incorrect":
+                total_incorrect,
+
+            "total_reviews":
+                total_reviews,
+
+            "accuracy":
+                accuracy,
+
+            "overall_mastery":
+                overall_mastery,
+
+            "subject_progress":
+                subject_progress,
+
         }
     )

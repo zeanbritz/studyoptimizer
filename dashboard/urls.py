@@ -43,7 +43,14 @@ urlpatterns = [
     path(
         "review/definitions/",
         views.review_definitions,
-        name="review_definitions"
+        name=
+        "review_definitions"
+    ),
+
+    path(
+        "progress/",
+        views.progress,
+        name="progress",
     ),
 
 ]
