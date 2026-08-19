@@ -80,7 +80,7 @@
 
         .header {
 
-            margin-bottom: 30px;
+            margin-bottom: 25px;
 
         }
 
@@ -104,6 +104,49 @@
             color: #888;
 
             font-size: 14px;
+
+        }
+
+
+        /* =========================================
+           MASTERY
+        ========================================= */
+
+        .mastery {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            margin-bottom: 30px;
+
+            padding:
+                12px
+                15px;
+
+            background: #f7f7f7;
+
+            border-radius: 8px;
+
+            font-size: 14px;
+
+        }
+
+
+        .mastery-label {
+
+            color: #777;
+
+        }
+
+
+        .mastery-value {
+
+            font-weight: 700;
+
+            color: #222;
 
         }
 
@@ -397,6 +440,25 @@
 
 
     <!-- =========================================
+         MASTERY
+    ========================================= -->
+
+    <div class="mastery">
+
+        <span class="mastery-label">
+            Mastery
+        </span>
+
+        <span class="mastery-value">
+
+            {{ progress.mastery_level }}/6
+
+        </span>
+
+    </div>
+
+
+    <!-- =========================================
          TERM
     ========================================= -->
 
@@ -549,29 +611,33 @@
         {% endif %}
 
 
+        <!-- =====================================
+             CONTINUE
+        ====================================== -->
+
         {% if next_definition %}
 
-    <a
-        href="{% url 'review_definition' definition_id=next_definition.id %}"
-        class="continue-button"
-    >
+            <a
+                href="{% url 'review_definition' definition_id=next_definition.id %}"
+                class="continue-button"
+            >
 
-        Continue
+                Continue
 
-    </a>
+            </a>
 
-{% else %}
+        {% else %}
 
-    <a
-        href="{% url 'subject_detail' subject_index=subject_index %}"
-        class="continue-button"
-    >
+            <a
+                href="{% url 'subject_detail' subject_index=subject_index %}"
+                class="continue-button"
+            >
 
-        Finish Review
+                Finish Review
 
-    </a>
+            </a>
 
-{% endif %}
+        {% endif %}
 
 
     {% endif %}
