@@ -62,7 +62,6 @@
 
     <header class="page-header">
         <h1>Welcome back, {{ request.user.first_name|default:request.user.username }}</h1>
-        <p>Your study workspace.</p>
     </header>
 
     <!-- =================================
@@ -87,25 +86,25 @@
         </div>
 
         <!-- REVIEW -->
-        <a href="{% url 'review' %}" class="card clickable-card">
+        <a href="{% url 'review' %}" class="card clickable-card card-review">
             <h3>Review</h3>
             <p>Review definitions, formulas, lists, steps, key ideas, and comparisons across all your subjects.</p>
         </a>
 
         <!-- PROGRESS -->
-        <a href="{% url 'progress' %}" class="card clickable-card">
+        <a href="{% url 'progress' %}" class="card clickable-card card-progress">
             <h3>Progress</h3>
             <p>Track your mastery, study time, and performance over time.</p>
         </a>
 
         <!-- UPCOMING EXAMS -->
-        <div class="card">
+        <div class="card card-exams">
             <h3>Upcoming Exams</h3>
             <p>Your upcoming assessments and deadlines will appear here.</p>
         </div>
 
         <!-- GOALS -->
-        <a href="{% url 'goals' %}" class="card clickable-card">
+        <a href="{% url 'goals' %}" class="card clickable-card card-goals">
             <h3>Goals</h3>
             <p>Set and manage your academic goals, subject targets, and study objectives.</p>
         </a>
