@@ -1,128 +1,226 @@
 {% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StudyOptimizer</title>
-<link rel="stylesheet" href="{% static 'dashboard/css/dashboard.css' %}">
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        StudyOptimizer
+    </title>
+
+    <!-- SHARED SIDEBAR CSS -->
+    <link
+        rel="stylesheet"
+        href="{% static 'dashboard/css/sidebar.css' %}"
+    >
+
+    <!-- DASHBOARD CSS -->
+    <link
+        rel="stylesheet"
+        href="{% static 'dashboard/css/dashboard.css' %}"
+    >
+
 </head>
 
+
 <body>
+
+
 <div class="app">
 
-<!-- =================================
-     SIDEBAR
-================================= -->
-<aside id="sidebar" class="sidebar">
-
-    <div class="sidebar-top">
-        <div class="logo">StudyOptimizer</div>
-
-        <button id="menuButton" class="menu-button" type="button" aria-label="Toggle sidebar">
-            <span class="menu-line"></span>
-            <span class="menu-line"></span>
-            <span class="menu-line"></span>
-        </button>
-    </div>
-
-    <nav class="nav">
-        <a href="{% url 'dashboard' %}" class="nav-link active">
-            <span class="nav-icon">▦</span>
-            <span class="nav-text">Dashboard</span>
-        </a>
-
-        <a href="/planner/" class="nav-link">
-            <span class="nav-icon">◷</span>
-            <span class="nav-text">Planner</span>
-        </a>
-
-        <a href="{% url 'review' %}" class="nav-link">
-            <span class="nav-icon">↻</span>
-            <span class="nav-text">Review</span>
-        </a>
-
-        <a href="{% url 'goals' %}" class="nav-link">
-            <span class="nav-icon">≡</span>
-            <span class="nav-text">Summarize</span>
-        </a>
-
-        <a href="{% url 'progress' %}" class="nav-link">
-            <span class="nav-icon">↗</span>
-            <span class="nav-text">Progress</span>
-        </a>
-    </nav>
-
-</aside>
-
-<!-- =================================
-     MAIN
-================================= -->
-<main class="main">
-
-    <header class="page-header">
-        <h1>Welcome back, {{ request.user.first_name|default:request.user.username }}</h1>
-    </header>
 
     <!-- =================================
-         DASHBOARD GRID
+         SHARED SIDEBAR
     ================================= -->
-    <section class="dashboard-grid">
 
-        <!-- TODAY'S PLAN -->
-        <div class="card today-plan">
-            <div class="today-plan-header">
-                <h2>Today's Plan</h2>
-                <span class="today-date">Today</span>
+    {% include 'partials/sidebar.html' with active_page='dashboard' %}
+
+
+    <!-- =================================
+         MAIN
+    ================================= -->
+
+    <main class="main">
+
+
+        <!-- =================================
+             PAGE HEADER
+        ================================= -->
+
+        <header class="page-header">
+
+            <h1>
+                Welcome back,
+                {{ request.user.first_name|default:request.user.username }}
+            </h1>
+
+        </header>
+
+
+        <!-- =================================
+             DASHBOARD GRID
+        ================================= -->
+
+        <section class="dashboard-grid">
+
+
+            <!-- =================================
+                 TODAY'S PLAN
+            ================================= -->
+
+            <div class="card today-plan">
+
+
+                <div class="today-plan-header">
+
+                    <h2>
+                        Today's Plan
+                    </h2>
+
+                    <span class="today-date">
+                        Today
+                    </span>
+
+                </div>
+
+
+                <div class="empty-plan">
+
+
+                    {% if not onboarding_complete %}
+
+                        <a
+                            href="{% url 'onboarding' %}"
+                            class="get-started-button"
+                        >
+                            Get Started
+                        </a>
+
+
+                    {% else %}
+
+                        <p>
+                            Your study plan will appear here.
+                        </p>
+
+                    {% endif %}
+
+
+                </div>
+
+
             </div>
 
-            <div class="empty-plan">
-                {% if not onboarding_complete %}
-                    <a href="{% url 'onboarding' %}" class="get-started-button">Get Started</a>
-                {% else %}
-                    <p>Your study plan will appear here.</p>
-                {% endif %}
+
+            <!-- =================================
+                 REVIEW
+            ================================= -->
+
+            <a
+                href="{% url 'review' %}"
+                class="card clickable-card card-review"
+            >
+
+                <h3>
+                    Review
+                </h3>
+
+                <p>
+                    Review definitions, formulas,
+                    lists, steps, key ideas,
+                    and comparisons across all
+                    your subjects.
+                </p>
+
+            </a>
+
+
+            <!-- =================================
+                 PROGRESS
+            ================================= -->
+
+            <a
+                href="{% url 'progress' %}"
+                class="card clickable-card card-progress"
+            >
+
+                <h3>
+                    Progress
+                </h3>
+
+                <p>
+                    Track your mastery, study time,
+                    and performance over time.
+                </p>
+
+            </a>
+
+
+            <!-- =================================
+                 UPCOMING EXAMS
+            ================================= -->
+
+            <div class="card card-exams">
+
+                <h3>
+                    Upcoming Exams
+                </h3>
+
+                <p>
+                    Your upcoming assessments
+                    and deadlines will appear here.
+                </p>
+
             </div>
-        </div>
 
-        <!-- REVIEW -->
-        <a href="{% url 'review' %}" class="card clickable-card card-review">
-            <h3>Review</h3>
-            <p>Review definitions, formulas, lists, steps, key ideas, and comparisons across all your subjects.</p>
-        </a>
 
-        <!-- PROGRESS -->
-        <a href="{% url 'progress' %}" class="card clickable-card card-progress">
-            <h3>Progress</h3>
-            <p>Track your mastery, study time, and performance over time.</p>
-        </a>
+            <!-- =================================
+                 GOALS
+            ================================= -->
 
-        <!-- UPCOMING EXAMS -->
-        <div class="card card-exams">
-            <h3>Upcoming Exams</h3>
-            <p>Your upcoming assessments and deadlines will appear here.</p>
-        </div>
+            <a
+                href="{% url 'goals' %}"
+                class="card clickable-card card-goals"
+            >
 
-        <!-- GOALS -->
-        <a href="{% url 'goals' %}" class="card clickable-card card-goals">
-            <h3>Goals</h3>
-            <p>Set and manage your academic goals, subject targets, and study objectives.</p>
-        </a>
+                <h3>
+                    Goals
+                </h3>
 
-    </section>
+                <p>
+                    Set and manage your academic goals,
+                    subject targets, and study objectives.
+                </p>
 
-</main>
+            </a>
+
+
+        </section>
+
+
+    </main>
+
 
 </div>
 
-<script>
-    const sidebar = document.getElementById("sidebar");
-    const menuButton = document.getElementById("menuButton");
 
-    menuButton.addEventListener("click", function () {
-        sidebar.classList.toggle("closed");
-    });
-</script>
+<!-- =================================
+     SHARED SIDEBAR JAVASCRIPT
+================================= -->
+
+<script
+    src="{% static 'dashboard/js/sidebar.js' %}"
+></script>
+
 
 </body>
+
 </html>

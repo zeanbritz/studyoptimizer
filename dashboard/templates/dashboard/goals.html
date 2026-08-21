@@ -1,5 +1,6 @@
-<!DOCTYPE html>
+{% load static %}
 
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -11,20 +12,37 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Goals - StudyOptimizer</title>
+    <title>
+        Goals - StudyOptimizer
+    </title>
+
+
+    <!-- SHARED SIDEBAR -->
+    <link
+        rel="stylesheet"
+        href="{% static 'dashboard/css/sidebar.css' %}"
+    >
+
 
     <style>
+
+        @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap');
+
 
         * {
             box-sizing: border-box;
         }
 
+
         body {
             margin: 0;
-            background: #f5f6f8;
+
+            background: #ffffff;
+
             color: #222;
 
             font-family:
+                'Baloo 2',
                 -apple-system,
                 BlinkMacSystemFont,
                 "Segoe UI",
@@ -32,70 +50,121 @@
                 sans-serif;
         }
 
+
+        /* =========================================
+           APP
+        ========================================= */
+
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+
+
+        /* =========================================
+           MAIN
+        ========================================= */
+
+        .main {
+            flex: 1;
+
+            min-width: 0;
+
+            padding:
+                40px;
+        }
+
+
+        /* =========================================
+           CONTENT
+        ========================================= */
+
         .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 50px 30px;
+            width: 100%;
+
+            max-width: 1100px;
         }
 
-        .back {
-            display: inline-block;
 
-            margin-bottom: 25px;
-
-            color: #666;
-            text-decoration: none;
-
-            font-size: 14px;
-        }
-
-        .back:hover {
-            color: #222;
-        }
+        /* =========================================
+           HEADER
+        ========================================= */
 
         .header {
             margin-bottom: 30px;
         }
 
-        .header h1 {
-            margin: 0 0 8px;
 
-            font-size: 32px;
+        .header h1 {
+            margin:
+                0
+                0
+                8px;
+
+            font-size: 40px;
+
+            font-weight: 800;
 
             letter-spacing: -0.8px;
         }
+
 
         .header p {
             margin: 0;
 
             color: #777;
 
-            font-size: 15px;
+            font-size: 16px;
+
+            font-weight: 600;
         }
+
+
+        /* =========================================
+           PROFILE
+        ========================================= */
 
         .profile-card {
-            background: white;
+            background: #8BF527;
 
-            border: 1px solid #e5e5e5;
+            border: none;
 
-            border-radius: 12px;
+            border-radius: 14px;
 
-            padding: 24px;
+            padding: 26px;
 
-            margin-bottom: 25px;
+            margin-bottom: 30px;
         }
+
 
         .profile-card h2 {
-            margin: 0 0 8px;
+            margin:
+                0
+                0
+                6px;
 
-            font-size: 20px;
+            color: #1f3d0a;
+
+            font-size: 24px;
+
+            font-weight: 800;
         }
+
 
         .profile-card p {
             margin: 0;
 
-            color: #777;
+            color: #2d5c0f;
+
+            font-size: 15px;
+
+            font-weight: 700;
         }
+
+
+        /* =========================================
+           SUBJECT HEADER
+        ========================================= */
 
         .subjects-header {
             display: flex;
@@ -104,81 +173,120 @@
 
             align-items: center;
 
-            margin-bottom: 15px;
+            margin-bottom: 16px;
         }
+
 
         .subjects-header h2 {
             margin: 0;
 
-            font-size: 21px;
+            font-size: 24px;
+
+            font-weight: 800;
         }
+
 
         .subject-count {
             color: #777;
 
             font-size: 14px;
+
+            font-weight: 700;
         }
+
+
+        /* =========================================
+           SUBJECT GRID
+        ========================================= */
 
         .subjects {
             display: grid;
 
             grid-template-columns:
-                repeat(3, minmax(0, 1fr));
+                repeat(
+                    3,
+                    minmax(0, 1fr)
+                );
 
-            gap: 15px;
+            gap: 18px;
         }
+
+
+        /* =========================================
+           SUBJECT CARD
+        ========================================= */
 
         .subject {
             display: block;
 
+            min-height: 190px;
+
             background: white;
 
-            border: 1px solid #e5e5e5;
+            border:
+                1px solid
+                #e5e5e5;
 
-            border-radius: 12px;
+            border-radius: 14px;
 
-            padding: 22px;
+            padding: 24px;
 
             text-decoration: none;
 
             color: #222;
 
             transition:
-                border-color 0.15s,
-                box-shadow 0.15s,
-                transform 0.15s;
+                border-color 0.15s ease,
+                box-shadow 0.15s ease,
+                transform 0.15s ease;
         }
+
 
         .subject:hover {
-            border-color: #cfcfcf;
+            border-color: #bfbfbf;
 
             box-shadow:
-                0 4px 12px rgba(0, 0, 0, 0.06);
+                0
+                5px
+                16px
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.07
+                );
 
-            transform: translateY(-1px);
+            transform:
+                translateY(-2px);
         }
+
 
         .subject-number {
             color: #999;
 
             font-size: 13px;
 
+            font-weight: 700;
+
             margin-bottom: 12px;
         }
 
+
         .subject-name {
-            font-size: 17px;
+            margin-bottom: 16px;
 
-            font-weight: 600;
+            font-size: 19px;
 
-            margin-bottom: 15px;
+            font-weight: 800;
         }
+
 
         .empty-subject {
-            color: #999;
+            color: #888;
 
-            font-weight: 400;
+            font-weight: 700;
         }
+
 
         .subject-info {
             display: flex;
@@ -189,35 +297,61 @@
 
             color: #777;
 
-            font-size: 13px;
-        }
-
-        .edit {
-            margin-top: 18px;
-
-            color: #222;
-
-            font-size: 13px;
+            font-size: 14px;
 
             font-weight: 600;
         }
 
-        @media (max-width: 800px) {
+
+        .edit {
+            margin-top: 20px;
+
+            color: #222;
+
+            font-size: 14px;
+
+            font-weight: 800;
+        }
+
+
+        /* =========================================
+           RESPONSIVE
+        ========================================= */
+
+        @media (max-width: 900px) {
 
             .subjects {
-                grid-template-columns: 1fr 1fr;
+                grid-template-columns:
+                    repeat(
+                        2,
+                        minmax(0, 1fr)
+                    );
             }
 
         }
 
-        @media (max-width: 550px) {
 
-            .container {
-                padding: 30px 20px;
+        @media (max-width: 700px) {
+
+            .main {
+                padding:
+                    25px
+                    20px;
             }
 
+        }
+
+
+        @media (max-width: 550px) {
+
             .subjects {
-                grid-template-columns: 1fr;
+                grid-template-columns:
+                    1fr;
+            }
+
+
+            .header h1 {
+                font-size: 32px;
             }
 
         }
@@ -230,163 +364,197 @@
 <body>
 
 
-<div class="container">
+<div class="app">
 
 
-    <a
-        href="{% url 'dashboard' %}"
-        class="back"
-    >
-        ← Dashboard
-    </a>
+    <!-- =========================================
+         SHARED SIDEBAR
+    ========================================= -->
 
+    {% include 'partials/sidebar.html' with active_page='summarize' %}
 
-    <div class="header">
 
-        <h1>
-            Goals
-        </h1>
+    <!-- =========================================
+         MAIN
+    ========================================= -->
 
-        <p>
-            Manage your academic goals and subject targets.
-        </p>
+    <main class="main">
 
-    </div>
 
+        <div class="container">
 
-    <div class="profile-card">
 
-        <h2>
-            {{ profile.workspace_name }}
-        </h2>
+            <!-- =================================
+                 HEADER
+            ================================= -->
 
-        <p>
-            Overall target:
-            {{ profile.target_grade }}%
-        </p>
+            <div class="header">
 
-    </div>
+                <h1>
+                    Goals
+                </h1>
 
+                <p>
+                    Manage your academic goals and subject targets.
+                </p>
 
-    <div class="subjects-header">
+            </div>
 
-        <h2>
-            Subjects
-        </h2>
 
-        <span class="subject-count">
+            <!-- =================================
+                 PROFILE
+            ================================= -->
 
-            {{ subjects|length }}
-            subject{{ subjects|length|pluralize }}
+            <div class="profile-card">
 
-        </span>
+                <h2>
+                    {{ profile.workspace_name }}
+                </h2>
 
-    </div>
+                <p>
+                    Overall target:
+                    {{ profile.target_grade }}%
+                </p>
 
+            </div>
 
-    <div class="subjects">
 
+            <!-- =================================
+                 SUBJECTS HEADER
+            ================================= -->
 
-        {% for subject in subjects %}
+            <div class="subjects-header">
 
+                <h2>
+                    Subjects
+                </h2>
 
-            <a
-                href="{% url 'subject_detail' subject_index=forloop.counter0 %}"
-                class="subject"
-            >
+                <span class="subject-count">
 
+                    {{ subjects|length }}
+                    subject{{ subjects|length|pluralize }}
 
-                <div class="subject-number">
+                </span>
 
-                    Subject {{ forloop.counter }}
+            </div>
 
-                </div>
 
+            <!-- =================================
+                 SUBJECTS
+            ================================= -->
 
-                <div class="subject-name">
+            <div class="subjects">
 
 
-                    {% if subject.name %}
+                {% for subject in subjects %}
 
-                        {{ subject.name }}
 
-                    {% else %}
+                    <a
+                        href="{% url 'subject_detail' subject_index=forloop.counter0 %}"
+                        class="subject"
+                    >
 
-                        <span class="empty-subject">
 
-                            Add subject details
+                        <div class="subject-number">
 
-                        </span>
+                            Subject {{ forloop.counter }}
 
-                    {% endif %}
+                        </div>
 
 
-                </div>
+                        <div class="subject-name">
 
 
-                <div class="subject-info">
+                            {% if subject.name %}
 
+                                {{ subject.name }}
 
-                    {% if subject.target_grade %}
+                            {% else %}
 
-                        <span>
+                                <span class="empty-subject">
+                                    Add subject details
+                                </span>
 
-                            Target:
-                            {{ subject.target_grade }}%
+                            {% endif %}
 
-                        </span>
 
-                    {% else %}
+                        </div>
 
-                        <span>
 
-                            Target grade not set
+                        <div class="subject-info">
 
-                        </span>
 
-                    {% endif %}
+                            {% if subject.target_grade %}
 
+                                <span>
 
-                    {% if subject.exam_date %}
+                                    Target:
+                                    {{ subject.target_grade }}%
 
-                        <span>
+                                </span>
 
-                            Exam:
-                            {{ subject.exam_date }}
+                            {% else %}
 
-                        </span>
+                                <span>
+                                    Target grade not set
+                                </span>
 
-                    {% else %}
+                            {% endif %}
 
-                        <span>
 
-                            Exam date not set
+                            {% if subject.exam_date %}
 
-                        </span>
+                                <span>
 
-                    {% endif %}
+                                    Exam:
+                                    {{ subject.exam_date }}
 
+                                </span>
 
-                </div>
+                            {% else %}
 
+                                <span>
+                                    Exam date not set
+                                </span>
 
-                <div class="edit">
+                            {% endif %}
 
-                    Edit subject →
 
-                </div>
+                        </div>
 
 
-            </a>
+                        <div class="edit">
 
+                            Edit subject →
 
-        {% endfor %}
+                        </div>
 
 
-    </div>
+                    </a>
+
+
+                {% endfor %}
+
+
+            </div>
+
+
+        </div>
+
+
+    </main>
 
 
 </div>
+
+
+<!-- =========================================
+     SHARED SIDEBAR JAVASCRIPT
+========================================= -->
+
+<script
+    src="{% static 'dashboard/js/sidebar.js' %}"
+></script>
 
 
 </body>

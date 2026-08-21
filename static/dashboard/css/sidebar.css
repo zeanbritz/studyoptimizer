@@ -1,0 +1,313 @@
+/* ================================
+   SIDEBAR
+================================= */
+
+.sidebar {
+    width: 240px;
+    min-height: 100vh;
+
+    background: #ffffff;
+
+    border-right: 1px solid #e5e5e5;
+
+    padding: 18px 16px;
+
+    display: flex;
+    flex-direction: column;
+
+    flex-shrink: 0;
+
+    transition:
+        width 0.25s ease,
+        padding 0.25s ease;
+
+    overflow: hidden;
+
+    position: relative;
+}
+
+
+.sidebar.closed {
+    width: 64px;
+
+    padding-left: 11px;
+    padding-right: 11px;
+}
+
+
+/* ================================
+   SIDEBAR TOP
+================================= */
+
+.sidebar-top {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    height: 42px;
+
+    margin-bottom: 22px;
+
+    flex-shrink: 0;
+
+    position: relative;
+
+    z-index: 100;
+}
+
+
+.sidebar.closed .sidebar-top {
+    position: absolute;
+
+    top: 18px;
+    left: 11px;
+
+    width: 42px;
+    height: 42px;
+
+    margin: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    z-index: 1000;
+}
+
+
+/* ================================
+   MENU BUTTON
+================================= */
+
+.menu-button {
+    width: 42px;
+    height: 42px;
+
+    margin: 0;
+    padding: 0;
+
+    border: 1px solid #e1e1e1;
+
+    border-radius: 9px;
+
+    background: white;
+
+    cursor: pointer;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+    align-items: center;
+
+    gap: 5px;
+
+    flex-shrink: 0;
+
+    position: relative;
+
+    z-index: 1001;
+
+    transition:
+        background 0.15s ease;
+
+    box-shadow: none;
+}
+
+
+.menu-button:hover {
+    background: #f1f2f4;
+}
+
+
+.menu-button:active {
+    background: #e5e5e5;
+}
+
+
+.menu-line {
+    width: 18px;
+    height: 2px;
+
+    background: #333;
+
+    border-radius: 2px;
+
+    pointer-events: none;
+}
+
+
+/* ================================
+   CLOSED MENU BUTTON
+================================= */
+
+.sidebar.closed .menu-button {
+    position: relative;
+
+    top: auto;
+    left: auto;
+
+    width: 42px;
+    height: 42px;
+
+    margin: 0;
+    padding: 0;
+
+    border: 1px solid #e1e1e1;
+
+    border-radius: 9px;
+
+    background: white;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    cursor: pointer;
+
+    z-index: 1002;
+
+    box-shadow: none;
+}
+
+
+.sidebar.closed .menu-button:hover {
+    background: #f1f2f4;
+}
+
+
+.sidebar.closed .menu-button:active {
+    background: #e5e5e5;
+}
+
+
+/* ================================
+   LOGO
+================================= */
+
+.logo {
+    font-size: 26px;
+
+    font-weight: 800;
+
+    letter-spacing: -0.5px;
+
+    padding: 0 12px;
+
+    white-space: nowrap;
+
+    opacity: 1;
+
+    transition:
+        opacity 0.15s ease;
+}
+
+
+.sidebar.closed .logo {
+    opacity: 0;
+
+    width: 0;
+
+    padding: 0;
+
+    overflow: hidden;
+}
+
+
+/* ================================
+   NAVIGATION
+================================= */
+
+.nav {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 6px;
+
+    position: relative;
+
+    z-index: 1;
+}
+
+
+.sidebar.closed .nav {
+    margin-top: 60px;
+}
+
+
+.nav-link {
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 12px 14px;
+
+    border-radius: 8px;
+
+    text-decoration: none;
+
+    color: #555;
+
+    font-size: 16px;
+
+    font-weight: 700;
+
+    white-space: nowrap;
+
+    transition:
+        background 0.15s,
+        color 0.15s;
+}
+
+
+.nav-link:hover {
+    background: #f1f2f4;
+
+    color: #222;
+}
+
+
+.nav-link.active {
+    background: #8BF527;
+
+    color: #1f3d0a;
+}
+
+
+.nav-icon {
+    width: 20px;
+
+    min-width: 20px;
+
+    text-align: center;
+
+    font-size: 16px;
+}
+
+
+.nav-text {
+    opacity: 1;
+
+    transition:
+        opacity 0.15s ease;
+}
+
+
+.sidebar.closed .nav-text {
+    opacity: 0;
+
+    width: 0;
+
+    overflow: hidden;
+}
