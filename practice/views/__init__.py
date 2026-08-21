@@ -4,5 +4,5 @@ from .formulas import (
 )
 
 from .definitions import (
-    definition,
+    practice_definition,
 )

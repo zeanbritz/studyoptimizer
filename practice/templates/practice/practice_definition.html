@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Review Definition
+    </title>
+
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        body {
+
+            margin: 0;
+
+            min-height: 100vh;
+
+            background: #f5f6f8;
+
+            color: #222;
+
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Arial,
+                sans-serif;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding: 30px;
+
+        }
+
+
+        .container {
+
+            width: 100%;
+
+            max-width: 760px;
+
+            background: white;
+
+            border:
+                1px solid #e5e5e5;
+
+            border-radius: 14px;
+
+            padding: 35px;
+
+        }
+
+
+        /* =========================================
+           HEADER
+        ========================================= */
+
+        .header {
+
+            margin-bottom: 22px;
+
+        }
+
+
+        .header h1 {
+
+            margin:
+                0
+                0
+                6px;
+
+            font-size: 24px;
+
+        }
+
+
+        .header p {
+
+            margin: 0;
+
+            color: #888;
+
+            font-size: 14px;
+
+        }
+
+
+        /* =========================================
+           MASTERY
+        ========================================= */
+
+        .mastery {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            padding:
+                13px
+                15px;
+
+            margin-bottom: 30px;
+
+            background: #f7f7f7;
+
+            border-radius: 8px;
+
+        }
+
+
+        .mastery-label {
+
+            font-size: 14px;
+
+            color: #777;
+
+        }
+
+
+        .mastery-value {
+
+            font-size: 14px;
+
+            font-weight: 700;
+
+        }
+
+
+        /* =========================================
+           TERM
+        ========================================= */
+
+        .term {
+
+            margin-bottom: 25px;
+
+            font-size: 28px;
+
+            font-weight: 700;
+
+        }
+
+
+        /* =========================================
+           QUESTION
+        ========================================= */
+
+        .definition-question {
+
+            padding: 25px;
+
+            margin-bottom: 25px;
+
+            background: #f7f7f7;
+
+            border-radius: 10px;
+
+            font-size: 18px;
+
+            line-height: 1.8;
+
+        }
+
+
+        .missing-input {
+
+            width: 100%;
+
+            min-height: 50px;
+
+            margin-top: 12px;
+
+            padding:
+                12px
+                13px;
+
+            border:
+                1px solid #d8d8d8;
+
+            border-radius: 8px;
+
+            background: white;
+
+            font-family: inherit;
+
+            font-size: 16px;
+
+            line-height: 1.5;
+
+            resize: vertical;
+
+            outline: none;
+
+        }
+
+
+        .missing-input:focus {
+
+            border-color: #222;
+
+        }
+
+
+        /* =========================================
+           BUTTON
+        ========================================= */
+
+        .submit-button {
+
+            width: 100%;
+
+            padding: 14px;
+
+            border: none;
+
+            border-radius: 8px;
+
+            background: #222;
+
+            color: white;
+
+            font-size: 15px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+
+        }
+
+
+        .submit-button:hover {
+
+            background: #333;
+
+        }
+
+
+        /* =========================================
+           RESULT
+        ========================================= */
+
+        .result {
+
+            margin-top: 20px;
+
+            padding: 20px;
+
+            border-radius: 10px;
+
+        }
+
+
+        .result.correct {
+
+            background: #f0f7f0;
+
+            border:
+                1px solid #cfe3cf;
+
+        }
+
+
+        .result.incorrect {
+
+            background: #f7f3f3;
+
+            border:
+                1px solid #e4d4d4;
+
+        }
+
+
+        .result-title {
+
+            margin-bottom: 8px;
+
+            font-size: 17px;
+
+            font-weight: 700;
+
+        }
+
+
+        .result-answer {
+
+            color: #555;
+
+            line-height: 1.6;
+
+        }
+
+
+        /* =========================================
+           CONTINUE
+        ========================================= */
+
+        .continue-form {
+
+            margin: 0;
+
+        }
+
+
+        .continue-button {
+
+            width: 100%;
+
+            margin-top: 15px;
+
+            padding: 14px;
+
+            border:
+                1px solid #d8d8d8;
+
+            border-radius: 8px;
+
+            background: white;
+
+            color: #333;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+
+        }
+
+
+        .continue-button:hover {
+
+            background: #f5f5f5;
+
+        }
+
+
+        /* =========================================
+           RESPONSIVE
+        ========================================= */
+
+        @media (max-width: 600px) {
+
+            body {
+
+                padding: 15px;
+
+            }
+
+
+            .container {
+
+                padding: 25px;
+
+            }
+
+
+            .term {
+
+                font-size: 24px;
+
+            }
+
+
+            .definition-question {
+
+                font-size: 16px;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+    <!-- =========================================
+         HEADER
+    ========================================= -->
+
+    <div class="header">
+
+        <h1>
+            Review Definition
+        </h1>
+
+        <p>
+            Recall the missing part of the definition.
+        </p>
+
+    </div>
+
+
+    <!-- =========================================
+         MASTERY
+    ========================================= -->
+
+    <div class="mastery">
+
+        <span class="mastery-label">
+            Mastery
+        </span>
+
+        <span class="mastery-value">
+
+            {{ progress.mastery_level }}/6
+
+        </span>
+
+    </div>
+
+
+    <!-- =========================================
+         TERM
+    ========================================= -->
+
+    <div class="term">
+
+        {{ definition.term }}
+
+    </div>
+
+
+    {% if not submitted %}
+
+
+        <!-- =====================================
+             QUESTION
+        ====================================== -->
+
+        <form method="POST">
+
+            {% csrf_token %}
+
+
+            <div class="definition-question">
+
+
+                {% if before_text %}
+
+                    {{ before_text }}
+
+                {% endif %}
+
+
+                <textarea
+                    name="answer"
+                    class="missing-input"
+                    autocomplete="off"
+                    autofocus
+                    required
+                    placeholder="Type the missing part..."
+                ></textarea>
+
+
+                {% if after_text %}
+
+                    {{ after_text }}
+
+                {% endif %}
+
+
+            </div>
+
+
+            <button
+                type="submit"
+                class="submit-button"
+            >
+                Check Answer
+            </button>
+
+
+        </form>
+
+
+    {% else %}
+
+
+        <!-- =====================================
+             FULL ANSWER
+        ====================================== -->
+
+        <div class="definition-question">
+
+            {% if before_text %}
+
+                {{ before_text }}
+
+            {% endif %}
+
+
+            <strong>
+                {{ missing_text }}
+            </strong>
+
+
+            {% if after_text %}
+
+                {{ after_text }}
+
+            {% endif %}
+
+        </div>
+
+
+        <!-- =====================================
+             CORRECT
+        ====================================== -->
+
+        {% if is_correct %}
+
+            <div class="result correct">
+
+                <div class="result-title">
+                    ✓ Correct
+                </div>
+
+                <div class="result-answer">
+
+                    Your mastery is now
+
+                    <strong>
+                        {{ progress.mastery_level }}/6
+                    </strong>.
+
+                </div>
+
+            </div>
+
+
+        {% else %}
+
+
+            <!-- =================================
+                 INCORRECT
+            ================================== -->
+
+            <div class="result incorrect">
+
+                <div class="result-title">
+                    ✗ Not quite
+                </div>
+
+                <div class="result-answer">
+
+                    Your answer:
+
+                    <br>
+
+                    <strong>
+                        {{ answer|default:"No answer" }}
+                    </strong>
+
+
+                    <br><br>
+
+
+                    Correct answer:
+
+                    <br>
+
+                    <strong>
+                        {{ missing_text }}
+                    </strong>
+
+
+                    <br><br>
+
+
+                    Mastery:
+
+                    <strong>
+                        {{ progress.mastery_level }}/6
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+        {% endif %}
+
+
+        <!-- =====================================
+             CONTINUE
+        ====================================== -->
+
+        <form
+            method="POST"
+            class="continue-form"
+        >
+
+            {% csrf_token %}
+
+            <input
+                type="hidden"
+                name="action"
+                value="continue"
+            >
+
+            <input
+                type="hidden"
+                name="subject_index"
+                value="{{ subject_index }}"
+            >
+
+
+            <button
+                type="submit"
+                class="continue-button"
+            >
+
+                {% if next_definition %}
+
+                    Continue
+
+                {% else %}
+
+                    Finish Review
+
+                {% endif %}
+
+            </button>
+
+
+        </form>
+
+
+    {% endif %}
+
+
+</div>
+
+
+</body>
+
+</html>

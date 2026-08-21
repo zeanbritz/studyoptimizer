@@ -2,10 +2,13 @@ from django.urls import path
 
 from . import views
 from .views import definitions
-from .views import formulas
 
 
 urlpatterns = [
+
+    # ========================================================
+    # FORMULA
+    # ========================================================
 
     path(
         "formula/<int:formula_id>/",
@@ -19,22 +22,15 @@ urlpatterns = [
         name="formula_reconstruction",
     ),
 
-    path(
-        "subjects/<int:subject_index>/definition/",
-        definitions.definition,
-        name="practice_definition",
-    ),
+
+    # ========================================================
+    # DEFINITION
+    # ========================================================
 
     path(
-        "subjects/<int:subject_index>/definition/<int:definition_index>/edit/",
-        definitions.edit_definition,
-        name="edit_definition",
-    ),
-
-    path(
-        "subjects/<int:subject_index>/formula/",
-        formulas.add_formula,
-        name="add_formula",
+        "definition/<int:definition_id>/",
+        definitions.practice_definition,
+        name="practice_definition_review",
     ),
 
 ]
