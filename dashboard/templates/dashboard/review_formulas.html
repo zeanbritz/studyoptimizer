@@ -1,0 +1,470 @@
+{% load static %}
+
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Formulas | StudyOptimizer
+    </title>
+
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        body {
+
+            margin: 0;
+
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Arial,
+                sans-serif;
+
+            background: #f5f6f8;
+
+            color: #222;
+
+        }
+
+
+        .page {
+
+            max-width: 1100px;
+
+            margin: 0 auto;
+
+            padding: 40px 25px;
+
+        }
+
+
+        /* =========================================
+           HEADER
+        ========================================= */
+
+        .page-header {
+
+            margin-bottom: 30px;
+
+        }
+
+
+        .page-header h1 {
+
+            margin:
+                0
+                0
+                8px;
+
+            font-size: 32px;
+
+            letter-spacing: -0.8px;
+
+        }
+
+
+        .page-header p {
+
+            margin: 0;
+
+            color: #777;
+
+            font-size: 15px;
+
+        }
+
+
+        /* =========================================
+           FORMULAS
+        ========================================= */
+
+        .formulas {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 16px;
+
+        }
+
+
+        /* =========================================
+           FORMULA CARD
+        ========================================= */
+
+        .formula-card {
+
+            display: block;
+
+            background: white;
+
+            border:
+                1px solid
+                #e5e5e5;
+
+            border-radius: 12px;
+
+            padding: 22px 24px;
+
+            color: inherit;
+
+            text-decoration: none;
+
+            cursor: pointer;
+
+            transition:
+                border-color 0.15s ease,
+                box-shadow 0.15s ease,
+                transform 0.15s ease;
+
+        }
+
+
+        .formula-card:hover {
+
+            border-color: #cfcfcf;
+
+            box-shadow:
+                0
+                4px
+                12px
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.06
+                );
+
+            transform:
+                translateY(-2px);
+
+        }
+
+
+        /* =========================================
+           SUBJECT
+        ========================================= */
+
+        .formula-subject {
+
+            display: inline-block;
+
+            margin-bottom: 12px;
+
+            padding: 5px 9px;
+
+            border-radius: 6px;
+
+            background: #f1f2f4;
+
+            color: #666;
+
+            font-size: 12px;
+
+            font-weight: 600;
+
+        }
+
+
+        /* =========================================
+           FORMULA TITLE
+        ========================================= */
+
+        .formula-title {
+
+            margin:
+                0
+                0
+                10px;
+
+            font-size: 20px;
+
+            font-weight: 650;
+
+        }
+
+
+        /* =========================================
+           FORMULA INFORMATION
+        ========================================= */
+
+        .formula-purpose {
+
+            margin: 0;
+
+            color: #666;
+
+            font-size: 15px;
+
+            line-height: 1.6;
+
+        }
+
+
+        .formula-purpose.empty {
+
+            color: #999;
+
+            font-style: italic;
+
+        }
+
+
+        /* =========================================
+           REVIEW LINK
+        ========================================= */
+
+        .review-link {
+
+            display: inline-block;
+
+            margin-top: 16px;
+
+            color: #222;
+
+            font-size: 13px;
+
+            font-weight: 700;
+
+        }
+
+
+        /* =========================================
+           EMPTY STATE
+        ========================================= */
+
+        .empty-state {
+
+            background: white;
+
+            border:
+                1px solid
+                #e5e5e5;
+
+            border-radius: 12px;
+
+            padding: 50px 25px;
+
+            text-align: center;
+
+        }
+
+
+        .empty-state h2 {
+
+            margin:
+                0
+                0
+                8px;
+
+            font-size: 20px;
+
+        }
+
+
+        .empty-state p {
+
+            margin: 0;
+
+            color: #777;
+
+        }
+
+
+        /* =========================================
+           BACK BUTTON
+        ========================================= */
+
+        .back-button {
+
+            display: inline-block;
+
+            margin-bottom: 25px;
+
+            padding: 9px 14px;
+
+            border:
+                1px solid
+                #ddd;
+
+            border-radius: 8px;
+
+            background: white;
+
+            color: #333;
+
+            text-decoration: none;
+
+            font-size: 14px;
+
+            font-weight: 500;
+
+        }
+
+
+        .back-button:hover {
+
+            background: #f1f2f4;
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="page">
+
+
+    <!-- =========================================
+         BACK
+    ========================================= -->
+
+    <a
+        href="{% url 'review' %}"
+        class="back-button"
+    >
+        ← Review
+    </a>
+
+
+    <!-- =========================================
+         HEADER
+    ========================================= -->
+
+    <header class="page-header">
+
+        <h1>
+            Formulas
+        </h1>
+
+        <p>
+            All your formulas across all subjects.
+            {{ formula_count }}
+            formula{{ formula_count|pluralize }}.
+        </p>
+
+    </header>
+
+
+    <!-- =========================================
+         FORMULAS
+    ========================================= -->
+
+    {% if formulas %}
+
+
+        <div class="formulas">
+
+
+            {% for item in formulas %}
+
+
+                <a
+                    href="{% url 'practice_formula' formula_id=item.formula.id %}"
+                    class="formula-card"
+                >
+
+
+                    <!-- SUBJECT -->
+
+                    <div class="formula-subject">
+
+                        {{ item.subject.name }}
+
+                    </div>
+
+
+                    <!-- TITLE -->
+
+                    <h2 class="formula-title">
+
+                        {{ item.knowledge_unit.title }}
+
+                    </h2>
+
+
+                    <!-- PURPOSE -->
+
+                    {% if item.formula.purpose %}
+
+                        <p class="formula-purpose">
+
+                            {{ item.formula.purpose }}
+
+                        </p>
+
+                    {% else %}
+
+                        <p class="formula-purpose empty">
+
+                            No purpose added.
+
+                        </p>
+
+                    {% endif %}
+
+
+                    <!-- REVIEW -->
+
+                    <span class="review-link">
+
+                        Review formula →
+
+                    </span>
+
+
+                </a>
+
+
+            {% endfor %}
+
+
+        </div>
+
+
+    {% else %}
+
+
+        <div class="empty-state">
+
+            <h2>
+                No formulas yet
+            </h2>
+
+            <p>
+                Formulas you create will appear here.
+            </p>
+
+        </div>
+
+
+    {% endif %}
+
+
+</div>
+
+
+</body>
+
+</html>

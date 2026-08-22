@@ -53,4 +53,10 @@ urlpatterns = [
         name="progress",
     ),
 
+    path(
+        "review/formulas/",
+        views.review_formulas,
+        name="review_formulas",
+    ),
+
 ]

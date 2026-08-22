@@ -991,6 +991,67 @@ def review_definitions(request):
         }
     )
 
+# ============================================================
+# REVIEW FORMULAS
+# ============================================================
+
+@login_required
+def review_formulas(request):
+
+    formulas = (
+        Formula.objects
+        .filter(
+            knowledge_unit__subject__user=request.user,
+            knowledge_unit__knowledge_type=(
+                KnowledgeUnit
+                .KnowledgeType
+                .FORMULA
+            ),
+            knowledge_unit__active=True,
+        )
+        .select_related(
+            "knowledge_unit",
+            "knowledge_unit__subject",
+        )
+        .order_by(
+            "knowledge_unit__subject__name",
+            "knowledge_unit__title",
+            "id",
+        )
+    )
+
+
+    formula_items = []
+
+
+    for formula in formulas:
+
+        formula_items.append(
+            {
+                "formula":
+                    formula,
+
+                "subject":
+                    formula.knowledge_unit.subject,
+
+                "knowledge_unit":
+                    formula.knowledge_unit,
+            }
+        )
+
+
+    return render(
+        request,
+        "dashboard/review_formulas.html",
+        {
+            "formulas":
+                formula_items,
+
+            "formula_count":
+                len(formula_items),
+        }
+    )
+
 
 # ============================================================
 # PROGRESS
