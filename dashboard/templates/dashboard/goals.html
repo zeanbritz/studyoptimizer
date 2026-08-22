@@ -136,101 +136,202 @@
 
 
         /* =========================================
-           PROFILE
+           DEGREE / PROFILE CARD
         ========================================= */
 
         .profile-card {
+
+            position: relative;
 
             background: #f5f6f8;
 
             border:
                 1px solid
-                #e2e5e8;
+                #e0e3e6;
 
             border-radius: 14px;
 
-            padding: 26px;
+            padding:
+                30px
+                30px
+                28px;
 
             margin-bottom: 30px;
 
         }
 
 
-        .profile-card h2 {
+        /* =========================================
+           EDIT BUTTON
+        ========================================= */
 
-            margin:
-                0
-                0
-                14px;
+        .profile-edit-button {
 
-            color: #222;
+            position: absolute;
 
-            font-size: 24px;
+            top: 14px;
 
-            font-weight: 800;
+            left: 14px;
+
+            width: 34px;
+
+            height: 34px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            border:
+                1px solid
+                #d7dadd;
+
+            border-radius: 8px;
+
+            background: white;
+
+            color: #555;
+
+            font-size: 16px;
+
+            cursor: pointer;
+
+            transition:
+                background 0.15s ease,
+                border-color 0.15s ease,
+                transform 0.15s ease;
+
+        }
+
+
+        .profile-edit-button:hover {
+
+            background: #eeeeee;
+
+            border-color: #c8c8c8;
+
+            transform:
+                translateY(-1px);
 
         }
 
 
         /* =========================================
-           OVERALL TARGET
+           PROFILE DISPLAY
         ========================================= */
 
-        .target-form {
+        .profile-display {
 
-            display: flex;
-
-            align-items: flex-end;
-
-            gap: 12px;
-
-            flex-wrap: wrap;
+            padding-top: 24px;
 
         }
 
 
-        .target-field {
+        .degree-title {
 
-            display: flex;
+            margin:
+                0
+                0
+                6px;
 
-            flex-direction: column;
+            color: #222;
 
-            gap: 6px;
+            font-size: 34px;
+
+            line-height: 1.15;
+
+            font-weight: 800;
+
+            letter-spacing: -0.6px;
 
         }
 
 
-        .target-field label {
+        .overall-target {
 
-            color: #555;
+            margin: 0;
 
-            font-size: 14px;
+            color: #666;
+
+            font-size: 17px;
 
             font-weight: 700;
 
         }
 
 
-        .target-input-wrapper {
+        /* =========================================
+           PROFILE EDIT FORM
+        ========================================= */
 
-            position: relative;
+        .profile-edit-form {
 
-            width: 140px;
+            display: none;
+
+            padding-top: 24px;
 
         }
 
 
-        .target-input {
+        .profile-card.editing
+        .profile-display {
+
+            display: none;
+
+        }
+
+
+        .profile-card.editing
+        .profile-edit-form {
+
+            display: block;
+
+        }
+
+
+        .profile-fields {
+
+            display: grid;
+
+            grid-template-columns:
+                minmax(0, 2fr)
+                minmax(180px, 1fr);
+
+            gap: 18px;
+
+        }
+
+
+        .profile-field {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 7px;
+
+        }
+
+
+        .profile-field label {
+
+            color: #555;
+
+            font-size: 13px;
+
+            font-weight: 700;
+
+        }
+
+
+        .profile-field input {
 
             width: 100%;
 
-            height: 44px;
-
             padding:
-                8px
-                38px
-                8px
-                12px;
+                12px
+                13px;
 
             border:
                 1px solid
@@ -244,59 +345,62 @@
 
             font-family: inherit;
 
-            font-size: 18px;
+            font-size: 16px;
 
-            font-weight: 700;
+            font-weight: 600;
 
             outline: none;
 
         }
 
 
-        .target-input:focus {
+        .profile-field.degree-field input {
+
+            font-size: 21px;
+
+            font-weight: 800;
+
+        }
+
+
+        .profile-field input:focus {
 
             border-color: #8797A8;
 
         }
 
 
-        .target-percent {
+        /* =========================================
+           PROFILE ACTIONS
+        ========================================= */
 
-            position: absolute;
+        .profile-actions {
 
-            right: 13px;
+            display: flex;
 
-            top: 50%;
+            justify-content: flex-end;
 
-            transform:
-                translateY(-50%);
+            gap: 10px;
 
-            color: #777;
+            margin-top: 20px;
 
-            font-size: 16px;
+            padding-top: 18px;
 
-            font-weight: 700;
-
-            pointer-events: none;
+            border-top:
+                1px solid
+                #e1e3e5;
 
         }
 
 
-        .target-save-button {
-
-            height: 44px;
+        .profile-save-button,
+        .profile-cancel-button {
 
             padding:
-                0
-                20px;
-
-            border: none;
+                10px
+                19px;
 
             border-radius: 8px;
-
-            background: #222;
-
-            color: white;
 
             font-family: inherit;
 
@@ -306,19 +410,43 @@
 
             cursor: pointer;
 
-            transition:
-                background 0.15s ease,
-                transform 0.15s ease;
+        }
+
+
+        .profile-save-button {
+
+            border: none;
+
+            background: #222;
+
+            color: white;
 
         }
 
 
-        .target-save-button:hover {
+        .profile-save-button:hover {
 
             background: #333;
 
-            transform:
-                translateY(-1px);
+        }
+
+
+        .profile-cancel-button {
+
+            border:
+                1px solid
+                #d1d4d7;
+
+            background: white;
+
+            color: #444;
+
+        }
+
+
+        .profile-cancel-button:hover {
+
+            background: #eeeeee;
 
         }
 
@@ -429,7 +557,7 @@
                     0,
                     0,
                     0,
-                    0.12
+                    0.14
                 );
 
             transform:
@@ -449,7 +577,9 @@
 
             margin-bottom: 22px;
 
-            font-size: 25px;
+            color: white;
+
+            font-size: 26px;
 
             line-height: 1.15;
 
@@ -467,10 +597,10 @@
                     255,
                     255,
                     255,
-                    0.9
+                    0.92
                 );
 
-            font-weight: 700;
+            font-weight: 800;
 
         }
 
@@ -502,6 +632,15 @@
         }
 
 
+        .subject-info strong {
+
+            color: white;
+
+            font-weight: 800;
+
+        }
+
+
         /* =========================================
            ADD SUBJECT CARD
         ========================================= */
@@ -512,12 +651,16 @@
 
             padding: 0;
 
+            min-height: 190px;
+
         }
 
 
         .add-subject {
 
             width: 100%;
+
+            height: 100%;
 
             min-height: 190px;
 
@@ -563,7 +706,7 @@
                     0,
                     0,
                     0,
-                    0.12
+                    0.14
                 );
 
             transform:
@@ -577,9 +720,9 @@
 
         .add-subject-plus {
 
-            font-size: 52px;
+            font-size: 58px;
 
-            line-height: 1;
+            line-height: 0.9;
 
             font-weight: 500;
 
@@ -588,9 +731,9 @@
 
         .add-subject-text {
 
-            font-size: 17px;
+            font-size: 18px;
 
-            font-weight: 700;
+            font-weight: 800;
 
         }
 
@@ -608,6 +751,13 @@
                         2,
                         minmax(0, 1fr)
                     );
+
+            }
+
+
+            .profile-fields {
+
+                grid-template-columns: 1fr;
 
             }
 
@@ -643,28 +793,22 @@
             }
 
 
-            .target-form {
+            .degree-title {
 
-                align-items: stretch;
-
-            }
-
-
-            .target-field {
-
-                width: 100%;
+                font-size: 28px;
 
             }
 
 
-            .target-input-wrapper {
+            .profile-actions {
 
-                width: 100%;
+                flex-direction: column;
 
             }
 
 
-            .target-save-button {
+            .profile-save-button,
+            .profile-cancel-button {
 
                 width: 100%;
 
@@ -718,20 +862,64 @@
 
 
             <!-- =================================
-                 PROFILE / OVERALL TARGET
+                 DEGREE / OVERALL TARGET
             ================================== -->
 
-            <div class="profile-card">
+            <div
+                class="profile-card"
+                id="profile-card"
+            >
 
 
-                <h2>
-                    {{ profile.workspace_name }}
-                </h2>
+                <!-- =============================
+                     EDIT PENCIL
+                ============================== -->
 
+                <button
+                    type="button"
+                    class="profile-edit-button"
+                    onclick="openProfileEditor()"
+                    aria-label="Edit degree and overall target"
+                    title="Edit"
+                >
+                    ✎
+                </button>
+
+
+                <!-- =============================
+                     DISPLAY MODE
+                ============================== -->
+
+                <div class="profile-display">
+
+
+                    <h2 class="degree-title">
+
+                        {{ profile.workspace_name|default:"My Degree" }}
+
+                    </h2>
+
+
+                    <p class="overall-target">
+
+                        Overall target:
+                        <strong>
+                            {{ profile.target_grade }}%
+                        </strong>
+
+                    </p>
+
+
+                </div>
+
+
+                <!-- =============================
+                     EDIT MODE
+                ============================== -->
 
                 <form
                     method="POST"
-                    class="target-form"
+                    class="profile-edit-form"
                 >
 
                     {% csrf_token %}
@@ -740,18 +928,44 @@
                     <input
                         type="hidden"
                         name="action"
-                        value="update_target"
+                        value="update_profile"
                     >
 
 
-                    <div class="target-field">
-
-                        <label for="overall-target">
-                            Overall target
-                        </label>
+                    <div class="profile-fields">
 
 
-                        <div class="target-input-wrapper">
+                        <!-- =========================
+                             DEGREE TITLE
+                        ========================== -->
+
+                        <div class="profile-field degree-field">
+
+                            <label for="workspace-name">
+                                Degree / qualification
+                            </label>
+
+                            <input
+                                id="workspace-name"
+                                type="text"
+                                name="workspace_name"
+                                value="{{ profile.workspace_name }}"
+                                placeholder="e.g. BCom Honours Information Systems"
+                                required
+                            >
+
+                        </div>
+
+
+                        <!-- =========================
+                             OVERALL TARGET
+                        ========================== -->
+
+                        <div class="profile-field">
+
+                            <label for="overall-target">
+                                Overall target %
+                            </label>
 
                             <input
                                 id="overall-target"
@@ -761,25 +975,36 @@
                                 min="0"
                                 max="100"
                                 step="1"
-                                class="target-input"
                                 required
                             >
 
-                            <span class="target-percent">
-                                %
-                            </span>
-
                         </div>
+
 
                     </div>
 
 
-                    <button
-                        type="submit"
-                        class="target-save-button"
-                    >
-                        Save Target
-                    </button>
+                    <div class="profile-actions">
+
+
+                        <button
+                            type="button"
+                            class="profile-cancel-button"
+                            onclick="closeProfileEditor()"
+                        >
+                            Cancel
+                        </button>
+
+
+                        <button
+                            type="submit"
+                            class="profile-save-button"
+                        >
+                            Save Changes
+                        </button>
+
+
+                    </div>
 
 
                 </form>
@@ -841,7 +1066,7 @@
                             {% else %}
 
                                 <span class="empty-subject">
-                                    Add subject details
+                                    New Subject
                                 </span>
 
                             {% endif %}
@@ -853,12 +1078,18 @@
                         <div class="subject-info">
 
 
+                            <!-- =====================
+                                 TARGET
+                            ====================== -->
+
                             {% if subject.target_grade %}
 
                                 <span>
 
                                     Target:
-                                    {{ subject.target_grade }}%
+                                    <strong>
+                                        {{ subject.target_grade }}%
+                                    </strong>
 
                                 </span>
 
@@ -871,12 +1102,21 @@
                             {% endif %}
 
 
+                            <!-- =====================
+                                 EXAM COUNTDOWN
+                            ====================== -->
+
                             {% if subject.exam_date %}
 
                                 <span>
 
-                                    Exam:
-                                    {{ subject.exam_date }}
+                                    Exam in
+
+                                    <strong>
+                                        {{ subject.days_until_exam }}
+                                    </strong>
+
+                                    day{{ subject.days_until_exam|pluralize }}
 
                                 </span>
 
@@ -950,6 +1190,58 @@
 
 
 </div>
+
+
+<script>
+
+    // =============================================
+    // OPEN PROFILE EDITOR
+    // =============================================
+
+    function openProfileEditor() {
+
+        const profileCard =
+            document.getElementById(
+                "profile-card"
+            );
+
+        profileCard.classList.add(
+            "editing"
+        );
+
+
+        const titleInput =
+            document.getElementById(
+                "workspace-name"
+            );
+
+        if (titleInput) {
+
+            titleInput.focus();
+
+        }
+
+    }
+
+
+    // =============================================
+    // CLOSE PROFILE EDITOR
+    // =============================================
+
+    function closeProfileEditor() {
+
+        const profileCard =
+            document.getElementById(
+                "profile-card"
+            );
+
+        profileCard.classList.remove(
+            "editing"
+        );
+
+    }
+
+</script>
 
 
 <script

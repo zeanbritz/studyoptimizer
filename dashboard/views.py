@@ -1,3 +1,5 @@
+from datetime import date, datetime
+
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.utils import timezone
@@ -56,7 +58,11 @@ def review(request):
         KnowledgeUnit.objects
         .filter(
             subject__user=request.user,
-            knowledge_type=KnowledgeUnit.KnowledgeType.DEFINITION,
+            knowledge_type=(
+                KnowledgeUnit
+                .KnowledgeType
+                .DEFINITION
+            ),
             active=True,
         )
         .select_related(
@@ -93,7 +99,11 @@ def review(request):
         KnowledgeUnit.objects
         .filter(
             subject__user=request.user,
-            knowledge_type=KnowledgeUnit.KnowledgeType.FORMULA,
+            knowledge_type=(
+                KnowledgeUnit
+                .KnowledgeType
+                .FORMULA
+            ),
             active=True,
         )
         .select_related(
@@ -142,13 +152,20 @@ def review(request):
         request,
         "dashboard/review.html",
         {
-            "subjects": subjects,
+            "subjects":
+                subjects,
 
-            "definitions": definitions,
-            "definition_count": definition_count,
+            "definitions":
+                definitions,
 
-            "formulas": formulas,
-            "formula_count": formula_count,
+            "definition_count":
+                definition_count,
+
+            "formulas":
+                formulas,
+
+            "formula_count":
+                formula_count,
         }
     )
 
@@ -239,21 +256,27 @@ def onboarding(request):
             subject_count
         ):
 
-            subjects.append({
+            subjects.append(
+                {
+                    "name":
+                        "",
 
-                "name": "",
+                    "target_grade":
+                        "",
 
-                "target_grade": "",
+                    "exam_date":
+                        "",
 
-                "exam_date": "",
+                    "definitions":
+                        [],
 
-                "definitions": [],
+                    "formulas":
+                        [],
 
-                "formulas": [],
-
-                "database_id": None,
-
-            })
+                    "database_id":
+                        None,
+                }
+            )
 
         request.session[
             "onboarding_subjects"
@@ -286,6 +309,10 @@ def onboarding(request):
 @login_required
 def goals(request):
 
+    # --------------------------------------------------------
+    # GET PROFILE
+    # --------------------------------------------------------
+
     profile = request.session.get(
         "onboarding_profile"
     )
@@ -296,17 +323,381 @@ def goals(request):
             "onboarding"
         )
 
+    # --------------------------------------------------------
+    # GET SUBJECTS
+    # --------------------------------------------------------
+
     subjects = request.session.get(
         "onboarding_subjects",
         []
     )
 
+    # ========================================================
+    # HANDLE FORM SUBMISSIONS
+    # ========================================================
+
+    if request.method == "POST":
+
+        action = request.POST.get(
+            "action",
+            ""
+        )
+
+        # ====================================================
+        # UPDATE DEGREE TITLE + OVERALL TARGET
+        # ====================================================
+
+        if action == "update_profile":
+
+            workspace_name = (
+                request.POST.get(
+                    "workspace_name",
+                    ""
+                )
+                .strip()
+            )
+
+            target_grade = (
+                request.POST.get(
+                    "target_grade",
+                    ""
+                )
+                .strip()
+            )
+
+            # ------------------------------------------------
+            # UPDATE DEGREE / QUALIFICATION TITLE
+            # ------------------------------------------------
+
+            if workspace_name:
+
+                profile[
+                    "workspace_name"
+                ] = workspace_name
+
+            # ------------------------------------------------
+            # UPDATE OVERALL TARGET
+            # ------------------------------------------------
+
+            try:
+
+                target_grade = int(
+                    target_grade
+                )
+
+                target_grade = max(
+                    0,
+                    min(
+                        target_grade,
+                        100
+                    )
+                )
+
+                profile[
+                    "target_grade"
+                ] = target_grade
+
+            except (
+                TypeError,
+                ValueError
+            ):
+
+                pass
+
+            # ------------------------------------------------
+            # KEEP SUBJECT COUNT SYNCHRONIZED
+            # ------------------------------------------------
+
+            profile[
+                "subject_count"
+            ] = len(
+                subjects
+            )
+
+            # ------------------------------------------------
+            # SAVE PROFILE
+            # ------------------------------------------------
+
+            request.session[
+                "onboarding_profile"
+            ] = profile
+
+            request.session.modified = True
+
+            return redirect(
+                "goals"
+            )
+
+        # ====================================================
+        # SUPPORT OLD TARGET-ONLY FORM
+        # ====================================================
+
+        elif action == "update_target":
+
+            target_grade = (
+                request.POST.get(
+                    "target_grade",
+                    ""
+                )
+                .strip()
+            )
+
+            try:
+
+                target_grade = int(
+                    target_grade
+                )
+
+                target_grade = max(
+                    0,
+                    min(
+                        target_grade,
+                        100
+                    )
+                )
+
+                profile[
+                    "target_grade"
+                ] = target_grade
+
+            except (
+                TypeError,
+                ValueError
+            ):
+
+                pass
+
+            request.session[
+                "onboarding_profile"
+            ] = profile
+
+            request.session.modified = True
+
+            return redirect(
+                "goals"
+            )
+
+        # ====================================================
+        # ADD SUBJECT
+        # ====================================================
+
+        elif action == "add_subject":
+
+            # ------------------------------------------------
+            # OPTIONAL MAXIMUM
+            # ------------------------------------------------
+
+            if len(subjects) >= 20:
+
+                return redirect(
+                    "goals"
+                )
+
+            # ------------------------------------------------
+            # CREATE NEW SUBJECT SLOT
+            #
+            # Same structure as onboarding subjects.
+            # ------------------------------------------------
+
+            new_subject = {
+
+                "name":
+                    "",
+
+                "target_grade":
+                    "",
+
+                "exam_date":
+                    "",
+
+                "definitions":
+                    [],
+
+                "formulas":
+                    [],
+
+                "database_id":
+                    None,
+
+            }
+
+            # ------------------------------------------------
+            # ADD TO SUBJECT LIST
+            # ------------------------------------------------
+
+            subjects.append(
+                new_subject
+            )
+
+            # ------------------------------------------------
+            # UPDATE SUBJECT COUNT
+            # ------------------------------------------------
+
+            profile[
+                "subject_count"
+            ] = len(
+                subjects
+            )
+
+            # ------------------------------------------------
+            # SAVE SESSION
+            # ------------------------------------------------
+
+            request.session[
+                "onboarding_subjects"
+            ] = subjects
+
+            request.session[
+                "onboarding_profile"
+            ] = profile
+
+            request.session.modified = True
+
+            # ------------------------------------------------
+            # NEW SUBJECT'S INDEX
+            # ------------------------------------------------
+
+            new_subject_index = (
+                len(subjects)
+                - 1
+            )
+
+            # ------------------------------------------------
+            # OPEN NEW SUBJECT DETAIL PAGE
+            # ------------------------------------------------
+
+            return redirect(
+                "subject_detail",
+                subject_index=new_subject_index
+            )
+
+    # ========================================================
+    # CALCULATE DAYS UNTIL EXAM
+    # ========================================================
+
+    today = timezone.localdate()
+
+    display_subjects = []
+
+    for subject in subjects:
+
+        # ----------------------------------------------------
+        # COPY SUBJECT
+        #
+        # Avoid putting days_until_exam into session data.
+        # ----------------------------------------------------
+
+        subject_data = dict(
+            subject
+        )
+
+        exam_date = subject_data.get(
+            "exam_date"
+        )
+
+        days_until_exam = None
+
+        # ----------------------------------------------------
+        # EXAM DATE EXISTS
+        # ----------------------------------------------------
+
+        if exam_date:
+
+            try:
+
+                # --------------------------------------------
+                # DATETIME VALUE
+                # --------------------------------------------
+
+                if isinstance(
+                    exam_date,
+                    datetime
+                ):
+
+                    parsed_exam_date = (
+                        exam_date.date()
+                    )
+
+                # --------------------------------------------
+                # DATE VALUE
+                # --------------------------------------------
+
+                elif isinstance(
+                    exam_date,
+                    date
+                ):
+
+                    parsed_exam_date = (
+                        exam_date
+                    )
+
+                # --------------------------------------------
+                # STRING VALUE
+                #
+                # Expected:
+                # YYYY-MM-DD
+                # --------------------------------------------
+
+                else:
+
+                    parsed_exam_date = (
+                        date.fromisoformat(
+                            str(
+                                exam_date
+                            )[:10]
+                        )
+                    )
+
+                # --------------------------------------------
+                # CALCULATE DIFFERENCE
+                # --------------------------------------------
+
+                days_until_exam = (
+                    parsed_exam_date
+                    - today
+                ).days
+
+                # --------------------------------------------
+                # NEVER SHOW NEGATIVE DAYS
+                # --------------------------------------------
+
+                days_until_exam = max(
+                    0,
+                    days_until_exam
+                )
+
+            except (
+                TypeError,
+                ValueError
+            ):
+
+                days_until_exam = None
+
+        # ----------------------------------------------------
+        # TEMPORARY DISPLAY VALUE
+        # ----------------------------------------------------
+
+        subject_data[
+            "days_until_exam"
+        ] = days_until_exam
+
+        display_subjects.append(
+            subject_data
+        )
+
+    # ========================================================
+    # RENDER
+    # ========================================================
+
     return render(
         request,
         "dashboard/goals.html",
         {
-            "profile": profile,
-            "subjects": subjects,
+            "profile":
+                profile,
+
+            "subjects":
+                display_subjects,
         }
     )
 
@@ -365,7 +756,8 @@ def subject_detail(
 
     if (
         subject_index < 0
-        or subject_index >= len(subjects)
+        or
+        subject_index >= len(subjects)
     ):
 
         return redirect(
@@ -404,17 +796,23 @@ def subject_detail(
 
     if request.method == "POST":
 
-        subject_data["name"] = request.POST.get(
+        subject_data[
+            "name"
+        ] = request.POST.get(
             "name",
             ""
         ).strip()
 
-        subject_data["target_grade"] = request.POST.get(
+        subject_data[
+            "target_grade"
+        ] = request.POST.get(
             "target_grade",
             ""
         )
 
-        subject_data["exam_date"] = request.POST.get(
+        subject_data[
+            "exam_date"
+        ] = request.POST.get(
             "exam_date",
             ""
         )
@@ -435,8 +833,10 @@ def subject_detail(
 
     database_subject = None
 
-    database_subject_id = subject_data.get(
-        "database_id"
+    database_subject_id = (
+        subject_data.get(
+            "database_id"
+        )
     )
 
     # --------------------------------------------------------
@@ -460,10 +860,12 @@ def subject_detail(
 
     if not database_subject:
 
-        subject_name = subject_data.get(
-            "name",
-            ""
-        ).strip()
+        subject_name = (
+            subject_data.get(
+                "name",
+                ""
+            ).strip()
+        )
 
         if subject_name:
 
@@ -482,10 +884,12 @@ def subject_detail(
 
     if not database_subject:
 
-        subject_name = subject_data.get(
-            "name",
-            ""
-        ).strip()
+        subject_name = (
+            subject_data.get(
+                "name",
+                ""
+            ).strip()
+        )
 
         if subject_name:
 
@@ -540,7 +944,11 @@ def subject_detail(
             KnowledgeUnit.objects
             .filter(
                 subject=database_subject,
-                knowledge_type=KnowledgeUnit.KnowledgeType.FORMULA,
+                knowledge_type=(
+                    KnowledgeUnit
+                    .KnowledgeType
+                    .FORMULA
+                ),
                 active=True,
             )
             .select_related(
@@ -604,7 +1012,11 @@ def subject_detail(
             KnowledgeUnit.objects
             .filter(
                 subject=database_subject,
-                knowledge_type=KnowledgeUnit.KnowledgeType.DEFINITION,
+                knowledge_type=(
+                    KnowledgeUnit
+                    .KnowledgeType
+                    .DEFINITION
+                ),
                 active=True,
             )
             .select_related(
@@ -685,7 +1097,8 @@ def subject_detail(
         request,
         "dashboard/subject_detail.html",
         {
-            "subject": subject_data,
+            "subject":
+                subject_data,
 
             "subject_index":
                 subject_index,
@@ -762,7 +1175,8 @@ def definition(
 
     if (
         subject_index < 0
-        or subject_index >= len(subjects)
+        or
+        subject_index >= len(subjects)
     ):
 
         return redirect(
@@ -779,11 +1193,15 @@ def definition(
 
     database_subject = None
 
-    database_subject_id = subject_data.get(
-        "database_id"
+    database_subject_id = (
+        subject_data.get(
+            "database_id"
+        )
     )
 
-    # First try database ID
+    # --------------------------------------------------------
+    # FIRST TRY DATABASE ID
+    # --------------------------------------------------------
 
     if database_subject_id:
 
@@ -796,14 +1214,18 @@ def definition(
             .first()
         )
 
-    # Fall back to subject name
+    # --------------------------------------------------------
+    # FALL BACK TO SUBJECT NAME
+    # --------------------------------------------------------
 
     if not database_subject:
 
-        subject_name = subject_data.get(
-            "name",
-            ""
-        ).strip()
+        subject_name = (
+            subject_data.get(
+                "name",
+                ""
+            ).strip()
+        )
 
         if subject_name:
 
@@ -944,7 +1366,11 @@ def review_definitions(request):
         KnowledgeUnit.objects
         .filter(
             subject__user=request.user,
-            knowledge_type=KnowledgeUnit.KnowledgeType.DEFINITION,
+            knowledge_type=(
+                KnowledgeUnit
+                .KnowledgeType
+                .DEFINITION
+            ),
             active=True,
         )
         .select_related(
@@ -971,13 +1397,15 @@ def review_definitions(request):
 
         if definition:
 
-            definitions.append({
-                "definition":
-                    definition,
+            definitions.append(
+                {
+                    "definition":
+                        definition,
 
-                "subject":
-                    knowledge_unit.subject,
-            })
+                    "subject":
+                        knowledge_unit.subject,
+                }
+            )
 
     return render(
         request,
@@ -987,9 +1415,12 @@ def review_definitions(request):
                 definitions,
 
             "definition_count":
-                len(definitions),
+                len(
+                    definitions
+                ),
         }
     )
+
 
 # ============================================================
 # REVIEW FORMULAS
@@ -1020,9 +1451,7 @@ def review_formulas(request):
         )
     )
 
-
     formula_items = []
-
 
     for formula in formulas:
 
@@ -1039,7 +1468,6 @@ def review_formulas(request):
             }
         )
 
-
     return render(
         request,
         "dashboard/review_formulas.html",
@@ -1048,7 +1476,9 @@ def review_formulas(request):
                 formula_items,
 
             "formula_count":
-                len(formula_items),
+                len(
+                    formula_items
+                ),
         }
     )
 
@@ -1069,14 +1499,13 @@ def progress(request):
         .filter(
             user=request.user
         )
-        .order_by("name")
+        .order_by(
+            "name"
+        )
     )
 
     # --------------------------------------------------------
     # GET ALL KNOWLEDGE UNITS
-    # --------------------------------------------------------
-    # KnowledgeUnit is directly linked to Subject.
-    # There is NO topic relationship on KnowledgeUnit.
     # --------------------------------------------------------
 
     knowledge_units = (
@@ -1128,12 +1557,14 @@ def progress(request):
 
     total_correct = sum(
         record.correct_count
-        for record in progress_records
+        for record
+        in progress_records
     )
 
     total_incorrect = sum(
         record.incorrect_count
-        for record in progress_records
+        for record
+        in progress_records
     )
 
     total_reviews = (
@@ -1151,7 +1582,8 @@ def progress(request):
             (
                 total_correct
                 / total_reviews
-            ) * 100
+            )
+            * 100
         )
 
     else:
@@ -1168,7 +1600,8 @@ def progress(request):
             (
                 mastered_count
                 / total_knowledge
-            ) * 100
+            )
+            * 100
         )
 
     else:
@@ -1183,7 +1616,10 @@ def progress(request):
 
     for subject in subjects:
 
-        # KnowledgeUnit belongs directly to Subject.
+        # ----------------------------------------------------
+        # KNOWLEDGE UNITS FOR THIS SUBJECT
+        # ----------------------------------------------------
+
         subject_units = (
             knowledge_units
             .filter(
@@ -1195,8 +1631,12 @@ def progress(request):
             subject_units.count()
         )
 
-        # Skip subjects with no knowledge units.
+        # ----------------------------------------------------
+        # SKIP EMPTY SUBJECTS
+        # ----------------------------------------------------
+
         if subject_unit_count == 0:
+
             continue
 
         # ----------------------------------------------------
@@ -1206,7 +1646,9 @@ def progress(request):
         subject_progress_records = (
             progress_records
             .filter(
-                knowledge_unit__in=subject_units
+                knowledge_unit__in=(
+                    subject_units
+                )
             )
         )
 
@@ -1263,7 +1705,8 @@ def progress(request):
                 (
                     subject_correct
                     / subject_total_answers
-                ) * 100
+                )
+                * 100
             )
 
         else:
@@ -1278,43 +1721,44 @@ def progress(request):
             (
                 subject_mastered
                 / subject_unit_count
-            ) * 100
+            )
+            * 100
         )
 
         # ----------------------------------------------------
         # ADD SUBJECT RESULT
         # ----------------------------------------------------
 
-        subject_progress.append({
+        subject_progress.append(
+            {
+                "subject":
+                    subject,
 
-            "subject":
-                subject,
+                "total_units":
+                    subject_unit_count,
 
-            "total_units":
-                subject_unit_count,
+                "reviewed":
+                    subject_progress_records.count(),
 
-            "reviewed":
-                subject_progress_records.count(),
+                "mastered":
+                    subject_mastered,
 
-            "mastered":
-                subject_mastered,
+                "reviews":
+                    subject_reviews,
 
-            "reviews":
-                subject_reviews,
+                "correct":
+                    subject_correct,
 
-            "correct":
-                subject_correct,
+                "incorrect":
+                    subject_incorrect,
 
-            "incorrect":
-                subject_incorrect,
+                "accuracy":
+                    subject_accuracy,
 
-            "accuracy":
-                subject_accuracy,
-
-            "mastery":
-                subject_mastery,
-
-        })
+                "mastery":
+                    subject_mastery,
+            }
+        )
 
     # --------------------------------------------------------
     # RENDER
@@ -1324,7 +1768,6 @@ def progress(request):
         request,
         "dashboard/progress.html",
         {
-
             "total_knowledge":
                 total_knowledge,
 
@@ -1351,6 +1794,5 @@ def progress(request):
 
             "subject_progress":
                 subject_progress,
-
         }
     )
