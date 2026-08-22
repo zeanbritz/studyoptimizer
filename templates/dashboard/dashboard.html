@@ -16,15 +16,25 @@
         StudyOptimizer
     </title>
 
-    <!-- SHARED SIDEBAR CSS -->
-    <link
-        rel="stylesheet"
-        href="{% static 'dashboard/css/dashboard.css' %}"
-    >
+
+    <!-- =========================================
+         SHARED SIDEBAR CSS
+    ========================================= -->
 
     <link
         rel="stylesheet"
         href="{% static 'dashboard/css/sidebar.css' %}"
+    >
+
+
+    <!-- =========================================
+         DASHBOARD CSS
+         Loaded AFTER sidebar so dashboard styles win
+    ========================================= -->
+
+    <link
+        rel="stylesheet"
+        href="{% static 'dashboard/css/dashboard.css' %}"
     >
 
 </head>
@@ -36,65 +46,81 @@
 <div class="app">
 
 
-    <!-- =================================
+    <!-- =========================================
          SHARED SIDEBAR
-    ================================= -->
+    ========================================= -->
 
     {% include 'partials/sidebar.html' with active_page='dashboard' %}
 
 
-    <!-- =================================
+    <!-- =========================================
          MAIN
-    ================================= -->
+    ========================================= -->
 
     <main class="main">
 
 
-        <!-- =================================
+        <!-- =====================================
              PAGE HEADER
-        ================================= -->
+        ====================================== -->
 
         <header class="page-header">
 
+
             <h1>
+
                 Welcome back,
                 {{ request.user.first_name|default:request.user.username }}
+
             </h1>
+
 
         </header>
 
 
-        <!-- =================================
+        <!-- =====================================
              DASHBOARD GRID
-        ================================= -->
+        ====================================== -->
 
         <section class="dashboard-grid">
 
 
             <!-- =================================
                  TODAY'S PLAN
-            ================================= -->
+            ================================== -->
 
             <div class="card today-plan">
 
 
+                <!-- =============================
+                     HEADER
+                ============================== -->
+
                 <div class="today-plan-header">
+
 
                     <h2>
                         Today's Plan
                     </h2>
 
+
                     <span class="today-date">
                         Today
                     </span>
 
+
                 </div>
 
 
-                <div class="empty-plan">
+                <!-- =============================
+                     NOT ONBOARDED
+                ============================== -->
+
+                {% if not onboarding_complete %}
 
 
-                    {% if not onboarding_complete %}
+                    <div class="empty-plan">
+
 
                         <a
                             href="{% url 'onboarding' %}"
@@ -104,16 +130,138 @@
                         </a>
 
 
+                    </div>
+
+
+                <!-- =============================
+                     TODAY'S STUDY PLAN
+                ============================== -->
+
+                {% else %}
+
+
+                    {% if due_definition_subjects %}
+
+
+                        <div class="today-plan-columns">
+
+
+                            <!-- =========================
+                                 DEFINITIONS COLUMN
+                            ========================== -->
+
+                            <div class="today-plan-column">
+
+
+                                <!-- =====================
+                                     COLUMN HEADER
+                                ====================== -->
+
+                                <div class="plan-column-header">
+
+
+                                    <div>
+
+                                        <h3>
+                                            Definitions
+                                        </h3>
+
+                                        <p>
+                                            Definitions scheduled for review today.
+                                        </p>
+
+                                    </div>
+
+
+                                    <span class="plan-total-count">
+                                        {{ due_definition_total }}
+                                    </span>
+
+
+                                </div>
+
+
+                                <!-- =====================
+                                     SUBJECTS
+                                ====================== -->
+
+                                <div class="definition-subject-list">
+
+
+                                    {% for item in due_definition_subjects %}
+
+
+                                        <a
+                                            href="{% url 'definition_review_list' subject_index=item.subject_index %}"
+                                            class="definition-subject-card"
+                                        >
+
+
+                                            <div class="definition-card-content">
+
+
+                                                <span class="definition-card-title">
+
+                                                    {{ item.subject.name }}
+                                                    Definitions
+
+                                                </span>
+
+
+                                                <span class="definition-card-count">
+
+                                                    {{ item.count }}
+
+                                                    definition{{ item.count|pluralize }}
+
+                                                    due
+
+                                                </span>
+
+
+                                            </div>
+
+
+                                            <span class="definition-card-arrow">
+                                                →
+                                            </span>
+
+
+                                        </a>
+
+
+                                    {% endfor %}
+
+
+                                </div>
+
+
+                            </div>
+
+
+                        </div>
+
+
                     {% else %}
 
-                        <p>
-                            Your study plan will appear here.
-                        </p>
+
+                        <!-- =========================
+                             NOTHING DUE
+                        ========================== -->
+
+                        <div class="empty-plan">
+
+                            <p>
+                                Nothing to review today.
+                            </p>
+
+                        </div>
+
 
                     {% endif %}
 
 
-                </div>
+                {% endif %}
 
 
             </div>
@@ -121,16 +269,18 @@
 
             <!-- =================================
                  REVIEW
-            ================================= -->
+            ================================== -->
 
             <a
                 href="{% url 'review' %}"
                 class="card clickable-card card-review"
             >
 
+
                 <h3>
                     Review
                 </h3>
+
 
                 <p>
                     Review definitions, formulas,
@@ -139,65 +289,75 @@
                     your subjects.
                 </p>
 
+
             </a>
 
 
             <!-- =================================
                  PROGRESS
-            ================================= -->
+            ================================== -->
 
             <a
                 href="{% url 'progress' %}"
                 class="card clickable-card card-progress"
             >
 
+
                 <h3>
                     Progress
                 </h3>
+
 
                 <p>
                     Track your mastery, study time,
                     and performance over time.
                 </p>
 
+
             </a>
 
 
             <!-- =================================
                  UPCOMING EXAMS
-            ================================= -->
+            ================================== -->
 
             <div class="card card-exams">
+
 
                 <h3>
                     Upcoming Exams
                 </h3>
+
 
                 <p>
                     Your upcoming assessments
                     and deadlines will appear here.
                 </p>
 
+
             </div>
 
 
             <!-- =================================
                  GOALS
-            ================================= -->
+            ================================== -->
 
             <a
                 href="{% url 'goals' %}"
                 class="card clickable-card card-goals"
             >
 
+
                 <h3>
                     Goals
                 </h3>
+
 
                 <p>
                     Set and manage your academic goals,
                     subject targets, and study objectives.
                 </p>
+
 
             </a>
 
@@ -211,9 +371,9 @@
 </div>
 
 
-<!-- =================================
-     SHARED SIDEBAR JAVASCRIPT
-================================= -->
+<!-- =========================================
+     SIDEBAR JAVASCRIPT
+========================================= -->
 
 <script
     src="{% static 'dashboard/js/sidebar.js' %}"

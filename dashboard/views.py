@@ -20,10 +20,299 @@ from learning.models import (
 @login_required
 def dashboard(request):
 
-    onboarding_complete = request.session.get(
-        "onboarding_complete",
-        False
+    # --------------------------------------------------------
+    # ONBOARDING STATUS
+    # --------------------------------------------------------
+
+    onboarding_complete = (
+        request.session.get(
+            "onboarding_complete",
+            False
+        )
     )
+
+    # --------------------------------------------------------
+    # TODAY
+    # --------------------------------------------------------
+
+    today = timezone.localdate()
+
+    # --------------------------------------------------------
+    # SESSION SUBJECTS
+    #
+    # subject_detail and definition_review_list use the
+    # position inside onboarding_subjects as subject_index.
+    # --------------------------------------------------------
+
+    session_subjects = (
+        request.session.get(
+            "onboarding_subjects",
+            []
+        )
+    )
+
+    # --------------------------------------------------------
+    # TODAY'S DEFINITION GROUPS
+    # --------------------------------------------------------
+
+    due_definition_subjects = []
+
+    due_definition_total = 0
+
+    # ========================================================
+    # ONLY BUILD PLAN AFTER ONBOARDING
+    # ========================================================
+
+    if onboarding_complete:
+
+        # ----------------------------------------------------
+        # GET ALL ACTIVE DEFINITIONS
+        # ----------------------------------------------------
+
+        definition_knowledge_units = (
+            KnowledgeUnit.objects
+            .filter(
+                subject__user=request.user,
+                knowledge_type=(
+                    KnowledgeUnit
+                    .KnowledgeType
+                    .DEFINITION
+                ),
+                active=True,
+            )
+            .select_related(
+                "definition",
+                "subject",
+            )
+            .order_by(
+                "subject__name",
+                "definition__term",
+            )
+        )
+
+        # ----------------------------------------------------
+        # GROUPS
+        # ----------------------------------------------------
+
+        subject_groups = {}
+
+        # ====================================================
+        # CHECK EACH DEFINITION
+        # ====================================================
+
+        for knowledge_unit in (
+            definition_knowledge_units
+        ):
+
+            # ------------------------------------------------
+            # DEFINITION
+            # ------------------------------------------------
+
+            definition = getattr(
+                knowledge_unit,
+                "definition",
+                None
+            )
+
+            if not definition:
+
+                continue
+
+            # ------------------------------------------------
+            # STUDENT PROGRESS
+            # ------------------------------------------------
+
+            progress = (
+                StudentKnowledge.objects
+                .filter(
+                    student=request.user,
+                    knowledge_unit=knowledge_unit,
+                )
+                .first()
+            )
+
+            # ------------------------------------------------
+            # DETERMINE WHETHER DUE
+            #
+            # Same logic used on subject_detail.
+            # ------------------------------------------------
+
+            is_due = False
+
+            if progress is None:
+
+                is_due = True
+
+            elif progress.next_review is None:
+
+                is_due = True
+
+            elif (
+                progress.next_review.date()
+                <= today
+            ):
+
+                is_due = True
+
+            # ------------------------------------------------
+            # SKIP IF NOT DUE
+            # ------------------------------------------------
+
+            if not is_due:
+
+                continue
+
+            # ------------------------------------------------
+            # DATABASE SUBJECT
+            # ------------------------------------------------
+
+            database_subject = (
+                knowledge_unit.subject
+            )
+
+            # =================================================
+            # FIND CORRECT SESSION SUBJECT INDEX
+            # =================================================
+
+            subject_index = None
+
+            # ------------------------------------------------
+            # FIRST TRY DATABASE ID
+            # ------------------------------------------------
+
+            for index, subject_data in enumerate(
+                session_subjects
+            ):
+
+                database_id = (
+                    subject_data.get(
+                        "database_id"
+                    )
+                )
+
+                try:
+
+                    database_id = int(
+                        database_id
+                    )
+
+                except (
+                    TypeError,
+                    ValueError
+                ):
+
+                    database_id = None
+
+                if (
+                    database_id
+                    == database_subject.id
+                ):
+
+                    subject_index = index
+
+                    break
+
+            # ------------------------------------------------
+            # FALLBACK TO SUBJECT NAME
+            # ------------------------------------------------
+
+            if subject_index is None:
+
+                for index, subject_data in enumerate(
+                    session_subjects
+                ):
+
+                    session_name = (
+                        subject_data.get(
+                            "name",
+                            ""
+                        )
+                        .strip()
+                    )
+
+                    if (
+                        session_name
+                        == database_subject.name.strip()
+                    ):
+
+                        subject_index = index
+
+                        break
+
+            # ------------------------------------------------
+            # CANNOT LINK WITHOUT SUBJECT INDEX
+            # ------------------------------------------------
+
+            if subject_index is None:
+
+                continue
+
+            # ------------------------------------------------
+            # GROUP KEY
+            # ------------------------------------------------
+
+            subject_id = (
+                database_subject.id
+            )
+
+            # ------------------------------------------------
+            # CREATE GROUP
+            # ------------------------------------------------
+
+            if (
+                subject_id
+                not in subject_groups
+            ):
+
+                subject_groups[
+                    subject_id
+                ] = {
+
+                    "subject":
+                        database_subject,
+
+                    "subject_index":
+                        subject_index,
+
+                    "count":
+                        0,
+
+                    "definitions":
+                        [],
+
+                }
+
+            # ------------------------------------------------
+            # ADD DUE DEFINITION
+            # ------------------------------------------------
+
+            subject_groups[
+                subject_id
+            ][
+                "count"
+            ] += 1
+
+            subject_groups[
+                subject_id
+            ][
+                "definitions"
+            ].append(
+                definition
+            )
+
+            due_definition_total += 1
+
+        # ----------------------------------------------------
+        # CONVERT GROUPS TO LIST
+        # ----------------------------------------------------
+
+        due_definition_subjects = list(
+            subject_groups.values()
+        )
+
+    # ========================================================
+    # RENDER
+    # ========================================================
 
     return render(
         request,
@@ -31,6 +320,12 @@ def dashboard(request):
         {
             "onboarding_complete":
                 onboarding_complete,
+
+            "due_definition_subjects":
+                due_definition_subjects,
+
+            "due_definition_total":
+                due_definition_total,
         }
     )
 
