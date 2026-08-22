@@ -191,23 +191,7 @@
 
             font-size: 20px;
 
-            font-weight: 500;
-
             pointer-events: none;
-
-        }
-
-
-        .subject-selector:hover {
-
-            color: #444;
-
-        }
-
-
-        .subject-selector:focus {
-
-            outline: none;
 
         }
 
@@ -219,8 +203,6 @@
             background: white;
 
             font-size: 16px;
-
-            font-weight: 500;
 
         }
 
@@ -242,6 +224,8 @@
 
         .subject-information {
 
+            position: relative;
+
             background: white;
 
             border:
@@ -256,6 +240,185 @@
 
         }
 
+
+        /* =========================================
+           EDIT PENCIL
+        ========================================= */
+
+        .subject-edit-button {
+
+            position: absolute;
+
+            top: 14px;
+
+            right: 14px;
+
+            width: 34px;
+
+            height: 34px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            border:
+                1px solid
+                #d7dadd;
+
+            border-radius: 8px;
+
+            background: white;
+
+            color: #555;
+
+            font-size: 16px;
+
+            cursor: pointer;
+
+            transition:
+                background 0.15s ease,
+                border-color 0.15s ease,
+                transform 0.15s ease;
+
+        }
+
+
+        .subject-edit-button:hover {
+
+            background: #f4f4f4;
+
+            border-color: #c8c8c8;
+
+            transform:
+                translateY(-1px);
+
+        }
+
+
+        /* =========================================
+           SUBJECT DISPLAY MODE
+        ========================================= */
+
+        .subject-information-display {
+
+            padding-right: 50px;
+
+        }
+
+
+        .information-display-grid {
+
+            display: grid;
+
+            grid-template-columns:
+                minmax(0, 2fr)
+                minmax(160px, 1fr)
+                minmax(180px, 1fr);
+
+            gap: 20px;
+
+        }
+
+
+        .display-field {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 7px;
+
+        }
+
+
+        .display-label {
+
+            color: #777;
+
+            font-size: 12px;
+
+            font-weight: 600;
+
+            text-transform: uppercase;
+
+            letter-spacing: 0.4px;
+
+        }
+
+
+        .display-value {
+
+            color: #222;
+
+            font-size: 16px;
+
+            font-weight: 600;
+
+            line-height: 1.4;
+
+        }
+
+
+        .display-value.subject-name-display {
+
+            font-size: 21px;
+
+            font-weight: 700;
+
+        }
+
+
+        .display-empty {
+
+            color: #999;
+
+            font-weight: 500;
+
+        }
+
+
+        /* =========================================
+           EDIT MODE
+        ========================================= */
+
+        .subject-edit-form {
+
+            display: none;
+
+            padding-top: 8px;
+
+        }
+
+
+        .subject-information.editing
+        .subject-information-display {
+
+            display: none;
+
+        }
+
+
+        .subject-information.editing
+        .subject-edit-form {
+
+            display: block;
+
+        }
+
+
+        .subject-information.editing
+        .subject-edit-button {
+
+            display: none;
+
+        }
+
+
+        /* =========================================
+           INFORMATION GRID
+        ========================================= */
 
         .information-grid {
 
@@ -309,6 +472,10 @@
 
             background: white;
 
+            color: #222;
+
+            font-family: inherit;
+
             font-size: 15px;
 
             outline: none;
@@ -324,14 +491,18 @@
 
 
         /* =========================================
-           SAVE BUTTON
+           EDIT ACTIONS
         ========================================= */
 
         .information-footer {
 
             display: flex;
 
+            align-items: center;
+
             justify-content: flex-end;
+
+            gap: 10px;
 
             margin-top: 22px;
 
@@ -358,15 +529,13 @@
                 11px
                 22px;
 
+            font-family: inherit;
+
             font-size: 14px;
 
             font-weight: 600;
 
             cursor: pointer;
-
-            transition:
-                background 0.15s ease,
-                transform 0.15s ease;
 
         }
 
@@ -375,8 +544,39 @@
 
             background: #333;
 
-            transform:
-                translateY(-1px);
+        }
+
+
+        .cancel-edit-button {
+
+            border:
+                1px solid
+                #d8d8d8;
+
+            border-radius: 8px;
+
+            background: white;
+
+            color: #444;
+
+            padding:
+                10px
+                20px;
+
+            font-family: inherit;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+
+        }
+
+
+        .cancel-edit-button:hover {
+
+            background: #f5f5f5;
 
         }
 
@@ -395,7 +595,24 @@
 
             gap: 20px;
 
-            align-items: stretch;
+            align-items: start;
+
+        }
+
+
+        /* =========================================
+           WORKSPACE COLUMN
+        ========================================= */
+
+        .workspace-column {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 14px;
+
+            min-width: 0;
 
         }
 
@@ -490,14 +707,14 @@
 
             text-align: left;
 
+            text-decoration: none;
+
+            color: inherit;
+
             transition:
                 background 0.15s ease,
                 border-color 0.15s ease,
                 transform 0.15s ease;
-
-            text-decoration: none;
-
-            color: inherit;
 
         }
 
@@ -540,7 +757,79 @@
 
 
         /* =========================================
-           REVIEW CATEGORIES
+           DELETE SUBJECT SECTION
+        ========================================= */
+
+        .delete-subject-section {
+
+            display: flex;
+
+            justify-content: flex-start;
+
+        }
+
+
+        .delete-subject-button {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            gap: 8px;
+
+            padding:
+                10px
+                14px;
+
+            border:
+                1px solid
+                #d9b8b8;
+
+            border-radius: 8px;
+
+            background: white;
+
+            color: #a33a3a;
+
+            font-family: inherit;
+
+            font-size: 13px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+
+            transition:
+                background 0.15s ease,
+                border-color 0.15s ease,
+                transform 0.15s ease;
+
+        }
+
+
+        .delete-subject-button:hover {
+
+            background: #fff5f5;
+
+            border-color: #c98f8f;
+
+            transform:
+                translateY(-1px);
+
+        }
+
+
+        .bin-icon {
+
+            font-size: 15px;
+
+        }
+
+
+        /* =========================================
+           REVIEW
         ========================================= */
 
         .review-categories {
@@ -553,10 +842,6 @@
 
         }
 
-
-        /* =========================================
-           RESET TODAY'S REVIEWS
-        ========================================= */
 
         .reset-reviews-container {
 
@@ -595,10 +880,6 @@
 
             cursor: pointer;
 
-            transition:
-                background 0.15s ease,
-                border-color 0.15s ease;
-
         }
 
 
@@ -606,14 +887,8 @@
 
             background: #f7f7f7;
 
-            border-color: #c8c8c8;
-
         }
 
-
-        /* =========================================
-           REVIEW CATEGORY
-        ========================================= */
 
         .review-category {
 
@@ -633,16 +908,9 @@
 
             cursor: pointer;
 
-            text-align: left;
-
             text-decoration: none;
 
             color: inherit;
-
-            transition:
-                background 0.15s ease,
-                border-color 0.15s ease,
-                transform 0.15s ease;
 
         }
 
@@ -651,11 +919,6 @@
 
             background: #f7f7f7;
 
-            border-color: #cfcfcf;
-
-            transform:
-                translateY(-1px);
-
         }
 
 
@@ -663,25 +926,11 @@
 
             width: 100%;
 
-            padding: 18px;
-
             display: flex;
 
             align-items: center;
 
             justify-content: space-between;
-
-            cursor: pointer;
-
-            transition:
-                background 0.15s ease;
-
-        }
-
-
-        .review-category-header:hover {
-
-            background: #f7f7f7;
 
         }
 
@@ -737,20 +986,9 @@
 
         .review-arrow {
 
-            font-size: 18px;
-
             color: #777;
 
-            transition:
-                transform 0.2s ease;
-
-        }
-
-
-        .review-category.open .review-arrow {
-
-            transform:
-                rotate(180deg);
+            font-size: 18px;
 
         }
 
@@ -758,9 +996,9 @@
         .review-description {
 
             margin:
+                10px
                 0
-                18px
-                18px;
+                0;
 
             color: #888;
 
@@ -769,18 +1007,11 @@
         }
 
 
-        /* =========================================
-           REVIEW CONTENT
-        ========================================= */
-
         .review-content {
 
             display: none;
 
-            padding:
-                0
-                18px
-                18px;
+            margin-top: 15px;
 
             flex-direction: column;
 
@@ -789,16 +1020,13 @@
         }
 
 
-        .review-category.open .review-content {
+        .review-category.open
+        .review-content {
 
             display: flex;
 
         }
 
-
-        /* =========================================
-           REVIEW ITEM
-        ========================================= */
 
         .review-item {
 
@@ -813,27 +1041,6 @@
             border-radius: 9px;
 
             background: white;
-
-            text-decoration: none;
-
-            color: inherit;
-
-            transition:
-                background 0.15s ease,
-                border-color 0.15s ease,
-                transform 0.15s ease;
-
-        }
-
-
-        .review-item:hover {
-
-            background: #fafafa;
-
-            border-color: #cfcfcf;
-
-            transform:
-                translateY(-1px);
 
         }
 
@@ -858,8 +1065,6 @@
 
             font-size: 13px;
 
-            line-height: 1.5;
-
         }
 
 
@@ -878,21 +1083,11 @@
         }
 
 
-        /* =========================================
-           EMPTY REVIEW
-        ========================================= */
-
         .empty-review {
 
             padding:
                 35px
                 20px;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
 
             text-align: center;
 
@@ -903,6 +1098,165 @@
                 #d5d5d5;
 
             border-radius: 10px;
+
+        }
+
+
+        /* =========================================
+           DELETE MODAL
+        ========================================= */
+
+        .delete-modal-overlay {
+
+            position: fixed;
+
+            inset: 0;
+
+            display: none;
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding: 20px;
+
+            background:
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.45
+                );
+
+            z-index: 9999;
+
+        }
+
+
+        .delete-modal-overlay.open {
+
+            display: flex;
+
+        }
+
+
+        .delete-modal {
+
+            width: 100%;
+
+            max-width: 440px;
+
+            background: white;
+
+            border-radius: 14px;
+
+            padding: 28px;
+
+            box-shadow:
+                0
+                20px
+                60px
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.2
+                );
+
+        }
+
+
+        .delete-modal h2 {
+
+            margin:
+                0
+                0
+                10px;
+
+            font-size: 22px;
+
+        }
+
+
+        .delete-modal p {
+
+            margin:
+                0
+                0
+                24px;
+
+            color: #666;
+
+            font-size: 14px;
+
+            line-height: 1.55;
+
+        }
+
+
+        .delete-modal-actions {
+
+            display: flex;
+
+            gap: 10px;
+
+        }
+
+
+        .confirm-delete-button,
+        .cancel-delete-button {
+
+            flex: 1;
+
+            padding: 12px;
+
+            border-radius: 8px;
+
+            font-family: inherit;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+
+        }
+
+
+        .confirm-delete-button {
+
+            border: none;
+
+            background: #a83d3d;
+
+            color: white;
+
+        }
+
+
+        .confirm-delete-button:hover {
+
+            background: #913333;
+
+        }
+
+
+        .cancel-delete-button {
+
+            border:
+                1px solid
+                #d7d7d7;
+
+            background: white;
+
+            color: #333;
+
+        }
+
+
+        .cancel-delete-button:hover {
+
+            background: #f5f5f5;
 
         }
 
@@ -923,7 +1277,8 @@
             }
 
 
-            .information-grid {
+            .information-grid,
+            .information-display-grid {
 
                 grid-template-columns: 1fr;
 
@@ -952,7 +1307,11 @@
 
                 min-width: 200px;
 
-                max-width: calc(100vw - 80px);
+                max-width:
+                    calc(
+                        100vw
+                        - 80px
+                    );
 
                 font-size: 24px;
 
@@ -961,14 +1320,31 @@
 
             .information-footer {
 
-                justify-content: stretch;
+                flex-direction: column-reverse;
+
+                align-items: stretch;
 
             }
 
 
-            .save-button {
+            .save-button,
+            .cancel-edit-button {
 
                 width: 100%;
+
+            }
+
+
+            .delete-subject-button {
+
+                width: 100%;
+
+            }
+
+
+            .delete-modal-actions {
+
+                flex-direction: column;
 
             }
 
@@ -1004,17 +1380,11 @@
                 <div class="subject-title">
 
 
-                    <!-- =================================
-                         SUBJECT DROPDOWN
-                    ================================== -->
-
                     <div class="subject-selector-wrapper">
 
 
                         <select
-                            id="subject-selector"
                             class="subject-selector"
-                            aria-label="Choose subject"
                             onchange="changeSubject(this)"
                         >
 
@@ -1028,15 +1398,9 @@
                                         selected
                                     {% endif %}
                                 >
-                                    {{ subject_option.name|default:"Subject" }}
-                                </option>
 
+                                    {{ subject_option.name|default:"New Subject" }}
 
-                            {% empty %}
-
-
-                                <option selected>
-                                    {{ subject.name|default:"Subject" }}
                                 </option>
 
 
@@ -1064,12 +1428,149 @@
                  SUBJECT INFORMATION
             ========================================= -->
 
-            <section class="subject-information">
+            <section
+                class="subject-information"
+                id="subject-information"
+            >
 
 
-                <form method="POST">
+                <!-- =====================================
+                     EDIT PENCIL
+                ====================================== -->
+
+                <button
+                    type="button"
+                    class="subject-edit-button"
+                    onclick="openSubjectEditor()"
+                    aria-label="Edit subject information"
+                    title="Edit subject"
+                >
+                    ✎
+                </button>
+
+
+                <!-- =====================================
+                     DISPLAY MODE
+                ====================================== -->
+
+                <div class="subject-information-display">
+
+
+                    <div class="information-display-grid">
+
+
+                        <!-- =============================
+                             SUBJECT NAME
+                        ============================== -->
+
+                        <div class="display-field">
+
+                            <span class="display-label">
+                                Subject name
+                            </span>
+
+
+                            {% if subject.name %}
+
+                                <span class="display-value subject-name-display">
+                                    {{ subject.name }}
+                                </span>
+
+                            {% else %}
+
+                                <span class="display-value display-empty">
+                                    Not set
+                                </span>
+
+                            {% endif %}
+
+
+                        </div>
+
+
+                        <!-- =============================
+                             TARGET
+                        ============================== -->
+
+                        <div class="display-field">
+
+                            <span class="display-label">
+                                Target grade
+                            </span>
+
+
+                            {% if subject.target_grade %}
+
+                                <span class="display-value">
+                                    {{ subject.target_grade }}%
+                                </span>
+
+                            {% else %}
+
+                                <span class="display-value display-empty">
+                                    Not set
+                                </span>
+
+                            {% endif %}
+
+
+                        </div>
+
+
+                        <!-- =============================
+                             EXAM DATE
+                        ============================== -->
+
+                        <div class="display-field">
+
+                            <span class="display-label">
+                                Exam date
+                            </span>
+
+
+                            {% if subject.exam_date %}
+
+                                <span class="display-value">
+                                    {{ subject.exam_date }}
+                                </span>
+
+                            {% else %}
+
+                                <span class="display-value display-empty">
+                                    Not set
+                                </span>
+
+                            {% endif %}
+
+
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+
+                <!-- =====================================
+                     EDIT MODE
+                ====================================== -->
+
+                <form
+                    method="POST"
+                    class="subject-edit-form"
+                    id="subject-edit-form"
+                >
+
 
                     {% csrf_token %}
+
+
+                    <input
+                        type="hidden"
+                        name="action"
+                        value="save_subject"
+                    >
 
 
                     <div class="information-grid">
@@ -1081,15 +1582,15 @@
 
                         <div class="field">
 
-                            <label>
+                            <label for="subject-name">
                                 Subject name
                             </label>
 
                             <input
+                                id="subject-name"
                                 type="text"
                                 value="{{ subject.name }}"
                                 name="name"
-                                placeholder="e.g. Business Informatics"
                                 required
                             >
 
@@ -1102,17 +1603,17 @@
 
                         <div class="field">
 
-                            <label>
+                            <label for="target-grade">
                                 Target grade
                             </label>
 
                             <input
+                                id="target-grade"
                                 type="number"
                                 value="{{ subject.target_grade }}"
                                 name="target_grade"
                                 min="0"
                                 max="100"
-                                placeholder="e.g. 80"
                                 required
                             >
 
@@ -1125,11 +1626,12 @@
 
                         <div class="field">
 
-                            <label>
+                            <label for="exam-date">
                                 Exam date
                             </label>
 
                             <input
+                                id="exam-date"
                                 type="date"
                                 value="{{ subject.exam_date }}"
                                 name="exam_date"
@@ -1141,7 +1643,21 @@
                     </div>
 
 
+                    <!-- =================================
+                         SAVE / CANCEL
+                    ================================== -->
+
                     <div class="information-footer">
+
+
+                        <button
+                            type="button"
+                            class="cancel-edit-button"
+                            onclick="closeSubjectEditor()"
+                        >
+                            Cancel
+                        </button>
+
 
                         <button
                             type="submit"
@@ -1149,6 +1665,7 @@
                         >
                             Save Changes
                         </button>
+
 
                     </div>
 
@@ -1167,462 +1684,504 @@
 
 
                 <!-- =====================================
-                     SUMMARIZE
+                     LEFT COLUMN
                 ====================================== -->
 
-                <div class="workspace-box">
+                <div class="workspace-column">
 
 
-                    <div class="workspace-header">
+                    <!-- =================================
+                         SUMMARIZE
+                    ================================== -->
 
-                        <div>
+                    <div class="workspace-box">
 
-                            <h2>
-                                Summarize
-                            </h2>
 
-                            <p>
-                                Choose what you want to summarize.
-                            </p>
+                        <div class="workspace-header">
+
+                            <div>
+
+                                <h2>
+                                    Summarize
+                                </h2>
+
+                                <p>
+                                    Choose what you want to summarize.
+                                </p>
+
+                            </div>
 
                         </div>
 
-                    </div>
+
+                        <div class="summary-options">
 
 
-                    <div class="summary-options">
+                            <!-- =========================
+                                 DEFINITION
+                            ========================== -->
+
+                            {% if database_subject %}
 
 
-                        <!-- =============================
-                             DEFINITION
-                        ============================== -->
+                                <a
+                                    href="{% url 'create_definition' subject_id=database_subject.id %}?subject_index={{ subject_index }}"
+                                    class="summary-option"
+                                >
 
-                        {% if database_subject %}
+                                    <h3>
+                                        Definition
+                                    </h3>
+
+                                    <p>
+                                        Define important terms and concepts.
+                                    </p>
+
+                                </a>
 
 
-                            <a
-                                href="{% url 'create_definition' subject_id=database_subject.id %}?subject_index={{ subject_index }}"
+                            {% else %}
+
+
+                                <div class="summary-option">
+
+                                    <h3>
+                                        Definition
+                                    </h3>
+
+                                    <p>
+                                        Save the subject first before adding definitions.
+                                    </p>
+
+                                </div>
+
+
+                            {% endif %}
+
+
+                            <!-- =========================
+                                 FORMULA
+                            ========================== -->
+
+                            {% if database_subject %}
+
+
+                                <a
+                                    href="{% url 'create_formula' subject_id=database_subject.id %}"
+                                    class="summary-option"
+                                >
+
+                                    <h3>
+                                        Formula
+                                    </h3>
+
+                                    <p>
+                                        Add important formulas for this subject.
+                                    </p>
+
+                                </a>
+
+
+                            {% else %}
+
+
+                                <div class="summary-option">
+
+                                    <h3>
+                                        Formula
+                                    </h3>
+
+                                    <p>
+                                        Save the subject first before adding formulas.
+                                    </p>
+
+                                </div>
+
+
+                            {% endif %}
+
+
+                            <!-- =========================
+                                 LIST
+                            ========================== -->
+
+                            <button
+                                type="button"
                                 class="summary-option"
                             >
 
                                 <h3>
-                                    Definition
+                                    List
                                 </h3>
 
                                 <p>
-                                    Define important terms and concepts.
+                                    Summarize important items or characteristics.
                                 </p>
 
-                            </a>
+                            </button>
 
 
-                        {% else %}
+                            <!-- =========================
+                                 STEPS
+                            ========================== -->
 
-
-                            <div class="summary-option">
-
-                                <h3>
-                                    Definition
-                                </h3>
-
-                                <p>
-                                    Save the subject first before adding definitions.
-                                </p>
-
-                            </div>
-
-
-                        {% endif %}
-
-
-                        <!-- =============================
-                             FORMULA
-                        ============================== -->
-
-                        {% if database_subject %}
-
-
-                            <a
-                                href="{% url 'create_formula' subject_id=database_subject.id %}"
+                            <button
+                                type="button"
                                 class="summary-option"
                             >
 
                                 <h3>
-                                    Formula
+                                    Steps
                                 </h3>
 
                                 <p>
-                                    Add important formulas for this subject.
+                                    Record a process or procedure step by step.
                                 </p>
 
-                            </a>
+                            </button>
 
 
-                        {% else %}
+                            <!-- =========================
+                                 KEY IDEA
+                            ========================== -->
 
-
-                            <div class="summary-option">
+                            <button
+                                type="button"
+                                class="summary-option"
+                            >
 
                                 <h3>
-                                    Formula
+                                    Key Idea
                                 </h3>
 
                                 <p>
-                                    Save the subject first before adding formulas.
+                                    Capture the central idea of a topic.
                                 </p>
 
-                            </div>
+                            </button>
 
 
-                        {% endif %}
+                            <!-- =========================
+                                 COMPARISON
+                            ========================== -->
+
+                            <button
+                                type="button"
+                                class="summary-option"
+                            >
+
+                                <h3>
+                                    Comparison
+                                </h3>
+
+                                <p>
+                                    Summarize the differences between concepts.
+                                </p>
+
+                            </button>
 
 
-                        <!-- =============================
-                             LIST
-                        ============================== -->
+                        </div>
+
+
+                    </div>
+
+
+                    <!-- =================================
+                         DELETE SUBJECT
+                    ================================== -->
+
+                    <div class="delete-subject-section">
+
 
                         <button
                             type="button"
-                            class="summary-option"
+                            class="delete-subject-button"
+                            onclick="openDeleteModal()"
                         >
 
-                            <h3>
-                                List
-                            </h3>
+                            <span class="bin-icon">
+                                🗑
+                            </span>
 
-                            <p>
-                                Summarize important items or characteristics.
-                            </p>
-
-                        </button>
-
-
-                        <!-- =============================
-                             STEPS
-                        ============================== -->
-
-                        <button
-                            type="button"
-                            class="summary-option"
-                        >
-
-                            <h3>
-                                Steps
-                            </h3>
-
-                            <p>
-                                Record a process or procedure step by step.
-                            </p>
-
-                        </button>
-
-
-                        <!-- =============================
-                             KEY IDEA
-                        ============================== -->
-
-                        <button
-                            type="button"
-                            class="summary-option"
-                        >
-
-                            <h3>
-                                Key Idea
-                            </h3>
-
-                            <p>
-                                Capture the central idea of a topic.
-                            </p>
-
-                        </button>
-
-
-                        <!-- =============================
-                             COMPARISON
-                        ============================== -->
-
-                        <button
-                            type="button"
-                            class="summary-option"
-                        >
-
-                            <h3>
-                                Comparison
-                            </h3>
-
-                            <p>
-                                Summarize the differences between concepts.
-                            </p>
+                            Delete Subject
 
                         </button>
 
 
                     </div>
+
 
                 </div>
 
 
                 <!-- =====================================
-                     REVIEW
+                     RIGHT COLUMN / REVIEW
                 ====================================== -->
 
-                <div class="workspace-box">
+                <div class="workspace-column">
 
 
-                    <div class="workspace-header">
+                    <div class="workspace-box">
 
-                        <div>
 
-                            <h2>
-                                Review
-                            </h2>
+                        <div class="workspace-header">
 
-                            <p>
-                                Reviews scheduled for this subject.
-                            </p>
+                            <div>
+
+                                <h2>
+                                    Review
+                                </h2>
+
+                                <p>
+                                    Reviews scheduled for this subject.
+                                </p>
+
+                            </div>
 
                         </div>
 
-                    </div>
+
+                        <!-- =============================
+                             RESET REVIEWS
+                        ============================== -->
+
+                        <div class="reset-reviews-container">
 
 
-                    <!-- =================================
-                         RESET TODAY'S REVIEWS
-                    ================================== -->
-
-                    <div class="reset-reviews-container">
-
-
-                        <form
-                            method="post"
-                            action="{% url 'reset_today_reviews' %}"
-                        >
-
-                            {% csrf_token %}
-
-
-                            <button
-                                type="submit"
-                                class="reset-reviews-button"
-                                onclick="
-                                    return confirm(
-                                        'Make all formulas and definitions available for review again today?'
-                                    );
-                                "
+                            <form
+                                method="post"
+                                action="{% url 'reset_today_reviews' %}"
                             >
-                                Reset Today's Reviews
-                            </button>
+
+                                {% csrf_token %}
 
 
-                        </form>
+                                <button
+                                    type="submit"
+                                    class="reset-reviews-button"
+                                    onclick="
+                                        return confirm(
+                                            'Make all formulas and definitions available for review again today?'
+                                        );
+                                    "
+                                >
+                                    Reset Today's Reviews
+                                </button>
 
 
-                    </div>
+                            </form>
 
 
-                    <!-- =================================
-                         REVIEW CATEGORIES
-                    ================================== -->
-
-                    <div class="review-categories">
+                        </div>
 
 
                         <!-- =============================
-                             FORMULAS
+                             REVIEW CATEGORIES
                         ============================== -->
 
-                        {% if due_formulas %}
+                        <div class="review-categories">
 
 
-                            <a
-                                href="{% url 'formula_review_list' subject_index=subject_index %}"
-                                class="review-category"
-                            >
+                            <!-- =========================
+                                 FORMULAS
+                            ========================== -->
+
+                            {% if due_formulas %}
 
 
-                                <div class="review-category-header">
-
-
-                                    <div class="review-category-title">
-
-                                        <h3>
-                                            Formulas to Review
-                                        </h3>
-
-                                        <span class="review-count">
-                                            {{ due_formula_count }}
-                                        </span>
-
-                                    </div>
-
-
-                                    <span class="review-arrow">
-                                        →
-                                    </span>
-
-
-                                </div>
-
-
-                                <p class="review-description">
-                                    Formulas you need to review today.
-                                </p>
-
-
-                            </a>
-
-
-                        {% endif %}
-
-
-                        <!-- =============================
-                             DEFINITIONS
-                        ============================== -->
-
-                        {% if due_definitions %}
-
-
-                            <a
-                                href="{% url 'definition_review_list' subject_index=subject_index %}"
-                                class="review-category"
-                            >
-
-
-                                <div class="review-category-header">
-
-
-                                    <div class="review-category-title">
-
-                                        <h3>
-                                            Definitions to Review
-                                        </h3>
-
-                                        <span class="review-count">
-                                            {{ due_definition_count }}
-                                        </span>
-
-                                    </div>
-
-
-                                    <span class="review-arrow">
-                                        →
-                                    </span>
-
-
-                                </div>
-
-
-                                <p class="review-description">
-                                    Definitions you need to review today.
-                                </p>
-
-
-                            </a>
-
-
-                        {% endif %}
-
-
-                        <!-- =============================
-                             LISTS
-                        ============================== -->
-
-                        {% if due_bullet_lists %}
-
-
-                            <div class="review-category">
-
-
-                                <div
-                                    class="review-category-header"
-                                    onclick="toggleReview(this)"
+                                <a
+                                    href="{% url 'formula_review_list' subject_index=subject_index %}"
+                                    class="review-category"
                                 >
 
 
-                                    <div class="review-category-title">
-
-                                        <h3>
-                                            Lists to Review
-                                        </h3>
-
-                                        <span class="review-count">
-                                            {{ due_bullet_list_count }}
-                                        </span>
-
-                                    </div>
+                                    <div class="review-category-header">
 
 
-                                    <span class="review-arrow">
-                                        ▼
-                                    </span>
+                                        <div class="review-category-title">
 
+                                            <h3>
+                                                Formulas to Review
+                                            </h3>
 
-                                </div>
-
-
-                                <p class="review-description">
-                                    Lists you need to review today.
-                                </p>
-
-
-                                <div class="review-content">
-
-
-                                    {% for bullet_list in due_bullet_lists %}
-
-
-                                        <div class="review-item">
-
-
-                                            <h4>
-                                                {{ bullet_list.question }}
-                                            </h4>
-
-
-                                            {% for item in bullet_list.items.all %}
-
-                                                <p>
-                                                    • {{ item.text }}
-                                                </p>
-
-                                            {% endfor %}
-
-
-                                            <span class="review-date">
-                                                Review today
+                                            <span class="review-count">
+                                                {{ due_formula_count }}
                                             </span>
-
 
                                         </div>
 
 
-                                    {% endfor %}
+                                        <span class="review-arrow">
+                                            →
+                                        </span>
+
+
+                                    </div>
+
+
+                                    <p class="review-description">
+                                        Formulas you need to review today.
+                                    </p>
+
+
+                                </a>
+
+
+                            {% endif %}
+
+
+                            <!-- =========================
+                                 DEFINITIONS
+                            ========================== -->
+
+                            {% if due_definitions %}
+
+
+                                <a
+                                    href="{% url 'definition_review_list' subject_index=subject_index %}"
+                                    class="review-category"
+                                >
+
+
+                                    <div class="review-category-header">
+
+
+                                        <div class="review-category-title">
+
+                                            <h3>
+                                                Definitions to Review
+                                            </h3>
+
+                                            <span class="review-count">
+                                                {{ due_definition_count }}
+                                            </span>
+
+                                        </div>
+
+
+                                        <span class="review-arrow">
+                                            →
+                                        </span>
+
+
+                                    </div>
+
+
+                                    <p class="review-description">
+                                        Definitions you need to review today.
+                                    </p>
+
+
+                                </a>
+
+
+                            {% endif %}
+
+
+                            <!-- =========================
+                                 LISTS
+                            ========================== -->
+
+                            {% if due_bullet_lists %}
+
+
+                                <div class="review-category">
+
+
+                                    <div
+                                        class="review-category-header"
+                                        onclick="toggleReview(this)"
+                                    >
+
+
+                                        <div class="review-category-title">
+
+                                            <h3>
+                                                Lists to Review
+                                            </h3>
+
+                                            <span class="review-count">
+                                                {{ due_bullet_list_count }}
+                                            </span>
+
+                                        </div>
+
+
+                                        <span class="review-arrow">
+                                            ▼
+                                        </span>
+
+
+                                    </div>
+
+
+                                    <p class="review-description">
+                                        Lists you need to review today.
+                                    </p>
+
+
+                                    <div class="review-content">
+
+
+                                        {% for bullet_list in due_bullet_lists %}
+
+
+                                            <div class="review-item">
+
+
+                                                <h4>
+                                                    {{ bullet_list.question }}
+                                                </h4>
+
+
+                                                {% for item in bullet_list.items.all %}
+
+                                                    <p>
+                                                        • {{ item.text }}
+                                                    </p>
+
+                                                {% endfor %}
+
+
+                                                <span class="review-date">
+                                                    Review today
+                                                </span>
+
+
+                                            </div>
+
+
+                                        {% endfor %}
+
+
+                                    </div>
 
 
                                 </div>
 
 
-                            </div>
+                            {% endif %}
 
 
-                        {% endif %}
+                            <!-- =========================
+                                 EMPTY REVIEW
+                            ========================== -->
+
+                            {% if not due_formulas and not due_definitions and not due_bullet_lists %}
 
 
-                        <!-- =============================
-                             NOTHING DUE
-                        ============================== -->
+                                <div class="empty-review">
 
-                        {% if not due_formulas and not due_definitions and not due_bullet_lists %}
+                                    No reviews due today.
 
-
-                            <div class="empty-review">
-
-                                No reviews due today.
-
-                            </div>
+                                </div>
 
 
-                        {% endif %}
+                            {% endif %}
+
+
+                        </div>
 
 
                     </div>
@@ -1643,6 +2202,84 @@
 </div>
 
 
+<!-- =========================================
+     DELETE SUBJECT MODAL
+========================================= -->
+
+<div
+    class="delete-modal-overlay"
+    id="delete-modal"
+    onclick="handleModalBackground(event)"
+>
+
+
+    <div class="delete-modal">
+
+
+        <h2>
+            Delete Subject?
+        </h2>
+
+
+        <p>
+
+            Are you sure you want to delete
+
+            <strong>
+                {{ subject.name|default:"this subject" }}
+            </strong>?
+
+            This will also remove the formulas,
+            definitions and review progress
+            connected to this subject.
+
+        </p>
+
+
+        <form method="POST">
+
+            {% csrf_token %}
+
+
+            <input
+                type="hidden"
+                name="action"
+                value="delete_subject"
+            >
+
+
+            <div class="delete-modal-actions">
+
+
+                <button
+                    type="submit"
+                    class="confirm-delete-button"
+                >
+                    Yes, Delete Subject
+                </button>
+
+
+                <button
+                    type="button"
+                    class="cancel-delete-button"
+                    onclick="closeDeleteModal()"
+                >
+                    Cancel
+                </button>
+
+
+            </div>
+
+
+        </form>
+
+
+    </div>
+
+
+</div>
+
+
 <script>
 
     // =============================================
@@ -1651,11 +2288,10 @@
 
     function changeSubject(select) {
 
-        const url = select.value;
+        if (select.value) {
 
-        if (url) {
-
-            window.location.href = url;
+            window.location.href =
+                select.value;
 
         }
 
@@ -1663,7 +2299,55 @@
 
 
     // =============================================
-    // TOGGLE REVIEW CATEGORY
+    // OPEN SUBJECT EDITOR
+    // =============================================
+
+    function openSubjectEditor() {
+
+        const subjectInformation =
+            document.getElementById(
+                "subject-information"
+            );
+
+        subjectInformation.classList.add(
+            "editing"
+        );
+
+
+        const subjectName =
+            document.getElementById(
+                "subject-name"
+            );
+
+        if (subjectName) {
+
+            subjectName.focus();
+
+        }
+
+    }
+
+
+    // =============================================
+    // CLOSE SUBJECT EDITOR
+    // =============================================
+
+    function closeSubjectEditor() {
+
+        const subjectInformation =
+            document.getElementById(
+                "subject-information"
+            );
+
+        subjectInformation.classList.remove(
+            "editing"
+        );
+
+    }
+
+
+    // =============================================
+    // REVIEW TOGGLE
     // =============================================
 
     function toggleReview(header) {
@@ -1678,6 +2362,82 @@
         );
 
     }
+
+
+    // =============================================
+    // OPEN DELETE MODAL
+    // =============================================
+
+    function openDeleteModal() {
+
+        const modal =
+            document.getElementById(
+                "delete-modal"
+            );
+
+        modal.classList.add(
+            "open"
+        );
+
+    }
+
+
+    // =============================================
+    // CLOSE DELETE MODAL
+    // =============================================
+
+    function closeDeleteModal() {
+
+        const modal =
+            document.getElementById(
+                "delete-modal"
+            );
+
+        modal.classList.remove(
+            "open"
+        );
+
+    }
+
+
+    // =============================================
+    // CLICK OUTSIDE DELETE MODAL
+    // =============================================
+
+    function handleModalBackground(event) {
+
+        if (
+            event.target.id
+            === "delete-modal"
+        ) {
+
+            closeDeleteModal();
+
+        }
+
+    }
+
+
+    // =============================================
+    // ESCAPE KEY
+    // =============================================
+
+    document.addEventListener(
+        "keydown",
+        function(event) {
+
+            if (
+                event.key === "Escape"
+            ) {
+
+                closeDeleteModal();
+
+                closeSubjectEditor();
+
+            }
+
+        }
+    );
 
 </script>
 

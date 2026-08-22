@@ -17,8 +17,6 @@
     </title>
 
 
-    <!-- SHARED SIDEBAR -->
-
     <link
         rel="stylesheet"
         href="{% static 'dashboard/css/sidebar.css' %}"
@@ -136,7 +134,7 @@
 
 
         /* =========================================
-           DEGREE / PROFILE CARD
+           PROFILE CARD
         ========================================= */
 
         .profile-card {
@@ -171,7 +169,7 @@
 
             top: 14px;
 
-            left: 14px;
+            right: 14px;
 
             width: 34px;
 
@@ -262,7 +260,7 @@
 
 
         /* =========================================
-           PROFILE EDIT FORM
+           PROFILE EDIT
         ========================================= */
 
         .profile-edit-form {
@@ -569,10 +567,6 @@
         }
 
 
-        /* =========================================
-           SUBJECT NAME
-        ========================================= */
-
         .subject-name {
 
             margin-bottom: 22px;
@@ -642,7 +636,7 @@
 
 
         /* =========================================
-           ADD SUBJECT CARD
+           ADD SUBJECT
         ========================================= */
 
         .add-subject-form {
@@ -827,16 +821,8 @@
 <div class="app">
 
 
-    <!-- =========================================
-         SHARED SIDEBAR
-    ========================================= -->
-
     {% include 'partials/sidebar.html' with active_page='summarize' %}
 
-
-    <!-- =========================================
-         MAIN
-    ========================================= -->
 
     <main class="main">
 
@@ -862,7 +848,7 @@
 
 
             <!-- =================================
-                 DEGREE / OVERALL TARGET
+                 DEGREE
             ================================== -->
 
             <div
@@ -870,10 +856,6 @@
                 id="profile-card"
             >
 
-
-                <!-- =============================
-                     EDIT PENCIL
-                ============================== -->
 
                 <button
                     type="button"
@@ -887,7 +869,7 @@
 
 
                 <!-- =============================
-                     DISPLAY MODE
+                     DISPLAY
                 ============================== -->
 
                 <div class="profile-display">
@@ -903,6 +885,7 @@
                     <p class="overall-target">
 
                         Overall target:
+
                         <strong>
                             {{ profile.target_grade }}%
                         </strong>
@@ -914,7 +897,7 @@
 
 
                 <!-- =============================
-                     EDIT MODE
+                     EDIT
                 ============================== -->
 
                 <form
@@ -935,10 +918,6 @@
                     <div class="profile-fields">
 
 
-                        <!-- =========================
-                             DEGREE TITLE
-                        ========================== -->
-
                         <div class="profile-field degree-field">
 
                             <label for="workspace-name">
@@ -950,16 +929,11 @@
                                 type="text"
                                 name="workspace_name"
                                 value="{{ profile.workspace_name }}"
-                                placeholder="e.g. BCom Honours Information Systems"
                                 required
                             >
 
                         </div>
 
-
-                        <!-- =========================
-                             OVERALL TARGET
-                        ========================== -->
 
                         <div class="profile-field">
 
@@ -1014,7 +988,7 @@
 
 
             <!-- =================================
-                 SUBJECTS HEADER
+                 SUBJECT HEADER
             ================================== -->
 
             <div class="subjects-header">
@@ -1046,10 +1020,6 @@
                 {% for subject in subjects %}
 
 
-                    <!-- =============================
-                         SUBJECT CARD
-                    ============================== -->
-
                     <a
                         href="{% url 'subject_detail' subject_index=forloop.counter0 %}"
                         class="subject"
@@ -1078,15 +1048,12 @@
                         <div class="subject-info">
 
 
-                            <!-- =====================
-                                 TARGET
-                            ====================== -->
-
                             {% if subject.target_grade %}
 
                                 <span>
 
                                     Target:
+
                                     <strong>
                                         {{ subject.target_grade }}%
                                     </strong>
@@ -1101,10 +1068,6 @@
 
                             {% endif %}
 
-
-                            <!-- =====================
-                                 EXAM COUNTDOWN
-                            ====================== -->
 
                             {% if subject.exam_date %}
 
@@ -1160,7 +1123,6 @@
                     <button
                         type="submit"
                         class="add-subject"
-                        aria-label="Add another subject"
                     >
 
 
@@ -1194,48 +1156,40 @@
 
 <script>
 
-    // =============================================
-    // OPEN PROFILE EDITOR
-    // =============================================
-
     function openProfileEditor() {
 
-        const profileCard =
+        const card =
             document.getElementById(
                 "profile-card"
             );
 
-        profileCard.classList.add(
+        card.classList.add(
             "editing"
         );
 
 
-        const titleInput =
+        const input =
             document.getElementById(
                 "workspace-name"
             );
 
-        if (titleInput) {
+        if (input) {
 
-            titleInput.focus();
+            input.focus();
 
         }
 
     }
 
 
-    // =============================================
-    // CLOSE PROFILE EDITOR
-    // =============================================
-
     function closeProfileEditor() {
 
-        const profileCard =
+        const card =
             document.getElementById(
                 "profile-card"
             );
 
-        profileCard.classList.remove(
+        card.classList.remove(
             "editing"
         );
 

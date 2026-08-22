@@ -727,7 +727,7 @@ def subject_detail(
         )
 
     # --------------------------------------------------------
-    # GET SUBJECTS FROM SESSION
+    # GET SUBJECTS
     # --------------------------------------------------------
 
     subjects = request.session.get(
@@ -764,12 +764,16 @@ def subject_detail(
             "goals"
         )
 
+    # --------------------------------------------------------
+    # CURRENT SUBJECT
+    # --------------------------------------------------------
+
     subject_data = subjects[
         subject_index
     ]
 
     # --------------------------------------------------------
-    # MAKE SURE REQUIRED SESSION FIELDS EXIST
+    # MAKE SURE REQUIRED FIELDS EXIST
     # --------------------------------------------------------
 
     if "definitions" not in subject_data:
@@ -790,46 +794,165 @@ def subject_detail(
             "database_id"
         ] = None
 
-    # --------------------------------------------------------
-    # SAVE SUBJECT INFORMATION
-    # --------------------------------------------------------
+    # ========================================================
+    # POST ACTION
+    # ========================================================
 
     if request.method == "POST":
 
-        subject_data[
-            "name"
-        ] = request.POST.get(
-            "name",
-            ""
-        ).strip()
-
-        subject_data[
-            "target_grade"
-        ] = request.POST.get(
-            "target_grade",
-            ""
+        action = request.POST.get(
+            "action",
+            "save_subject"
         )
 
-        subject_data[
-            "exam_date"
-        ] = request.POST.get(
-            "exam_date",
-            ""
-        )
+        # ====================================================
+        # DELETE SUBJECT
+        # ====================================================
 
-        subjects[
-            subject_index
-        ] = subject_data
+        if action == "delete_subject":
 
-        request.session[
-            "onboarding_subjects"
-        ] = subjects
+            database_subject = None
 
-        request.session.modified = True
+            database_subject_id = (
+                subject_data.get(
+                    "database_id"
+                )
+            )
 
-    # --------------------------------------------------------
+            # ------------------------------------------------
+            # TRY DATABASE ID
+            # ------------------------------------------------
+
+            if database_subject_id:
+
+                database_subject = (
+                    Subject.objects
+                    .filter(
+                        id=database_subject_id,
+                        user=request.user,
+                    )
+                    .first()
+                )
+
+            # ------------------------------------------------
+            # FALLBACK TO NAME
+            # ------------------------------------------------
+
+            if not database_subject:
+
+                subject_name = (
+                    subject_data.get(
+                        "name",
+                        ""
+                    )
+                    .strip()
+                )
+
+                if subject_name:
+
+                    database_subject = (
+                        Subject.objects
+                        .filter(
+                            user=request.user,
+                            name=subject_name,
+                        )
+                        .first()
+                    )
+
+            # ------------------------------------------------
+            # DELETE DATABASE SUBJECT
+            #
+            # Related formulas / definitions / knowledge
+            # units will follow the model relationships.
+            # ------------------------------------------------
+
+            if database_subject:
+
+                database_subject.delete()
+
+            # ------------------------------------------------
+            # REMOVE SESSION SUBJECT
+            # ------------------------------------------------
+
+            subjects.pop(
+                subject_index
+            )
+
+            # ------------------------------------------------
+            # UPDATE PROFILE SUBJECT COUNT
+            # ------------------------------------------------
+
+            profile[
+                "subject_count"
+            ] = len(
+                subjects
+            )
+
+            # ------------------------------------------------
+            # SAVE SESSION
+            # ------------------------------------------------
+
+            request.session[
+                "onboarding_subjects"
+            ] = subjects
+
+            request.session[
+                "onboarding_profile"
+            ] = profile
+
+            request.session.modified = True
+
+            # ------------------------------------------------
+            # RETURN TO GOALS
+            # ------------------------------------------------
+
+            return redirect(
+                "goals"
+            )
+
+        # ====================================================
+        # SAVE SUBJECT
+        # ====================================================
+
+        if action == "save_subject":
+
+            subject_data[
+                "name"
+            ] = (
+                request.POST.get(
+                    "name",
+                    ""
+                )
+                .strip()
+            )
+
+            subject_data[
+                "target_grade"
+            ] = request.POST.get(
+                "target_grade",
+                ""
+            )
+
+            subject_data[
+                "exam_date"
+            ] = request.POST.get(
+                "exam_date",
+                ""
+            )
+
+            subjects[
+                subject_index
+            ] = subject_data
+
+            request.session[
+                "onboarding_subjects"
+            ] = subjects
+
+            request.session.modified = True
+
+    # ========================================================
     # FIND DATABASE SUBJECT
-    # --------------------------------------------------------
+    # ========================================================
 
     database_subject = None
 
@@ -840,7 +963,7 @@ def subject_detail(
     )
 
     # --------------------------------------------------------
-    # FIRST: TRY DATABASE ID
+    # FIRST: DATABASE ID
     # --------------------------------------------------------
 
     if database_subject_id:
@@ -849,13 +972,13 @@ def subject_detail(
             Subject.objects
             .filter(
                 id=database_subject_id,
-                user=request.user
+                user=request.user,
             )
             .first()
         )
 
     # --------------------------------------------------------
-    # SECOND: TRY SUBJECT NAME
+    # SECOND: SUBJECT NAME
     # --------------------------------------------------------
 
     if not database_subject:
@@ -864,7 +987,8 @@ def subject_detail(
             subject_data.get(
                 "name",
                 ""
-            ).strip()
+            )
+            .strip()
         )
 
         if subject_name:
@@ -873,7 +997,7 @@ def subject_detail(
                 Subject.objects
                 .filter(
                     user=request.user,
-                    name=subject_name
+                    name=subject_name,
                 )
                 .first()
             )
@@ -888,7 +1012,8 @@ def subject_detail(
             subject_data.get(
                 "name",
                 ""
-            ).strip()
+            )
+            .strip()
         )
 
         if subject_name:
@@ -898,6 +1023,37 @@ def subject_detail(
                     user=request.user,
                     name=subject_name,
                 )
+            )
+
+    # --------------------------------------------------------
+    # UPDATE DATABASE SUBJECT NAME
+    # --------------------------------------------------------
+
+    if database_subject:
+
+        subject_name = (
+            subject_data.get(
+                "name",
+                ""
+            )
+            .strip()
+        )
+
+        if (
+            subject_name
+            and
+            database_subject.name
+            != subject_name
+        ):
+
+            database_subject.name = (
+                subject_name
+            )
+
+            database_subject.save(
+                update_fields=[
+                    "name"
+                ]
             )
 
     # --------------------------------------------------------
@@ -920,25 +1076,25 @@ def subject_detail(
 
         request.session.modified = True
 
-    # --------------------------------------------------------
-    # INITIALISE REVIEW LISTS
-    # --------------------------------------------------------
+    # ========================================================
+    # REVIEW LISTS
+    # ========================================================
 
     due_formulas = []
 
     due_definitions = []
 
     # --------------------------------------------------------
-    # FIND EVERYTHING DUE FOR REVIEW
+    # FIND DUE ITEMS
     # --------------------------------------------------------
 
     if database_subject:
 
         today = timezone.localdate()
 
-        # ----------------------------------------------------
+        # ====================================================
         # FORMULAS
-        # ----------------------------------------------------
+        # ====================================================
 
         formula_knowledge_units = (
             KnowledgeUnit.objects
@@ -974,10 +1130,16 @@ def subject_detail(
                 StudentKnowledge.objects
                 .filter(
                     student=request.user,
-                    knowledge_unit=knowledge_unit,
+                    knowledge_unit=(
+                        knowledge_unit
+                    ),
                 )
                 .first()
             )
+
+            # ------------------------------------------------
+            # NEVER REVIEWED
+            # ------------------------------------------------
 
             if progress is None:
 
@@ -987,6 +1149,10 @@ def subject_detail(
 
                 continue
 
+            # ------------------------------------------------
+            # PROGRESS EXISTS BUT NO DATE
+            # ------------------------------------------------
+
             if progress.next_review is None:
 
                 due_formulas.append(
@@ -994,6 +1160,10 @@ def subject_detail(
                 )
 
                 continue
+
+            # ------------------------------------------------
+            # DUE TODAY
+            # ------------------------------------------------
 
             if (
                 progress.next_review.date()
@@ -1004,9 +1174,9 @@ def subject_detail(
                     formula
                 )
 
-        # ----------------------------------------------------
+        # ====================================================
         # DEFINITIONS
-        # ----------------------------------------------------
+        # ====================================================
 
         definition_knowledge_units = (
             KnowledgeUnit.objects
@@ -1042,10 +1212,16 @@ def subject_detail(
                 StudentKnowledge.objects
                 .filter(
                     student=request.user,
-                    knowledge_unit=knowledge_unit,
+                    knowledge_unit=(
+                        knowledge_unit
+                    ),
                 )
                 .first()
             )
+
+            # ------------------------------------------------
+            # NEVER REVIEWED
+            # ------------------------------------------------
 
             if progress is None:
 
@@ -1055,6 +1231,10 @@ def subject_detail(
 
                 continue
 
+            # ------------------------------------------------
+            # NO REVIEW DATE
+            # ------------------------------------------------
+
             if progress.next_review is None:
 
                 due_definitions.append(
@@ -1062,6 +1242,10 @@ def subject_detail(
                 )
 
                 continue
+
+            # ------------------------------------------------
+            # DUE
+            # ------------------------------------------------
 
             if (
                 progress.next_review.date()
@@ -1072,9 +1256,9 @@ def subject_detail(
                     definition
                 )
 
-    # --------------------------------------------------------
+    # ========================================================
     # COUNTS
-    # --------------------------------------------------------
+    # ========================================================
 
     due_formula_count = len(
         due_formulas
@@ -1089,9 +1273,9 @@ def subject_detail(
         + due_definition_count
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # RENDER
-    # --------------------------------------------------------
+    # ========================================================
 
     return render(
         request,
@@ -1107,9 +1291,11 @@ def subject_detail(
                 database_subject,
 
             "subject_id":
-                database_subject.id
-                if database_subject
-                else None,
+                (
+                    database_subject.id
+                    if database_subject
+                    else None
+                ),
 
             "due_formulas":
                 due_formulas,
@@ -1127,7 +1313,6 @@ def subject_detail(
                 total_due_reviews,
         }
     )
-
 
 # ============================================================
 # DEFINITIONS
