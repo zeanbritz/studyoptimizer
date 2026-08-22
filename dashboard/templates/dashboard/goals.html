@@ -18,6 +18,7 @@
 
 
     <!-- SHARED SIDEBAR -->
+
     <link
         rel="stylesheet"
         href="{% static 'dashboard/css/sidebar.css' %}"
@@ -35,6 +36,7 @@
 
 
         body {
+
             margin: 0;
 
             background: #ffffff;
@@ -48,6 +50,7 @@
                 "Segoe UI",
                 Arial,
                 sans-serif;
+
         }
 
 
@@ -56,8 +59,11 @@
         ========================================= */
 
         .app {
+
             display: flex;
+
             min-height: 100vh;
+
         }
 
 
@@ -66,12 +72,13 @@
         ========================================= */
 
         .main {
+
             flex: 1;
 
             min-width: 0;
 
-            padding:
-                40px;
+            padding: 40px;
+
         }
 
 
@@ -80,9 +87,11 @@
         ========================================= */
 
         .container {
+
             width: 100%;
 
             max-width: 1100px;
+
         }
 
 
@@ -91,11 +100,14 @@
         ========================================= */
 
         .header {
+
             margin-bottom: 30px;
+
         }
 
 
         .header h1 {
+
             margin:
                 0
                 0
@@ -106,10 +118,12 @@
             font-weight: 800;
 
             letter-spacing: -0.8px;
+
         }
 
 
         .header p {
+
             margin: 0;
 
             color: #777;
@@ -117,6 +131,7 @@
             font-size: 16px;
 
             font-weight: 600;
+
         }
 
 
@@ -125,40 +140,186 @@
         ========================================= */
 
         .profile-card {
-            background: #8BF527;
 
-            border: none;
+            background: #f5f6f8;
+
+            border:
+                1px solid
+                #e2e5e8;
 
             border-radius: 14px;
 
             padding: 26px;
 
             margin-bottom: 30px;
+
         }
 
 
         .profile-card h2 {
+
             margin:
                 0
                 0
-                6px;
+                14px;
 
-            color: #1f3d0a;
+            color: #222;
 
             font-size: 24px;
 
             font-weight: 800;
+
         }
 
 
-        .profile-card p {
-            margin: 0;
+        /* =========================================
+           OVERALL TARGET
+        ========================================= */
 
-            color: #2d5c0f;
+        .target-form {
 
-            font-size: 15px;
+            display: flex;
+
+            align-items: flex-end;
+
+            gap: 12px;
+
+            flex-wrap: wrap;
+
+        }
+
+
+        .target-field {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 6px;
+
+        }
+
+
+        .target-field label {
+
+            color: #555;
+
+            font-size: 14px;
 
             font-weight: 700;
+
+        }
+
+
+        .target-input-wrapper {
+
+            position: relative;
+
+            width: 140px;
+
+        }
+
+
+        .target-input {
+
+            width: 100%;
+
+            height: 44px;
+
+            padding:
+                8px
+                38px
+                8px
+                12px;
+
+            border:
+                1px solid
+                #ccd1d6;
+
+            border-radius: 8px;
+
+            background: white;
+
+            color: #222;
+
+            font-family: inherit;
+
+            font-size: 18px;
+
+            font-weight: 700;
+
+            outline: none;
+
+        }
+
+
+        .target-input:focus {
+
+            border-color: #8797A8;
+
+        }
+
+
+        .target-percent {
+
+            position: absolute;
+
+            right: 13px;
+
+            top: 50%;
+
+            transform:
+                translateY(-50%);
+
+            color: #777;
+
+            font-size: 16px;
+
+            font-weight: 700;
+
+            pointer-events: none;
+
+        }
+
+
+        .target-save-button {
+
+            height: 44px;
+
+            padding:
+                0
+                20px;
+
+            border: none;
+
+            border-radius: 8px;
+
+            background: #222;
+
+            color: white;
+
+            font-family: inherit;
+
+            font-size: 14px;
+
+            font-weight: 700;
+
+            cursor: pointer;
+
+            transition:
+                background 0.15s ease,
+                transform 0.15s ease;
+
+        }
+
+
+        .target-save-button:hover {
+
+            background: #333;
+
+            transform:
+                translateY(-1px);
+
         }
 
 
@@ -167,6 +328,7 @@
         ========================================= */
 
         .subjects-header {
+
             display: flex;
 
             justify-content: space-between;
@@ -174,24 +336,29 @@
             align-items: center;
 
             margin-bottom: 16px;
+
         }
 
 
         .subjects-header h2 {
+
             margin: 0;
 
             font-size: 24px;
 
             font-weight: 800;
+
         }
 
 
         .subject-count {
+
             color: #777;
 
             font-size: 14px;
 
             font-weight: 700;
+
         }
 
 
@@ -200,6 +367,7 @@
         ========================================= */
 
         .subjects {
+
             display: grid;
 
             grid-template-columns:
@@ -209,6 +377,7 @@
                 );
 
             gap: 18px;
+
         }
 
 
@@ -217,100 +386,212 @@
         ========================================= */
 
         .subject {
-            display: block;
 
-            min-height: 190px;
-
-            background: white;
-
-            border:
-                1px solid
-                #e5e5e5;
-
-            border-radius: 14px;
-
-            padding: 24px;
-
-            text-decoration: none;
-
-            color: #222;
-
-            transition:
-                border-color 0.15s ease,
-                box-shadow 0.15s ease,
-                transform 0.15s ease;
-        }
-
-
-        .subject:hover {
-            border-color: #bfbfbf;
-
-            box-shadow:
-                0
-                5px
-                16px
-                rgba(
-                    0,
-                    0,
-                    0,
-                    0.07
-                );
-
-            transform:
-                translateY(-2px);
-        }
-
-
-        .subject-number {
-            color: #999;
-
-            font-size: 13px;
-
-            font-weight: 700;
-
-            margin-bottom: 12px;
-        }
-
-
-        .subject-name {
-            margin-bottom: 16px;
-
-            font-size: 19px;
-
-            font-weight: 800;
-        }
-
-
-        .empty-subject {
-            color: #888;
-
-            font-weight: 700;
-        }
-
-
-        .subject-info {
             display: flex;
 
             flex-direction: column;
 
-            gap: 6px;
+            justify-content: space-between;
 
-            color: #777;
+            min-height: 190px;
+
+            background: #8797A8;
+
+            border:
+                1px solid
+                #8797A8;
+
+            border-radius: 14px;
+
+            padding: 25px;
+
+            text-decoration: none;
+
+            color: white;
+
+            cursor: pointer;
+
+            transition:
+                box-shadow 0.15s ease,
+                transform 0.15s ease,
+                filter 0.15s ease;
+
+        }
+
+
+        .subject:hover {
+
+            box-shadow:
+                0
+                7px
+                18px
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.12
+                );
+
+            transform:
+                translateY(-3px);
+
+            filter:
+                brightness(0.97);
+
+        }
+
+
+        /* =========================================
+           SUBJECT NAME
+        ========================================= */
+
+        .subject-name {
+
+            margin-bottom: 22px;
+
+            font-size: 25px;
+
+            line-height: 1.15;
+
+            font-weight: 800;
+
+            letter-spacing: -0.3px;
+
+        }
+
+
+        .empty-subject {
+
+            color:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    0.9
+                );
+
+            font-weight: 700;
+
+        }
+
+
+        /* =========================================
+           SUBJECT INFORMATION
+        ========================================= */
+
+        .subject-info {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 7px;
+
+            color:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    0.88
+                );
 
             font-size: 14px;
 
             font-weight: 600;
+
         }
 
 
-        .edit {
-            margin-top: 20px;
+        /* =========================================
+           ADD SUBJECT CARD
+        ========================================= */
 
-            color: #222;
+        .add-subject-form {
 
-            font-size: 14px;
+            margin: 0;
 
-            font-weight: 800;
+            padding: 0;
+
+        }
+
+
+        .add-subject {
+
+            width: 100%;
+
+            min-height: 190px;
+
+            display: flex;
+
+            flex-direction: column;
+
+            align-items: center;
+
+            justify-content: center;
+
+            gap: 8px;
+
+            background: #8797A8;
+
+            border:
+                1px solid
+                #8797A8;
+
+            border-radius: 14px;
+
+            color: white;
+
+            font-family: inherit;
+
+            cursor: pointer;
+
+            transition:
+                box-shadow 0.15s ease,
+                transform 0.15s ease,
+                filter 0.15s ease;
+
+        }
+
+
+        .add-subject:hover {
+
+            box-shadow:
+                0
+                7px
+                18px
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.12
+                );
+
+            transform:
+                translateY(-3px);
+
+            filter:
+                brightness(0.97);
+
+        }
+
+
+        .add-subject-plus {
+
+            font-size: 52px;
+
+            line-height: 1;
+
+            font-weight: 500;
+
+        }
+
+
+        .add-subject-text {
+
+            font-size: 17px;
+
+            font-weight: 700;
+
         }
 
 
@@ -321,11 +602,13 @@
         @media (max-width: 900px) {
 
             .subjects {
+
                 grid-template-columns:
                     repeat(
                         2,
                         minmax(0, 1fr)
                     );
+
             }
 
         }
@@ -334,9 +617,11 @@
         @media (max-width: 700px) {
 
             .main {
+
                 padding:
                     25px
                     20px;
+
             }
 
         }
@@ -345,13 +630,44 @@
         @media (max-width: 550px) {
 
             .subjects {
-                grid-template-columns:
-                    1fr;
+
+                grid-template-columns: 1fr;
+
             }
 
 
             .header h1 {
+
                 font-size: 32px;
+
+            }
+
+
+            .target-form {
+
+                align-items: stretch;
+
+            }
+
+
+            .target-field {
+
+                width: 100%;
+
+            }
+
+
+            .target-input-wrapper {
+
+                width: 100%;
+
+            }
+
+
+            .target-save-button {
+
+                width: 100%;
+
             }
 
         }
@@ -386,7 +702,7 @@
 
             <!-- =================================
                  HEADER
-            ================================= -->
+            ================================== -->
 
             <div class="header">
 
@@ -402,32 +718,87 @@
 
 
             <!-- =================================
-                 PROFILE
-            ================================= -->
+                 PROFILE / OVERALL TARGET
+            ================================== -->
 
             <div class="profile-card">
+
 
                 <h2>
                     {{ profile.workspace_name }}
                 </h2>
 
-                <p>
-                    Overall target:
-                    {{ profile.target_grade }}%
-                </p>
+
+                <form
+                    method="POST"
+                    class="target-form"
+                >
+
+                    {% csrf_token %}
+
+
+                    <input
+                        type="hidden"
+                        name="action"
+                        value="update_target"
+                    >
+
+
+                    <div class="target-field">
+
+                        <label for="overall-target">
+                            Overall target
+                        </label>
+
+
+                        <div class="target-input-wrapper">
+
+                            <input
+                                id="overall-target"
+                                type="number"
+                                name="target_grade"
+                                value="{{ profile.target_grade }}"
+                                min="0"
+                                max="100"
+                                step="1"
+                                class="target-input"
+                                required
+                            >
+
+                            <span class="target-percent">
+                                %
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <button
+                        type="submit"
+                        class="target-save-button"
+                    >
+                        Save Target
+                    </button>
+
+
+                </form>
+
 
             </div>
 
 
             <!-- =================================
                  SUBJECTS HEADER
-            ================================= -->
+            ================================== -->
 
             <div class="subjects-header">
+
 
                 <h2>
                     Subjects
                 </h2>
+
 
                 <span class="subject-count">
 
@@ -436,12 +807,13 @@
 
                 </span>
 
+
             </div>
 
 
             <!-- =================================
                  SUBJECTS
-            ================================= -->
+            ================================== -->
 
             <div class="subjects">
 
@@ -449,17 +821,14 @@
                 {% for subject in subjects %}
 
 
+                    <!-- =============================
+                         SUBJECT CARD
+                    ============================== -->
+
                     <a
                         href="{% url 'subject_detail' subject_index=forloop.counter0 %}"
                         class="subject"
                     >
-
-
-                        <div class="subject-number">
-
-                            Subject {{ forloop.counter }}
-
-                        </div>
 
 
                         <div class="subject-name">
@@ -523,17 +892,52 @@
                         </div>
 
 
-                        <div class="edit">
-
-                            Edit subject →
-
-                        </div>
-
-
                     </a>
 
 
                 {% endfor %}
+
+
+                <!-- =================================
+                     ADD SUBJECT
+                ================================== -->
+
+                <form
+                    method="POST"
+                    class="add-subject-form"
+                >
+
+                    {% csrf_token %}
+
+
+                    <input
+                        type="hidden"
+                        name="action"
+                        value="add_subject"
+                    >
+
+
+                    <button
+                        type="submit"
+                        class="add-subject"
+                        aria-label="Add another subject"
+                    >
+
+
+                        <span class="add-subject-plus">
+                            +
+                        </span>
+
+
+                        <span class="add-subject-text">
+                            Add Subject
+                        </span>
+
+
+                    </button>
+
+
+                </form>
 
 
             </div>
@@ -547,10 +951,6 @@
 
 </div>
 
-
-<!-- =========================================
-     SHARED SIDEBAR JAVASCRIPT
-========================================= -->
 
 <script
     src="{% static 'dashboard/js/sidebar.js' %}"
