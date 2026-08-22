@@ -1,5 +1,6 @@
-<!DOCTYPE html>
+{% load static %}
 
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -14,6 +15,14 @@
     <title>
         Review - StudyOptimizer
     </title>
+
+
+    <!-- SHARED SIDEBAR CSS -->
+
+    <link
+        rel="stylesheet"
+        href="{% static 'dashboard/css/sidebar.css' %}"
+    >
 
 
     <style>
@@ -42,6 +51,32 @@
 
 
         /* ================================
+           APP
+        ================================= */
+
+        .app {
+
+            display: flex;
+
+            min-height: 100vh;
+
+        }
+
+
+        /* ================================
+           MAIN
+        ================================= */
+
+        .main {
+
+            flex: 1;
+
+            min-width: 0;
+
+        }
+
+
+        /* ================================
            PAGE
         ================================= */
 
@@ -51,7 +86,7 @@
 
             padding:
                 40px
-                20px
+                40px
                 60px;
 
         }
@@ -59,9 +94,9 @@
 
         .container {
 
-            max-width: 900px;
+            width: 100%;
 
-            margin: 0 auto;
+            max-width: 1000px;
 
         }
 
@@ -204,70 +239,24 @@
 
 
         /* ================================
-           BACK BUTTON
-        ================================= */
-
-        .back-button {
-
-            display: inline-flex;
-
-            align-items: center;
-
-            gap: 8px;
-
-            margin-bottom: 25px;
-
-            padding:
-                9px
-                14px;
-
-            border:
-                1px solid
-                #dedede;
-
-            border-radius: 8px;
-
-            background: white;
-
-            color: #333;
-
-            text-decoration: none;
-
-            font-size: 14px;
-
-            font-weight: 500;
-
-            transition:
-                background 0.15s ease,
-                border-color 0.15s ease;
-
-        }
-
-
-        .back-button:hover {
-
-            background: #f1f1f1;
-
-            border-color: #cfcfcf;
-
-        }
-
-
-        /* ================================
            RESPONSIVE
         ================================= */
 
-        @media (max-width: 650px) {
+        @media (max-width: 700px) {
 
             .page {
 
                 padding:
                     25px
-                    15px
+                    20px
                     40px;
 
             }
 
+        }
+
+
+        @media (max-width: 650px) {
 
             .header h1 {
 
@@ -292,177 +281,197 @@
 <body>
 
 
-<div class="page">
+<div class="app">
 
 
-    <div class="container">
+    <!-- ================================
+         SHARED SIDEBAR
+    ================================= -->
+
+    {% include 'partials/sidebar.html' with active_page='review' %}
 
 
-        <!-- ================================
-             BACK
-        ================================= -->
+    <!-- ================================
+         MAIN
+    ================================= -->
 
-        <a
-            href="{% url 'dashboard' %}"
-            class="back-button"
-        >
-            ← Dashboard
-        </a>
+    <main class="main">
 
 
-        <!-- ================================
-             HEADER
-        ================================= -->
-
-        <header class="header">
-
-            <h1>
-                Review
-            </h1>
-
-            <p>
-                Review your knowledge across all of your subjects.
-            </p>
-
-        </header>
+        <div class="page">
 
 
-        <!-- ================================
-             REVIEW OPTIONS
-        ================================= -->
-
-        <section class="review-grid">
+            <div class="container">
 
 
-            <!-- ================================
-                 DEFINITIONS
-            ================================= -->
+                <!-- ================================
+                     HEADER
+                ================================= -->
 
-            <a
-                href="{% url 'review_definitions' %}"
-                class="review-card"
-            >
+                <header class="header">
 
-                <h2>
-                    Definition
-                </h2>
+                    <h1>
+                        Review
+                    </h1>
 
-                <p>
-                    Review important terms and their definitions
-                    across all of your subjects.
-                </p>
+                    <p>
+                        Review your knowledge across all of your subjects.
+                    </p>
 
-            </a>
+                </header>
 
 
-            <!-- ================================
-                 FORMULAS
-            ================================= -->
+                <!-- ================================
+                     REVIEW OPTIONS
+                ================================= -->
 
-            <a
-                href="#"
-                class="review-card"
-            >
-
-                <h2>
-                    Formula
-                </h2>
-
-                <p>
-                    Review formulas and the meaning of their variables.
-                </p>
-
-            </a>
+                <section class="review-grid">
 
 
-            <!-- ================================
-                 LISTS
-            ================================= -->
+                    <!-- ================================
+                         DEFINITIONS
+                    ================================= -->
 
-            <a
-                href="#"
-                class="review-card"
-            >
+                    <a
+                        href="{% url 'review_definitions' %}"
+                        class="review-card"
+                    >
 
-                <h2>
-                    List
-                </h2>
+                        <h2>
+                            Definition
+                        </h2>
 
-                <p>
-                    Review important lists and collections of information.
-                </p>
+                        <p>
+                            Review important terms and their definitions
+                            across all of your subjects.
+                        </p>
 
-            </a>
-
-
-            <!-- ================================
-                 STEPS
-            ================================= -->
-
-            <a
-                href="#"
-                class="review-card"
-            >
-
-                <h2>
-                    Steps
-                </h2>
-
-                <p>
-                    Review processes and procedures step by step.
-                </p>
-
-            </a>
+                    </a>
 
 
-            <!-- ================================
-                 KEY IDEAS
-            ================================= -->
+                    <!-- ================================
+                         FORMULAS
+                    ================================= -->
 
-            <a
-                href="#"
-                class="review-card"
-            >
+                    <a
+                        href="#"
+                        class="review-card"
+                    >
 
-                <h2>
-                    Key Idea
-                </h2>
+                        <h2>
+                            Formula
+                        </h2>
 
-                <p>
-                    Review the most important ideas and concepts
-                    from your subjects.
-                </p>
+                        <p>
+                            Review formulas and the meaning of their variables.
+                        </p>
 
-            </a>
-
-
-            <!-- ================================
-                 COMPARISONS
-            ================================= -->
-
-            <a
-                href="#"
-                class="review-card"
-            >
-
-                <h2>
-                    Comparison
-                </h2>
-
-                <p>
-                    Review important comparisons between concepts.
-                </p>
-
-            </a>
+                    </a>
 
 
-        </section>
+                    <!-- ================================
+                         LISTS
+                    ================================= -->
+
+                    <a
+                        href="#"
+                        class="review-card"
+                    >
+
+                        <h2>
+                            List
+                        </h2>
+
+                        <p>
+                            Review important lists and collections of information.
+                        </p>
+
+                    </a>
 
 
-    </div>
+                    <!-- ================================
+                         STEPS
+                    ================================= -->
+
+                    <a
+                        href="#"
+                        class="review-card"
+                    >
+
+                        <h2>
+                            Steps
+                        </h2>
+
+                        <p>
+                            Review processes and procedures step by step.
+                        </p>
+
+                    </a>
+
+
+                    <!-- ================================
+                         KEY IDEAS
+                    ================================= -->
+
+                    <a
+                        href="#"
+                        class="review-card"
+                    >
+
+                        <h2>
+                            Key Idea
+                        </h2>
+
+                        <p>
+                            Review the most important ideas and concepts
+                            from your subjects.
+                        </p>
+
+                    </a>
+
+
+                    <!-- ================================
+                         COMPARISONS
+                    ================================= -->
+
+                    <a
+                        href="#"
+                        class="review-card"
+                    >
+
+                        <h2>
+                            Comparison
+                        </h2>
+
+                        <p>
+                            Review important comparisons between concepts.
+                        </p>
+
+                    </a>
+
+
+                </section>
+
+
+            </div>
+
+
+        </div>
+
+
+    </main>
 
 
 </div>
+
+
+<!-- ================================
+     SHARED SIDEBAR SCRIPT
+================================= -->
+
+<script
+    src="{% static 'dashboard/js/sidebar.js' %}"
+></script>
 
 
 </body>

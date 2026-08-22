@@ -1,7 +1,6 @@
 {% load static %}
 
 <!DOCTYPE html>
-
 <html lang="en">
 
 <head>
@@ -16,6 +15,12 @@
     <title>
         {{ subject.name }} - StudyOptimizer
     </title>
+
+
+    <link
+        rel="stylesheet"
+        href="{% static 'dashboard/css/sidebar.css' %}"
+    >
 
 
     <style>
@@ -39,6 +44,32 @@
                 "Segoe UI",
                 Arial,
                 sans-serif;
+
+        }
+
+
+        /* =========================================
+           APP
+        ========================================= */
+
+        .app {
+
+            display: flex;
+
+            min-height: 100vh;
+
+        }
+
+
+        /* =========================================
+           MAIN
+        ========================================= */
+
+        .main {
+
+            flex: 1;
+
+            min-width: 0;
 
         }
 
@@ -72,56 +103,6 @@
             justify-content: space-between;
 
             margin-bottom: 30px;
-
-        }
-
-
-        .header-left {
-
-            display: flex;
-
-            align-items: center;
-
-            gap: 18px;
-
-        }
-
-
-        .back-button {
-
-            width: 40px;
-
-            height: 40px;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-            border:
-                1px solid
-                #dedede;
-
-            border-radius: 9px;
-
-            background: white;
-
-            color: #333;
-
-            text-decoration: none;
-
-            font-size: 20px;
-
-            transition:
-                background 0.15s ease;
-
-        }
-
-
-        .back-button:hover {
-
-            background: #f0f0f0;
 
         }
 
@@ -662,8 +643,7 @@
         }
 
 
-        .review-category.open
-        .review-arrow {
+        .review-category.open .review-arrow {
 
             transform:
                 rotate(180deg);
@@ -705,8 +685,7 @@
         }
 
 
-        .review-category.open
-        .review-content {
+        .review-category.open .review-content {
 
             display: flex;
 
@@ -895,570 +874,498 @@
 <body>
 
 
-<div class="page">
+<div class="app">
 
 
-    <!-- =========================================
-         HEADER
-    ========================================= -->
-
-    <header class="header">
-
-        <div class="header-left">
-
-            <a
-                href="{% url 'goals' %}"
-                class="back-button"
-            >
-                ←
-            </a>
+    {% include 'partials/sidebar.html' with active_page='summarize' %}
 
 
-            <div class="subject-title">
-
-                <h1>
-                    {{ subject.name|default:"Subject" }}
-                </h1>
-
-                <p>
-                    Subject workspace
-                </p>
-
-            </div>
-
-        </div>
-
-    </header>
+    <main class="main">
 
 
-    <!-- =========================================
-         SUBJECT INFORMATION
-    ========================================= -->
-
-    <section class="subject-information">
-
-        <form method="POST">
-
-            {% csrf_token %}
+        <div class="page">
 
 
-            <div class="information-grid">
+            <header class="header">
 
+                <div class="subject-title">
 
-                <!-- SUBJECT NAME -->
-
-                <div class="field">
-
-                    <label>
-                        Subject name
-                    </label>
-
-                    <input
-                        type="text"
-                        value="{{ subject.name }}"
-                        name="name"
-                        placeholder="e.g. Business Informatics"
-                        required
-                    >
-
-                </div>
-
-
-                <!-- TARGET GRADE -->
-
-                <div class="field">
-
-                    <label>
-                        Target grade
-                    </label>
-
-                    <input
-                        type="number"
-                        value="{{ subject.target_grade }}"
-                        name="target_grade"
-                        min="0"
-                        max="100"
-                        placeholder="e.g. 80"
-                        required
-                    >
-
-                </div>
-
-
-                <!-- EXAM DATE -->
-
-                <div class="field">
-
-                    <label>
-                        Exam date
-                    </label>
-
-                    <input
-                        type="date"
-                        value="{{ subject.exam_date }}"
-                        name="exam_date"
-                    >
-
-                </div>
-
-
-            </div>
-
-
-            <div class="information-footer">
-
-                <button
-                    type="submit"
-                    class="save-button"
-                >
-                    Save Changes
-                </button>
-
-            </div>
-
-        </form>
-
-    </section>
-
-
-    <!-- =========================================
-         MAIN WORKSPACE
-    ========================================= -->
-
-    <section class="workspace">
-
-
-        <!-- =========================================
-             LEFT SIDE — SUMMARIZE
-        ========================================= -->
-
-        <div class="workspace-box">
-
-            <div class="workspace-header">
-
-                <div>
-
-                    <h2>
-                        Summarize
-                    </h2>
+                    <h1>
+                        {{ subject.name|default:"Subject" }}
+                    </h1>
 
                     <p>
-                        Choose what you want to summarize.
+                        Subject workspace
                     </p>
 
                 </div>
 
-            </div>
+            </header>
 
 
-            <div class="summary-options">
+            <section class="subject-information">
 
-
-                <!-- =====================================
-                     DEFINITION
-                ====================================== -->
-
-                {% if database_subject %}
-
-                    <a
-                        href="{% url 'create_definition' subject_id=database_subject.id %}?subject_index={{ subject_index }}"
-                        class="summary-option"
-                    >
-
-                        <h3>
-                            Definition
-                        </h3>
-
-                        <p>
-                            Define important terms and concepts.
-                        </p>
-
-                    </a>
-
-                {% else %}
-
-                    <div class="summary-option">
-
-                        <h3>
-                            Definition
-                        </h3>
-
-                        <p>
-                            Save the subject first before adding definitions.
-                        </p>
-
-                    </div>
-
-                {% endif %}
-
-
-                <!-- =====================================
-                     FORMULA
-                ====================================== -->
-
-                {% if database_subject %}
-
-                    <a
-                        href="{% url 'create_formula' subject_id=database_subject.id %}"
-                        class="summary-option"
-                    >
-
-                        <h3>
-                            Formula
-                        </h3>
-
-                        <p>
-                            Add important formulas for this subject.
-                        </p>
-
-                    </a>
-
-                {% else %}
-
-                    <div class="summary-option">
-
-                        <h3>
-                            Formula
-                        </h3>
-
-                        <p>
-                            Save the subject first before adding formulas.
-                        </p>
-
-                    </div>
-
-                {% endif %}
-
-
-                <!-- =====================================
-                     LIST
-                ====================================== -->
-
-                <button
-                    type="button"
-                    class="summary-option"
-                >
-
-                    <h3>
-                        List
-                    </h3>
-
-                    <p>
-                        Summarize important items or characteristics.
-                    </p>
-
-                </button>
-
-
-                <!-- =====================================
-                     STEPS
-                ====================================== -->
-
-                <button
-                    type="button"
-                    class="summary-option"
-                >
-
-                    <h3>
-                        Steps
-                    </h3>
-
-                    <p>
-                        Record a process or procedure step by step.
-                    </p>
-
-                </button>
-
-
-                <!-- =====================================
-                     KEY IDEA
-                ====================================== -->
-
-                <button
-                    type="button"
-                    class="summary-option"
-                >
-
-                    <h3>
-                        Key Idea
-                    </h3>
-
-                    <p>
-                        Capture the central idea of a topic.
-                    </p>
-
-                </button>
-
-
-                <!-- =====================================
-                     COMPARISON
-                ====================================== -->
-
-                <button
-                    type="button"
-                    class="summary-option"
-                >
-
-                    <h3>
-                        Comparison
-                    </h3>
-
-                    <p>
-                        Summarize the differences between concepts.
-                    </p>
-
-                </button>
-
-
-            </div>
-
-        </div>
-
-
-        <!-- =========================================
-             RIGHT SIDE — REVIEW
-        ========================================= -->
-
-        <div class="workspace-box">
-
-
-            <!-- REVIEW HEADER -->
-
-            <div class="workspace-header">
-
-                <div>
-
-                    <h2>
-                        Review
-                    </h2>
-
-                    <p>
-                        Reviews scheduled for this subject.
-                    </p>
-
-                </div>
-
-            </div>
-
-
-            <!-- =========================================
-                 RESET TODAY'S REVIEWS
-            ========================================= -->
-
-            <div class="reset-reviews-container">
-
-                <form
-                    method="post"
-                    action="{% url 'reset_today_reviews' %}"
-                >
+                <form method="POST">
 
                     {% csrf_token %}
 
-                    <button
-                        type="submit"
-                        class="reset-reviews-button"
-                        onclick="
-                            return confirm(
-                                'Make all formulas and definitions available for review again today?'
-                            );
-                        "
-                    >
-                        Reset Today's Reviews
-                    </button>
+
+                    <div class="information-grid">
+
+
+                        <div class="field">
+
+                            <label>
+                                Subject name
+                            </label>
+
+                            <input
+                                type="text"
+                                value="{{ subject.name }}"
+                                name="name"
+                                placeholder="e.g. Business Informatics"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <label>
+                                Target grade
+                            </label>
+
+                            <input
+                                type="number"
+                                value="{{ subject.target_grade }}"
+                                name="target_grade"
+                                min="0"
+                                max="100"
+                                placeholder="e.g. 80"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <label>
+                                Exam date
+                            </label>
+
+                            <input
+                                type="date"
+                                value="{{ subject.exam_date }}"
+                                name="exam_date"
+                            >
+
+                        </div>
+
+
+                    </div>
+
+
+                    <div class="information-footer">
+
+                        <button
+                            type="submit"
+                            class="save-button"
+                        >
+                            Save Changes
+                        </button>
+
+                    </div>
 
                 </form>
 
-            </div>
+            </section>
 
 
-            <!-- =========================================
-                 REVIEW CATEGORIES
-            ========================================= -->
-
-            <div class="review-categories">
+            <section class="workspace">
 
 
-                <!-- =====================================
-                     FORMULAS TO REVIEW
-                ====================================== -->
+                <div class="workspace-box">
 
-                {% if due_formulas %}
 
-                    <a
-                        href="{% url 'formula_review_list' subject_index=subject_index %}"
-                        class="review-category"
-                    >
+                    <div class="workspace-header">
 
-                        <div class="review-category-header">
+                        <div>
 
-                            <div class="review-category-title">
+                            <h2>
+                                Summarize
+                            </h2>
 
-                                <h3>
-                                    Formulas to Review
-                                </h3>
-
-                                <span class="review-count">
-                                    {{ due_formula_count }}
-                                </span>
-
-                            </div>
-
-                            <span class="review-arrow">
-                                →
-                            </span>
+                            <p>
+                                Choose what you want to summarize.
+                            </p>
 
                         </div>
 
-                        <p class="review-description">
-                            Formulas you need to review today.
-                        </p>
-
-                    </a>
-
-                {% endif %}
+                    </div>
 
 
-                <!-- =====================================
-                     DEFINITIONS TO REVIEW
-                ====================================== -->
+                    <div class="summary-options">
 
-                {% if due_definitions %}
 
-                    <a
-                        href="{% url 'definition_review_list' subject_index=subject_index %}"
-                        class="review-category"
-                    >
+                        {% if database_subject %}
 
-                        <div class="review-category-header">
-
-                            <div class="review-category-title">
+                            <a
+                                href="{% url 'create_definition' subject_id=database_subject.id %}?subject_index={{ subject_index }}"
+                                class="summary-option"
+                            >
 
                                 <h3>
-                                    Definitions to Review
+                                    Definition
                                 </h3>
 
-                                <span class="review-count">
-                                    {{ due_definition_count }}
-                                </span>
+                                <p>
+                                    Define important terms and concepts.
+                                </p>
+
+                            </a>
+
+                        {% else %}
+
+                            <div class="summary-option">
+
+                                <h3>
+                                    Definition
+                                </h3>
+
+                                <p>
+                                    Save the subject first before adding definitions.
+                                </p>
 
                             </div>
 
-                            <span class="review-arrow">
-                                →
-                            </span>
-
-                        </div>
-
-                        <p class="review-description">
-                            Definitions you need to review today.
-                        </p>
-
-                    </a>
-
-                {% endif %}
+                        {% endif %}
 
 
-                <!-- =====================================
-                     BULLET LISTS TO REVIEW
-                ====================================== -->
+                        {% if database_subject %}
 
-                {% if due_bullet_lists %}
+                            <a
+                                href="{% url 'create_formula' subject_id=database_subject.id %}"
+                                class="summary-option"
+                            >
 
-                    <div class="review-category">
+                                <h3>
+                                    Formula
+                                </h3>
+
+                                <p>
+                                    Add important formulas for this subject.
+                                </p>
+
+                            </a>
+
+                        {% else %}
+
+                            <div class="summary-option">
+
+                                <h3>
+                                    Formula
+                                </h3>
+
+                                <p>
+                                    Save the subject first before adding formulas.
+                                </p>
+
+                            </div>
+
+                        {% endif %}
 
 
-                        <div
-                            class="review-category-header"
-                            onclick="toggleReview(this)"
+                        <button
+                            type="button"
+                            class="summary-option"
                         >
 
-                            <div class="review-category-title">
+                            <h3>
+                                List
+                            </h3>
 
-                                <h3>
-                                    Lists to Review
-                                </h3>
+                            <p>
+                                Summarize important items or characteristics.
+                            </p>
 
-                                <span class="review-count">
-                                    {{ due_bullet_list_count }}
-                                </span>
-
-                            </div>
+                        </button>
 
 
-                            <span class="review-arrow">
-                                ▼
-                            </span>
+                        <button
+                            type="button"
+                            class="summary-option"
+                        >
+
+                            <h3>
+                                Steps
+                            </h3>
+
+                            <p>
+                                Record a process or procedure step by step.
+                            </p>
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="summary-option"
+                        >
+
+                            <h3>
+                                Key Idea
+                            </h3>
+
+                            <p>
+                                Capture the central idea of a topic.
+                            </p>
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="summary-option"
+                        >
+
+                            <h3>
+                                Comparison
+                            </h3>
+
+                            <p>
+                                Summarize the differences between concepts.
+                            </p>
+
+                        </button>
+
+
+                    </div>
+
+                </div>
+
+
+                <div class="workspace-box">
+
+
+                    <div class="workspace-header">
+
+                        <div>
+
+                            <h2>
+                                Review
+                            </h2>
+
+                            <p>
+                                Reviews scheduled for this subject.
+                            </p>
 
                         </div>
 
-
-                        <p class="review-description">
-                            Lists you need to review today.
-                        </p>
+                    </div>
 
 
-                        <div class="review-content">
+                    <div class="reset-reviews-container">
+
+                        <form
+                            method="post"
+                            action="{% url 'reset_today_reviews' %}"
+                        >
+
+                            {% csrf_token %}
+
+                            <button
+                                type="submit"
+                                class="reset-reviews-button"
+                                onclick="
+                                    return confirm(
+                                        'Make all formulas and definitions available for review again today?'
+                                    );
+                                "
+                            >
+                                Reset Today's Reviews
+                            </button>
+
+                        </form>
+
+                    </div>
 
 
-                            {% for bullet_list in due_bullet_lists %}
-
-                                <div class="review-item">
+                    <div class="review-categories">
 
 
-                                    <h4>
-                                        {{ bullet_list.question }}
-                                    </h4>
+                        {% if due_formulas %}
+
+                            <a
+                                href="{% url 'formula_review_list' subject_index=subject_index %}"
+                                class="review-category"
+                            >
+
+                                <div class="review-category-header">
+
+                                    <div class="review-category-title">
+
+                                        <h3>
+                                            Formulas to Review
+                                        </h3>
+
+                                        <span class="review-count">
+                                            {{ due_formula_count }}
+                                        </span>
+
+                                    </div>
+
+                                    <span class="review-arrow">
+                                        →
+                                    </span>
+
+                                </div>
+
+                                <p class="review-description">
+                                    Formulas you need to review today.
+                                </p>
+
+                            </a>
+
+                        {% endif %}
 
 
-                                    {% for item in bullet_list.items.all %}
+                        {% if due_definitions %}
 
-                                        <p>
-                                            • {{ item.text }}
-                                        </p>
+                            <a
+                                href="{% url 'definition_review_list' subject_index=subject_index %}"
+                                class="review-category"
+                            >
+
+                                <div class="review-category-header">
+
+                                    <div class="review-category-title">
+
+                                        <h3>
+                                            Definitions to Review
+                                        </h3>
+
+                                        <span class="review-count">
+                                            {{ due_definition_count }}
+                                        </span>
+
+                                    </div>
+
+                                    <span class="review-arrow">
+                                        →
+                                    </span>
+
+                                </div>
+
+                                <p class="review-description">
+                                    Definitions you need to review today.
+                                </p>
+
+                            </a>
+
+                        {% endif %}
+
+
+                        {% if due_bullet_lists %}
+
+                            <div class="review-category">
+
+
+                                <div
+                                    class="review-category-header"
+                                    onclick="toggleReview(this)"
+                                >
+
+                                    <div class="review-category-title">
+
+                                        <h3>
+                                            Lists to Review
+                                        </h3>
+
+                                        <span class="review-count">
+                                            {{ due_bullet_list_count }}
+                                        </span>
+
+                                    </div>
+
+
+                                    <span class="review-arrow">
+                                        ▼
+                                    </span>
+
+                                </div>
+
+
+                                <p class="review-description">
+                                    Lists you need to review today.
+                                </p>
+
+
+                                <div class="review-content">
+
+
+                                    {% for bullet_list in due_bullet_lists %}
+
+                                        <div class="review-item">
+
+
+                                            <h4>
+                                                {{ bullet_list.question }}
+                                            </h4>
+
+
+                                            {% for item in bullet_list.items.all %}
+
+                                                <p>
+                                                    • {{ item.text }}
+                                                </p>
+
+                                            {% endfor %}
+
+
+                                            <span class="review-date">
+                                                Review today
+                                            </span>
+
+
+                                        </div>
 
                                     {% endfor %}
 
 
-                                    <span class="review-date">
-                                        Review today
-                                    </span>
-
-
                                 </div>
 
-                            {% endfor %}
+
+                            </div>
+
+                        {% endif %}
 
 
-                        </div>
+                        {% if not due_formulas and not due_definitions and not due_bullet_lists %}
+
+                            <div class="empty-review">
+
+                                No reviews due today.
+
+                            </div>
+
+                        {% endif %}
 
 
                     </div>
 
-                {% endif %}
+
+                </div>
 
 
-                <!-- =====================================
-                     NOTHING TO REVIEW
-                ====================================== -->
-
-                {% if not due_formulas and not due_definitions and not due_bullet_lists %}
-
-                    <div class="empty-review">
-
-                        No reviews due today.
-
-                    </div>
-
-                {% endif %}
-
-
-            </div>
+            </section>
 
 
         </div>
 
 
-    </section>
+    </main>
 
 
 </div>
@@ -1469,13 +1376,22 @@
     function toggleReview(header) {
 
         const category =
-            header.closest(".review-category");
+            header.closest(
+                ".review-category"
+            );
 
-        category.classList.toggle("open");
+        category.classList.toggle(
+            "open"
+        );
 
     }
 
 </script>
+
+
+<script
+    src="{% static 'dashboard/js/sidebar.js' %}"
+></script>
 
 
 </body>

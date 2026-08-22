@@ -1,5 +1,6 @@
-<!DOCTYPE html>
+{% load static %}
 
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -14,6 +15,14 @@
     <title>
         Progress - StudyOptimizer
     </title>
+
+
+    <!-- SHARED SIDEBAR CSS -->
+
+    <link
+        rel="stylesheet"
+        href="{% static 'dashboard/css/sidebar.css' %}"
+    >
 
 
     <style>
@@ -41,7 +50,39 @@
         }
 
 
+        /* ================================
+           APP
+        ================================= */
+
+        .app {
+
+            display: flex;
+
+            min-height: 100vh;
+
+        }
+
+
+        /* ================================
+           MAIN
+        ================================= */
+
+        .main {
+
+            flex: 1;
+
+            min-width: 0;
+
+        }
+
+
+        /* ================================
+           PAGE
+        ================================= */
+
         .page {
+
+            width: 100%;
 
             min-height: 100vh;
 
@@ -70,42 +111,6 @@
         }
 
 
-        .back-button {
-
-            width: 40px;
-
-            height: 40px;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-            border:
-                1px solid
-                #dedede;
-
-            border-radius: 9px;
-
-            background: white;
-
-            color: #333;
-
-            text-decoration: none;
-
-            font-size: 20px;
-
-        }
-
-
-        .back-button:hover {
-
-            background: #f0f0f0;
-
-        }
-
-
         .header h1 {
 
             margin:
@@ -130,6 +135,8 @@
 
 
         .content {
+
+            width: 100%;
 
             max-width: 1100px;
 
@@ -438,7 +445,7 @@
         }
 
 
-        @media (max-width: 600px) {
+        @media (max-width: 700px) {
 
             .page {
 
@@ -449,6 +456,10 @@
 
             }
 
+        }
+
+
+        @media (max-width: 600px) {
 
             .stats-grid {
 
@@ -476,260 +487,275 @@
 <body>
 
 
-<div class="page">
+<div class="app">
 
 
     <!-- ================================
-         HEADER
+         SHARED SIDEBAR
     ================================= -->
 
-    <header class="header">
+    {% include 'partials/sidebar.html' with active_page='progress' %}
 
 
-        <a
-            href="{% url 'dashboard' %}"
-            class="back-button"
-        >
-            ←
-        </a>
+    <!-- ================================
+         MAIN
+    ================================= -->
+
+    <main class="main">
 
 
-        <div>
-
-            <h1>
-                Progress
-            </h1>
-
-            <p>
-                Track your learning progress and mastery.
-            </p>
-
-        </div>
+        <div class="page">
 
 
-    </header>
+            <!-- ================================
+                 HEADER
+            ================================= -->
+
+            <header class="header">
 
 
-    <div class="content">
+                <div>
 
+                    <h1>
+                        Progress
+                    </h1>
 
-        <!-- ================================
-             STATISTICS
-        ================================= -->
+                    <p>
+                        Track your learning progress and mastery.
+                    </p>
 
-        <section class="stats-grid">
-
-
-            <div class="stat-card">
-
-                <div class="stat-label">
-                    Knowledge
                 </div>
 
-                <div class="stat-value">
-                    {{ total_knowledge }}
-                </div>
 
-                <div class="stat-description">
-                    Total learning items
-                </div>
+            </header>
 
-            </div>
 
+            <div class="content">
 
-            <div class="stat-card">
 
-                <div class="stat-label">
-                    Reviewed
-                </div>
+                <!-- ================================
+                     STATISTICS
+                ================================= -->
 
-                <div class="stat-value">
-                    {{ reviewed_count }}
-                </div>
+                <section class="stats-grid">
 
-                <div class="stat-description">
-                    Items you've practiced
-                </div>
 
-            </div>
+                    <div class="stat-card">
 
+                        <div class="stat-label">
+                            Knowledge
+                        </div>
 
-            <div class="stat-card">
+                        <div class="stat-value">
+                            {{ total_knowledge }}
+                        </div>
 
-                <div class="stat-label">
-                    Mastered
-                </div>
+                        <div class="stat-description">
+                            Total learning items
+                        </div>
 
-                <div class="stat-value">
-                    {{ mastered_count }}
-                </div>
+                    </div>
 
-                <div class="stat-description">
-                    Mastery level 6
-                </div>
 
-            </div>
+                    <div class="stat-card">
 
+                        <div class="stat-label">
+                            Reviewed
+                        </div>
 
-            <div class="stat-card">
+                        <div class="stat-value">
+                            {{ reviewed_count }}
+                        </div>
 
-                <div class="stat-label">
-                    Accuracy
-                </div>
+                        <div class="stat-description">
+                            Items you've practiced
+                        </div>
 
-                <div class="stat-value">
-                    {{ accuracy }}%
-                </div>
+                    </div>
 
-                <div class="stat-description">
-                    Correct answers
-                </div>
 
-            </div>
+                    <div class="stat-card">
 
+                        <div class="stat-label">
+                            Mastered
+                        </div>
 
-        </section>
+                        <div class="stat-value">
+                            {{ mastered_count }}
+                        </div>
 
+                        <div class="stat-description">
+                            Mastery level 6
+                        </div>
 
-        <!-- ================================
-             OVERALL MASTERY
-        ================================= -->
+                    </div>
 
-        <section class="card">
 
+                    <div class="stat-card">
 
-            <h2>
-                Overall Mastery
-            </h2>
+                        <div class="stat-label">
+                            Accuracy
+                        </div>
 
+                        <div class="stat-value">
+                            {{ accuracy }}%
+                        </div>
 
-            <div class="progress-header">
+                        <div class="stat-description">
+                            Correct answers
+                        </div>
 
-                <span class="progress-label">
-                    Mastered knowledge
-                </span>
+                    </div>
 
-                <span class="progress-value">
-                    {{ overall_mastery }}%
-                </span>
 
-            </div>
+                </section>
 
 
-            <div class="progress-bar">
+                <!-- ================================
+                     OVERALL MASTERY
+                ================================= -->
 
-                <div
-                    class="progress-fill"
-                    data-progress="{{ overall_mastery }}"
-                ></div>
+                <section class="card">
 
-            </div>
 
+                    <h2>
+                        Overall Mastery
+                    </h2>
 
-        </section>
 
+                    <div class="progress-header">
 
-        <!-- ================================
-             SUBJECT PROGRESS
-        ================================= -->
+                        <span class="progress-label">
+                            Mastered knowledge
+                        </span>
 
-        <section class="card">
+                        <span class="progress-value">
+                            {{ overall_mastery }}%
+                        </span>
 
+                    </div>
 
-            <h2>
-                Progress by Subject
-            </h2>
 
+                    <div class="progress-bar">
 
-            {% if subject_progress %}
+                        <div
+                            class="progress-fill"
+                            data-progress="{{ overall_mastery }}"
+                        ></div>
 
+                    </div>
 
-                <div class="subject-list">
 
+                </section>
 
-                    {% for item in subject_progress %}
 
+                <!-- ================================
+                     SUBJECT PROGRESS
+                ================================= -->
 
-                        <div class="subject-row">
+                <section class="card">
 
 
-                            <div class="subject-top">
+                    <h2>
+                        Progress by Subject
+                    </h2>
 
 
-                                <span class="subject-name">
-                                    {{ item.subject.name }}
-                                </span>
+                    {% if subject_progress %}
 
 
-                                <span class="subject-percentage">
-                                    {{ item.mastery }}%
-                                </span>
+                        <div class="subject-list">
 
 
-                            </div>
+                            {% for item in subject_progress %}
 
 
-                            <div class="progress-bar">
+                                <div class="subject-row">
 
-                                <div
-                                    class="progress-fill"
-                                    data-progress="{{ item.mastery }}"
-                                ></div>
 
-                            </div>
+                                    <div class="subject-top">
 
 
-                            <div class="subject-info">
+                                        <span class="subject-name">
+                                            {{ item.subject.name }}
+                                        </span>
 
-                                <span>
-                                    {{ item.total_units }}
-                                    knowledge items
-                                </span>
 
-                                <span>
-                                    {{ item.mastered }}
-                                    mastered
-                                </span>
+                                        <span class="subject-percentage">
+                                            {{ item.mastery }}%
+                                        </span>
 
-                                <span>
-                                    {{ item.reviews }}
-                                    reviews
-                                </span>
 
-                                <span>
-                                    {{ item.accuracy }}%
-                                    accuracy
-                                </span>
+                                    </div>
 
-                            </div>
+
+                                    <div class="progress-bar">
+
+                                        <div
+                                            class="progress-fill"
+                                            data-progress="{{ item.mastery }}"
+                                        ></div>
+
+                                    </div>
+
+
+                                    <div class="subject-info">
+
+                                        <span>
+                                            {{ item.total_units }}
+                                            knowledge items
+                                        </span>
+
+                                        <span>
+                                            {{ item.mastered }}
+                                            mastered
+                                        </span>
+
+                                        <span>
+                                            {{ item.reviews }}
+                                            reviews
+                                        </span>
+
+                                        <span>
+                                            {{ item.accuracy }}%
+                                            accuracy
+                                        </span>
+
+                                    </div>
+
+
+                                </div>
+
+
+                            {% endfor %}
 
 
                         </div>
 
 
-                    {% endfor %}
+                    {% else %}
 
 
-                </div>
+                        <div class="empty">
+
+                            No learning progress yet.
+
+                        </div>
 
 
-            {% else %}
+                    {% endif %}
 
 
-                <div class="empty">
-
-                    No learning progress yet.
-
-                </div>
+                </section>
 
 
-            {% endif %}
+            </div>
 
 
-        </section>
+        </div>
 
 
-    </div>
+    </main>
 
 
 </div>
@@ -788,6 +814,15 @@
     );
 
 </script>
+
+
+<!-- ================================
+     SHARED SIDEBAR SCRIPT
+================================= -->
+
+<script
+    src="{% static 'dashboard/js/sidebar.js' %}"
+></script>
 
 
 </body>
