@@ -107,16 +107,120 @@
         }
 
 
-        .subject-title h1 {
+        .subject-title {
 
-            margin:
-                0
-                0
-                4px;
+            display: flex;
+
+            flex-direction: column;
+
+            align-items: flex-start;
+
+            gap: 4px;
+
+        }
+
+
+        /* =========================================
+           SUBJECT DROPDOWN
+        ========================================= */
+
+        .subject-selector-wrapper {
+
+            position: relative;
+
+            display: inline-block;
+
+        }
+
+
+        .subject-selector {
+
+            appearance: none;
+
+            -webkit-appearance: none;
+
+            -moz-appearance: none;
+
+            width: auto;
+
+            max-width: 600px;
+
+            min-width: 250px;
+
+            padding:
+                2px
+                42px
+                4px
+                0;
+
+            border: none;
+
+            background: transparent;
+
+            color: #222;
+
+            font-family: inherit;
 
             font-size: 30px;
 
+            font-weight: 700;
+
             letter-spacing: -0.6px;
+
+            cursor: pointer;
+
+            outline: none;
+
+        }
+
+
+        .subject-selector-wrapper::after {
+
+            content: "⌄";
+
+            position: absolute;
+
+            right: 8px;
+
+            top: 50%;
+
+            transform:
+                translateY(-55%);
+
+            color: #777;
+
+            font-size: 20px;
+
+            font-weight: 500;
+
+            pointer-events: none;
+
+        }
+
+
+        .subject-selector:hover {
+
+            color: #444;
+
+        }
+
+
+        .subject-selector:focus {
+
+            outline: none;
+
+        }
+
+
+        .subject-selector option {
+
+            color: #222;
+
+            background: white;
+
+            font-size: 16px;
+
+            font-weight: 500;
 
         }
 
@@ -844,7 +948,11 @@
             }
 
 
-            .subject-title h1 {
+            .subject-selector {
+
+                min-width: 200px;
+
+                max-width: calc(100vw - 80px);
 
                 font-size: 24px;
 
@@ -886,24 +994,78 @@
         <div class="page">
 
 
+            <!-- =========================================
+                 SUBJECT HEADER
+            ========================================= -->
+
             <header class="header">
+
 
                 <div class="subject-title">
 
-                    <h1>
-                        {{ subject.name|default:"Subject" }}
-                    </h1>
+
+                    <!-- =================================
+                         SUBJECT DROPDOWN
+                    ================================== -->
+
+                    <div class="subject-selector-wrapper">
+
+
+                        <select
+                            id="subject-selector"
+                            class="subject-selector"
+                            aria-label="Choose subject"
+                            onchange="changeSubject(this)"
+                        >
+
+
+                            {% for subject_option in request.session.onboarding_subjects %}
+
+
+                                <option
+                                    value="{% url 'subject_detail' subject_index=forloop.counter0 %}"
+                                    {% if forloop.counter0 == subject_index %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    {{ subject_option.name|default:"Subject" }}
+                                </option>
+
+
+                            {% empty %}
+
+
+                                <option selected>
+                                    {{ subject.name|default:"Subject" }}
+                                </option>
+
+
+                            {% endfor %}
+
+
+                        </select>
+
+
+                    </div>
+
 
                     <p>
                         Subject workspace
                     </p>
 
+
                 </div>
+
 
             </header>
 
 
+            <!-- =========================================
+                 SUBJECT INFORMATION
+            ========================================= -->
+
             <section class="subject-information">
+
 
                 <form method="POST">
 
@@ -912,6 +1074,10 @@
 
                     <div class="information-grid">
 
+
+                        <!-- =============================
+                             SUBJECT NAME
+                        ============================== -->
 
                         <div class="field">
 
@@ -929,6 +1095,10 @@
 
                         </div>
 
+
+                        <!-- =============================
+                             TARGET GRADE
+                        ============================== -->
 
                         <div class="field">
 
@@ -948,6 +1118,10 @@
 
                         </div>
 
+
+                        <!-- =============================
+                             EXAM DATE
+                        ============================== -->
 
                         <div class="field">
 
@@ -978,13 +1152,23 @@
 
                     </div>
 
+
                 </form>
+
 
             </section>
 
 
+            <!-- =========================================
+                 WORKSPACE
+            ========================================= -->
+
             <section class="workspace">
 
+
+                <!-- =====================================
+                     SUMMARIZE
+                ====================================== -->
 
                 <div class="workspace-box">
 
@@ -1009,7 +1193,12 @@
                     <div class="summary-options">
 
 
+                        <!-- =============================
+                             DEFINITION
+                        ============================== -->
+
                         {% if database_subject %}
+
 
                             <a
                                 href="{% url 'create_definition' subject_id=database_subject.id %}?subject_index={{ subject_index }}"
@@ -1026,7 +1215,9 @@
 
                             </a>
 
+
                         {% else %}
+
 
                             <div class="summary-option">
 
@@ -1040,10 +1231,16 @@
 
                             </div>
 
+
                         {% endif %}
 
 
+                        <!-- =============================
+                             FORMULA
+                        ============================== -->
+
                         {% if database_subject %}
+
 
                             <a
                                 href="{% url 'create_formula' subject_id=database_subject.id %}"
@@ -1060,7 +1257,9 @@
 
                             </a>
 
+
                         {% else %}
+
 
                             <div class="summary-option">
 
@@ -1074,8 +1273,13 @@
 
                             </div>
 
+
                         {% endif %}
 
+
+                        <!-- =============================
+                             LIST
+                        ============================== -->
 
                         <button
                             type="button"
@@ -1093,6 +1297,10 @@
                         </button>
 
 
+                        <!-- =============================
+                             STEPS
+                        ============================== -->
+
                         <button
                             type="button"
                             class="summary-option"
@@ -1109,6 +1317,10 @@
                         </button>
 
 
+                        <!-- =============================
+                             KEY IDEA
+                        ============================== -->
+
                         <button
                             type="button"
                             class="summary-option"
@@ -1124,6 +1336,10 @@
 
                         </button>
 
+
+                        <!-- =============================
+                             COMPARISON
+                        ============================== -->
 
                         <button
                             type="button"
@@ -1146,6 +1362,10 @@
                 </div>
 
 
+                <!-- =====================================
+                     REVIEW
+                ====================================== -->
+
                 <div class="workspace-box">
 
 
@@ -1166,7 +1386,12 @@
                     </div>
 
 
+                    <!-- =================================
+                         RESET TODAY'S REVIEWS
+                    ================================== -->
+
                     <div class="reset-reviews-container">
+
 
                         <form
                             method="post"
@@ -1174,6 +1399,7 @@
                         >
 
                             {% csrf_token %}
+
 
                             <button
                                 type="submit"
@@ -1187,22 +1413,35 @@
                                 Reset Today's Reviews
                             </button>
 
+
                         </form>
+
 
                     </div>
 
 
+                    <!-- =================================
+                         REVIEW CATEGORIES
+                    ================================== -->
+
                     <div class="review-categories">
 
 
+                        <!-- =============================
+                             FORMULAS
+                        ============================== -->
+
                         {% if due_formulas %}
+
 
                             <a
                                 href="{% url 'formula_review_list' subject_index=subject_index %}"
                                 class="review-category"
                             >
 
+
                                 <div class="review-category-header">
+
 
                                     <div class="review-category-title">
 
@@ -1216,29 +1455,41 @@
 
                                     </div>
 
+
                                     <span class="review-arrow">
                                         →
                                     </span>
 
+
                                 </div>
+
 
                                 <p class="review-description">
                                     Formulas you need to review today.
                                 </p>
 
+
                             </a>
+
 
                         {% endif %}
 
 
+                        <!-- =============================
+                             DEFINITIONS
+                        ============================== -->
+
                         {% if due_definitions %}
+
 
                             <a
                                 href="{% url 'definition_review_list' subject_index=subject_index %}"
                                 class="review-category"
                             >
 
+
                                 <div class="review-category-header">
+
 
                                     <div class="review-category-title">
 
@@ -1252,22 +1503,32 @@
 
                                     </div>
 
+
                                     <span class="review-arrow">
                                         →
                                     </span>
 
+
                                 </div>
+
 
                                 <p class="review-description">
                                     Definitions you need to review today.
                                 </p>
 
+
                             </a>
+
 
                         {% endif %}
 
 
+                        <!-- =============================
+                             LISTS
+                        ============================== -->
+
                         {% if due_bullet_lists %}
+
 
                             <div class="review-category">
 
@@ -1276,6 +1537,7 @@
                                     class="review-category-header"
                                     onclick="toggleReview(this)"
                                 >
+
 
                                     <div class="review-category-title">
 
@@ -1294,6 +1556,7 @@
                                         ▼
                                     </span>
 
+
                                 </div>
 
 
@@ -1306,6 +1569,7 @@
 
 
                                     {% for bullet_list in due_bullet_lists %}
+
 
                                         <div class="review-item">
 
@@ -1331,6 +1595,7 @@
 
                                         </div>
 
+
                                     {% endfor %}
 
 
@@ -1339,16 +1604,23 @@
 
                             </div>
 
+
                         {% endif %}
 
 
+                        <!-- =============================
+                             NOTHING DUE
+                        ============================== -->
+
                         {% if not due_formulas and not due_definitions and not due_bullet_lists %}
+
 
                             <div class="empty-review">
 
                                 No reviews due today.
 
                             </div>
+
 
                         {% endif %}
 
@@ -1372,6 +1644,27 @@
 
 
 <script>
+
+    // =============================================
+    // CHANGE SUBJECT
+    // =============================================
+
+    function changeSubject(select) {
+
+        const url = select.value;
+
+        if (url) {
+
+            window.location.href = url;
+
+        }
+
+    }
+
+
+    // =============================================
+    // TOGGLE REVIEW CATEGORY
+    // =============================================
 
     function toggleReview(header) {
 
