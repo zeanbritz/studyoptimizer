@@ -222,7 +222,7 @@
 
 
         /* =========================================
-           BUTTON
+           CHECK ANSWER BUTTON
         ========================================= */
 
         .submit-button {
@@ -311,23 +311,78 @@
 
 
         /* =========================================
-           CONTINUE
+           REVIEW ACTIONS
         ========================================= */
 
-        .continue-form {
+        .review-actions {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
+
+            margin-top: 20px;
+
+        }
+
+
+        .next-form {
+
+            flex: 1;
 
             margin: 0;
 
         }
 
 
-        .continue-button {
+        .next-button {
 
             width: 100%;
 
-            margin-top: 15px;
-
             padding: 14px;
+
+            border: none;
+
+            border-radius: 8px;
+
+            background: #222;
+
+            color: white;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+
+            text-align: center;
+
+        }
+
+
+        .next-button:hover {
+
+            background: #333;
+
+        }
+
+
+        .finish-review-button {
+
+            flex: 1;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            min-height: 46px;
+
+            padding:
+                12px
+                18px;
 
             border:
                 1px solid #d8d8d8;
@@ -338,16 +393,18 @@
 
             color: #333;
 
+            text-decoration: none;
+
             font-size: 14px;
 
             font-weight: 600;
 
-            cursor: pointer;
+            text-align: center;
 
         }
 
 
-        .continue-button:hover {
+        .finish-review-button:hover {
 
             background: #f5f5f5;
 
@@ -384,6 +441,21 @@
             .definition-question {
 
                 font-size: 16px;
+
+            }
+
+
+            .review-actions {
+
+                flex-direction: column;
+
+            }
+
+
+            .next-form,
+            .finish-review-button {
+
+                width: 100%;
 
             }
 
@@ -609,48 +681,54 @@
 
 
         <!-- =====================================
-             CONTINUE
+             REVIEW ACTIONS
         ====================================== -->
 
-        <form
-            method="POST"
-            class="continue-form"
-        >
+        <div class="review-actions">
 
-            {% csrf_token %}
 
-            <input
-                type="hidden"
-                name="action"
-                value="continue"
+            {% if next_definition %}
+
+                <form
+                    method="POST"
+                    class="next-form"
+                >
+
+                    {% csrf_token %}
+
+                    <input
+                        type="hidden"
+                        name="action"
+                        value="continue"
+                    >
+
+                    <input
+                        type="hidden"
+                        name="subject_index"
+                        value="{{ subject_index }}"
+                    >
+
+                    <button
+                        type="submit"
+                        class="next-button"
+                    >
+                        Next
+                    </button>
+
+                </form>
+
+            {% endif %}
+
+
+            <a
+                href="{% url 'review_definitions' %}"
+                class="finish-review-button"
             >
-
-            <input
-                type="hidden"
-                name="subject_index"
-                value="{{ subject_index }}"
-            >
+                Finish Review
+            </a>
 
 
-            <button
-                type="submit"
-                class="continue-button"
-            >
-
-                {% if next_definition %}
-
-                    Continue
-
-                {% else %}
-
-                    Finish Review
-
-                {% endif %}
-
-            </button>
-
-
-        </form>
+        </div>
 
 
     {% endif %}

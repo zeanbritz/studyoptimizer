@@ -6,6 +6,7 @@ from django.shortcuts import (
     redirect,
     get_object_or_404,
 )
+from django.urls import reverse
 from django.utils import timezone
 
 from learning.models import (
@@ -22,11 +23,6 @@ from learning.models import (
 def get_definition_hidden_percentage(
     mastery_level
 ):
-    """
-    Determines how much of the definition should be hidden.
-
-    Uses the same mastery progression as formula practice.
-    """
 
     percentages = {
         0: 10,
@@ -51,9 +47,6 @@ def get_definition_hidden_percentage(
 def get_definition_review_interval(
     mastery_level
 ):
-    """
-    Number of days before the definition becomes due again.
-    """
 
     intervals = {
         0: 0,
@@ -79,21 +72,13 @@ def create_definition_question(
     definition_text,
     mastery_level
 ):
-    """
-    Split a definition into:
-
-        before_text
-        missing_text
-        after_text
-
-    Higher mastery hides a larger percentage.
-    """
 
     definition_text = (
         definition_text.strip()
     )
 
     words = definition_text.split()
+
 
     # --------------------------------------------------------
     # EMPTY DEFINITION
@@ -108,8 +93,9 @@ def create_definition_question(
             "hidden_percentage": 0,
         }
 
+
     # --------------------------------------------------------
-    # GET MASTERY PERCENTAGE
+    # HIDDEN PERCENTAGE
     # --------------------------------------------------------
 
     hidden_percentage = (
@@ -118,10 +104,11 @@ def create_definition_question(
         )
     )
 
+
     # --------------------------------------------------------
     # MASTERY 6
     #
-    # Hide the complete definition.
+    # Hide complete definition.
     # --------------------------------------------------------
 
     if hidden_percentage >= 100:
@@ -136,8 +123,9 @@ def create_definition_question(
                 hidden_percentage,
         }
 
+
     # --------------------------------------------------------
-    # CALCULATE HOW MANY WORDS TO HIDE
+    # NUMBER OF WORDS TO HIDE
     # --------------------------------------------------------
 
     number_to_hide = round(
@@ -156,8 +144,9 @@ def create_definition_question(
         len(words)
     )
 
+
     # --------------------------------------------------------
-    # HIDE A CONTIGUOUS SECTION AROUND THE MIDDLE
+    # HIDE SECTION AROUND MIDDLE
     # --------------------------------------------------------
 
     middle_index = (
@@ -174,6 +163,7 @@ def create_definition_question(
         start_index
     )
 
+
     if (
         start_index
         + number_to_hide
@@ -185,10 +175,12 @@ def create_definition_question(
             - number_to_hide
         )
 
+
     end_index = (
         start_index
         + number_to_hide
     )
+
 
     before_text = " ".join(
         words[
@@ -207,6 +199,7 @@ def create_definition_question(
             end_index:
         ]
     )
+
 
     return {
         "before_text":
@@ -230,13 +223,345 @@ def create_definition_question(
 def normalize_definition_answer(
     text
 ):
-    """
-    Normalize spacing and capitalization before comparison.
-    """
 
     return " ".join(
         text.split()
     ).casefold()
+
+
+# ============================================================
+# GET SUBJECT INDEX
+# ============================================================
+
+def get_subject_index(
+    request,
+    subject
+):
+
+    subjects = request.session.get(
+        "onboarding_subjects",
+        []
+    )
+
+
+    # --------------------------------------------------------
+    # DATABASE ID
+    # --------------------------------------------------------
+
+    for index, subject_data in enumerate(
+        subjects
+    ):
+
+        if (
+            subject_data.get(
+                "database_id"
+            )
+            == subject.id
+        ):
+
+            return index
+
+
+    # --------------------------------------------------------
+    # FALLBACK TO SUBJECT NAME
+    # --------------------------------------------------------
+
+    for index, subject_data in enumerate(
+        subjects
+    ):
+
+        if (
+            subject_data.get(
+                "name",
+                ""
+            ).strip()
+            == subject.name
+        ):
+
+            return index
+
+
+    return 0
+
+
+# ============================================================
+# CHECK WHETHER DEFINITION IS DUE
+# ============================================================
+
+def definition_is_due(
+    user,
+    definition,
+    now=None,
+):
+
+    if now is None:
+
+        now = timezone.now()
+
+
+    progress = (
+        StudentKnowledge.objects
+        .filter(
+            student=user,
+            knowledge_unit=(
+                definition.knowledge_unit
+            ),
+        )
+        .first()
+    )
+
+
+    # --------------------------------------------------------
+    # NEVER REVIEWED
+    # --------------------------------------------------------
+
+    if progress is None:
+
+        return True
+
+
+    if progress.review_count == 0:
+
+        return True
+
+
+    # --------------------------------------------------------
+    # REVIEW DATE HAS ARRIVED
+    # --------------------------------------------------------
+
+    if (
+        progress.next_review
+        is not None
+        and
+        progress.next_review
+        <= now
+    ):
+
+        return True
+
+
+    return False
+
+
+# ============================================================
+# GET NEXT SUBJECT DEFINITION
+# ============================================================
+
+def get_next_subject_definition(
+    user,
+    current_definition,
+):
+
+    """
+    Find another definition that:
+
+    1. Belongs to the SAME subject.
+    2. Is currently due.
+    3. Is not the definition just reviewed.
+
+    There is deliberately NO wrapping.
+
+    Once all due definitions have been reviewed,
+    this returns None.
+    """
+
+    subject = (
+        current_definition
+        .knowledge_unit
+        .subject
+    )
+
+    now = timezone.now()
+
+
+    definitions = (
+        Definition.objects
+        .filter(
+            knowledge_unit__subject=subject,
+            knowledge_unit__subject__user=user,
+            knowledge_unit__knowledge_type=(
+                KnowledgeUnit
+                .KnowledgeType
+                .DEFINITION
+            ),
+            knowledge_unit__active=True,
+        )
+        .exclude(
+            id=current_definition.id
+        )
+        .select_related(
+            "knowledge_unit",
+            "knowledge_unit__subject",
+        )
+        .order_by(
+            "id"
+        )
+    )
+
+
+    # --------------------------------------------------------
+    # RETURN FIRST DEFINITION STILL DUE TODAY
+    # --------------------------------------------------------
+
+    for definition in definitions:
+
+        if definition_is_due(
+            user,
+            definition,
+            now,
+        ):
+
+            return definition
+
+
+    # --------------------------------------------------------
+    # NOTHING ELSE DUE
+    # --------------------------------------------------------
+
+    return None
+
+
+# ============================================================
+# GET NEXT GLOBAL DEFINITION
+# ============================================================
+
+def get_next_global_definition(
+    user,
+    current_definition,
+):
+
+    """
+    Global/manual review.
+
+    Unlike subject scheduled review, this may move through
+    definitions across all subjects.
+    """
+
+    definitions = (
+        Definition.objects
+        .filter(
+            knowledge_unit__subject__user=user,
+            knowledge_unit__knowledge_type=(
+                KnowledgeUnit
+                .KnowledgeType
+                .DEFINITION
+            ),
+            knowledge_unit__active=True,
+        )
+        .select_related(
+            "knowledge_unit",
+            "knowledge_unit__subject",
+        )
+        .order_by(
+            "id"
+        )
+    )
+
+
+    # --------------------------------------------------------
+    # NEXT ID
+    # --------------------------------------------------------
+
+    next_definition = (
+        definitions
+        .filter(
+            id__gt=current_definition.id
+        )
+        .first()
+    )
+
+
+    if next_definition is not None:
+
+        return next_definition
+
+
+    # --------------------------------------------------------
+    # GLOBAL REVIEW MAY WRAP
+    # --------------------------------------------------------
+
+    return (
+        definitions
+        .exclude(
+            id=current_definition.id
+        )
+        .first()
+    )
+
+
+# ============================================================
+# GET NEXT DEFINITION
+# ============================================================
+
+def get_next_definition_for_review(
+    user,
+    current_definition,
+    review_scope="global",
+):
+
+    # --------------------------------------------------------
+    # SUBJECT REVIEW
+    # --------------------------------------------------------
+
+    if review_scope == "subject":
+
+        return (
+            get_next_subject_definition(
+                user,
+                current_definition,
+            )
+        )
+
+
+    # --------------------------------------------------------
+    # GLOBAL REVIEW
+    # --------------------------------------------------------
+
+    return (
+        get_next_global_definition(
+            user,
+            current_definition,
+        )
+    )
+
+
+# ============================================================
+# BUILD NEXT REVIEW URL
+# ============================================================
+
+def build_definition_review_url(
+    definition,
+    review_scope,
+    subject_index,
+):
+
+    url = reverse(
+        "practice_definition_review",
+        kwargs={
+            "definition_id":
+                definition.id,
+        }
+    )
+
+
+    # --------------------------------------------------------
+    # SUBJECT REVIEW
+    # --------------------------------------------------------
+
+    if review_scope == "subject":
+
+        return (
+            f"{url}"
+            f"?review_scope=subject"
+            f"&subject_index={subject_index}"
+        )
+
+
+    # --------------------------------------------------------
+    # GLOBAL REVIEW
+    # --------------------------------------------------------
+
+    return url
 
 
 # ============================================================
@@ -248,11 +573,6 @@ def practice_definition(
     request,
     definition_id
 ):
-    """
-    Adaptive definition recall practice.
-
-    Mastery controls how much of the definition is hidden.
-    """
 
     # ========================================================
     # GET DEFINITION
@@ -272,6 +592,73 @@ def practice_definition(
         knowledge_unit.subject
     )
 
+
+    # ========================================================
+    # DETERMINE REVIEW SCOPE
+    # ========================================================
+
+    review_scope = (
+        request.POST.get(
+            "review_scope"
+        )
+        or request.GET.get(
+            "review_scope"
+        )
+        or "global"
+    )
+
+
+    if review_scope not in (
+        "global",
+        "subject",
+    ):
+
+        review_scope = "global"
+
+
+    # ========================================================
+    # SUBJECT INDEX
+    # ========================================================
+
+    subject_index = (
+        request.POST.get(
+            "subject_index"
+        )
+        or request.GET.get(
+            "subject_index"
+        )
+    )
+
+
+    if subject_index is None:
+
+        subject_index = (
+            get_subject_index(
+                request,
+                subject
+            )
+        )
+
+
+    try:
+
+        subject_index = int(
+            subject_index
+        )
+
+    except (
+        TypeError,
+        ValueError,
+    ):
+
+        subject_index = (
+            get_subject_index(
+                request,
+                subject
+            )
+        )
+
+
     # ========================================================
     # GET OR CREATE PROGRESS
     # ========================================================
@@ -283,6 +670,7 @@ def practice_definition(
         )
     )
 
+
     # ========================================================
     # CREATE QUESTION
     # ========================================================
@@ -293,6 +681,7 @@ def practice_definition(
             progress.mastery_level
         )
     )
+
 
     before_text = question[
         "before_text"
@@ -310,8 +699,9 @@ def practice_definition(
         "hidden_percentage"
     ]
 
+
     # ========================================================
-    # CONTINUE TO NEXT DEFINITION
+    # NEXT BUTTON
     # ========================================================
 
     if (
@@ -321,106 +711,50 @@ def practice_definition(
         ) == "continue"
     ):
 
-        now = timezone.now()
-
-        due_definitions = []
-
-        definitions = (
-            Definition.objects
-            .filter(
-                knowledge_unit__subject=subject,
-                knowledge_unit__knowledge_type=(
-                    KnowledgeUnit
-                    .KnowledgeType
-                    .DEFINITION
-                ),
-                knowledge_unit__active=True,
-            )
-            .exclude(
-                id=definition.id
-            )
-            .select_related(
-                "knowledge_unit"
-            )
-            .order_by(
-                "id"
+        next_definition = (
+            get_next_definition_for_review(
+                request.user,
+                definition,
+                review_scope,
             )
         )
 
-        # ----------------------------------------------------
-        # FIND DEFINITIONS THAT ARE DUE
-        # ----------------------------------------------------
-
-        for next_definition in definitions:
-
-            next_progress = (
-                StudentKnowledge.objects
-                .filter(
-                    student=request.user,
-                    knowledge_unit=(
-                        next_definition
-                        .knowledge_unit
-                    ),
-                )
-                .first()
-            )
-
-            # Never reviewed = due.
-
-            if next_progress is None:
-
-                due_definitions.append(
-                    next_definition
-                )
-
-                continue
-
-            # Reviewed and due again.
-
-            if (
-                next_progress.next_review
-                is not None
-                and
-                next_progress.next_review
-                <= now
-            ):
-
-                due_definitions.append(
-                    next_definition
-                )
 
         # ----------------------------------------------------
-        # ANOTHER DEFINITION IS DUE
+        # NEXT DEFINITION EXISTS
         # ----------------------------------------------------
 
-        if due_definitions:
-
-            next_definition = (
-                due_definitions[0]
-            )
+        if next_definition is not None:
 
             return redirect(
-                "practice_definition_review",
-                definition_id=(
-                    next_definition.id
+                build_definition_review_url(
+                    next_definition,
+                    review_scope,
+                    subject_index,
                 )
             )
 
+
         # ----------------------------------------------------
-        # NO MORE DEFINITIONS
-        #
-        # Return to subject.
+        # SUBJECT REVIEW FINISHED
         # ----------------------------------------------------
 
-        subject_index = request.POST.get(
-            "subject_index",
-            0
-        )
+        if review_scope == "subject":
+
+            return redirect(
+                "subject_detail",
+                subject_index=subject_index
+            )
+
+
+        # ----------------------------------------------------
+        # GLOBAL REVIEW FINISHED
+        # ----------------------------------------------------
 
         return redirect(
-            "subject_detail",
-            subject_index=subject_index
+            "review_definitions"
         )
+
 
     # ========================================================
     # SUBMIT ANSWER
@@ -433,8 +767,9 @@ def practice_definition(
             ""
         ).strip()
 
+
         # ----------------------------------------------------
-        # NORMALIZE ANSWERS
+        # NORMALIZE
         # ----------------------------------------------------
 
         normalized_answer = (
@@ -449,20 +784,23 @@ def practice_definition(
             )
         )
 
+
         is_correct = (
             normalized_answer
             == normalized_correct_answer
         )
 
-        # ----------------------------------------------------
-        # UPDATE COMMON REVIEW DATA
-        # ----------------------------------------------------
+
+        # ====================================================
+        # UPDATE REVIEW DATA
+        # ====================================================
 
         progress.review_count += 1
 
         progress.last_reviewed = (
             timezone.now()
         )
+
 
         # ====================================================
         # CORRECT
@@ -472,15 +810,18 @@ def practice_definition(
 
             progress.correct_count += 1
 
+
             if progress.mastery_level < 6:
 
                 progress.mastery_level += 1
+
 
             interval = (
                 get_definition_review_interval(
                     progress.mastery_level
                 )
             )
+
 
             progress.next_review = (
                 timezone.now()
@@ -489,7 +830,9 @@ def practice_definition(
                 )
             )
 
+
             result = "correct"
+
 
         # ====================================================
         # INCORRECT
@@ -499,11 +842,15 @@ def practice_definition(
 
             progress.incorrect_count += 1
 
+
             if progress.mastery_level > 0:
 
                 progress.mastery_level -= 1
 
-            # Incorrect answers return soon.
+
+            # ------------------------------------------------
+            # Incorrect definition returns tomorrow.
+            # ------------------------------------------------
 
             progress.next_review = (
                 timezone.now()
@@ -512,130 +859,25 @@ def practice_definition(
                 )
             )
 
+
             result = "incorrect"
+
 
         progress.save()
 
-        # ====================================================
-        # FIND SUBJECT INDEX
-        # ====================================================
-
-        subjects = request.session.get(
-            "onboarding_subjects",
-            []
-        )
-
-        subject_index = None
-
-        for index, subject_data in enumerate(
-            subjects
-        ):
-
-            if (
-                subject_data.get(
-                    "database_id"
-                )
-                == subject.id
-            ):
-
-                subject_index = index
-
-                break
-
-        # ----------------------------------------------------
-        # FALLBACK TO NAME
-        # ----------------------------------------------------
-
-        if subject_index is None:
-
-            for index, subject_data in enumerate(
-                subjects
-            ):
-
-                if (
-                    subject_data.get(
-                        "name",
-                        ""
-                    ).strip()
-                    == subject.name
-                ):
-
-                    subject_index = index
-
-                    break
-
-        # ----------------------------------------------------
-        # FINAL FALLBACK
-        # ----------------------------------------------------
-
-        if subject_index is None:
-
-            subject_index = 0
 
         # ====================================================
-        # FIND WHETHER ANOTHER DEFINITION IS DUE
+        # FIND NEXT DEFINITION
         # ====================================================
 
-        now = timezone.now()
-
-        next_definition = None
-
-        definitions = (
-            Definition.objects
-            .filter(
-                knowledge_unit__subject=subject,
-                knowledge_unit__knowledge_type=(
-                    KnowledgeUnit
-                    .KnowledgeType
-                    .DEFINITION
-                ),
-                knowledge_unit__active=True,
-            )
-            .exclude(
-                id=definition.id
-            )
-            .select_related(
-                "knowledge_unit"
-            )
-            .order_by(
-                "id"
+        next_definition = (
+            get_next_definition_for_review(
+                request.user,
+                definition,
+                review_scope,
             )
         )
 
-        for next_item in definitions:
-
-            next_progress = (
-                StudentKnowledge.objects
-                .filter(
-                    student=request.user,
-                    knowledge_unit=(
-                        next_item.knowledge_unit
-                    ),
-                )
-                .first()
-            )
-
-            if next_progress is None:
-
-                next_definition = (
-                    next_item
-                )
-
-                break
-
-            if (
-                next_progress.next_review
-                is not None
-                and
-                next_progress.next_review
-                <= now
-            ):
-
-                next_definition = (
-                    next_item
-                )
-
-                break
 
         # ====================================================
         # SHOW RESULT
@@ -680,59 +922,15 @@ def practice_definition(
 
                 "next_definition":
                     next_definition,
+
+                "review_scope":
+                    review_scope,
             }
         )
 
-    # ========================================================
-    # FIND SUBJECT INDEX FOR FIRST DISPLAY
-    # ========================================================
-
-    subjects = request.session.get(
-        "onboarding_subjects",
-        []
-    )
-
-    subject_index = None
-
-    for index, subject_data in enumerate(
-        subjects
-    ):
-
-        if (
-            subject_data.get(
-                "database_id"
-            )
-            == subject.id
-        ):
-
-            subject_index = index
-
-            break
-
-    if subject_index is None:
-
-        for index, subject_data in enumerate(
-            subjects
-        ):
-
-            if (
-                subject_data.get(
-                    "name",
-                    ""
-                ).strip()
-                == subject.name
-            ):
-
-                subject_index = index
-
-                break
-
-    if subject_index is None:
-
-        subject_index = 0
 
     # ========================================================
-    # DISPLAY QUESTION
+    # FIRST DISPLAY
     # ========================================================
 
     return render(
@@ -762,5 +960,8 @@ def practice_definition(
 
             "subject_index":
                 subject_index,
+
+            "review_scope":
+                review_scope,
         }
     )

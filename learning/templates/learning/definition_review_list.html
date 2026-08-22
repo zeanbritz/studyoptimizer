@@ -274,7 +274,9 @@
     <div class="container">
 
 
-        <!-- HEADER -->
+        <!-- =========================================
+             HEADER
+        ========================================= -->
 
         <header class="header">
 
@@ -303,29 +305,37 @@
         </header>
 
 
-        <!-- LIST -->
+        <!-- =========================================
+             DEFINITIONS
+        ========================================= -->
 
         {% if definitions %}
+
 
             <div class="review-list">
 
 
                 {% for definition in definitions %}
 
+
                     <a
-                        href="{% url 'review_definition' definition_id=definition.id %}"
+                        href="{% url 'practice_definition_review' definition_id=definition.id %}?review_scope=subject&subject_index={{ subject_index }}"
                         class="review-item"
                     >
 
+
                         <div class="review-item-header">
+
 
                             <h2>
                                 {{ definition.term }}
                             </h2>
 
+
                             <span class="arrow">
                                 →
                             </span>
+
 
                         </div>
 
@@ -337,18 +347,22 @@
 
                     </a>
 
+
                 {% endfor %}
 
 
             </div>
 
+
         {% else %}
+
 
             <div class="empty">
 
                 No definitions are due for review today.
 
             </div>
+
 
         {% endif %}
 
