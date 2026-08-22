@@ -320,6 +320,10 @@ def definition_is_due(
         return True
 
 
+    # --------------------------------------------------------
+    # PROGRESS EXISTS BUT NEVER REVIEWED
+    # --------------------------------------------------------
+
     if progress.review_count == 0:
 
         return True
@@ -353,16 +357,12 @@ def get_next_subject_definition(
 ):
 
     """
-    Find another definition that:
+    Find the next definition due for the same subject.
 
-    1. Belongs to the SAME subject.
-    2. Is currently due.
-    3. Is not the definition just reviewed.
+    Subject review does NOT wrap around.
 
-    There is deliberately NO wrapping.
-
-    Once all due definitions have been reviewed,
-    this returns None.
+    Once all definitions due for this subject have been
+    reviewed, return None.
     """
 
     subject = (
@@ -378,12 +378,15 @@ def get_next_subject_definition(
         Definition.objects
         .filter(
             knowledge_unit__subject=subject,
+
             knowledge_unit__subject__user=user,
+
             knowledge_unit__knowledge_type=(
                 KnowledgeUnit
                 .KnowledgeType
                 .DEFINITION
             ),
+
             knowledge_unit__active=True,
         )
         .exclude(
@@ -400,7 +403,7 @@ def get_next_subject_definition(
 
 
     # --------------------------------------------------------
-    # RETURN FIRST DEFINITION STILL DUE TODAY
+    # RETURN FIRST DEFINITION STILL DUE
     # --------------------------------------------------------
 
     for definition in definitions:
@@ -415,7 +418,7 @@ def get_next_subject_definition(
 
 
     # --------------------------------------------------------
-    # NOTHING ELSE DUE
+    # FINISHED THIS SUBJECT'S DAILY REVIEW
     # --------------------------------------------------------
 
     return None
@@ -431,21 +434,23 @@ def get_next_global_definition(
 ):
 
     """
-    Global/manual review.
+    Global manual review.
 
-    Unlike subject scheduled review, this may move through
-    definitions across all subjects.
+    Global review may move between subjects
+    and may wrap around.
     """
 
     definitions = (
         Definition.objects
         .filter(
             knowledge_unit__subject__user=user,
+
             knowledge_unit__knowledge_type=(
                 KnowledgeUnit
                 .KnowledgeType
                 .DEFINITION
             ),
+
             knowledge_unit__active=True,
         )
         .select_related(
@@ -459,7 +464,7 @@ def get_next_global_definition(
 
 
     # --------------------------------------------------------
-    # NEXT ID
+    # NEXT DEFINITION
     # --------------------------------------------------------
 
     next_definition = (
@@ -721,7 +726,7 @@ def practice_definition(
 
 
         # ----------------------------------------------------
-        # NEXT DEFINITION EXISTS
+        # ANOTHER DEFINITION EXISTS
         # ----------------------------------------------------
 
         if next_definition is not None:
@@ -737,6 +742,8 @@ def practice_definition(
 
         # ----------------------------------------------------
         # SUBJECT REVIEW FINISHED
+        #
+        # Return directly to this subject's page.
         # ----------------------------------------------------
 
         if review_scope == "subject":
@@ -769,7 +776,7 @@ def practice_definition(
 
 
         # ----------------------------------------------------
-        # NORMALIZE
+        # NORMALIZE ANSWERS
         # ----------------------------------------------------
 
         normalized_answer = (
@@ -849,7 +856,7 @@ def practice_definition(
 
 
             # ------------------------------------------------
-            # Incorrect definition returns tomorrow.
+            # Incorrect definitions return tomorrow.
             # ------------------------------------------------
 
             progress.next_review = (
@@ -876,6 +883,16 @@ def practice_definition(
                 definition,
                 review_scope,
             )
+        )
+
+
+        # ====================================================
+        # DETERMINE WHETHER SUBJECT REVIEW IS FINISHED
+        # ====================================================
+
+        subject_review_finished = (
+            review_scope == "subject"
+            and next_definition is None
         )
 
 
@@ -925,6 +942,9 @@ def practice_definition(
 
                 "review_scope":
                     review_scope,
+
+                "subject_review_finished":
+                    subject_review_finished,
             }
         )
 
@@ -963,5 +983,8 @@ def practice_definition(
 
             "review_scope":
                 review_scope,
+
+            "subject_review_finished":
+                False,
         }
     )

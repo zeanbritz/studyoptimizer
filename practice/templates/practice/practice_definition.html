@@ -681,54 +681,73 @@
 
 
         <!-- =====================================
-             REVIEW ACTIONS
-        ====================================== -->
+     REVIEW ACTIONS
+====================================== -->
 
-        <div class="review-actions">
-
-
-            {% if next_definition %}
-
-                <form
-                    method="POST"
-                    class="next-form"
-                >
-
-                    {% csrf_token %}
-
-                    <input
-                        type="hidden"
-                        name="action"
-                        value="continue"
-                    >
-
-                    <input
-                        type="hidden"
-                        name="subject_index"
-                        value="{{ subject_index }}"
-                    >
-
-                    <button
-                        type="submit"
-                        class="next-button"
-                    >
-                        Next
-                    </button>
-
-                </form>
-
-            {% endif %}
+<div class="review-actions">
 
 
-            <a
-                href="{% url 'review_definitions' %}"
-                class="finish-review-button"
+    {% if next_definition %}
+
+        <form
+            method="POST"
+            class="next-form"
+        >
+
+            {% csrf_token %}
+
+            <input
+                type="hidden"
+                name="action"
+                value="continue"
             >
-                Finish Review
-            </a>
+
+            <input
+                type="hidden"
+                name="review_scope"
+                value="{{ review_scope }}"
+            >
+
+            <input
+                type="hidden"
+                name="subject_index"
+                value="{{ subject_index }}"
+            >
+
+            <button
+                type="submit"
+                class="next-button"
+            >
+                Next
+            </button>
+
+        </form>
+
+    {% endif %}
 
 
-        </div>
+    {% if review_scope == "subject" %}
+
+        <a
+            href="{% url 'subject_detail' subject_index=subject_index %}"
+            class="finish-review-button"
+        >
+            Finish Review
+        </a>
+
+    {% else %}
+
+        <a
+            href="{% url 'review_definitions' %}"
+            class="finish-review-button"
+        >
+            Finish Review
+        </a>
+
+    {% endif %}
+
+
+</div>
 
 
     {% endif %}
