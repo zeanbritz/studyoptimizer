@@ -570,6 +570,20 @@
                 >
 
 
+                <input
+                    type="hidden"
+                    name="review_mode"
+                    value="normal"
+                >
+
+
+                <input
+                    type="hidden"
+                    name="subject_index"
+                    value="{{ subject_index }}"
+                >
+
+
                 <button
                     type="submit"
                     class="continue-button"
@@ -612,7 +626,9 @@
                 {{ answer }}
 
                 {% if not forloop.last %}
+
                     &nbsp; | &nbsp;
+
                 {% endif %}
 
             {% endfor %}
@@ -701,6 +717,20 @@
                 >
 
 
+                <input
+                    type="hidden"
+                    name="review_mode"
+                    value="normal"
+                >
+
+
+                <input
+                    type="hidden"
+                    name="subject_index"
+                    value="{{ subject_index }}"
+                >
+
+
                 <button
                     type="submit"
                     class="continue-button"
@@ -735,6 +765,17 @@
                 type="hidden"
                 name="review_mode"
                 value="{{ review_mode }}"
+            >
+
+
+            <!-- =================================
+                 PRESERVE SUBJECT INDEX
+            ================================== -->
+
+            <input
+                type="hidden"
+                name="subject_index"
+                value="{{ subject_index }}"
             >
 
 
@@ -856,6 +897,10 @@
                             >
 
 
+                                <!-- =====================
+                                     NUMERATOR
+                                ====================== -->
+
                                 <span
                                     style="
                                         padding: 0 5px 4px;
@@ -912,6 +957,10 @@
 
                                 </span>
 
+
+                                <!-- =====================
+                                     DENOMINATOR
+                                ====================== -->
 
                                 <span
                                     style="

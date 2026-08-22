@@ -749,6 +749,89 @@ def practice_formula(
         formula.knowledge_unit
     )
 
+        # ========================================================
+    # FIND SUBJECT INDEX
+    # ========================================================
+
+    subject = (
+        knowledge_unit.subject
+    )
+
+    subjects = request.session.get(
+        "onboarding_subjects",
+        []
+    )
+
+    subject_index = None
+
+
+    # --------------------------------------------------------
+    # FIND SUBJECT USING DATABASE ID
+    # --------------------------------------------------------
+
+    for index, subject_data in enumerate(
+        subjects
+    ):
+
+        database_id = (
+            subject_data.get(
+                "database_id"
+            )
+        )
+
+
+        try:
+
+            database_id = int(
+                database_id
+            )
+
+        except (
+            TypeError,
+            ValueError,
+        ):
+
+            database_id = None
+
+
+        if database_id == subject.id:
+
+            subject_index = index
+
+            break
+
+
+    # --------------------------------------------------------
+    # FALLBACK TO SUBJECT NAME
+    # --------------------------------------------------------
+
+    if subject_index is None:
+
+        for index, subject_data in enumerate(
+            subjects
+        ):
+
+            if (
+                subject_data.get(
+                    "name",
+                    ""
+                ).strip()
+                == subject.name.strip()
+            ):
+
+                subject_index = index
+
+                break
+
+
+    # --------------------------------------------------------
+    # FINAL FALLBACK
+    # --------------------------------------------------------
+
+    if subject_index is None:
+
+        subject_index = 0
+
     # ========================================================
     # REVIEW MODE
     # ========================================================
@@ -989,14 +1072,9 @@ def practice_formula(
         # ====================================================
 
         return redirect(
-            "subject_detail",
-            subject_index=(
-                request.POST.get(
-                    "subject_index",
-                    0
-                )
-            )
-        )
+        "subject_detail",
+        subject_index=subject_index
+    )
 
     # ========================================================
     # SUBMIT ANSWER
