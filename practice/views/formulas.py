@@ -1,5 +1,12 @@
+from datetime import timedelta
+
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import (
+    render,
+    redirect,
+    get_object_or_404,
+)
+from django.urls import reverse
 from django.utils import timezone
 
 import json
@@ -7,6 +14,7 @@ import random
 
 from learning.models import (
     Formula,
+    KnowledgeUnit,
     StudentKnowledge,
     FormulaElementPerformance,
 )
@@ -31,18 +39,29 @@ def get_all_elements(elements):
     for element in elements:
 
         element_type = element.get("type")
+
         value = str(
-            element.get("value", "")
+            element.get(
+                "value",
+                ""
+            )
         ).strip()
 
-        # Do not test the "=" sign.
+        # ----------------------------------------------------
+        # DO NOT TEST "="
+        # ----------------------------------------------------
+
         if (
             element_type == "operator"
             and value == "="
         ):
+
             continue
 
-        # Fractions contain their own elements.
+        # ----------------------------------------------------
+        # FRACTION
+        # ----------------------------------------------------
+
         if element_type == "fraction":
 
             result.extend(
@@ -65,7 +84,9 @@ def get_all_elements(elements):
 
         else:
 
-            result.append(element)
+            result.append(
+                element
+            )
 
     return result
 
@@ -74,7 +95,10 @@ def get_all_elements(elements):
 # FIND ELEMENT BY ID
 # ============================================================
 
-def find_element(elements, element_id):
+def find_element(
+    elements,
+    element_id
+):
     """
     Recursively find a formula element by its ID.
 
@@ -84,12 +108,22 @@ def find_element(elements, element_id):
     for element in elements:
 
         if str(
-            element.get("id")
-        ) == str(element_id):
+            element.get(
+                "id"
+            )
+        ) == str(
+            element_id
+        ):
 
             return element
 
-        if element.get("type") == "fraction":
+        # ----------------------------------------------------
+        # SEARCH INSIDE FRACTION
+        # ----------------------------------------------------
+
+        if element.get(
+            "type"
+        ) == "fraction":
 
             found = find_element(
                 element.get(
@@ -100,6 +134,7 @@ def find_element(elements, element_id):
             )
 
             if found:
+
                 return found
 
             found = find_element(
@@ -111,6 +146,7 @@ def find_element(elements, element_id):
             )
 
             if found:
+
                 return found
 
     return None
@@ -120,7 +156,9 @@ def find_element(elements, element_id):
 # MASTERY -> HIDDEN PERCENTAGE
 # ============================================================
 
-def get_hidden_percentage(mastery_level):
+def get_hidden_percentage(
+    mastery_level
+):
     """
     Determines approximately how much of the formula
     should be hidden at each mastery level.
@@ -139,6 +177,33 @@ def get_hidden_percentage(mastery_level):
     return percentages.get(
         mastery_level,
         15
+    )
+
+
+# ============================================================
+# REVIEW INTERVAL
+# ============================================================
+
+def get_formula_review_interval(
+    mastery_level
+):
+    """
+    Number of days before the formula becomes due again.
+    """
+
+    intervals = {
+        0: 0,
+        1: 1,
+        2: 2,
+        3: 4,
+        4: 7,
+        5: 14,
+        6: 30,
+    }
+
+    return intervals.get(
+        mastery_level,
+        0
     )
 
 
@@ -164,11 +229,14 @@ def record_element_performance(
     )
 
     if not element_id:
+
         return
 
-    element_type = element.get(
-        "type",
-        ""
+    element_type = (
+        element.get(
+            "type",
+            ""
+        )
     )
 
     value = str(
@@ -179,21 +247,24 @@ def record_element_performance(
     )
 
     performance, created = (
-        FormulaElementPerformance.objects.get_or_create(
-
+        FormulaElementPerformance.objects
+        .get_or_create(
             formula=formula,
-
             element_id=element_id,
-
             defaults={
-                "element_type": element_type,
-                "value": value,
+                "element_type":
+                    element_type,
+
+                "value":
+                    value,
             }
         )
     )
 
-    # Keep stored information synchronized
-    # with the current formula.
+    # --------------------------------------------------------
+    # KEEP STORED DATA SYNCHRONIZED
+    # --------------------------------------------------------
+
     performance.element_type = (
         element_type
     )
@@ -203,6 +274,10 @@ def record_element_performance(
     performance.last_reviewed = (
         timezone.now()
     )
+
+    # --------------------------------------------------------
+    # CORRECT / INCORRECT
+    # --------------------------------------------------------
 
     if is_correct:
 
@@ -239,10 +314,13 @@ def choose_hidden_elements(
     """
 
     if not all_elements:
+
         return []
 
-    percentage = get_hidden_percentage(
-        mastery_level
+    percentage = (
+        get_hidden_percentage(
+            mastery_level
+        )
     )
 
     # ========================================================
@@ -264,6 +342,7 @@ def choose_hidden_elements(
     )
 
     # Always test at least one element.
+
     number_to_hide = max(
         1,
         number_to_hide
@@ -274,21 +353,30 @@ def choose_hidden_elements(
         len(all_elements)
     )
 
-    previous_ids = previous_ids or []
+    previous_ids = (
+        previous_ids
+        or []
+    )
 
     # ========================================================
     # GET PERFORMANCE DATA
     # ========================================================
 
     performance_records = (
-        FormulaElementPerformance.objects.filter(
+        FormulaElementPerformance.objects
+        .filter(
             formula=formula
         )
     )
 
     performance_map = {
-        str(record.element_id): record
-        for record in performance_records
+        str(
+            record.element_id
+        ):
+            record
+
+        for record
+        in performance_records
     }
 
     # ========================================================
@@ -300,14 +388,21 @@ def choose_hidden_elements(
     for element in all_elements:
 
         element_id = str(
-            element.get("id")
+            element.get(
+                "id"
+            )
         )
 
-        record = performance_map.get(
-            element_id
+        record = (
+            performance_map.get(
+                element_id
+            )
         )
 
-        # Never tested before.
+        # ----------------------------------------------------
+        # NEVER TESTED
+        # ----------------------------------------------------
+
         if not record:
 
             weakness = 1.0
@@ -330,7 +425,10 @@ def choose_hidden_elements(
                     / total
                 )
 
-                weakness = 1 - accuracy
+                weakness = (
+                    1
+                    - accuracy
+                )
 
         weighted_elements.append(
             (
@@ -345,24 +443,34 @@ def choose_hidden_elements(
 
     available = [
         item
-        for item in weighted_elements
+        for item
+        in weighted_elements
         if str(
-            item[0].get("id")
+            item[0].get(
+                "id"
+            )
         ) not in previous_ids
     ]
 
-    # If there are not enough alternatives,
-    # allow previous elements again.
-    if len(available) < number_to_hide:
+    # --------------------------------------------------------
+    # NOT ENOUGH ALTERNATIVES
+    # --------------------------------------------------------
 
-        available = weighted_elements
+    if len(
+        available
+    ) < number_to_hide:
+
+        available = (
+            weighted_elements
+        )
 
     # ========================================================
     # SPLIT SELECTION
     # ========================================================
 
     weak_count = round(
-        number_to_hide * 0.7
+        number_to_hide
+        * 0.7
     )
 
     weak_count = min(
@@ -387,8 +495,10 @@ def choose_hidden_elements(
 
     weak_candidates = [
         element
+
         for element, weakness
         in sorted_elements
+
         if weakness > 0
     ]
 
@@ -398,26 +508,39 @@ def choose_hidden_elements(
     # SELECT WEAK ELEMENTS
     # ========================================================
 
-    if weak_candidates and weak_count > 0:
+    if (
+        weak_candidates
+        and weak_count > 0
+    ):
 
         weak_pool_size = max(
             weak_count,
+
             min(
-                len(weak_candidates),
-                weak_count * 2
+                len(
+                    weak_candidates
+                ),
+
+                weak_count
+                * 2
             )
         )
 
-        weak_pool = weak_candidates[
-            :weak_pool_size
-        ]
+        weak_pool = (
+            weak_candidates[
+                :weak_pool_size
+            ]
+        )
 
         selected.extend(
             random.sample(
                 weak_pool,
+
                 min(
                     weak_count,
-                    len(weak_pool)
+                    len(
+                        weak_pool
+                    )
                 )
             )
         )
@@ -428,19 +551,27 @@ def choose_hidden_elements(
 
     remaining = [
         element
+
         for element, weakness
         in available
+
         if element not in selected
     ]
 
-    if remaining and random_count > 0:
+    if (
+        remaining
+        and random_count > 0
+    ):
 
         selected.extend(
             random.sample(
                 remaining,
+
                 min(
                     random_count,
-                    len(remaining)
+                    len(
+                        remaining
+                    )
                 )
             )
         )
@@ -449,12 +580,16 @@ def choose_hidden_elements(
     # FILL REMAINING SPACES
     # ========================================================
 
-    if len(selected) < number_to_hide:
+    if len(
+        selected
+    ) < number_to_hide:
 
         remaining = [
             element
+
             for element, weakness
             in available
+
             if element not in selected
         ]
 
@@ -463,10 +598,16 @@ def choose_hidden_elements(
             selected.extend(
                 random.sample(
                     remaining,
+
                     min(
                         number_to_hide
-                        - len(selected),
-                        len(remaining)
+                        - len(
+                            selected
+                        ),
+
+                        len(
+                            remaining
+                        )
                     )
                 )
             )
@@ -474,6 +615,101 @@ def choose_hidden_elements(
     return selected[
         :number_to_hide
     ]
+
+
+# ============================================================
+# GET NEXT GLOBAL FORMULA
+# ============================================================
+
+def get_next_global_formula(
+    user,
+    current_formula,
+):
+    """
+    Used when the student entered through:
+
+        Review -> Formulas
+
+    Global review can move between subjects.
+
+    When the end is reached it wraps back to the first
+    available formula so the student can continue until
+    they press Finish Review.
+    """
+
+    formulas = (
+        Formula.objects
+        .filter(
+            knowledge_unit__subject__user=user,
+
+            knowledge_unit__knowledge_type=(
+                KnowledgeUnit
+                .KnowledgeType
+                .FORMULA
+            ),
+
+            knowledge_unit__active=True,
+        )
+        .select_related(
+            "knowledge_unit",
+            "knowledge_unit__subject",
+        )
+        .order_by(
+            "id"
+        )
+    )
+
+    # --------------------------------------------------------
+    # FIND NEXT FORMULA
+    # --------------------------------------------------------
+
+    next_formula = (
+        formulas
+        .filter(
+            id__gt=current_formula.id
+        )
+        .first()
+    )
+
+    if next_formula is not None:
+
+        return next_formula
+
+    # --------------------------------------------------------
+    # END OF LIST
+    #
+    # GLOBAL REVIEW MAY WRAP.
+    # --------------------------------------------------------
+
+    return (
+        formulas
+        .exclude(
+            id=current_formula.id
+        )
+        .first()
+    )
+
+
+# ============================================================
+# BUILD GLOBAL FORMULA REVIEW URL
+# ============================================================
+
+def build_global_formula_review_url(
+    formula
+):
+
+    url = reverse(
+        "practice_formula",
+        kwargs={
+            "formula_id":
+                formula.id,
+        }
+    )
+
+    return (
+        f"{url}"
+        f"?review_mode=global"
+    )
 
 
 # ============================================================
@@ -488,19 +724,15 @@ def practice_formula(
     """
     Formula recall practice.
 
-    Flow:
+    Supports two modes:
 
-        Question
-            ↓
-        Submit Answer
-            ↓
-        Show Correct / Incorrect
-            ↓
-        Continue
-            ↓
-        Find next due formula
-            ↓
-        New Question
+        normal
+            Subject-specific scheduled review.
+
+        global
+            Review -> Formulas.
+            Allows the student to move through formulas
+            across all subjects.
     """
 
     # ========================================================
@@ -518,16 +750,35 @@ def practice_formula(
     )
 
     # ========================================================
+    # REVIEW MODE
+    # ========================================================
+
+    review_mode = (
+        request.POST.get(
+            "review_mode"
+        )
+        or request.GET.get(
+            "review_mode"
+        )
+        or "normal"
+    )
+
+    if review_mode not in (
+        "normal",
+        "global",
+    ):
+
+        review_mode = "normal"
+
+    # ========================================================
     # GET OR CREATE STUDENT PROGRESS
     # ========================================================
 
     progress, created = (
-        StudentKnowledge.objects.get_or_create(
-
+        StudentKnowledge.objects
+        .get_or_create(
             student=request.user,
-
             knowledge_unit=knowledge_unit,
-
         )
     )
 
@@ -537,8 +788,10 @@ def practice_formula(
 
     try:
 
-        formula_elements = json.loads(
-            formula.structure
+        formula_elements = (
+            json.loads(
+                formula.structure
+            )
         )
 
     except (
@@ -548,29 +801,74 @@ def practice_formula(
 
         formula_elements = []
 
-    all_elements = get_all_elements(
-        formula_elements
+    all_elements = (
+        get_all_elements(
+            formula_elements
+        )
     )
 
     # ========================================================
-    # CONTINUE TO NEXT FORMULA
+    # GLOBAL REVIEW -> NEXT FORMULA
     # ========================================================
 
     if (
         request.method == "POST"
         and
-        request.POST.get("action") == "continue"
+        request.POST.get(
+            "action"
+        ) == "next_formula"
     ):
 
-        today = timezone.localdate()
+        next_formula = (
+            get_next_global_formula(
+                request.user,
+                formula,
+            )
+        )
+
+        # ----------------------------------------------------
+        # NEXT GLOBAL FORMULA
+        # ----------------------------------------------------
+
+        if next_formula is not None:
+
+            return redirect(
+                build_global_formula_review_url(
+                    next_formula
+                )
+            )
+
+        # ----------------------------------------------------
+        # NO OTHER FORMULA EXISTS
+        # ----------------------------------------------------
+
+        return redirect(
+            "review_formulas"
+        )
+
+    # ========================================================
+    # SUBJECT REVIEW -> CONTINUE TO NEXT DUE FORMULA
+    # ========================================================
+
+    if (
+        request.method == "POST"
+        and
+        request.POST.get(
+            "action"
+        ) == "continue"
+    ):
+
+        today = (
+            timezone.localdate()
+        )
 
         due_formulas = []
 
         # ----------------------------------------------------
-        # GET ALL ACTIVE FORMULAS FOR THIS SUBJECT
+        # GET ACTIVE FORMULAS FOR THIS SUBJECT ONLY
         # ----------------------------------------------------
 
-        knowledge_units = (
+        formulas = (
             Formula.objects
             .filter(
                 knowledge_unit__subject=(
@@ -582,21 +880,30 @@ def practice_formula(
             .select_related(
                 "knowledge_unit"
             )
+            .order_by(
+                "id"
+            )
         )
 
         # ----------------------------------------------------
-        # FIND A DIFFERENT DUE FORMULA
+        # FIND ANOTHER DUE FORMULA
         # ----------------------------------------------------
 
-        for next_formula in knowledge_units:
+        for next_formula in formulas:
 
-            # Don't show the formula we just reviewed.
-            if next_formula.id == formula.id:
+            # Do not immediately show the formula
+            # that was just reviewed.
+
+            if (
+                next_formula.id
+                == formula.id
+            ):
 
                 continue
 
             next_knowledge_unit = (
-                next_formula.knowledge_unit
+                next_formula
+                .knowledge_unit
             )
 
             # ------------------------------------------------
@@ -628,11 +935,27 @@ def practice_formula(
                 continue
 
             # ------------------------------------------------
+            # CREATED BUT NEVER REVIEWED
+            # ------------------------------------------------
+
+            if (
+                next_progress.review_count
+                == 0
+            ):
+
+                due_formulas.append(
+                    next_formula
+                )
+
+                continue
+
+            # ------------------------------------------------
             # PREVIOUSLY REVIEWED AND DUE
             # ------------------------------------------------
 
             if (
-                next_progress.next_review is not None
+                next_progress.next_review
+                is not None
                 and
                 next_progress.next_review.date()
                 <= today
@@ -654,11 +977,15 @@ def practice_formula(
 
             return redirect(
                 "practice_formula",
-                formula_id=next_formula.id
+                formula_id=(
+                    next_formula.id
+                )
             )
 
         # ====================================================
         # NO MORE FORMULAS ARE DUE
+        #
+        # Return to the subject page.
         # ====================================================
 
         return redirect(
@@ -677,8 +1004,10 @@ def practice_formula(
 
     if request.method == "POST":
 
-        hidden_ids = request.POST.getlist(
-            "hidden_element_id"
+        hidden_ids = (
+            request.POST.getlist(
+                "hidden_element_id"
+            )
         )
 
         correct_answers = {}
@@ -703,17 +1032,23 @@ def practice_formula(
                 continue
 
             element_id = str(
-                element.get("id")
+                element.get(
+                    "id"
+                )
             )
 
             # ------------------------------------------------
             # STUDENT ANSWER
             # ------------------------------------------------
 
-            user_answer = request.POST.get(
-                "answer_" + element_id,
-                ""
-            ).strip()
+            user_answer = (
+                request.POST.get(
+                    "answer_"
+                    + element_id,
+                    ""
+                )
+                .strip()
+            )
 
             # ------------------------------------------------
             # CORRECT ANSWER
@@ -770,7 +1105,10 @@ def practice_formula(
 
             progress.review_count += 1
 
-            if progress.mastery_level < 6:
+            if (
+                progress.mastery_level
+                < 6
+            ):
 
                 progress.mastery_level += 1
 
@@ -781,32 +1119,16 @@ def practice_formula(
             # ------------------------------------------------
             # CALCULATE NEXT REVIEW
             # ------------------------------------------------
-            #
-            # Use the same review interval system
-            # as definitions.
-            #
-            # This prevents the formula from immediately
-            # becoming due again.
-            # ------------------------------------------------
 
-            intervals = {
-                0: 0,
-                1: 1,
-                2: 2,
-                3: 4,
-                4: 7,
-                5: 14,
-                6: 30,
-            }
-
-            interval = intervals.get(
-                progress.mastery_level,
-                0
+            interval = (
+                get_formula_review_interval(
+                    progress.mastery_level
+                )
             )
 
             progress.next_review = (
                 timezone.now()
-                + timezone.timedelta(
+                + timedelta(
                     days=interval
                 )
             )
@@ -825,7 +1147,10 @@ def practice_formula(
 
             progress.review_count += 1
 
-            if progress.mastery_level > 0:
+            if (
+                progress.mastery_level
+                > 0
+            ):
 
                 progress.mastery_level -= 1
 
@@ -834,12 +1159,12 @@ def practice_formula(
             )
 
             # ------------------------------------------------
-            # INCORRECT ANSWERS SHOULD COME BACK SOON
+            # INCORRECT ANSWERS RETURN TOMORROW
             # ------------------------------------------------
 
             progress.next_review = (
                 timezone.now()
-                + timezone.timedelta(
+                + timedelta(
                     days=1
                 )
             )
@@ -849,8 +1174,8 @@ def practice_formula(
             result = "incorrect"
 
         # ====================================================
-        # SHOW RESULT
-        # ========================================================
+        # BUILD RESULT ELEMENTS
+        # ====================================================
 
         hidden_elements = []
 
@@ -869,11 +1194,33 @@ def practice_formula(
 
         hidden_ids = [
             str(
-                element.get("id")
+                element.get(
+                    "id"
+                )
             )
+
             for element
             in hidden_elements
         ]
+
+        # ====================================================
+        # GLOBAL REVIEW -> FIND NEXT FORMULA
+        # ====================================================
+
+        next_formula = None
+
+        if review_mode == "global":
+
+            next_formula = (
+                get_next_global_formula(
+                    request.user,
+                    formula,
+                )
+            )
+
+        # ====================================================
+        # SHOW RESULT
+        # ====================================================
 
         return render(
             request,
@@ -902,6 +1249,12 @@ def practice_formula(
 
                 "user_answers":
                     user_answers,
+
+                "review_mode":
+                    review_mode,
+
+                "next_formula":
+                    next_formula,
             }
         )
 
@@ -909,20 +1262,21 @@ def practice_formula(
     # FIRST QUESTION
     # ========================================================
 
-    hidden_elements = choose_hidden_elements(
-
-        all_elements,
-
-        progress.mastery_level,
-
-        formula,
-
+    hidden_elements = (
+        choose_hidden_elements(
+            all_elements,
+            progress.mastery_level,
+            formula,
+        )
     )
 
     hidden_ids = [
         str(
-            element.get("id")
+            element.get(
+                "id"
+            )
         )
+
         for element
         in hidden_elements
     ]
@@ -958,6 +1312,12 @@ def practice_formula(
 
             "user_answers":
                 {},
+
+            "review_mode":
+                review_mode,
+
+            "next_formula":
+                None,
         }
     )
 
@@ -966,7 +1326,9 @@ def practice_formula(
 # RECONSTRUCTION ELEMENTS
 # ============================================================
 
-def get_reconstruction_elements(elements):
+def get_reconstruction_elements(
+    elements
+):
     """
     Flatten the formula into reconstructable pieces.
 
@@ -979,9 +1341,16 @@ def get_reconstruction_elements(elements):
 
     for element in elements:
 
-        if element.get("type") == "fraction":
+        if (
+            element.get(
+                "type"
+            )
+            == "fraction"
+        ):
 
-            result.append(element)
+            result.append(
+                element
+            )
 
             result.extend(
                 element.get(
@@ -999,7 +1368,9 @@ def get_reconstruction_elements(elements):
 
         else:
 
-            result.append(element)
+            result.append(
+                element
+            )
 
     return result
 
@@ -1046,6 +1417,7 @@ def choose_reconstruction_elements(
     """
 
     if not elements:
+
         return []
 
     percentage = (
@@ -1093,9 +1465,9 @@ def formula_reconstruction(
     reconstruction was correct.
     """
 
-    # --------------------------------------------------------
+    # ========================================================
     # GET FORMULA
-    # --------------------------------------------------------
+    # ========================================================
 
     formula = get_object_or_404(
         Formula,
@@ -1107,28 +1479,28 @@ def formula_reconstruction(
         formula.knowledge_unit
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # GET OR CREATE PROGRESS
-    # --------------------------------------------------------
+    # ========================================================
 
     progress, created = (
-        StudentKnowledge.objects.get_or_create(
-
+        StudentKnowledge.objects
+        .get_or_create(
             student=request.user,
-
             knowledge_unit=knowledge_unit,
-
         )
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # LOAD FORMULA
-    # --------------------------------------------------------
+    # ========================================================
 
     try:
 
-        formula_elements = json.loads(
-            formula.structure
+        formula_elements = (
+            json.loads(
+                formula.structure
+            )
         )
 
     except (
@@ -1138,9 +1510,9 @@ def formula_reconstruction(
 
         formula_elements = []
 
-    # --------------------------------------------------------
+    # ========================================================
     # GET RECONSTRUCTION ELEMENTS
-    # --------------------------------------------------------
+    # ========================================================
 
     reconstruction_elements = (
         get_reconstruction_elements(
@@ -1148,9 +1520,9 @@ def formula_reconstruction(
         )
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # CHOOSE HIDDEN ELEMENTS
-    # --------------------------------------------------------
+    # ========================================================
 
     hidden_reconstruction_elements = (
         choose_reconstruction_elements(
@@ -1161,8 +1533,11 @@ def formula_reconstruction(
 
     hidden_reconstruction_ids = [
         str(
-            element.get("id")
+            element.get(
+                "id"
+            )
         )
+
         for element
         in hidden_reconstruction_elements
     ]
@@ -1175,8 +1550,10 @@ def formula_reconstruction(
 
     if request.method == "POST":
 
-        result = request.POST.get(
-            "result"
+        result = (
+            request.POST.get(
+                "result"
+            )
         )
 
         # ====================================================
@@ -1189,7 +1566,10 @@ def formula_reconstruction(
 
             progress.correct_count += 1
 
-            if progress.mastery_level < 6:
+            if (
+                progress.mastery_level
+                < 6
+            ):
 
                 progress.mastery_level += 1
 
@@ -1218,7 +1598,10 @@ def formula_reconstruction(
 
             progress.incorrect_count += 1
 
-            if progress.mastery_level > 0:
+            if (
+                progress.mastery_level
+                > 0
+            ):
 
                 progress.mastery_level -= 1
 
@@ -1308,8 +1691,10 @@ def add_formula(
     learning.views.create_formula.
     """
 
-    profile = request.session.get(
-        "onboarding_profile"
+    profile = (
+        request.session.get(
+            "onboarding_profile"
+        )
     )
 
     if not profile:
@@ -1318,10 +1703,16 @@ def add_formula(
             "onboarding"
         )
 
-    subjects = request.session.get(
-        "onboarding_subjects",
-        []
+    subjects = (
+        request.session.get(
+            "onboarding_subjects",
+            []
+        )
     )
+
+    # ========================================================
+    # VALIDATE SUBJECT INDEX
+    # ========================================================
 
     try:
 
@@ -1340,22 +1731,31 @@ def add_formula(
 
     if (
         subject_index < 0
-        or subject_index >= len(subjects)
+        or
+        subject_index >= len(
+            subjects
+        )
     ):
 
         return redirect(
             "goals"
         )
 
-    subject = subjects[
-        subject_index
-    ]
+    subject = (
+        subjects[
+            subject_index
+        ]
+    )
 
-    # Make sure the subject has
-    # a formulas list.
+    # --------------------------------------------------------
+    # MAKE SURE FORMULAS LIST EXISTS
+    # --------------------------------------------------------
+
     if "formulas" not in subject:
 
-        subject["formulas"] = []
+        subject[
+            "formulas"
+        ] = []
 
     # ========================================================
     # CREATE FORMULA
@@ -1363,24 +1763,38 @@ def add_formula(
 
     if request.method == "POST":
 
-        name = request.POST.get(
-            "name",
-            ""
-        ).strip()
+        name = (
+            request.POST.get(
+                "name",
+                ""
+            )
+            .strip()
+        )
 
-        formula = request.POST.get(
-            "formula",
-            ""
-        ).strip()
+        formula = (
+            request.POST.get(
+                "formula",
+                ""
+            )
+            .strip()
+        )
 
-        description = request.POST.get(
-            "description",
-            ""
-        ).strip()
+        description = (
+            request.POST.get(
+                "description",
+                ""
+            )
+            .strip()
+        )
 
-        if name and formula:
+        if (
+            name
+            and formula
+        ):
 
-            subject["formulas"].append(
+            subject[
+                "formulas"
+            ].append(
                 {
                     "name":
                         name,
@@ -1401,7 +1815,9 @@ def add_formula(
                 "onboarding_subjects"
             ] = subjects
 
-            request.session.modified = True
+            request.session.modified = (
+                True
+            )
 
             return redirect(
                 "add_formula",
@@ -1423,6 +1839,8 @@ def add_formula(
                 subject_index,
 
             "formulas":
-                subject["formulas"],
+                subject[
+                    "formulas"
+                ],
         }
     )
