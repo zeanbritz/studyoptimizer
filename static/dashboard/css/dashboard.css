@@ -162,9 +162,6 @@ body {
 
 /* =========================================
    TODAY'S PLAN
-
-   !important ensures another stylesheet
-   cannot overwrite this background.
 ========================================= */
 
 .today-plan {
@@ -173,7 +170,7 @@ body {
         1
         / -1;
 
-    min-height: 260px;
+    min-height: 290px;
 
     background: #CAFCB6 !important;
 
@@ -194,8 +191,6 @@ body {
 
     justify-content: space-between;
 
-    gap: 20px;
-
     margin-bottom: 22px;
 
 }
@@ -210,17 +205,6 @@ body {
     font-size: 26px;
 
     font-weight: 800;
-
-}
-
-
-.today-date {
-
-    color: #4f6846;
-
-    font-size: 14px;
-
-    font-weight: 700;
 
 }
 
@@ -244,9 +228,6 @@ body {
 
 /* =========================================
    PLAN COLUMN
-
-   This is the vertical box INSIDE
-   Today's Plan.
 ========================================= */
 
 .today-plan-column {
@@ -255,7 +236,7 @@ body {
 
     max-width: 360px;
 
-    min-height: 180px;
+    min-height: 190px;
 
     padding: 18px;
 
@@ -264,7 +245,7 @@ body {
             255,
             255,
             255,
-            0.60
+            0.62
         );
 
     border:
@@ -282,7 +263,7 @@ body {
 
 
 /* =========================================
-   PLAN COLUMN HEADER
+   COLUMN HEADER
 ========================================= */
 
 .plan-column-header {
@@ -378,10 +359,14 @@ body {
 
 
 /* =========================================
-   DEFINITION SUBJECT LIST
+   SUBJECT LIST
+
+   Shows about two subject cards initially.
+   Additional subjects can be revealed
+   by scrolling vertically.
 ========================================= */
 
-.definition-subject-list {
+.plan-subject-list {
 
     display: flex;
 
@@ -393,30 +378,32 @@ body {
 
     overflow-y: auto;
 
+    overflow-x: hidden;
+
     padding-right: 5px;
 
 }
 
 
 /* =========================================
-   SCROLLBAR
+   SUBJECT LIST SCROLLBAR
 ========================================= */
 
-.definition-subject-list::-webkit-scrollbar {
+.plan-subject-list::-webkit-scrollbar {
 
     width: 6px;
 
 }
 
 
-.definition-subject-list::-webkit-scrollbar-track {
+.plan-subject-list::-webkit-scrollbar-track {
 
     background: transparent;
 
 }
 
 
-.definition-subject-list::-webkit-scrollbar-thumb {
+.plan-subject-list::-webkit-scrollbar-thumb {
 
     background:
         rgba(
@@ -431,7 +418,7 @@ body {
 }
 
 
-.definition-subject-list::-webkit-scrollbar-thumb:hover {
+.plan-subject-list::-webkit-scrollbar-thumb:hover {
 
     background:
         rgba(
@@ -445,10 +432,10 @@ body {
 
 
 /* =========================================
-   DEFINITION SUBJECT CARD
+   SUBJECT REVIEW CARD / LINK
 ========================================= */
 
-.definition-subject-card {
+.plan-subject-card {
 
     width: 100%;
 
@@ -475,9 +462,9 @@ body {
 
     border-radius: 9px;
 
-    color: #222;
+    color: #222 !important;
 
-    text-decoration: none;
+    text-decoration: none !important;
 
     cursor: pointer;
 
@@ -492,7 +479,23 @@ body {
 }
 
 
-.definition-subject-card:hover {
+/* =========================================
+   REMOVE DEFAULT LINK STYLING
+========================================= */
+
+.plan-subject-card:link,
+.plan-subject-card:visited,
+.plan-subject-card:active,
+.plan-subject-card:focus {
+
+    color: #222 !important;
+
+    text-decoration: none !important;
+
+}
+
+
+.plan-subject-card:hover {
 
     background: #fbfff9;
 
@@ -518,14 +521,20 @@ body {
     transform:
         translateY(-1px);
 
+    color: #222 !important;
+
+    text-decoration: none !important;
+
 }
 
 
 /* =========================================
-   DEFINITION CARD CONTENT
+   CARD CONTENT
 ========================================= */
 
-.definition-card-content {
+.plan-card-content {
+
+    width: 100%;
 
     display: flex;
 
@@ -536,9 +545,15 @@ body {
 }
 
 
-.definition-card-title {
+/* =========================================
+   CARD TITLE
+========================================= */
 
-    color: #263c1e;
+.plan-card-title {
+
+    display: block;
+
+    color: #263c1e !important;
 
     font-size: 15px;
 
@@ -546,18 +561,41 @@ body {
 
     line-height: 1.3;
 
+    text-decoration: none !important;
+
 }
 
 
-.definition-card-count {
+/* =========================================
+   CARD COUNT
+========================================= */
+
+.plan-card-count {
+
+    display: block;
 
     margin-top: 3px;
 
-    color: #708068;
+    color: #708068 !important;
 
     font-size: 12px;
 
     font-weight: 600;
+
+    text-decoration: none !important;
+
+}
+
+
+/* =========================================
+   FORCE CHILDREN OF SUBJECT CARD
+   TO NEVER INHERIT BLUE LINK STYLING
+========================================= */
+
+.plan-subject-card span,
+.plan-subject-card div {
+
+    text-decoration: none !important;
 
 }
 
@@ -608,9 +646,9 @@ body {
 
     background: #ffffff;
 
-    color: #34492c;
+    color: #34492c !important;
 
-    text-decoration: none;
+    text-decoration: none !important;
 
     font-size: 16px;
 
@@ -625,18 +663,20 @@ body {
 
     background: #f6fff2;
 
+    text-decoration: none !important;
+
 }
 
 
 /* =========================================
-   CLICKABLE CARDS
+   CLICKABLE DASHBOARD CARDS
 ========================================= */
 
 .clickable-card {
 
-    text-decoration: none;
+    text-decoration: none !important;
 
-    color: inherit;
+    color: inherit !important;
 
     cursor: pointer;
 
@@ -644,6 +684,18 @@ body {
         border-color 0.15s ease,
         box-shadow 0.15s ease,
         transform 0.15s ease;
+
+}
+
+
+.clickable-card:link,
+.clickable-card:visited,
+.clickable-card:active,
+.clickable-card:focus {
+
+    text-decoration: none !important;
+
+    color: inherit !important;
 
 }
 
@@ -666,11 +718,13 @@ body {
     transform:
         translateY(-1px);
 
+    text-decoration: none !important;
+
 }
 
 
 /* =========================================
-   REVIEW CARD
+   REVIEW
 ========================================= */
 
 .card-review {
@@ -697,7 +751,7 @@ body {
 
 
 /* =========================================
-   PROGRESS CARD
+   PROGRESS
 ========================================= */
 
 .card-progress {
@@ -724,7 +778,7 @@ body {
 
 
 /* =========================================
-   EXAMS CARD
+   EXAMS
 ========================================= */
 
 .card-exams {
@@ -751,7 +805,7 @@ body {
 
 
 /* =========================================
-   GOALS CARD
+   GOALS
 ========================================= */
 
 .card-goals {
@@ -838,13 +892,6 @@ body {
     .today-plan {
 
         padding: 18px;
-
-    }
-
-
-    .today-plan-header {
-
-        align-items: flex-start;
 
     }
 

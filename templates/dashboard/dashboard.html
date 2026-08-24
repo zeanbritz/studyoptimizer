@@ -29,7 +29,6 @@
 
     <!-- =========================================
          DASHBOARD CSS
-         Loaded AFTER sidebar so dashboard styles win
     ========================================= -->
 
     <link
@@ -47,7 +46,7 @@
 
 
     <!-- =========================================
-         SHARED SIDEBAR
+         SIDEBAR
     ========================================= -->
 
     {% include 'partials/sidebar.html' with active_page='dashboard' %}
@@ -66,14 +65,12 @@
 
         <header class="page-header">
 
-
             <h1>
 
                 Welcome back,
                 {{ request.user.first_name|default:request.user.username }}
 
             </h1>
-
 
         </header>
 
@@ -98,16 +95,9 @@
 
                 <div class="today-plan-header">
 
-
                     <h2>
                         Today's Plan
                     </h2>
-
-
-                    <span class="today-date">
-                        Today
-                    </span>
-
 
                 </div>
 
@@ -121,7 +111,6 @@
 
                     <div class="empty-plan">
 
-
                         <a
                             href="{% url 'onboarding' %}"
                             class="get-started-button"
@@ -129,26 +118,25 @@
                             Get Started
                         </a>
 
-
                     </div>
 
 
                 <!-- =============================
-                     TODAY'S STUDY PLAN
+                     HAS SOMETHING DUE
                 ============================== -->
 
-                {% else %}
+                {% elif due_definition_subjects or due_formula_subjects %}
 
 
-                    {% if due_definition_subjects %}
+                    <div class="today-plan-columns">
 
 
-                        <div class="today-plan-columns">
+                        <!-- =================================
+                             DEFINITIONS COLUMN
+                        ================================== -->
 
+                        {% if due_definition_subjects %}
 
-                            <!-- =========================
-                                 DEFINITIONS COLUMN
-                            ========================== -->
 
                             <div class="today-plan-column">
 
@@ -167,14 +155,16 @@
                                         </h3>
 
                                         <p>
-                                            Definitions scheduled for review today.
+                                            Definitions scheduled for review.
                                         </p>
 
                                     </div>
 
 
                                     <span class="plan-total-count">
+
                                         {{ due_definition_total }}
+
                                     </span>
 
 
@@ -182,75 +172,168 @@
 
 
                                 <!-- =====================
-     SUBJECTS
-====================== -->
+                                     SUBJECT LIST
+                                ====================== -->
 
-<div class="definition-subject-list">
-
-
-    {% for item in due_definition_subjects %}
+                                <div class="plan-subject-list">
 
 
-        <a
-            href="{% url 'definition_review_list' subject_index=item.subject_index %}"
-            class="definition-subject-card"
-        >
+                                    {% for item in due_definition_subjects %}
 
 
-            <div class="definition-card-content">
+                                        <a
+                                            href="{% url 'definition_review_list' subject_index=item.subject_index %}"
+                                            class="plan-subject-card"
+                                        >
 
 
-                <span class="definition-card-title">
-
-                    {{ item.subject.name }}
-                    Definitions
-
-                </span>
+                                            <div class="plan-card-content">
 
 
-                <span class="definition-card-count">
+                                                <span class="plan-card-title">
 
-                    {{ item.count }}
-                    definition{{ item.count|pluralize }}
+                                                    {{ item.subject.name }}
+                                                    Definitions
 
-                </span>
-
-
-            </div>
+                                                </span>
 
 
-        </a>
+                                                <span class="plan-card-count">
+
+                                                    {{ item.count }}
+                                                    definition{{ item.count|pluralize }}
+
+                                                </span>
 
 
-    {% endfor %}
+                                            </div>
 
 
-</div>
+                                        </a>
+
+
+                                    {% endfor %}
+
+
+                                </div>
 
 
                             </div>
 
 
-                        </div>
+                        {% endif %}
 
 
-                    {% else %}
+                        <!-- =================================
+                             FORMULAS COLUMN
+                        ================================== -->
+
+                        {% if due_formula_subjects %}
 
 
-                        <!-- =========================
-                             NOTHING DUE
-                        ========================== -->
-
-                        <div class="empty-plan">
-
-                            <p>
-                                Nothing to review today.
-                            </p>
-
-                        </div>
+                            <div class="today-plan-column">
 
 
-                    {% endif %}
+                                <!-- =====================
+                                     COLUMN HEADER
+                                ====================== -->
+
+                                <div class="plan-column-header">
+
+
+                                    <div>
+
+                                        <h3>
+                                            Formulas
+                                        </h3>
+
+                                        <p>
+                                            Formulas scheduled for review.
+                                        </p>
+
+                                    </div>
+
+
+                                    <span class="plan-total-count">
+
+                                        {{ due_formula_total }}
+
+                                    </span>
+
+
+                                </div>
+
+
+                                <!-- =====================
+                                     SUBJECT LIST
+                                ====================== -->
+
+                                <div class="plan-subject-list">
+
+
+                                    {% for item in due_formula_subjects %}
+
+
+                                        <a
+                                            href="{% url 'formula_review_list' subject_index=item.subject_index %}"
+                                            class="plan-subject-card"
+                                        >
+
+
+                                            <div class="plan-card-content">
+
+
+                                                <span class="plan-card-title">
+
+                                                    {{ item.subject.name }}
+                                                    Formulas
+
+                                                </span>
+
+
+                                                <span class="plan-card-count">
+
+                                                    {{ item.count }}
+                                                    formula{{ item.count|pluralize }}
+
+                                                </span>
+
+
+                                            </div>
+
+
+                                        </a>
+
+
+                                    {% endfor %}
+
+
+                                </div>
+
+
+                            </div>
+
+
+                        {% endif %}
+
+
+                    </div>
+
+
+                <!-- =============================
+                     NOTHING DUE
+                ============================== -->
+
+                {% else %}
+
+
+                    <div class="empty-plan">
+
+                        <p>
+                            Nothing to review today.
+                        </p>
+
+                    </div>
 
 
                 {% endif %}
@@ -268,11 +351,9 @@
                 class="card clickable-card card-review"
             >
 
-
                 <h3>
                     Review
                 </h3>
-
 
                 <p>
                     Review definitions, formulas,
@@ -280,7 +361,6 @@
                     and comparisons across all
                     your subjects.
                 </p>
-
 
             </a>
 
@@ -294,17 +374,14 @@
                 class="card clickable-card card-progress"
             >
 
-
                 <h3>
                     Progress
                 </h3>
-
 
                 <p>
                     Track your mastery, study time,
                     and performance over time.
                 </p>
-
 
             </a>
 
@@ -315,17 +392,14 @@
 
             <div class="card card-exams">
 
-
                 <h3>
                     Upcoming Exams
                 </h3>
-
 
                 <p>
                     Your upcoming assessments
                     and deadlines will appear here.
                 </p>
-
 
             </div>
 
@@ -339,17 +413,14 @@
                 class="card clickable-card card-goals"
             >
 
-
                 <h3>
                     Goals
                 </h3>
-
 
                 <p>
                     Set and manage your academic goals,
                     subject targets, and study objectives.
                 </p>
-
 
             </a>
 
@@ -362,10 +433,6 @@
 
 </div>
 
-
-<!-- =========================================
-     SIDEBAR JAVASCRIPT
-========================================= -->
 
 <script
     src="{% static 'dashboard/js/sidebar.js' %}"

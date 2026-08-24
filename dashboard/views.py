@@ -21,7 +21,7 @@ from learning.models import (
 def dashboard(request):
 
     # --------------------------------------------------------
-    # ONBOARDING STATUS
+    # ONBOARDING
     # --------------------------------------------------------
 
     onboarding_complete = (
@@ -39,9 +39,6 @@ def dashboard(request):
 
     # --------------------------------------------------------
     # SESSION SUBJECTS
-    #
-    # subject_detail and definition_review_list use the
-    # position inside onboarding_subjects as subject_index.
     # --------------------------------------------------------
 
     session_subjects = (
@@ -52,12 +49,20 @@ def dashboard(request):
     )
 
     # --------------------------------------------------------
-    # TODAY'S DEFINITION GROUPS
+    # DEFINITION DATA
     # --------------------------------------------------------
 
     due_definition_subjects = []
 
     due_definition_total = 0
+
+    # --------------------------------------------------------
+    # FORMULA DATA
+    # --------------------------------------------------------
+
+    due_formula_subjects = []
+
+    due_formula_total = 0
 
     # ========================================================
     # ONLY BUILD PLAN AFTER ONBOARDING
@@ -65,9 +70,9 @@ def dashboard(request):
 
     if onboarding_complete:
 
-        # ----------------------------------------------------
-        # GET ALL ACTIVE DEFINITIONS
-        # ----------------------------------------------------
+        # ====================================================
+        # DEFINITIONS
+        # ====================================================
 
         definition_knowledge_units = (
             KnowledgeUnit.objects
@@ -90,23 +95,15 @@ def dashboard(request):
             )
         )
 
-        # ----------------------------------------------------
-        # GROUPS
-        # ----------------------------------------------------
+        definition_groups = {}
 
-        subject_groups = {}
-
-        # ====================================================
+        # ----------------------------------------------------
         # CHECK EACH DEFINITION
-        # ====================================================
+        # ----------------------------------------------------
 
         for knowledge_unit in (
             definition_knowledge_units
         ):
-
-            # ------------------------------------------------
-            # DEFINITION
-            # ------------------------------------------------
 
             definition = getattr(
                 knowledge_unit,
@@ -119,7 +116,7 @@ def dashboard(request):
                 continue
 
             # ------------------------------------------------
-            # STUDENT PROGRESS
+            # PROGRESS
             # ------------------------------------------------
 
             progress = (
@@ -132,9 +129,7 @@ def dashboard(request):
             )
 
             # ------------------------------------------------
-            # DETERMINE WHETHER DUE
-            #
-            # Same logic used on subject_detail.
+            # IS DUE?
             # ------------------------------------------------
 
             is_due = False
@@ -154,31 +149,27 @@ def dashboard(request):
 
                 is_due = True
 
-            # ------------------------------------------------
-            # SKIP IF NOT DUE
-            # ------------------------------------------------
-
             if not is_due:
 
                 continue
 
             # ------------------------------------------------
-            # DATABASE SUBJECT
+            # SUBJECT
             # ------------------------------------------------
 
             database_subject = (
                 knowledge_unit.subject
             )
 
-            # =================================================
-            # FIND CORRECT SESSION SUBJECT INDEX
-            # =================================================
+            # ------------------------------------------------
+            # FIND SUBJECT INDEX
+            # ------------------------------------------------
 
             subject_index = None
 
-            # ------------------------------------------------
-            # FIRST TRY DATABASE ID
-            # ------------------------------------------------
+            # --------------------------------------------
+            # DATABASE ID
+            # --------------------------------------------
 
             for index, subject_data in enumerate(
                 session_subjects
@@ -212,9 +203,9 @@ def dashboard(request):
 
                     break
 
-            # ------------------------------------------------
-            # FALLBACK TO SUBJECT NAME
-            # ------------------------------------------------
+            # --------------------------------------------
+            # FALLBACK TO NAME
+            # --------------------------------------------
 
             if subject_index is None:
 
@@ -239,32 +230,28 @@ def dashboard(request):
 
                         break
 
-            # ------------------------------------------------
-            # CANNOT LINK WITHOUT SUBJECT INDEX
-            # ------------------------------------------------
+            # --------------------------------------------
+            # SKIP IF CANNOT FIND SESSION SUBJECT
+            # --------------------------------------------
 
             if subject_index is None:
 
                 continue
 
             # ------------------------------------------------
-            # GROUP KEY
+            # GROUP BY SUBJECT
             # ------------------------------------------------
 
             subject_id = (
                 database_subject.id
             )
 
-            # ------------------------------------------------
-            # CREATE GROUP
-            # ------------------------------------------------
-
             if (
                 subject_id
-                not in subject_groups
+                not in definition_groups
             ):
 
-                subject_groups[
+                definition_groups[
                     subject_id
                 ] = {
 
@@ -277,37 +264,234 @@ def dashboard(request):
                     "count":
                         0,
 
-                    "definitions":
-                        [],
-
                 }
 
-            # ------------------------------------------------
-            # ADD DUE DEFINITION
-            # ------------------------------------------------
-
-            subject_groups[
+            definition_groups[
                 subject_id
             ][
                 "count"
             ] += 1
 
-            subject_groups[
-                subject_id
-            ][
-                "definitions"
-            ].append(
-                definition
-            )
-
             due_definition_total += 1
 
         # ----------------------------------------------------
-        # CONVERT GROUPS TO LIST
+        # FINAL DEFINITION LIST
         # ----------------------------------------------------
 
         due_definition_subjects = list(
-            subject_groups.values()
+            definition_groups.values()
+        )
+
+        # ====================================================
+        # FORMULAS
+        # ====================================================
+
+        formula_knowledge_units = (
+            KnowledgeUnit.objects
+            .filter(
+                subject__user=request.user,
+                knowledge_type=(
+                    KnowledgeUnit
+                    .KnowledgeType
+                    .FORMULA
+                ),
+                active=True,
+            )
+            .select_related(
+                "formula",
+                "subject",
+            )
+            .order_by(
+                "subject__name",
+                "created",
+            )
+        )
+
+        formula_groups = {}
+
+        # ----------------------------------------------------
+        # CHECK EACH FORMULA
+        # ----------------------------------------------------
+
+        for knowledge_unit in (
+            formula_knowledge_units
+        ):
+
+            formula = getattr(
+                knowledge_unit,
+                "formula",
+                None
+            )
+
+            if not formula:
+
+                continue
+
+            # ------------------------------------------------
+            # PROGRESS
+            # ------------------------------------------------
+
+            progress = (
+                StudentKnowledge.objects
+                .filter(
+                    student=request.user,
+                    knowledge_unit=knowledge_unit,
+                )
+                .first()
+            )
+
+            # ------------------------------------------------
+            # IS DUE?
+            # ------------------------------------------------
+
+            is_due = False
+
+            if progress is None:
+
+                is_due = True
+
+            elif progress.next_review is None:
+
+                is_due = True
+
+            elif (
+                progress.next_review.date()
+                <= today
+            ):
+
+                is_due = True
+
+            if not is_due:
+
+                continue
+
+            # ------------------------------------------------
+            # SUBJECT
+            # ------------------------------------------------
+
+            database_subject = (
+                knowledge_unit.subject
+            )
+
+            # ------------------------------------------------
+            # FIND SUBJECT INDEX
+            # ------------------------------------------------
+
+            subject_index = None
+
+            # --------------------------------------------
+            # DATABASE ID
+            # --------------------------------------------
+
+            for index, subject_data in enumerate(
+                session_subjects
+            ):
+
+                database_id = (
+                    subject_data.get(
+                        "database_id"
+                    )
+                )
+
+                try:
+
+                    database_id = int(
+                        database_id
+                    )
+
+                except (
+                    TypeError,
+                    ValueError
+                ):
+
+                    database_id = None
+
+                if (
+                    database_id
+                    == database_subject.id
+                ):
+
+                    subject_index = index
+
+                    break
+
+            # --------------------------------------------
+            # FALLBACK TO NAME
+            # --------------------------------------------
+
+            if subject_index is None:
+
+                for index, subject_data in enumerate(
+                    session_subjects
+                ):
+
+                    session_name = (
+                        subject_data.get(
+                            "name",
+                            ""
+                        )
+                        .strip()
+                    )
+
+                    if (
+                        session_name
+                        == database_subject.name.strip()
+                    ):
+
+                        subject_index = index
+
+                        break
+
+            # --------------------------------------------
+            # SKIP IF NOT FOUND
+            # --------------------------------------------
+
+            if subject_index is None:
+
+                continue
+
+            # ------------------------------------------------
+            # GROUP BY SUBJECT
+            # ------------------------------------------------
+
+            subject_id = (
+                database_subject.id
+            )
+
+            if (
+                subject_id
+                not in formula_groups
+            ):
+
+                formula_groups[
+                    subject_id
+                ] = {
+
+                    "subject":
+                        database_subject,
+
+                    "subject_index":
+                        subject_index,
+
+                    "count":
+                        0,
+
+                }
+
+            formula_groups[
+                subject_id
+            ][
+                "count"
+            ] += 1
+
+            due_formula_total += 1
+
+        # ----------------------------------------------------
+        # FINAL FORMULA LIST
+        # ----------------------------------------------------
+
+        due_formula_subjects = list(
+            formula_groups.values()
         )
 
     # ========================================================
@@ -326,9 +510,14 @@ def dashboard(request):
 
             "due_definition_total":
                 due_definition_total,
+
+            "due_formula_subjects":
+                due_formula_subjects,
+
+            "due_formula_total":
+                due_formula_total,
         }
     )
-
 
 # ============================================================
 # REVIEW
