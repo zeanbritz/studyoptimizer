@@ -182,58 +182,50 @@
 
 
                                 <!-- =====================
-                                     SUBJECTS
-                                ====================== -->
+     SUBJECTS
+====================== -->
 
-                                <div class="definition-subject-list">
-
-
-                                    {% for item in due_definition_subjects %}
+<div class="definition-subject-list">
 
 
-                                        <a
-                                            href="{% url 'definition_review_list' subject_index=item.subject_index %}"
-                                            class="definition-subject-card"
-                                        >
+    {% for item in due_definition_subjects %}
 
 
-                                            <div class="definition-card-content">
+        <a
+            href="{% url 'definition_review_list' subject_index=item.subject_index %}"
+            class="definition-subject-card"
+        >
 
 
-                                                <span class="definition-card-title">
-
-                                                    {{ item.subject.name }}
-                                                    Definitions
-
-                                                </span>
+            <div class="definition-card-content">
 
 
-                                                <span class="definition-card-count">
+                <span class="definition-card-title">
 
-                                                    {{ item.count }}
+                    {{ item.subject.name }}
+                    Definitions
 
-                                                    definition{{ item.count|pluralize }}
-
-                                                    due
-
-                                                </span>
+                </span>
 
 
-                                            </div>
+                <span class="definition-card-count">
+
+                    {{ item.count }}
+                    definition{{ item.count|pluralize }}
+
+                </span>
 
 
-                                            <span class="definition-card-arrow">
-                                                →
-                                            </span>
+            </div>
 
 
-                                        </a>
+        </a>
 
 
-                                    {% endfor %}
+    {% endfor %}
 
 
-                                </div>
+</div>
 
 
                             </div>

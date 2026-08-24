@@ -389,6 +389,58 @@ body {
 
     gap: 9px;
 
+    max-height: 145px;
+
+    overflow-y: auto;
+
+    padding-right: 5px;
+
+}
+
+
+/* =========================================
+   SCROLLBAR
+========================================= */
+
+.definition-subject-list::-webkit-scrollbar {
+
+    width: 6px;
+
+}
+
+
+.definition-subject-list::-webkit-scrollbar-track {
+
+    background: transparent;
+
+}
+
+
+.definition-subject-list::-webkit-scrollbar-thumb {
+
+    background:
+        rgba(
+            55,
+            80,
+            45,
+            0.22
+        );
+
+    border-radius: 20px;
+
+}
+
+
+.definition-subject-list::-webkit-scrollbar-thumb:hover {
+
+    background:
+        rgba(
+            55,
+            80,
+            45,
+            0.35
+        );
+
 }
 
 
@@ -400,16 +452,14 @@ body {
 
     width: 100%;
 
+    min-height: 64px;
+
     display: flex;
 
     align-items: center;
 
-    justify-content: space-between;
-
-    gap: 14px;
-
     padding:
-        14px
+        13px
         15px;
 
     background: #ffffff;
@@ -430,6 +480,8 @@ body {
     text-decoration: none;
 
     cursor: pointer;
+
+    flex-shrink: 0;
 
     transition:
         transform 0.15s ease,
@@ -506,23 +558,6 @@ body {
     font-size: 12px;
 
     font-weight: 600;
-
-}
-
-
-/* =========================================
-   DEFINITION ARROW
-========================================= */
-
-.definition-card-arrow {
-
-    flex-shrink: 0;
-
-    color: #607258;
-
-    font-size: 18px;
-
-    font-weight: 700;
 
 }
 
