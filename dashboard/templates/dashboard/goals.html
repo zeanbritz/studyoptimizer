@@ -400,6 +400,13 @@
         }
 
 
+        .profile-save-button:hover {
+
+            background: #333;
+
+        }
+
+
         .profile-cancel-button {
 
             border:
@@ -409,6 +416,13 @@
             background: white;
 
             color: #444;
+
+        }
+
+
+        .profile-cancel-button:hover {
+
+            background: #eeeeee;
 
         }
 
@@ -480,6 +494,55 @@
 
 
         /* =========================================
+           AVAILABILITY SUMMARY
+        ========================================= */
+
+        .availability-summary {
+
+            display: flex;
+
+            flex-direction: column;
+
+            align-items: flex-end;
+
+            gap: 3px;
+
+            flex-shrink: 0;
+
+            text-align: right;
+
+        }
+
+
+        /* =========================================
+           WEEKLY STUDY TOTAL
+        ========================================= */
+
+        .weekly-study-total {
+
+            color: #222;
+
+            font-size: 19px;
+
+            font-weight: 800;
+
+            white-space: nowrap;
+
+        }
+
+
+        .weekly-study-label {
+
+            color: #777;
+
+            font-size: 12px;
+
+            font-weight: 700;
+
+        }
+
+
+        /* =========================================
            AUTOSAVE STATUS
         ========================================= */
 
@@ -487,7 +550,7 @@
 
             flex-shrink: 0;
 
-            min-height: 24px;
+            min-height: 18px;
 
             color: #777;
 
@@ -1015,6 +1078,22 @@
             }
 
 
+            .availability-header {
+
+                flex-direction: column;
+
+            }
+
+
+            .availability-summary {
+
+                align-items: flex-start;
+
+                text-align: left;
+
+            }
+
+
             .availability-grid {
 
                 grid-template-columns:
@@ -1249,10 +1328,33 @@
                     </div>
 
 
-                    <span
-                        class="autosave-status"
-                        id="autosave-status"
-                    ></span>
+                    <!-- =================================
+                         WEEKLY TOTAL
+                    ================================== -->
+
+                    <div class="availability-summary">
+
+
+                        <div
+                            class="weekly-study-total"
+                            id="weekly-study-total"
+                        >
+                            0h 00m / week
+                        </div>
+
+
+                        <div class="weekly-study-label">
+                            Total study availability
+                        </div>
+
+
+                        <span
+                            class="autosave-status"
+                            id="autosave-status"
+                        ></span>
+
+
+                    </div>
 
 
                 </div>
@@ -1732,6 +1834,113 @@
 
 
     // =============================================
+    // UPDATE WEEKLY TOTAL
+    // =============================================
+
+    function updateWeeklyStudyTotal() {
+
+        let totalMinutes = 0;
+
+
+        for (
+            const day
+            of studyDays
+        ) {
+
+            if (
+                !isStudyDayEnabled(
+                    day
+                )
+            ) {
+
+                continue;
+
+            }
+
+
+            const input =
+                document.getElementById(
+                    "time-" + day
+                );
+
+
+            const value =
+                input.value.trim();
+
+
+            if (
+                value === ""
+                ||
+                !isValidStudyDuration(
+                    value
+                )
+            ) {
+
+                continue;
+
+            }
+
+
+            const parts =
+                value.split(
+                    ":"
+                );
+
+
+            const hours =
+                parseInt(
+                    parts[0],
+                    10
+                );
+
+
+            const minutes =
+                parseInt(
+                    parts[1],
+                    10
+                );
+
+
+            totalMinutes += (
+                hours * 60
+                +
+                minutes
+            );
+
+        }
+
+
+        const totalHours =
+            Math.floor(
+                totalMinutes / 60
+            );
+
+
+        const remainingMinutes =
+            totalMinutes % 60;
+
+
+        const totalElement =
+            document.getElementById(
+                "weekly-study-total"
+            );
+
+
+        totalElement.textContent =
+            totalHours
+            + "h "
+            + String(
+                remainingMinutes
+            ).padStart(
+                2,
+                "0"
+            )
+            + "m / week";
+
+    }
+
+
+    // =============================================
     // TOGGLE STUDY DAY
     // =============================================
 
@@ -1776,17 +1985,14 @@
                 "invalid"
             );
 
-            /*
-             * Clear time when the day is removed.
-             * Database will store this day as disabled.
-             */
-
             input.value = "";
 
         }
 
 
         hideAvailabilityError();
+
+        updateWeeklyStudyTotal();
 
         saveAvailability();
 
@@ -1798,11 +2004,6 @@
     // =============================================
 
     function sanitizeDurationInput(value) {
-
-        /*
-         * Only digits and colon are allowed.
-         * This automatically prevents "-" values.
-         */
 
         return value
             .replace(
@@ -1910,6 +2111,9 @@
             );
 
 
+        updateWeeklyStudyTotal();
+
+
         if (
             input.value === ""
             ||
@@ -1968,6 +2172,8 @@
 
             showAvailabilityError();
 
+            updateWeeklyStudyTotal();
+
             return;
 
         }
@@ -1978,6 +2184,8 @@
         );
 
         hideAvailabilityError();
+
+        updateWeeklyStudyTotal();
 
         saveAvailability();
 
@@ -2173,15 +2381,18 @@
                             "POST",
 
                         headers: {
+
                             "X-CSRFToken":
                                 csrfToken,
 
                             "X-Requested-With":
                                 "XMLHttpRequest",
+
                         },
 
                         body:
                             buildAvailabilityFormData(),
+
                     }
                 );
 
@@ -2275,6 +2486,20 @@
             );
 
     }
+
+
+    // =============================================
+    // INITIAL PAGE LOAD
+    // =============================================
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function() {
+
+            updateWeeklyStudyTotal();
+
+        }
+    );
 
 </script>
 
