@@ -1,6 +1,7 @@
 from datetime import date, datetime
 
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.utils import timezone
 
@@ -11,6 +12,8 @@ from learning.models import (
     Definition,
     StudentKnowledge,
 )
+
+from .models import StudyAvailability
 
 
 # ============================================================
@@ -794,7 +797,7 @@ def onboarding(request):
 def goals(request):
 
     # --------------------------------------------------------
-    # GET PROFILE
+    # PROFILE
     # --------------------------------------------------------
 
     profile = request.session.get(
@@ -808,7 +811,7 @@ def goals(request):
         )
 
     # --------------------------------------------------------
-    # GET SUBJECTS
+    # SUBJECTS
     # --------------------------------------------------------
 
     subjects = request.session.get(
@@ -816,8 +819,59 @@ def goals(request):
         []
     )
 
+    # --------------------------------------------------------
+    # DAYS
+    # --------------------------------------------------------
+
+    days = [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+    ]
+
     # ========================================================
-    # HANDLE FORM SUBMISSIONS
+    # GET OR CREATE STUDY AVAILABILITY
+    # ========================================================
+
+    availability_record, created = (
+        StudyAvailability.objects
+        .get_or_create(
+            user=request.user
+        )
+    )
+
+    # ========================================================
+    # BUILD TEMPLATE AVAILABILITY
+    # ========================================================
+
+    study_availability = {}
+
+    for day in days:
+
+        study_availability[
+            day
+        ] = {
+
+            "enabled":
+                getattr(
+                    availability_record,
+                    f"{day}_enabled"
+                ),
+
+            "time":
+                getattr(
+                    availability_record,
+                    f"{day}_time"
+                ),
+
+        }
+
+    # ========================================================
+    # POST
     # ========================================================
 
     if request.method == "POST":
@@ -828,7 +882,7 @@ def goals(request):
         )
 
         # ====================================================
-        # UPDATE DEGREE TITLE + OVERALL TARGET
+        # UPDATE PROFILE
         # ====================================================
 
         if action == "update_profile":
@@ -850,7 +904,7 @@ def goals(request):
             )
 
             # ------------------------------------------------
-            # UPDATE DEGREE / QUALIFICATION TITLE
+            # WORKSPACE NAME
             # ------------------------------------------------
 
             if workspace_name:
@@ -860,7 +914,7 @@ def goals(request):
                 ] = workspace_name
 
             # ------------------------------------------------
-            # UPDATE OVERALL TARGET
+            # TARGET GRADE
             # ------------------------------------------------
 
             try:
@@ -889,7 +943,7 @@ def goals(request):
                 pass
 
             # ------------------------------------------------
-            # KEEP SUBJECT COUNT SYNCHRONIZED
+            # SUBJECT COUNT
             # ------------------------------------------------
 
             profile[
@@ -913,7 +967,7 @@ def goals(request):
             )
 
         # ====================================================
-        # SUPPORT OLD TARGET-ONLY FORM
+        # LEGACY TARGET ACTION
         # ====================================================
 
         elif action == "update_target":
@@ -962,14 +1016,221 @@ def goals(request):
             )
 
         # ====================================================
+        # AUTOSAVE STUDY AVAILABILITY
+        # ====================================================
+
+        elif action == "update_availability":
+
+            errors = {}
+
+            # =================================================
+            # PROCESS EACH DAY
+            # =================================================
+
+            for day in days:
+
+                # --------------------------------------------
+                # ENABLED
+                # --------------------------------------------
+
+                enabled = (
+                    request.POST.get(
+                        f"{day}_enabled",
+                        "0"
+                    )
+                    == "1"
+                )
+
+                # --------------------------------------------
+                # TIME
+                # --------------------------------------------
+
+                raw_time = (
+                    request.POST.get(
+                        f"{day}_time",
+                        ""
+                    )
+                    .strip()
+                )
+
+                # --------------------------------------------
+                # DAY DISABLED
+                # --------------------------------------------
+
+                if not enabled:
+
+                    setattr(
+                        availability_record,
+                        f"{day}_enabled",
+                        False
+                    )
+
+                    setattr(
+                        availability_record,
+                        f"{day}_time",
+                        ""
+                    )
+
+                    continue
+
+                # --------------------------------------------
+                # DAY ENABLED
+                # --------------------------------------------
+
+                setattr(
+                    availability_record,
+                    f"{day}_enabled",
+                    True
+                )
+
+                # --------------------------------------------
+                # NO TIME ENTERED YET
+                #
+                # Valid because student may click the day
+                # before entering the number of hours.
+                # --------------------------------------------
+
+                if raw_time == "":
+
+                    setattr(
+                        availability_record,
+                        f"{day}_time",
+                        ""
+                    )
+
+                    continue
+
+                # --------------------------------------------
+                # VALIDATE HH:MM
+                # --------------------------------------------
+
+                try:
+
+                    parts = raw_time.split(
+                        ":"
+                    )
+
+                    if len(parts) != 2:
+
+                        raise ValueError
+
+                    hours = int(
+                        parts[0]
+                    )
+
+                    minutes = int(
+                        parts[1]
+                    )
+
+                    # ----------------------------------------
+                    # HOURS 0 - 24
+                    # ----------------------------------------
+
+                    if (
+                        hours < 0
+                        or
+                        hours > 24
+                    ):
+
+                        raise ValueError
+
+                    # ----------------------------------------
+                    # MINUTES 0 - 59
+                    # ----------------------------------------
+
+                    if (
+                        minutes < 0
+                        or
+                        minutes > 59
+                    ):
+
+                        raise ValueError
+
+                    # ----------------------------------------
+                    # 24 HOURS CAN ONLY BE 24:00
+                    # ----------------------------------------
+
+                    if (
+                        hours == 24
+                        and
+                        minutes != 0
+                    ):
+
+                        raise ValueError
+
+                    # ----------------------------------------
+                    # NORMALIZE
+                    # ----------------------------------------
+
+                    normalized_time = (
+                        f"{hours:02d}:"
+                        f"{minutes:02d}"
+                    )
+
+                    setattr(
+                        availability_record,
+                        f"{day}_time",
+                        normalized_time
+                    )
+
+                except (
+                    TypeError,
+                    ValueError
+                ):
+
+                    errors[
+                        day
+                    ] = (
+                        "Enter a valid time "
+                        "between 00:00 and 24:00."
+                    )
+
+            # =================================================
+            # INVALID VALUE
+            # =================================================
+
+            if errors:
+
+                return JsonResponse(
+                    {
+                        "success": False,
+                        "errors": errors,
+                    },
+                    status=400,
+                )
+
+            # =================================================
+            # SAVE DATABASE RECORD
+            # =================================================
+
+            availability_record.save()
+
+            # =================================================
+            # AJAX RESPONSE
+            # =================================================
+
+            if (
+                request.headers.get(
+                    "X-Requested-With"
+                )
+                == "XMLHttpRequest"
+            ):
+
+                return JsonResponse(
+                    {
+                        "success": True,
+                    }
+                )
+
+            return redirect(
+                "goals"
+            )
+
+        # ====================================================
         # ADD SUBJECT
         # ====================================================
 
         elif action == "add_subject":
-
-            # ------------------------------------------------
-            # OPTIONAL MAXIMUM
-            # ------------------------------------------------
 
             if len(subjects) >= 20:
 
@@ -978,9 +1239,7 @@ def goals(request):
                 )
 
             # ------------------------------------------------
-            # CREATE NEW SUBJECT SLOT
-            #
-            # Same structure as onboarding subjects.
+            # NEW SUBJECT
             # ------------------------------------------------
 
             new_subject = {
@@ -1004,10 +1263,6 @@ def goals(request):
                     None,
 
             }
-
-            # ------------------------------------------------
-            # ADD TO SUBJECT LIST
-            # ------------------------------------------------
 
             subjects.append(
                 new_subject
@@ -1038,7 +1293,7 @@ def goals(request):
             request.session.modified = True
 
             # ------------------------------------------------
-            # NEW SUBJECT'S INDEX
+            # OPEN NEW SUBJECT
             # ------------------------------------------------
 
             new_subject_index = (
@@ -1046,17 +1301,41 @@ def goals(request):
                 - 1
             )
 
-            # ------------------------------------------------
-            # OPEN NEW SUBJECT DETAIL PAGE
-            # ------------------------------------------------
-
             return redirect(
                 "subject_detail",
-                subject_index=new_subject_index
+                subject_index=(
+                    new_subject_index
+                )
             )
 
     # ========================================================
-    # CALCULATE DAYS UNTIL EXAM
+    # REFRESH AVAILABILITY
+    # ========================================================
+
+    study_availability = {}
+
+    for day in days:
+
+        study_availability[
+            day
+        ] = {
+
+            "enabled":
+                getattr(
+                    availability_record,
+                    f"{day}_enabled"
+                ),
+
+            "time":
+                getattr(
+                    availability_record,
+                    f"{day}_time"
+                ),
+
+        }
+
+    # ========================================================
+    # DAYS UNTIL EXAM
     # ========================================================
 
     today = timezone.localdate()
@@ -1064,12 +1343,6 @@ def goals(request):
     display_subjects = []
 
     for subject in subjects:
-
-        # ----------------------------------------------------
-        # COPY SUBJECT
-        #
-        # Avoid putting days_until_exam into session data.
-        # ----------------------------------------------------
 
         subject_data = dict(
             subject
@@ -1081,17 +1354,9 @@ def goals(request):
 
         days_until_exam = None
 
-        # ----------------------------------------------------
-        # EXAM DATE EXISTS
-        # ----------------------------------------------------
-
         if exam_date:
 
             try:
-
-                # --------------------------------------------
-                # DATETIME VALUE
-                # --------------------------------------------
 
                 if isinstance(
                     exam_date,
@@ -1102,10 +1367,6 @@ def goals(request):
                         exam_date.date()
                     )
 
-                # --------------------------------------------
-                # DATE VALUE
-                # --------------------------------------------
-
                 elif isinstance(
                     exam_date,
                     date
@@ -1114,13 +1375,6 @@ def goals(request):
                     parsed_exam_date = (
                         exam_date
                     )
-
-                # --------------------------------------------
-                # STRING VALUE
-                #
-                # Expected:
-                # YYYY-MM-DD
-                # --------------------------------------------
 
                 else:
 
@@ -1132,18 +1386,10 @@ def goals(request):
                         )
                     )
 
-                # --------------------------------------------
-                # CALCULATE DIFFERENCE
-                # --------------------------------------------
-
                 days_until_exam = (
                     parsed_exam_date
                     - today
                 ).days
-
-                # --------------------------------------------
-                # NEVER SHOW NEGATIVE DAYS
-                # --------------------------------------------
 
                 days_until_exam = max(
                     0,
@@ -1156,10 +1402,6 @@ def goals(request):
             ):
 
                 days_until_exam = None
-
-        # ----------------------------------------------------
-        # TEMPORARY DISPLAY VALUE
-        # ----------------------------------------------------
 
         subject_data[
             "days_until_exam"
@@ -1182,6 +1424,9 @@ def goals(request):
 
             "subjects":
                 display_subjects,
+
+            "study_availability":
+                study_availability,
         }
     )
 

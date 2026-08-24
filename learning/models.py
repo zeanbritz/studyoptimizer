@@ -45,6 +45,8 @@ class KnowledgeUnit(models.Model):
         Subject,
         on_delete=models.CASCADE,
         related_name="knowledge_units",
+        null=True,
+        blank=True,
     )
 
     class KnowledgeType(models.TextChoices):

@@ -154,13 +154,13 @@
                 30px
                 28px;
 
-            margin-bottom: 30px;
+            margin-bottom: 20px;
 
         }
 
 
         /* =========================================
-           EDIT BUTTON
+           PROFILE EDIT
         ========================================= */
 
         .profile-edit-button {
@@ -195,11 +195,6 @@
 
             cursor: pointer;
 
-            transition:
-                background 0.15s ease,
-                border-color 0.15s ease,
-                transform 0.15s ease;
-
         }
 
 
@@ -207,17 +202,8 @@
 
             background: #eeeeee;
 
-            border-color: #c8c8c8;
-
-            transform:
-                translateY(-1px);
-
         }
 
-
-        /* =========================================
-           PROFILE DISPLAY
-        ========================================= */
 
         .profile-display {
 
@@ -258,10 +244,6 @@
 
         }
 
-
-        /* =========================================
-           PROFILE EDIT
-        ========================================= */
 
         .profile-edit-form {
 
@@ -368,10 +350,6 @@
         }
 
 
-        /* =========================================
-           PROFILE ACTIONS
-        ========================================= */
-
         .profile-actions {
 
             display: flex;
@@ -422,13 +400,6 @@
         }
 
 
-        .profile-save-button:hover {
-
-            background: #333;
-
-        }
-
-
         .profile-cancel-button {
 
             border:
@@ -442,9 +413,298 @@
         }
 
 
-        .profile-cancel-button:hover {
+        /* =========================================
+           STUDY AVAILABILITY
+        ========================================= */
 
-            background: #eeeeee;
+        .availability-card {
+
+            background: #f5f6f8;
+
+            border:
+                1px solid
+                #e0e3e6;
+
+            border-radius: 14px;
+
+            padding:
+                26px
+                30px
+                28px;
+
+            margin-bottom: 30px;
+
+        }
+
+
+        .availability-header {
+
+            display: flex;
+
+            align-items: flex-start;
+
+            justify-content: space-between;
+
+            gap: 20px;
+
+            margin-bottom: 22px;
+
+        }
+
+
+        .availability-header h2 {
+
+            margin:
+                0
+                0
+                5px;
+
+            font-size: 24px;
+
+            font-weight: 800;
+
+        }
+
+
+        .availability-header p {
+
+            margin: 0;
+
+            color: #777;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+        }
+
+
+        /* =========================================
+           AUTOSAVE STATUS
+        ========================================= */
+
+        .autosave-status {
+
+            flex-shrink: 0;
+
+            min-height: 24px;
+
+            color: #777;
+
+            font-size: 12px;
+
+            font-weight: 700;
+
+        }
+
+
+        .autosave-status.saving {
+
+            color: #777;
+
+        }
+
+
+        .autosave-status.saved {
+
+            color: #3e7627;
+
+        }
+
+
+        .autosave-status.error {
+
+            color: #a33a3a;
+
+        }
+
+
+        /* =========================================
+           TWO ROWS / SEVEN COLUMNS
+        ========================================= */
+
+        .availability-grid {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(
+                    7,
+                    minmax(0, 1fr)
+                );
+
+            gap: 10px;
+
+        }
+
+
+        /* =========================================
+           DAY BUTTON
+        ========================================= */
+
+        .day-button {
+
+            width: 100%;
+
+            min-height: 58px;
+
+            border:
+                1px solid
+                #8797A8;
+
+            border-radius: 10px;
+
+            background: #8797A8;
+
+            color: white;
+
+            font-family: inherit;
+
+            font-size: 14px;
+
+            font-weight: 800;
+
+            cursor: pointer;
+
+            transition:
+                background 0.15s ease,
+                border-color 0.15s ease,
+                transform 0.15s ease,
+                box-shadow 0.15s ease;
+
+        }
+
+
+        .day-button:hover {
+
+            transform:
+                translateY(-1px);
+
+            box-shadow:
+                0
+                4px
+                10px
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.08
+                );
+
+        }
+
+
+        .day-button.selected {
+
+            background: #8BF527;
+
+            border-color: #8BF527;
+
+            color: #1f3d0a;
+
+        }
+
+
+        /* =========================================
+           TIME INPUT
+        ========================================= */
+
+        .time-input {
+
+            width: 100%;
+
+            min-height: 50px;
+
+            padding:
+                10px
+                8px;
+
+            border:
+                1px solid
+                #ccd1d6;
+
+            border-radius: 9px;
+
+            background: white;
+
+            color: #222;
+
+            font-family: inherit;
+
+            font-size: 15px;
+
+            font-weight: 700;
+
+            text-align: center;
+
+            outline: none;
+
+        }
+
+
+        .time-input:focus {
+
+            border-color: #8797A8;
+
+        }
+
+
+        .time-input:disabled {
+
+            background: #e7eaed;
+
+            border-color: #d7dce0;
+
+            color: #a3a9ae;
+
+            cursor: not-allowed;
+
+        }
+
+
+        .time-input.invalid {
+
+            border-color: #c75555;
+
+            background: #fff8f8;
+
+        }
+
+
+        /* =========================================
+           AVAILABILITY MESSAGE
+        ========================================= */
+
+        .availability-error {
+
+            display: none;
+
+            margin-top: 14px;
+
+            padding:
+                10px
+                12px;
+
+            border:
+                1px solid
+                #e3b9b9;
+
+            border-radius: 8px;
+
+            background: #fff4f4;
+
+            color: #9b3333;
+
+            font-size: 13px;
+
+            font-weight: 700;
+
+        }
+
+
+        .availability-error.show {
+
+            display: block;
 
         }
 
@@ -508,7 +768,7 @@
 
 
         /* =========================================
-           SUBJECT CARD
+           SUBJECT
         ========================================= */
 
         .subject {
@@ -579,8 +839,6 @@
 
             font-weight: 800;
 
-            letter-spacing: -0.3px;
-
         }
 
 
@@ -598,10 +856,6 @@
 
         }
 
-
-        /* =========================================
-           SUBJECT INFORMATION
-        ========================================= */
 
         .subject-info {
 
@@ -682,29 +936,10 @@
 
             cursor: pointer;
 
-            transition:
-                box-shadow 0.15s ease,
-                transform 0.15s ease,
-                filter 0.15s ease;
-
         }
 
 
         .add-subject:hover {
-
-            box-shadow:
-                0
-                7px
-                18px
-                rgba(
-                    0,
-                    0,
-                    0,
-                    0.14
-                );
-
-            transform:
-                translateY(-3px);
 
             filter:
                 brightness(0.97);
@@ -755,6 +990,17 @@
 
             }
 
+
+            .availability-grid {
+
+                grid-template-columns:
+                    repeat(
+                        4,
+                        minmax(0, 1fr)
+                    );
+
+            }
+
         }
 
 
@@ -765,6 +1011,17 @@
                 padding:
                     25px
                     20px;
+
+            }
+
+
+            .availability-grid {
+
+                grid-template-columns:
+                    repeat(
+                        2,
+                        minmax(0, 1fr)
+                    );
 
             }
 
@@ -794,17 +1051,9 @@
             }
 
 
-            .profile-actions {
+            .availability-grid {
 
-                flex-direction: column;
-
-            }
-
-
-            .profile-save-button,
-            .profile-cancel-button {
-
-                width: 100%;
+                grid-template-columns: 1fr;
 
             }
 
@@ -861,16 +1110,11 @@
                     type="button"
                     class="profile-edit-button"
                     onclick="openProfileEditor()"
-                    aria-label="Edit degree and overall target"
                     title="Edit"
                 >
                     ✎
                 </button>
 
-
-                <!-- =============================
-                     DISPLAY
-                ============================== -->
 
                 <div class="profile-display">
 
@@ -895,10 +1139,6 @@
 
                 </div>
 
-
-                <!-- =============================
-                     EDIT
-                ============================== -->
 
                 <form
                     method="POST"
@@ -948,7 +1188,6 @@
                                 value="{{ profile.target_grade }}"
                                 min="0"
                                 max="100"
-                                step="1"
                                 required
                             >
 
@@ -978,6 +1217,260 @@
                         </button>
 
 
+                    </div>
+
+
+                </form>
+
+
+            </div>
+
+
+            <!-- =================================
+                 STUDY AVAILABILITY
+            ================================== -->
+
+            <div class="availability-card">
+
+
+                <div class="availability-header">
+
+
+                    <div>
+
+                        <h2>
+                            Study Availability
+                        </h2>
+
+                        <p>
+                            Select your usual study days and enter the amount of time available each day.
+                        </p>
+
+                    </div>
+
+
+                    <span
+                        class="autosave-status"
+                        id="autosave-status"
+                    ></span>
+
+
+                </div>
+
+
+                <!-- =================================
+                     CSRF TOKEN FOR AJAX
+                ================================== -->
+
+                <form
+                    id="availability-form"
+                    onsubmit="return false;"
+                >
+
+                    {% csrf_token %}
+
+
+                    <div class="availability-grid">
+
+
+                        <!-- =================================
+                             DAY BUTTONS
+                        ================================== -->
+
+                        <button
+                            type="button"
+                            class="day-button {% if study_availability.monday.enabled %}selected{% endif %}"
+                            id="button-monday"
+                            onclick="toggleStudyDay('monday')"
+                        >
+                            Monday
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="day-button {% if study_availability.tuesday.enabled %}selected{% endif %}"
+                            id="button-tuesday"
+                            onclick="toggleStudyDay('tuesday')"
+                        >
+                            Tuesday
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="day-button {% if study_availability.wednesday.enabled %}selected{% endif %}"
+                            id="button-wednesday"
+                            onclick="toggleStudyDay('wednesday')"
+                        >
+                            Wednesday
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="day-button {% if study_availability.thursday.enabled %}selected{% endif %}"
+                            id="button-thursday"
+                            onclick="toggleStudyDay('thursday')"
+                        >
+                            Thursday
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="day-button {% if study_availability.friday.enabled %}selected{% endif %}"
+                            id="button-friday"
+                            onclick="toggleStudyDay('friday')"
+                        >
+                            Friday
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="day-button {% if study_availability.saturday.enabled %}selected{% endif %}"
+                            id="button-saturday"
+                            onclick="toggleStudyDay('saturday')"
+                        >
+                            Saturday
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="day-button {% if study_availability.sunday.enabled %}selected{% endif %}"
+                            id="button-sunday"
+                            onclick="toggleStudyDay('sunday')"
+                        >
+                            Sunday
+                        </button>
+
+
+                        <!-- =================================
+                             TIME INPUTS
+                        ================================== -->
+
+                        <input
+                            type="text"
+                            inputmode="numeric"
+                            maxlength="5"
+                            placeholder="hh:mm"
+                            id="time-monday"
+                            class="time-input"
+                            value="{{ study_availability.monday.time }}"
+                            oninput="studyTimeChanged('monday')"
+                            onblur="studyTimeBlurred('monday')"
+                            {% if not study_availability.monday.enabled %}
+                                disabled
+                            {% endif %}
+                        >
+
+
+                        <input
+                            type="text"
+                            inputmode="numeric"
+                            maxlength="5"
+                            placeholder="hh:mm"
+                            id="time-tuesday"
+                            class="time-input"
+                            value="{{ study_availability.tuesday.time }}"
+                            oninput="studyTimeChanged('tuesday')"
+                            onblur="studyTimeBlurred('tuesday')"
+                            {% if not study_availability.tuesday.enabled %}
+                                disabled
+                            {% endif %}
+                        >
+
+
+                        <input
+                            type="text"
+                            inputmode="numeric"
+                            maxlength="5"
+                            placeholder="hh:mm"
+                            id="time-wednesday"
+                            class="time-input"
+                            value="{{ study_availability.wednesday.time }}"
+                            oninput="studyTimeChanged('wednesday')"
+                            onblur="studyTimeBlurred('wednesday')"
+                            {% if not study_availability.wednesday.enabled %}
+                                disabled
+                            {% endif %}
+                        >
+
+
+                        <input
+                            type="text"
+                            inputmode="numeric"
+                            maxlength="5"
+                            placeholder="hh:mm"
+                            id="time-thursday"
+                            class="time-input"
+                            value="{{ study_availability.thursday.time }}"
+                            oninput="studyTimeChanged('thursday')"
+                            onblur="studyTimeBlurred('thursday')"
+                            {% if not study_availability.thursday.enabled %}
+                                disabled
+                            {% endif %}
+                        >
+
+
+                        <input
+                            type="text"
+                            inputmode="numeric"
+                            maxlength="5"
+                            placeholder="hh:mm"
+                            id="time-friday"
+                            class="time-input"
+                            value="{{ study_availability.friday.time }}"
+                            oninput="studyTimeChanged('friday')"
+                            onblur="studyTimeBlurred('friday')"
+                            {% if not study_availability.friday.enabled %}
+                                disabled
+                            {% endif %}
+                        >
+
+
+                        <input
+                            type="text"
+                            inputmode="numeric"
+                            maxlength="5"
+                            placeholder="hh:mm"
+                            id="time-saturday"
+                            class="time-input"
+                            value="{{ study_availability.saturday.time }}"
+                            oninput="studyTimeChanged('saturday')"
+                            onblur="studyTimeBlurred('saturday')"
+                            {% if not study_availability.saturday.enabled %}
+                                disabled
+                            {% endif %}
+                        >
+
+
+                        <input
+                            type="text"
+                            inputmode="numeric"
+                            maxlength="5"
+                            placeholder="hh:mm"
+                            id="time-sunday"
+                            class="time-input"
+                            value="{{ study_availability.sunday.time }}"
+                            oninput="studyTimeChanged('sunday')"
+                            onblur="studyTimeBlurred('sunday')"
+                            {% if not study_availability.sunday.enabled %}
+                                disabled
+                            {% endif %}
+                        >
+
+
+                    </div>
+
+
+                    <div
+                        class="availability-error"
+                        id="availability-error"
+                    >
+                        Study time must use hh:mm and cannot exceed 24:00.
                     </div>
 
 
@@ -1156,6 +1649,28 @@
 
 <script>
 
+    // =============================================
+    // DAYS
+    // =============================================
+
+    const studyDays = [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday"
+    ];
+
+
+    let autoSaveTimer = null;
+
+
+    // =============================================
+    // PROFILE EDITOR
+    // =============================================
+
     function openProfileEditor() {
 
         const card =
@@ -1184,14 +1699,580 @@
 
     function closeProfileEditor() {
 
-        const card =
-            document.getElementById(
+        document
+            .getElementById(
                 "profile-card"
+            )
+            .classList
+            .remove(
+                "editing"
             );
 
-        card.classList.remove(
-            "editing"
+    }
+
+
+    // =============================================
+    // IS DAY SELECTED
+    // =============================================
+
+    function isStudyDayEnabled(day) {
+
+        return (
+            document
+                .getElementById(
+                    "button-" + day
+                )
+                .classList
+                .contains(
+                    "selected"
+                )
         );
+
+    }
+
+
+    // =============================================
+    // TOGGLE STUDY DAY
+    // =============================================
+
+    function toggleStudyDay(day) {
+
+        const button =
+            document.getElementById(
+                "button-" + day
+            );
+
+        const input =
+            document.getElementById(
+                "time-" + day
+            );
+
+
+        const becomingSelected =
+            !button.classList.contains(
+                "selected"
+            );
+
+
+        if (becomingSelected) {
+
+            button.classList.add(
+                "selected"
+            );
+
+            input.disabled = false;
+
+            input.focus();
+
+        } else {
+
+            button.classList.remove(
+                "selected"
+            );
+
+            input.disabled = true;
+
+            input.classList.remove(
+                "invalid"
+            );
+
+            /*
+             * Clear time when the day is removed.
+             * Database will store this day as disabled.
+             */
+
+            input.value = "";
+
+        }
+
+
+        hideAvailabilityError();
+
+        saveAvailability();
+
+    }
+
+
+    // =============================================
+    // SANITIZE TYPING
+    // =============================================
+
+    function sanitizeDurationInput(value) {
+
+        /*
+         * Only digits and colon are allowed.
+         * This automatically prevents "-" values.
+         */
+
+        return value
+            .replace(
+                /[^0-9:]/g,
+                ""
+            )
+            .slice(
+                0,
+                5
+            );
+
+    }
+
+
+    // =============================================
+    // VALID HH:MM
+    // =============================================
+
+    function isValidStudyDuration(value) {
+
+        if (value === "") {
+
+            return true;
+
+        }
+
+
+        const match =
+            value.match(
+                /^(\d{2}):(\d{2})$/
+            );
+
+
+        if (!match) {
+
+            return false;
+
+        }
+
+
+        const hours =
+            Number(
+                match[1]
+            );
+
+        const minutes =
+            Number(
+                match[2]
+            );
+
+
+        if (
+            hours < 0
+            ||
+            hours > 24
+        ) {
+
+            return false;
+
+        }
+
+
+        if (
+            minutes < 0
+            ||
+            minutes > 59
+        ) {
+
+            return false;
+
+        }
+
+
+        if (
+            hours === 24
+            &&
+            minutes !== 0
+        ) {
+
+            return false;
+
+        }
+
+
+        return true;
+
+    }
+
+
+    // =============================================
+    // TIME CHANGED
+    // =============================================
+
+    function studyTimeChanged(day) {
+
+        const input =
+            document.getElementById(
+                "time-" + day
+            );
+
+
+        input.value =
+            sanitizeDurationInput(
+                input.value
+            );
+
+
+        if (
+            input.value === ""
+            ||
+            isValidStudyDuration(
+                input.value
+            )
+        ) {
+
+            input.classList.remove(
+                "invalid"
+            );
+
+            hideAvailabilityError();
+
+            scheduleAvailabilitySave();
+
+        }
+
+    }
+
+
+    // =============================================
+    // TIME BLURRED
+    // =============================================
+
+    function studyTimeBlurred(day) {
+
+        const input =
+            document.getElementById(
+                "time-" + day
+            );
+
+
+        if (
+            !isStudyDayEnabled(
+                day
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            input.value !== ""
+            &&
+            !isValidStudyDuration(
+                input.value
+            )
+        ) {
+
+            input.classList.add(
+                "invalid"
+            );
+
+            showAvailabilityError();
+
+            return;
+
+        }
+
+
+        input.classList.remove(
+            "invalid"
+        );
+
+        hideAvailabilityError();
+
+        saveAvailability();
+
+    }
+
+
+    // =============================================
+    // DELAY AUTOSAVE WHILE TYPING
+    // =============================================
+
+    function scheduleAvailabilitySave() {
+
+        clearTimeout(
+            autoSaveTimer
+        );
+
+
+        autoSaveTimer = setTimeout(
+            function() {
+
+                if (
+                    allAvailabilityValuesValid()
+                ) {
+
+                    saveAvailability();
+
+                }
+
+            },
+            600
+        );
+
+    }
+
+
+    // =============================================
+    // CHECK ALL VALUES
+    // =============================================
+
+    function allAvailabilityValuesValid() {
+
+        let valid = true;
+
+
+        for (
+            const day
+            of studyDays
+        ) {
+
+            if (
+                !isStudyDayEnabled(
+                    day
+                )
+            ) {
+
+                continue;
+
+            }
+
+
+            const input =
+                document.getElementById(
+                    "time-" + day
+                );
+
+
+            if (
+                !isValidStudyDuration(
+                    input.value
+                )
+            ) {
+
+                input.classList.add(
+                    "invalid"
+                );
+
+                valid = false;
+
+            } else {
+
+                input.classList.remove(
+                    "invalid"
+                );
+
+            }
+
+        }
+
+
+        return valid;
+
+    }
+
+
+    // =============================================
+    // BUILD REQUEST DATA
+    // =============================================
+
+    function buildAvailabilityFormData() {
+
+        const formData =
+            new FormData();
+
+
+        formData.append(
+            "action",
+            "update_availability"
+        );
+
+
+        for (
+            const day
+            of studyDays
+        ) {
+
+            const enabled =
+                isStudyDayEnabled(
+                    day
+                );
+
+            const input =
+                document.getElementById(
+                    "time-" + day
+                );
+
+
+            formData.append(
+                day + "_enabled",
+                enabled
+                    ? "1"
+                    : "0"
+            );
+
+
+            formData.append(
+                day + "_time",
+                enabled
+                    ? input.value
+                    : ""
+            );
+
+        }
+
+
+        return formData;
+
+    }
+
+
+    // =============================================
+    // AUTOSAVE
+    // =============================================
+
+    async function saveAvailability() {
+
+        if (
+            !allAvailabilityValuesValid()
+        ) {
+
+            showAvailabilityError();
+
+            return;
+
+        }
+
+
+        const status =
+            document.getElementById(
+                "autosave-status"
+            );
+
+
+        status.textContent =
+            "Saving...";
+
+        status.className =
+            "autosave-status saving";
+
+
+        const csrfToken =
+            document.querySelector(
+                '#availability-form input[name="csrfmiddlewaretoken"]'
+            ).value;
+
+
+        try {
+
+            const response =
+                await fetch(
+                    window.location.href,
+                    {
+                        method:
+                            "POST",
+
+                        headers: {
+                            "X-CSRFToken":
+                                csrfToken,
+
+                            "X-Requested-With":
+                                "XMLHttpRequest",
+                        },
+
+                        body:
+                            buildAvailabilityFormData(),
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
+
+            if (
+                !response.ok
+                ||
+                !data.success
+            ) {
+
+                throw new Error(
+                    "Could not save availability."
+                );
+
+            }
+
+
+            status.textContent =
+                "Saved";
+
+            status.className =
+                "autosave-status saved";
+
+
+            hideAvailabilityError();
+
+
+            setTimeout(
+                function() {
+
+                    if (
+                        status.textContent
+                        === "Saved"
+                    ) {
+
+                        status.textContent =
+                            "";
+
+                    }
+
+                },
+                1500
+            );
+
+        } catch (error) {
+
+            status.textContent =
+                "Could not save";
+
+            status.className =
+                "autosave-status error";
+
+            showAvailabilityError();
+
+        }
+
+    }
+
+
+    // =============================================
+    // ERROR
+    // =============================================
+
+    function showAvailabilityError() {
+
+        document
+            .getElementById(
+                "availability-error"
+            )
+            .classList
+            .add(
+                "show"
+            );
+
+    }
+
+
+    function hideAvailabilityError() {
+
+        document
+            .getElementById(
+                "availability-error"
+            )
+            .classList
+            .remove(
+                "show"
+            );
 
     }
 
