@@ -1,3 +1,4 @@
+from collections import Counter
 from datetime import date, datetime, timedelta
 
 from django.contrib.auth.decorators import login_required
@@ -173,13 +174,13 @@ def dashboard(request):
                 continue
 
             # ------------------------------------------------
-            # FIND SUBJECT INDEX
+            # FIND SESSION SUBJECT INDEX
             # ------------------------------------------------
 
             subject_index = None
 
             # --------------------------------------------
-            # DATABASE ID
+            # DATABASE ID FIRST
             # --------------------------------------------
 
             for index, subject_data in enumerate(
@@ -240,10 +241,6 @@ def dashboard(request):
                         subject_index = index
 
                         break
-
-            # --------------------------------------------
-            # SKIP IF CANNOT FIND SESSION SUBJECT
-            # --------------------------------------------
 
             if subject_index is None:
 
@@ -395,7 +392,7 @@ def dashboard(request):
             subject_index = None
 
             # --------------------------------------------
-            # DATABASE ID
+            # DATABASE ID FIRST
             # --------------------------------------------
 
             for index, subject_data in enumerate(
@@ -456,10 +453,6 @@ def dashboard(request):
                         subject_index = index
 
                         break
-
-            # --------------------------------------------
-            # SKIP IF NOT FOUND
-            # --------------------------------------------
 
             if subject_index is None:
 
@@ -543,7 +536,7 @@ def dashboard(request):
 def review(request):
 
     # --------------------------------------------------------
-    # GET ALL SUBJECTS FOR THIS STUDENT
+    # SUBJECTS
     # --------------------------------------------------------
 
     subjects = Subject.objects.filter(
@@ -551,7 +544,7 @@ def review(request):
     )
 
     # --------------------------------------------------------
-    # GET ALL DEFINITIONS
+    # DEFINITIONS
     # --------------------------------------------------------
 
     definition_knowledge_units = (
@@ -577,7 +570,9 @@ def review(request):
 
     definitions = []
 
-    for knowledge_unit in definition_knowledge_units:
+    for knowledge_unit in (
+        definition_knowledge_units
+    ):
 
         definition = getattr(
             knowledge_unit,
@@ -592,7 +587,7 @@ def review(request):
             )
 
     # --------------------------------------------------------
-    # GET ALL FORMULAS
+    # FORMULAS
     # --------------------------------------------------------
 
     formula_knowledge_units = (
@@ -618,7 +613,9 @@ def review(request):
 
     formulas = []
 
-    for knowledge_unit in formula_knowledge_units:
+    for knowledge_unit in (
+        formula_knowledge_units
+    ):
 
         formula = getattr(
             knowledge_unit,
@@ -679,10 +676,13 @@ def onboarding(request):
 
     if request.method == "POST":
 
-        workspace_name = request.POST.get(
-            "workspace_name",
-            ""
-        ).strip()
+        workspace_name = (
+            request.POST.get(
+                "workspace_name",
+                ""
+            )
+            .strip()
+        )
 
         target_grade = request.POST.get(
             "target_grade",
@@ -713,7 +713,7 @@ def onboarding(request):
             subject_count = 1
 
         # ----------------------------------------------------
-        # NEVER ALLOW MORE THAN 20 SUBJECTS
+        # MAXIMUM 20
         # ----------------------------------------------------
 
         subject_count = max(
@@ -725,7 +725,7 @@ def onboarding(request):
         )
 
         # ----------------------------------------------------
-        # SAVE PROFILE
+        # PROFILE
         # ----------------------------------------------------
 
         request.session[
@@ -747,7 +747,7 @@ def onboarding(request):
         }
 
         # ----------------------------------------------------
-        # CREATE EMPTY SUBJECT SLOTS
+        # SUBJECT SLOTS
         # ----------------------------------------------------
 
         subjects = []
@@ -781,10 +781,6 @@ def onboarding(request):
         request.session[
             "onboarding_subjects"
         ] = subjects
-
-        # ----------------------------------------------------
-        # MARK ONBOARDING AS COMPLETE
-        # ----------------------------------------------------
 
         request.session[
             "onboarding_complete"
@@ -847,7 +843,7 @@ def goals(request):
     ]
 
     # ========================================================
-    # GET OR CREATE STUDY AVAILABILITY
+    # STUDY AVAILABILITY
     # ========================================================
 
     availability_record, created = (
@@ -856,10 +852,6 @@ def goals(request):
             user=request.user
         )
     )
-
-    # ========================================================
-    # BUILD TEMPLATE AVAILABILITY
-    # ========================================================
 
     study_availability = {}
 
@@ -964,7 +956,7 @@ def goals(request):
             )
 
         # ====================================================
-        # LEGACY TARGET ACTION
+        # LEGACY TARGET
         # ====================================================
 
         elif action == "update_target":
@@ -1039,7 +1031,7 @@ def goals(request):
                 )
 
                 # --------------------------------------------
-                # DISABLED DAY
+                # DISABLED
                 # --------------------------------------------
 
                 if not enabled:
@@ -1059,7 +1051,7 @@ def goals(request):
                     continue
 
                 # --------------------------------------------
-                # ENABLE DAY
+                # ENABLED
                 # --------------------------------------------
 
                 setattr(
@@ -1067,10 +1059,6 @@ def goals(request):
                     f"{day}_enabled",
                     True
                 )
-
-                # --------------------------------------------
-                # ENABLED BUT TIME NOT ENTERED YET
-                # --------------------------------------------
 
                 if raw_time == "":
 
@@ -1151,9 +1139,9 @@ def goals(request):
                         "between 00:00 and 24:00."
                     )
 
-            # =================================================
+            # ------------------------------------------------
             # INVALID
-            # =================================================
+            # ------------------------------------------------
 
             if errors:
 
@@ -1165,9 +1153,9 @@ def goals(request):
                     status=400,
                 )
 
-            # =================================================
-            # SAVE DATABASE
-            # =================================================
+            # ------------------------------------------------
+            # SAVE
+            # ------------------------------------------------
 
             availability_record.save()
 
@@ -1281,7 +1269,7 @@ def goals(request):
         }
 
     # ========================================================
-    # DAYS UNTIL EXAM FOR GOALS CARDS
+    # DAYS UNTIL EXAM
     # ========================================================
 
     today = timezone.localdate()
@@ -1294,8 +1282,10 @@ def goals(request):
             subject
         )
 
-        exam_date = subject_data.get(
-            "exam_date"
+        exam_date = (
+            subject_data.get(
+                "exam_date"
+            )
         )
 
         days_until_exam = None
@@ -1373,6 +1363,251 @@ def goals(request):
                 study_availability,
         }
     )
+
+
+# ============================================================
+# STUDY SCHEDULE HELPERS
+# ============================================================
+
+def duration_to_minutes(value):
+
+    if not value:
+
+        return 0
+
+    try:
+
+        hours_text, minutes_text = (
+            str(value).split(
+                ":",
+                1
+            )
+        )
+
+        hours = int(
+            hours_text
+        )
+
+        minutes = int(
+            minutes_text
+        )
+
+        if (
+            hours < 0
+            or
+            hours > 24
+            or
+            minutes < 0
+            or
+            minutes > 59
+        ):
+
+            return 0
+
+        if (
+            hours == 24
+            and
+            minutes != 0
+        ):
+
+            return 0
+
+        return (
+            hours * 60
+            +
+            minutes
+        )
+
+    except (
+        TypeError,
+        ValueError
+    ):
+
+        return 0
+
+
+def format_study_minutes(
+    total_minutes
+):
+
+    total_minutes = int(
+        total_minutes
+        or 0
+    )
+
+    hours = (
+        total_minutes
+        // 60
+    )
+
+    minutes = (
+        total_minutes
+        % 60
+    )
+
+    if (
+        hours > 0
+        and
+        minutes > 0
+    ):
+
+        return (
+            f"{hours}h "
+            f"{minutes}m"
+        )
+
+    if hours > 0:
+
+        return (
+            f"{hours}h"
+        )
+
+    return (
+        f"{minutes}m"
+    )
+
+
+def get_availability_by_weekday(
+    availability
+):
+
+    schedule = {
+
+        0: {
+            "name": "Monday",
+            "enabled": False,
+            "minutes": 0,
+        },
+
+        1: {
+            "name": "Tuesday",
+            "enabled": False,
+            "minutes": 0,
+        },
+
+        2: {
+            "name": "Wednesday",
+            "enabled": False,
+            "minutes": 0,
+        },
+
+        3: {
+            "name": "Thursday",
+            "enabled": False,
+            "minutes": 0,
+        },
+
+        4: {
+            "name": "Friday",
+            "enabled": False,
+            "minutes": 0,
+        },
+
+        5: {
+            "name": "Saturday",
+            "enabled": False,
+            "minutes": 0,
+        },
+
+        6: {
+            "name": "Sunday",
+            "enabled": False,
+            "minutes": 0,
+        },
+
+    }
+
+    if not availability:
+
+        return schedule
+
+    fields = {
+
+        0: (
+            "monday_enabled",
+            "monday_time",
+        ),
+
+        1: (
+            "tuesday_enabled",
+            "tuesday_time",
+        ),
+
+        2: (
+            "wednesday_enabled",
+            "wednesday_time",
+        ),
+
+        3: (
+            "thursday_enabled",
+            "thursday_time",
+        ),
+
+        4: (
+            "friday_enabled",
+            "friday_time",
+        ),
+
+        5: (
+            "saturday_enabled",
+            "saturday_time",
+        ),
+
+        6: (
+            "sunday_enabled",
+            "sunday_time",
+        ),
+
+    }
+
+    for (
+        weekday,
+        field_names
+    ) in fields.items():
+
+        enabled_field = (
+            field_names[0]
+        )
+
+        time_field = (
+            field_names[1]
+        )
+
+        enabled = bool(
+            getattr(
+                availability,
+                enabled_field,
+                False
+            )
+        )
+
+        minutes = 0
+
+        if enabled:
+
+            minutes = (
+                duration_to_minutes(
+                    getattr(
+                        availability,
+                        time_field,
+                        ""
+                    )
+                )
+            )
+
+        schedule[
+            weekday
+        ][
+            "enabled"
+        ] = enabled
+
+        schedule[
+            weekday
+        ][
+            "minutes"
+        ] = minutes
+
+    return schedule
 
 
 # ============================================================
@@ -1496,7 +1731,7 @@ def subject_detail(
         )
 
         # ----------------------------------------------------
-        # FIND BY DATABASE ID
+        # DATABASE ID
         # ----------------------------------------------------
 
         if database_subject_id:
@@ -1536,7 +1771,7 @@ def subject_detail(
                 )
 
         # ----------------------------------------------------
-        # DELETE DATABASE SUBJECT
+        # DELETE DB
         # ----------------------------------------------------
 
         if database_subject:
@@ -1544,7 +1779,7 @@ def subject_detail(
             database_subject.delete()
 
         # ----------------------------------------------------
-        # DELETE SESSION SUBJECT
+        # DELETE SESSION
         # ----------------------------------------------------
 
         subjects.pop(
@@ -1572,7 +1807,7 @@ def subject_detail(
         )
 
     # ========================================================
-    # SAVE SUBJECT INFORMATION
+    # SAVE SUBJECT
     # ========================================================
 
     if (
@@ -1668,7 +1903,7 @@ def subject_detail(
             )
 
     # --------------------------------------------------------
-    # CREATE DATABASE SUBJECT
+    # CREATE
     # --------------------------------------------------------
 
     if not database_subject:
@@ -1691,7 +1926,7 @@ def subject_detail(
             )
 
     # --------------------------------------------------------
-    # SYNCHRONIZE DATABASE NAME
+    # UPDATE NAME
     # --------------------------------------------------------
 
     if database_subject:
@@ -1722,7 +1957,7 @@ def subject_detail(
             )
 
     # --------------------------------------------------------
-    # SAVE DATABASE ID INTO SESSION
+    # SAVE DATABASE ID
     # --------------------------------------------------------
 
     if database_subject:
@@ -1814,14 +2049,10 @@ def subject_detail(
             parsed_exam_date = None
 
     # ========================================================
-    # CALCULATE DAYS
+    # CALCULATE STUDY DAYS LEFT
     # ========================================================
 
     if parsed_exam_date is not None:
-
-        # ----------------------------------------------------
-        # CALENDAR DAYS
-        # ----------------------------------------------------
 
         days_until_exam = max(
             0,
@@ -1830,10 +2061,6 @@ def subject_detail(
                 - today
             ).days
         )
-
-        # ----------------------------------------------------
-        # STUDY AVAILABILITY
-        # ----------------------------------------------------
 
         availability = (
             StudyAvailability.objects
@@ -1893,13 +2120,6 @@ def subject_detail(
                         weekday_number
                     )
 
-        # ----------------------------------------------------
-        # COUNT STUDY DAYS
-        #
-        # Today counts if selected.
-        # Exam day does not count.
-        # ----------------------------------------------------
-
         study_days_left = 0
 
         if (
@@ -1926,16 +2146,10 @@ def subject_detail(
                 )
 
     # ========================================================
-    # FORM ERRORS
+    # TEXTBOOK ERROR
     # ========================================================
 
     textbook_error = None
-
-    revision_error = None
-
-    revision_form_attempted = False
-
-    revision_input_value = ""
 
     # ========================================================
     # ADD TEXTBOOK
@@ -1963,19 +2177,11 @@ def subject_detail(
             .strip()
         )
 
-        # ----------------------------------------------------
-        # SUBJECT MUST EXIST
-        # ----------------------------------------------------
-
         if not database_subject:
 
             textbook_error = (
                 "Save the subject before adding a textbook."
             )
-
-        # ----------------------------------------------------
-        # NAME REQUIRED
-        # ----------------------------------------------------
 
         elif not textbook_name:
 
@@ -2005,10 +2211,6 @@ def subject_detail(
                     "greater than 0."
                 )
 
-        # ----------------------------------------------------
-        # SAVE
-        # ----------------------------------------------------
-
         if textbook_error is None:
 
             SubjectTextbook.objects.create(
@@ -2022,7 +2224,6 @@ def subject_detail(
                 subject_index=subject_index
             )
 
-
     # ========================================================
     # AUTOSAVE REVISION DAYS
     # ========================================================
@@ -2032,10 +2233,6 @@ def subject_detail(
         and
         action == "save_revision_days"
     ):
-
-        # ----------------------------------------------------
-        # SUBJECT MUST EXIST
-        # ----------------------------------------------------
 
         if not database_subject:
 
@@ -2050,10 +2247,6 @@ def subject_detail(
                 status=400,
             )
 
-        # ----------------------------------------------------
-        # EXAM DATE MUST EXIST
-        # ----------------------------------------------------
-
         if study_days_left is None:
 
             return JsonResponse(
@@ -2066,10 +2259,6 @@ def subject_detail(
                 },
                 status=400,
             )
-
-        # ----------------------------------------------------
-        # GET VALUE
-        # ----------------------------------------------------
 
         raw_revision_days = (
             request.POST.get(
@@ -2156,10 +2345,6 @@ def subject_detail(
 
         revision_plan.save()
 
-        # ----------------------------------------------------
-        # AJAX RESPONSE
-        # ----------------------------------------------------
-
         if (
             request.headers.get(
                 "X-Requested-With"
@@ -2170,6 +2355,7 @@ def subject_detail(
             return JsonResponse(
                 {
                     "success": True,
+
                     "revision_days":
                         revision_days_value,
 
@@ -2182,7 +2368,6 @@ def subject_detail(
             "subject_detail",
             subject_index=subject_index
         )
-
 
     # ========================================================
     # TEXTBOOKS
@@ -2211,7 +2396,6 @@ def subject_detail(
             in textbooks
         )
 
-
     # ========================================================
     # REVISION PLAN
     # ========================================================
@@ -2219,7 +2403,6 @@ def subject_detail(
     revision_plan = None
 
     revision_days = 0
-
 
     if database_subject:
 
@@ -2230,7 +2413,6 @@ def subject_detail(
             )
             .first()
         )
-
 
         if (
             revision_plan
@@ -2243,18 +2425,8 @@ def subject_detail(
                 revision_plan.revision_days
             )
 
-
     # ========================================================
-    # AUTOMATICALLY CAP REVISION DAYS
-    #
-    # Example:
-    # Student originally had 15 study days left and chose
-    # 10 revision days.
-    #
-    # Later their availability changes and they now only
-    # have 8 study days left.
-    #
-    # Revision days automatically becomes 8.
+    # CAP REVISION DAYS
     # ========================================================
 
     if (
@@ -2268,7 +2440,6 @@ def subject_detail(
             study_days_left
         )
 
-
         if revision_plan:
 
             revision_plan.revision_days = (
@@ -2277,21 +2448,397 @@ def subject_detail(
 
             revision_plan.save()
 
+    # ========================================================
+    # PAGES TO SUMMARIZE TODAY
+    # ========================================================
+
+    pages_to_summarize = []
+
+    pages_to_summarize_total = 0
+
+    pages_today_weekday = (
+        today.strftime(
+            "%A"
+        )
+    )
+
+    pages_today_weekday_count = 0
+
+    pages_today_study_time = ""
+
+    pages_today_weekday_total_time = ""
+
+    pages_total_learning_time = ""
+
+    pages_today_weekday_percentage = 0
+
+    today_is_learning_day = False
+
     # --------------------------------------------------------
-    # VALUE DISPLAYED IN INPUT
+    # REQUIRE:
+    #
+    # - Valid future exam
+    # - Subject
+    # - Textbooks
     # --------------------------------------------------------
 
-    if not revision_form_attempted:
+    if (
+        parsed_exam_date is not None
+        and
+        parsed_exam_date > today
+        and
+        database_subject
+        and
+        textbooks
+    ):
 
-        if revision_days is None:
+        # ----------------------------------------------------
+        # GET AVAILABILITY
+        # ----------------------------------------------------
 
-            revision_input_value = ""
+        page_availability = (
+            StudyAvailability.objects
+            .filter(
+                user=request.user
+            )
+            .first()
+        )
+
+        weekday_schedule = (
+            get_availability_by_weekday(
+                page_availability
+            )
+        )
+
+        # ====================================================
+        # BUILD ALL REMAINING STUDY DATES
+        # ====================================================
+
+        remaining_study_dates = []
+
+        current_date = today
+
+        while (
+            current_date
+            < parsed_exam_date
+        ):
+
+            weekday = (
+                current_date.weekday()
+            )
+
+            if (
+                weekday_schedule[
+                    weekday
+                ][
+                    "enabled"
+                ]
+            ):
+
+                remaining_study_dates.append(
+                    current_date
+                )
+
+            current_date += timedelta(
+                days=1
+            )
+
+        # ====================================================
+        # REMOVE REVISION DAYS FROM LEARNING PERIOD
+        #
+        # Revision days are always the FINAL selected
+        # study days immediately before the exam.
+        # ====================================================
+
+        revision_days_for_schedule = int(
+            revision_days
+            or 0
+        )
+
+        revision_days_for_schedule = max(
+            0,
+            min(
+                revision_days_for_schedule,
+                len(
+                    remaining_study_dates
+                )
+            )
+        )
+
+        if (
+            revision_days_for_schedule
+            > 0
+        ):
+
+            learning_dates = (
+                remaining_study_dates[
+                    :-revision_days_for_schedule
+                ]
+            )
 
         else:
 
-            revision_input_value = str(
-                revision_days
+            learning_dates = list(
+                remaining_study_dates
             )
+
+        # ====================================================
+        # REMOVE DAYS WITH ZERO HOURS
+        # ====================================================
+
+        learning_dates_with_time = []
+
+        for learning_date in (
+            learning_dates
+        ):
+
+            weekday = (
+                learning_date.weekday()
+            )
+
+            minutes = (
+                weekday_schedule[
+                    weekday
+                ][
+                    "minutes"
+                ]
+            )
+
+            if minutes > 0:
+
+                learning_dates_with_time.append(
+                    learning_date
+                )
+
+        # ====================================================
+        # COUNT WEEKDAYS
+        #
+        # Example:
+        # Monday = 5
+        # Tuesday = 5
+        # Friday = 6
+        # ====================================================
+
+        weekday_counts = Counter(
+            learning_date.weekday()
+            for learning_date
+            in learning_dates_with_time
+        )
+
+        # ====================================================
+        # TOTAL REMAINING LEARNING TIME
+        # ====================================================
+
+        total_learning_minutes = sum(
+
+            weekday_schedule[
+                learning_date.weekday()
+            ][
+                "minutes"
+            ]
+
+            for learning_date
+            in learning_dates_with_time
+
+        )
+
+        pages_total_learning_time = (
+            format_study_minutes(
+                total_learning_minutes
+            )
+        )
+
+        # ====================================================
+        # TODAY'S STUDY TIME
+        # ====================================================
+
+        today_weekday = (
+            today.weekday()
+        )
+
+        today_minutes = (
+            weekday_schedule[
+                today_weekday
+            ][
+                "minutes"
+            ]
+        )
+
+        pages_today_study_time = (
+            format_study_minutes(
+                today_minutes
+            )
+        )
+
+        # ====================================================
+        # IS TODAY A LEARNING DAY?
+        # ====================================================
+
+        if (
+            today
+            in learning_dates_with_time
+            and
+            total_learning_minutes > 0
+            and
+            today_minutes > 0
+        ):
+
+            today_is_learning_day = True
+
+            # ------------------------------------------------
+            # HOW MANY OF TODAY'S WEEKDAY REMAIN?
+            #
+            # Example:
+            # 6 Fridays
+            # ------------------------------------------------
+
+            pages_today_weekday_count = (
+                weekday_counts.get(
+                    today_weekday,
+                    0
+                )
+            )
+
+            # ------------------------------------------------
+            # TOTAL TIME ACROSS THIS WEEKDAY
+            #
+            # 6 Fridays × 2 hours
+            # = 12 hours
+            # ------------------------------------------------
+
+            weekday_total_minutes = (
+                pages_today_weekday_count
+                *
+                today_minutes
+            )
+
+            pages_today_weekday_total_time = (
+                format_study_minutes(
+                    weekday_total_minutes
+                )
+            )
+
+            # ------------------------------------------------
+            # WEEKDAY PERCENTAGE OF ALL LEARNING TIME
+            #
+            # 12 Friday hours / 120 total
+            # = 10%
+            # ------------------------------------------------
+
+            pages_today_weekday_percentage = (
+                round(
+                    (
+                        weekday_total_minutes
+                        /
+                        total_learning_minutes
+                    )
+                    * 100,
+                    2,
+                )
+            )
+
+            # =================================================
+            # ALLOCATE PAGES PER TEXTBOOK
+            # =================================================
+
+            for textbook in textbooks:
+
+                # --------------------------------------------
+                # PAGES ALLOCATED TO THIS WEEKDAY
+                #
+                # 100 pages × 10%
+                # = 10 pages across Fridays
+                # --------------------------------------------
+
+                weekday_pages_exact = (
+                    textbook.page_count
+                    *
+                    (
+                        weekday_total_minutes
+                        /
+                        total_learning_minutes
+                    )
+                )
+
+                # --------------------------------------------
+                # PAGES PER OCCURRENCE
+                #
+                # 10 pages / 6 Fridays
+                # = 1.67 per Friday
+                # --------------------------------------------
+
+                if (
+                    pages_today_weekday_count
+                    > 0
+                ):
+
+                    pages_today_exact = (
+                        weekday_pages_exact
+                        /
+                        pages_today_weekday_count
+                    )
+
+                else:
+
+                    pages_today_exact = 0
+
+                # --------------------------------------------
+                # ROUND TO WHOLE PAGES
+                #
+                # 1.67 -> 2
+                # 1.20 -> 1
+                # --------------------------------------------
+
+                if (
+                    pages_today_exact
+                    > 0
+                ):
+
+                    pages_today = int(
+                        pages_today_exact
+                        + 0.5
+                    )
+
+                    pages_today = max(
+                        1,
+                        pages_today
+                    )
+
+                else:
+
+                    pages_today = 0
+
+                # --------------------------------------------
+                # ADD
+                # --------------------------------------------
+
+                if pages_today > 0:
+
+                    pages_to_summarize.append(
+                        {
+                            "textbook":
+                                textbook,
+
+                            "pages":
+                                pages_today,
+
+                            "exact_pages":
+                                round(
+                                    pages_today_exact,
+                                    2
+                                ),
+
+                            "weekday_pages":
+                                round(
+                                    weekday_pages_exact,
+                                    2
+                                ),
+                        }
+                    )
+
+                    pages_to_summarize_total += (
+                        pages_today
+                    )
 
     # ========================================================
     # REVIEW LISTS
@@ -2512,12 +3059,6 @@ def subject_detail(
             "revision_days":
                 revision_days,
 
-            "revision_input_value":
-                revision_input_value,
-
-            "revision_error":
-                revision_error,
-
             # --------------------------------------------
             # COUNTDOWN
             # --------------------------------------------
@@ -2527,6 +3068,37 @@ def subject_detail(
 
             "study_days_left":
                 study_days_left,
+
+            # --------------------------------------------
+            # PAGES TO SUMMARIZE
+            # --------------------------------------------
+
+            "pages_to_summarize":
+                pages_to_summarize,
+
+            "pages_to_summarize_total":
+                pages_to_summarize_total,
+
+            "pages_today_weekday":
+                pages_today_weekday,
+
+            "pages_today_weekday_count":
+                pages_today_weekday_count,
+
+            "pages_today_study_time":
+                pages_today_study_time,
+
+            "pages_today_weekday_total_time":
+                pages_today_weekday_total_time,
+
+            "pages_total_learning_time":
+                pages_total_learning_time,
+
+            "pages_today_weekday_percentage":
+                pages_today_weekday_percentage,
+
+            "today_is_learning_day":
+                today_is_learning_day,
 
             # --------------------------------------------
             # REVIEWS
@@ -2615,7 +3187,7 @@ def definition(
     ]
 
     # --------------------------------------------------------
-    # FIND DATABASE SUBJECT
+    # DATABASE SUBJECT
     # --------------------------------------------------------
 
     database_subject = None
@@ -2643,7 +3215,8 @@ def definition(
             subject_data.get(
                 "name",
                 ""
-            ).strip()
+            )
+            .strip()
         )
 
         if subject_name:
@@ -2663,20 +3236,28 @@ def definition(
 
     if request.method == "POST":
 
-        term = request.POST.get(
-            "term",
-            ""
-        ).strip()
+        term = (
+            request.POST.get(
+                "term",
+                ""
+            )
+            .strip()
+        )
 
-        meaning = request.POST.get(
-            "meaning",
-            ""
-        ).strip()
+        meaning = (
+            request.POST.get(
+                "meaning",
+                ""
+            )
+            .strip()
+        )
 
         if (
             term
-            and meaning
-            and database_subject
+            and
+            meaning
+            and
+            database_subject
         ):
 
             knowledge_unit = (
@@ -2706,7 +3287,7 @@ def definition(
         )
 
     # --------------------------------------------------------
-    # GET EXISTING DEFINITIONS
+    # EXISTING DEFINITIONS
     # --------------------------------------------------------
 
     definitions = []
@@ -2902,7 +3483,7 @@ def review_formulas(request):
 def progress(request):
 
     # --------------------------------------------------------
-    # GET ALL SUBJECTS FOR THIS STUDENT
+    # SUBJECTS
     # --------------------------------------------------------
 
     subjects = (
@@ -2916,7 +3497,7 @@ def progress(request):
     )
 
     # --------------------------------------------------------
-    # GET ALL KNOWLEDGE UNITS
+    # KNOWLEDGE UNITS
     # --------------------------------------------------------
 
     knowledge_units = (
@@ -2931,7 +3512,7 @@ def progress(request):
     )
 
     # --------------------------------------------------------
-    # GET STUDENT PROGRESS
+    # PROGRESS RECORDS
     # --------------------------------------------------------
 
     progress_records = (
@@ -2947,7 +3528,7 @@ def progress(request):
     )
 
     # --------------------------------------------------------
-    # OVERALL STATISTICS
+    # OVERALL
     # --------------------------------------------------------
 
     total_knowledge = (
@@ -2980,7 +3561,8 @@ def progress(request):
 
     total_reviews = (
         total_correct
-        + total_incorrect
+        +
+        total_incorrect
     )
 
     # --------------------------------------------------------
@@ -2992,7 +3574,8 @@ def progress(request):
         accuracy = round(
             (
                 total_correct
-                / total_reviews
+                /
+                total_reviews
             )
             * 100
         )
@@ -3010,7 +3593,8 @@ def progress(request):
         overall_mastery = round(
             (
                 mastered_count
-                / total_knowledge
+                /
+                total_knowledge
             )
             * 100
         )
@@ -3079,15 +3663,21 @@ def progress(request):
 
         subject_total_answers = (
             subject_correct
-            + subject_incorrect
+            +
+            subject_incorrect
         )
+
+        # ----------------------------------------------------
+        # ACCURACY
+        # ----------------------------------------------------
 
         if subject_total_answers > 0:
 
             subject_accuracy = round(
                 (
                     subject_correct
-                    / subject_total_answers
+                    /
+                    subject_total_answers
                 )
                 * 100
             )
@@ -3096,13 +3686,22 @@ def progress(request):
 
             subject_accuracy = 0
 
+        # ----------------------------------------------------
+        # MASTERY
+        # ----------------------------------------------------
+
         subject_mastery = round(
             (
                 subject_mastered
-                / subject_unit_count
+                /
+                subject_unit_count
             )
             * 100
         )
+
+        # ----------------------------------------------------
+        # ADD RESULT
+        # ----------------------------------------------------
 
         subject_progress.append(
             {

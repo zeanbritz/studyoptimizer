@@ -47,6 +47,196 @@
 
         }
 
+        /* =========================================
+   PAGES TO SUMMARIZE
+========================================= */
+
+.pages-review-category {
+
+    cursor: default;
+
+}
+
+
+.pages-review-category:hover {
+
+    background: white;
+
+}
+
+
+.pages-review-header {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 15px;
+
+}
+
+
+.pages-review-title {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+}
+
+
+.pages-review-title h3 {
+
+    margin: 0;
+
+    font-size: 16px;
+
+}
+
+
+.pages-review-count {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    min-width: 26px;
+
+    height: 26px;
+
+    padding:
+        0
+        8px;
+
+    border-radius: 20px;
+
+    background: #8BF527;
+
+    color: #24351a;
+
+    font-size: 12px;
+
+    font-weight: 800;
+
+}
+
+
+.pages-review-description {
+
+    margin:
+        10px
+        0
+        0;
+
+    color: #888;
+
+    font-size: 13px;
+
+    line-height: 1.45;
+
+}
+
+
+.pages-review-breakdown {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 8px;
+
+    margin-top: 14px;
+
+    padding-top: 14px;
+
+    border-top:
+        1px solid
+        #eeeeee;
+
+}
+
+
+.pages-review-book {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 15px;
+
+    padding:
+        10px
+        12px;
+
+    border-radius: 8px;
+
+    background: #f5f6f8;
+
+}
+
+
+.pages-review-book-name {
+
+    min-width: 0;
+
+    color: #333;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+}
+
+
+.pages-review-book-pages {
+
+    flex-shrink: 0;
+
+    color: #222;
+
+    font-size: 13px;
+
+    font-weight: 800;
+
+}
+
+
+.pages-review-calculation {
+
+    margin-top: 12px;
+
+    padding:
+        10px
+        12px;
+
+    border-radius: 8px;
+
+    background: #f6faf3;
+
+    color: #5c6757;
+
+    font-size: 11px;
+
+    font-weight: 600;
+
+    line-height: 1.5;
+
+}
+
 
         /* =========================================
            APP
@@ -3001,6 +3191,129 @@
 
                         <div class="review-categories">
 
+                            <!-- =====================================
+     PAGES TO SUMMARIZE
+====================================== -->
+
+{% if pages_to_summarize_total %}
+
+
+    <div
+        class="review-category pages-review-category"
+    >
+
+
+        <div class="pages-review-header">
+
+
+            <div class="pages-review-title">
+
+
+                <h3>
+                    Pages to Summarize
+                </h3>
+
+
+                <span class="pages-review-count">
+
+                    {{ pages_to_summarize_total }}
+
+                </span>
+
+
+            </div>
+
+
+            <span>
+                📖
+            </span>
+
+
+        </div>
+
+
+        <p class="pages-review-description">
+
+            Recommended textbook pages to summarize today
+            based on your available study time.
+
+        </p>
+
+
+        <!-- =============================
+             PER BOOK
+        ============================== -->
+
+        <div class="pages-review-breakdown">
+
+
+            {% for item in pages_to_summarize %}
+
+
+                <div class="pages-review-book">
+
+
+                    <span class="pages-review-book-name">
+
+                        {{ item.textbook.name }}
+
+                    </span>
+
+
+                    <span class="pages-review-book-pages">
+
+                        {{ item.pages }}
+
+                        page{{ item.pages|pluralize }}
+
+                    </span>
+
+
+                </div>
+
+
+            {% endfor %}
+
+
+        </div>
+
+
+        <!-- =============================
+             CALCULATION EXPLANATION
+        ============================== -->
+
+        <div class="pages-review-calculation">
+
+            {{ pages_today_weekday }} occurs
+
+            {{ pages_today_weekday_count }}
+
+            more time{{ pages_today_weekday_count|pluralize }}
+
+            during your learning period.
+
+            Each {{ pages_today_weekday }}
+            has {{ pages_today_study_time }}
+            available,
+
+            giving
+            {{ pages_today_weekday_total_time }}
+            across all remaining
+            {{ pages_today_weekday }}s.
+
+            This represents
+            {{ pages_today_weekday_percentage }}%
+            of your remaining
+            {{ pages_total_learning_time }}
+            of learning time.
+
+        </div>
+
+
+    </div>
+
+
+{% endif %}
 
                             <!-- FORMULAS -->
 
@@ -3096,7 +3409,7 @@
 
                             <!-- EMPTY -->
 
-                            {% if not due_formulas and not due_definitions and not due_bullet_lists %}
+                            {% if not pages_to_summarize_total and not due_formulas and not due_definitions and not due_bullet_lists %}
 
 
                                 <div class="empty-review">
