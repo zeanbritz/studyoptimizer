@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.validators import MinValueValidator
 from django.db import models
 
 
@@ -125,4 +126,67 @@ class StudyAvailability(models.Model):
         return (
             f"Study availability - "
             f"{self.user}"
+        )
+
+
+# ============================================================
+# SUBJECT TEXTBOOK
+# ============================================================
+
+class SubjectTextbook(models.Model):
+
+    subject = models.ForeignKey(
+        "learning.Subject",
+        on_delete=models.CASCADE,
+        related_name="study_textbooks",
+    )
+
+    name = models.CharField(
+        max_length=255
+    )
+
+    page_count = models.PositiveIntegerField(
+        validators=[
+            MinValueValidator(1)
+        ]
+    )
+
+    created = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+
+        return (
+            f"{self.name} "
+            f"({self.page_count} pages)"
+        )
+
+
+# ============================================================
+# SUBJECT REVISION PLAN
+# ============================================================
+
+class SubjectRevisionPlan(models.Model):
+
+    subject = models.OneToOneField(
+        "learning.Subject",
+        on_delete=models.CASCADE,
+        related_name="revision_plan",
+    )
+
+    revision_days = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    def __str__(self):
+
+        return (
+            f"{self.subject.name} - "
+            f"{self.revision_days} revision days"
         )

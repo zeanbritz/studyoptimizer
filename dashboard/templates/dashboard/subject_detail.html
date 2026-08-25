@@ -277,11 +277,6 @@
 
             cursor: pointer;
 
-            transition:
-                background 0.15s ease,
-                border-color 0.15s ease,
-                transform 0.15s ease;
-
         }
 
 
@@ -289,16 +284,11 @@
 
             background: #f4f4f4;
 
-            border-color: #c8c8c8;
-
-            transform:
-                translateY(-1px);
-
         }
 
 
         /* =========================================
-           DISPLAY MODE
+           SUBJECT DISPLAY
         ========================================= */
 
         .subject-information-display {
@@ -361,7 +351,7 @@
         }
 
 
-        .display-value.subject-name-display {
+        .subject-name-display {
 
             font-size: 21px;
 
@@ -380,7 +370,430 @@
 
 
         /* =========================================
-           EXAM / STUDY COUNTDOWN
+           STUDY MATERIALS SECTION
+        ========================================= */
+
+        .study-materials {
+
+            margin-top: 24px;
+
+            padding-top: 22px;
+
+            border-top:
+                1px solid
+                #eeeeee;
+
+        }
+
+
+        .materials-header {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            gap: 15px;
+
+            margin-bottom: 14px;
+
+        }
+
+
+        .materials-header h3 {
+
+            margin:
+                0
+                0
+                4px;
+
+            font-size: 18px;
+
+        }
+
+
+        .materials-header p {
+
+            margin: 0;
+
+            color: #888;
+
+            font-size: 12px;
+
+        }
+
+
+        .add-textbook-button {
+
+            flex-shrink: 0;
+
+            border: none;
+
+            border-radius: 8px;
+
+            background: #222;
+
+            color: white;
+
+            padding:
+                10px
+                15px;
+
+            font-family: inherit;
+
+            font-size: 13px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+
+        }
+
+
+        .add-textbook-button:hover {
+
+            background: #333;
+
+        }
+
+
+        .add-textbook-button:disabled {
+
+            background: #b5b5b5;
+
+            cursor: not-allowed;
+
+        }
+
+
+        /* =========================================
+           TEXTBOOK LIST
+        ========================================= */
+
+        .textbook-list {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(
+                    3,
+                    minmax(0, 1fr)
+                );
+
+            gap: 10px;
+
+        }
+
+
+        .textbook-card {
+
+            padding:
+                14px
+                15px;
+
+            border:
+                1px solid
+                #e1e4e7;
+
+            border-radius: 9px;
+
+            background: #f5f6f8;
+
+        }
+
+
+        .textbook-name {
+
+            display: block;
+
+            margin-bottom: 5px;
+
+            color: #222;
+
+            font-size: 14px;
+
+            font-weight: 700;
+
+            line-height: 1.35;
+
+        }
+
+
+        .textbook-pages {
+
+            color: #777;
+
+            font-size: 12px;
+
+            font-weight: 600;
+
+        }
+
+
+        .empty-textbooks {
+
+            padding:
+                16px;
+
+            border:
+                1px dashed
+                #d8d8d8;
+
+            border-radius: 9px;
+
+            color: #888;
+
+            font-size: 13px;
+
+            text-align: center;
+
+        }
+
+
+        /* =========================================
+           TOTAL PAGES
+        ========================================= */
+
+        .textbook-total {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            margin-top: 12px;
+
+            padding:
+                12px
+                15px;
+
+            border-radius: 9px;
+
+            background: #eef0f2;
+
+            color: #555;
+
+            font-size: 13px;
+
+            font-weight: 600;
+
+        }
+
+
+        .textbook-total strong {
+
+            color: #222;
+
+            font-size: 17px;
+
+            font-weight: 800;
+
+        }
+
+
+        /* =========================================
+           REVISION DAYS
+        ========================================= */
+
+        .revision-section {
+
+            margin-top: 20px;
+
+            padding-top: 20px;
+
+            border-top:
+                1px solid
+                #eeeeee;
+
+        }
+
+
+        .revision-row {
+
+            display: flex;
+
+            align-items: flex-end;
+
+            justify-content: space-between;
+
+            gap: 20px;
+
+        }
+
+
+        .revision-copy {
+
+            flex: 1;
+
+        }
+
+
+        .revision-copy h3 {
+
+            margin:
+                0
+                0
+                4px;
+
+            font-size: 16px;
+
+        }
+
+
+        .revision-copy p {
+
+            margin: 0;
+
+            color: #888;
+
+            font-size: 12px;
+
+            line-height: 1.45;
+
+        }
+
+
+        .revision-controls {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 8px;
+
+        }
+
+
+        .revision-input {
+
+            width: 100px;
+
+            padding:
+                10px
+                11px;
+
+            border:
+                1px solid
+                #d8d8d8;
+
+            border-radius: 8px;
+
+            background: white;
+
+            color: #222;
+
+            font-family: inherit;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            outline: none;
+
+        }
+
+
+        .revision-input:focus {
+
+            border-color: #222;
+
+        }
+
+
+        .revision-input:disabled {
+
+            background: #eeeeee;
+
+            color: #aaa;
+
+        }
+
+
+        .revision-save-button {
+
+            border: none;
+
+            border-radius: 8px;
+
+            background: #222;
+
+            color: white;
+
+            padding:
+                11px
+                16px;
+
+            font-family: inherit;
+
+            font-size: 13px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+
+        }
+
+
+        .revision-save-button:hover {
+
+            background: #333;
+
+        }
+
+
+        .revision-save-button:disabled {
+
+            background: #b8b8b8;
+
+            cursor: not-allowed;
+
+        }
+
+
+        .revision-error {
+
+            margin-top: 12px;
+
+            padding:
+                10px
+                12px;
+
+            border:
+                1px solid
+                #e2bcbc;
+
+            border-radius: 8px;
+
+            background: #fff4f4;
+
+            color: #9c3434;
+
+            font-size: 12px;
+
+            font-weight: 600;
+
+            line-height: 1.45;
+
+        }
+
+
+        .revision-saved {
+
+            margin-top: 9px;
+
+            color: #62705c;
+
+            font-size: 12px;
+
+            font-weight: 600;
+
+        }
+
+
+        /* =========================================
+           COUNTDOWN
         ========================================= */
 
         .subject-countdown-grid {
@@ -461,8 +874,6 @@
 
             font-size: 12px;
 
-            line-height: 1.35;
-
         }
 
 
@@ -481,17 +892,8 @@
         }
 
 
-        .countdown-value-empty {
-
-            color: #aaa;
-
-            font-size: 18px;
-
-        }
-
-
         /* =========================================
-           EDIT MODE
+           SUBJECT EDIT MODE
         ========================================= */
 
         .subject-edit-form {
@@ -526,10 +928,6 @@
 
         }
 
-
-        /* =========================================
-           INFORMATION GRID
-        ========================================= */
 
         .information-grid {
 
@@ -594,22 +992,9 @@
         }
 
 
-        .field input:focus {
-
-            border-color: #222;
-
-        }
-
-
-        /* =========================================
-           EDIT ACTIONS
-        ========================================= */
-
         .information-footer {
 
             display: flex;
-
-            align-items: center;
 
             justify-content: flex-end;
 
@@ -642,18 +1027,7 @@
 
             font-family: inherit;
 
-            font-size: 14px;
-
-            font-weight: 600;
-
             cursor: pointer;
-
-        }
-
-
-        .save-button:hover {
-
-            background: #333;
 
         }
 
@@ -676,18 +1050,7 @@
 
             font-family: inherit;
 
-            font-size: 14px;
-
-            font-weight: 600;
-
             cursor: pointer;
-
-        }
-
-
-        .cancel-edit-button:hover {
-
-            background: #f5f5f5;
 
         }
 
@@ -719,8 +1082,6 @@
 
             gap: 14px;
 
-            min-width: 0;
-
         }
 
 
@@ -742,12 +1103,6 @@
 
 
         .workspace-header {
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: space-between;
 
             margin-bottom: 22px;
 
@@ -778,7 +1133,7 @@
 
 
         /* =========================================
-           SUMMARIZE
+           SUMMARY
         ========================================= */
 
         .summary-options {
@@ -818,22 +1173,12 @@
 
             color: inherit;
 
-            transition:
-                background 0.15s ease,
-                border-color 0.15s ease,
-                transform 0.15s ease;
-
         }
 
 
         .summary-option:hover {
 
             background: #f7f7f7;
-
-            border-color: #cfcfcf;
-
-            transform:
-                translateY(-1px);
 
         }
 
@@ -858,8 +1203,6 @@
 
             font-size: 13px;
 
-            line-height: 1.4;
-
         }
 
 
@@ -867,24 +1210,7 @@
            DELETE SUBJECT
         ========================================= */
 
-        .delete-subject-section {
-
-            display: flex;
-
-            justify-content: flex-start;
-
-        }
-
-
         .delete-subject-button {
-
-            display: inline-flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-            gap: 8px;
 
             padding:
                 10px
@@ -900,29 +1226,7 @@
 
             color: #a33a3a;
 
-            font-family: inherit;
-
-            font-size: 13px;
-
-            font-weight: 600;
-
             cursor: pointer;
-
-        }
-
-
-        .delete-subject-button:hover {
-
-            background: #fff5f5;
-
-            border-color: #c98f8f;
-
-        }
-
-
-        .bin-icon {
-
-            font-size: 15px;
 
         }
 
@@ -959,9 +1263,7 @@
 
             width: 100%;
 
-            padding:
-                11px
-                16px;
+            padding: 11px;
 
             border:
                 1px solid
@@ -971,20 +1273,7 @@
 
             background: white;
 
-            color: #444;
-
-            font-size: 13px;
-
-            font-weight: 600;
-
             cursor: pointer;
-
-        }
-
-
-        .reset-reviews-button:hover {
-
-            background: #f7f7f7;
 
         }
 
@@ -992,8 +1281,6 @@
         .review-category {
 
             display: block;
-
-            width: 100%;
 
             padding: 18px;
 
@@ -1005,8 +1292,6 @@
 
             background: white;
 
-            cursor: pointer;
-
             text-decoration: none;
 
             color: inherit;
@@ -1014,16 +1299,7 @@
         }
 
 
-        .review-category:hover {
-
-            background: #f7f7f7;
-
-        }
-
-
         .review-category-header {
-
-            width: 100%;
 
             display: flex;
 
@@ -1049,55 +1325,27 @@
 
             margin: 0;
 
-            font-size: 16px;
-
         }
 
 
         .review-count {
 
-            display: inline-flex;
-
-            align-items: center;
-
-            justify-content: center;
-
             min-width: 26px;
 
-            height: 26px;
-
-            padding:
-                0
-                7px;
+            padding: 5px 8px;
 
             border-radius: 20px;
 
             background: #f0f0f0;
 
-            color: #555;
+            text-align: center;
 
             font-size: 12px;
-
-            font-weight: 700;
-
-        }
-
-
-        .review-arrow {
-
-            color: #777;
-
-            font-size: 18px;
 
         }
 
 
         .review-description {
-
-            margin:
-                10px
-                0
-                0;
 
             color: #888;
 
@@ -1106,87 +1354,9 @@
         }
 
 
-        .review-content {
-
-            display: none;
-
-            margin-top: 15px;
-
-            flex-direction: column;
-
-            gap: 10px;
-
-        }
-
-
-        .review-category.open
-        .review-content {
-
-            display: flex;
-
-        }
-
-
-        .review-item {
-
-            display: block;
-
-            padding: 15px;
-
-            border:
-                1px solid
-                #e2e2e2;
-
-            border-radius: 9px;
-
-            background: white;
-
-        }
-
-
-        .review-item h4 {
-
-            margin:
-                0
-                0
-                7px;
-
-            font-size: 14px;
-
-        }
-
-
-        .review-item p {
-
-            margin: 0;
-
-            color: #777;
-
-            font-size: 13px;
-
-        }
-
-
-        .review-date {
-
-            display: inline-block;
-
-            margin-top: 8px;
-
-            color: #666;
-
-            font-size: 12px;
-
-            font-weight: 600;
-
-        }
-
-
         .empty-review {
 
-            padding:
-                35px
-                20px;
+            padding: 35px;
 
             text-align: center;
 
@@ -1202,10 +1372,10 @@
 
 
         /* =========================================
-           DELETE MODAL
+           MODALS
         ========================================= */
 
-        .delete-modal-overlay {
+        .modal-overlay {
 
             position: fixed;
 
@@ -1232,24 +1402,24 @@
         }
 
 
-        .delete-modal-overlay.open {
+        .modal-overlay.open {
 
             display: flex;
 
         }
 
 
-        .delete-modal {
+        .modal {
 
             width: 100%;
 
             max-width: 440px;
 
-            background: white;
+            padding: 28px;
 
             border-radius: 14px;
 
-            padding: 28px;
+            background: white;
 
             box-shadow:
                 0
@@ -1265,45 +1435,107 @@
         }
 
 
-        .delete-modal h2 {
+        .modal h2 {
 
             margin:
                 0
                 0
-                10px;
-
-            font-size: 22px;
+                8px;
 
         }
 
 
-        .delete-modal p {
+        .modal-description {
 
             margin:
                 0
                 0
-                24px;
+                20px;
 
-            color: #666;
+            color: #777;
+
+            font-size: 13px;
+
+        }
+
+
+        .modal-field {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 7px;
+
+            margin-bottom: 15px;
+
+        }
+
+
+        .modal-field label {
+
+            color: #555;
+
+            font-size: 13px;
+
+            font-weight: 600;
+
+        }
+
+
+        .modal-field input {
+
+            width: 100%;
+
+            padding: 12px;
+
+            border:
+                1px solid
+                #d8d8d8;
+
+            border-radius: 8px;
+
+            font-family: inherit;
 
             font-size: 14px;
 
-            line-height: 1.55;
+            outline: none;
 
         }
 
 
-        .delete-modal-actions {
+        .modal-error {
+
+            margin-bottom: 15px;
+
+            padding: 10px;
+
+            border-radius: 8px;
+
+            background: #fff4f4;
+
+            color: #9c3434;
+
+            font-size: 12px;
+
+            font-weight: 600;
+
+        }
+
+
+        .modal-actions {
 
             display: flex;
 
             gap: 10px;
 
+            margin-top: 20px;
+
         }
 
 
-        .confirm-delete-button,
-        .cancel-delete-button {
+        .modal-save-button,
+        .modal-cancel-button {
 
             flex: 1;
 
@@ -1313,8 +1545,6 @@
 
             font-family: inherit;
 
-            font-size: 14px;
-
             font-weight: 600;
 
             cursor: pointer;
@@ -1322,18 +1552,18 @@
         }
 
 
-        .confirm-delete-button {
+        .modal-save-button {
 
             border: none;
 
-            background: #a83d3d;
+            background: #222;
 
             color: white;
 
         }
 
 
-        .cancel-delete-button {
+        .modal-cancel-button {
 
             border:
                 1px solid
@@ -1346,24 +1576,33 @@
         }
 
 
+        .confirm-delete-button {
+
+            flex: 1;
+
+            border: none;
+
+            border-radius: 8px;
+
+            background: #a83d3d;
+
+            color: white;
+
+            padding: 12px;
+
+            cursor: pointer;
+
+        }
+
+
         /* =========================================
            RESPONSIVE
         ========================================= */
 
         @media (max-width: 900px) {
 
-            .page {
-
-                padding:
-                    25px
-                    20px
-                    40px;
-
-            }
-
-
-            .information-grid,
-            .information-display-grid {
+            .information-display-grid,
+            .information-grid {
 
                 grid-template-columns: 1fr;
 
@@ -1376,18 +1615,33 @@
 
             }
 
+
+            .textbook-list {
+
+                grid-template-columns:
+                    repeat(
+                        2,
+                        minmax(0, 1fr)
+                    );
+
+            }
+
         }
 
 
         @media (max-width: 600px) {
 
-            .subject-countdown-grid {
+            .page {
 
-                grid-template-columns: 1fr;
+                padding:
+                    25px
+                    20px;
 
             }
 
 
+            .textbook-list,
+            .subject-countdown-grid,
             .summary-options {
 
                 grid-template-columns: 1fr;
@@ -1395,40 +1649,33 @@
             }
 
 
-            .subject-selector {
-
-                min-width: 200px;
-
-                max-width:
-                    calc(
-                        100vw
-                        - 80px
-                    );
-
-                font-size: 24px;
-
-            }
-
-
-            .information-footer {
-
-                flex-direction: column-reverse;
+            .materials-header,
+            .revision-row {
 
                 align-items: stretch;
 
+                flex-direction: column;
+
             }
 
 
-            .save-button,
-            .cancel-edit-button,
-            .delete-subject-button {
+            .revision-controls {
 
                 width: 100%;
 
             }
 
 
-            .delete-modal-actions {
+            .revision-input {
+
+                flex: 1;
+
+                width: auto;
+
+            }
+
+
+            .modal-actions {
 
                 flex-direction: column;
 
@@ -1456,9 +1703,9 @@
         <div class="page">
 
 
-            <!-- =========================================
+            <!-- =================================
                  SUBJECT HEADER
-            ========================================= -->
+            ================================== -->
 
             <header class="header">
 
@@ -1484,9 +1731,7 @@
                                         selected
                                     {% endif %}
                                 >
-
                                     {{ subject_option.name|default:"New Subject" }}
-
                                 </option>
 
 
@@ -1510,9 +1755,9 @@
             </header>
 
 
-            <!-- =========================================
+            <!-- =================================
                  SUBJECT INFORMATION
-            ========================================= -->
+            ================================== -->
 
             <section
                 class="subject-information"
@@ -1524,24 +1769,21 @@
                     type="button"
                     class="subject-edit-button"
                     onclick="openSubjectEditor()"
-                    aria-label="Edit subject information"
                     title="Edit subject"
                 >
                     ✎
                 </button>
 
 
-                <!-- =====================================
-                     DISPLAY MODE
-                ====================================== -->
-
                 <div class="subject-information-display">
 
 
+                    <!-- =============================
+                         BASIC SUBJECT INFORMATION
+                    ============================== -->
+
                     <div class="information-display-grid">
 
-
-                        <!-- SUBJECT NAME -->
 
                         <div class="display-field">
 
@@ -1549,25 +1791,12 @@
                                 Subject name
                             </span>
 
-
-                            {% if subject.name %}
-
-                                <span class="display-value subject-name-display">
-                                    {{ subject.name }}
-                                </span>
-
-                            {% else %}
-
-                                <span class="display-value display-empty">
-                                    Not set
-                                </span>
-
-                            {% endif %}
+                            <span class="display-value subject-name-display">
+                                {{ subject.name|default:"Not set" }}
+                            </span>
 
                         </div>
 
-
-                        <!-- TARGET GRADE -->
 
                         <div class="display-field">
 
@@ -1575,25 +1804,18 @@
                                 Target grade
                             </span>
 
+                            <span class="display-value">
 
-                            {% if subject.target_grade %}
-
-                                <span class="display-value">
+                                {% if subject.target_grade %}
                                     {{ subject.target_grade }}%
-                                </span>
-
-                            {% else %}
-
-                                <span class="display-value display-empty">
+                                {% else %}
                                     Not set
-                                </span>
+                                {% endif %}
 
-                            {% endif %}
+                            </span>
 
                         </div>
 
-
-                        <!-- EXAM DATE -->
 
                         <div class="display-field">
 
@@ -1601,20 +1823,15 @@
                                 Exam date
                             </span>
 
+                            <span class="display-value">
 
-                            {% if subject.exam_date %}
-
-                                <span class="display-value">
+                                {% if subject.exam_date %}
                                     {{ subject.exam_date }}
-                                </span>
-
-                            {% else %}
-
-                                <span class="display-value display-empty">
+                                {% else %}
                                     Not set
-                                </span>
+                                {% endif %}
 
-                            {% endif %}
+                            </span>
 
                         </div>
 
@@ -1622,17 +1839,209 @@
                     </div>
 
 
-                    <!-- =================================
-                         EXAM / STUDY COUNTDOWN
-                    ================================== -->
+                    <!-- =============================
+                         STUDY MATERIALS
+                    ============================== -->
+
+                    <div class="study-materials">
+
+
+                        <div class="materials-header">
+
+
+                            <div>
+
+                                <h3>
+                                    Textbooks
+                                </h3>
+
+                                <p>
+                                    Add the textbooks and study material for this subject.
+                                </p>
+
+                            </div>
+
+
+                            <button
+                                type="button"
+                                class="add-textbook-button"
+                                onclick="openTextbookModal()"
+                                {% if not database_subject %}
+                                    disabled
+                                {% endif %}
+                            >
+                                + Add Textbook
+                            </button>
+
+
+                        </div>
+
+
+                        {% if textbooks %}
+
+
+                            <div class="textbook-list">
+
+
+                                {% for textbook in textbooks %}
+
+
+                                    <div class="textbook-card">
+
+                                        <span class="textbook-name">
+                                            {{ textbook.name }}
+                                        </span>
+
+                                        <span class="textbook-pages">
+                                            {{ textbook.page_count }}
+                                            page{{ textbook.page_count|pluralize }}
+                                        </span>
+
+                                    </div>
+
+
+                                {% endfor %}
+
+
+                            </div>
+
+
+                        {% else %}
+
+
+                            <div class="empty-textbooks">
+                                No textbooks added yet.
+                            </div>
+
+
+                        {% endif %}
+
+
+                        <div class="textbook-total">
+
+                            <span>
+                                Total textbook pages
+                            </span>
+
+                            <strong>
+                                {{ total_textbook_pages }}
+                            </strong>
+
+                        </div>
+
+
+                        <!-- =============================
+                             REVISION DAYS
+                        ============================== -->
+
+                        <div class="revision-section">
+
+
+                            <form method="POST">
+
+                                {% csrf_token %}
+
+
+                                <input
+                                    type="hidden"
+                                    name="action"
+                                    value="save_revision_days"
+                                >
+
+
+                                <div class="revision-row">
+
+
+                                    <div class="revision-copy">
+
+                                        <h3>
+                                            Revision Days
+                                        </h3>
+
+                                        <p>
+                                            Choose how many of your remaining study days
+                                            you want to reserve for revision.
+                                        </p>
+
+                                    </div>
+
+
+                                    <div class="revision-controls">
+
+
+                                        <input
+                                            type="number"
+                                            class="revision-input"
+                                            name="revision_days"
+                                            value="{{ revision_input_value }}"
+                                            min="0"
+                                            {% if study_days_left != None %}
+                                                max="{{ study_days_left }}"
+                                            {% endif %}
+                                            placeholder="Days"
+                                            {% if study_days_left == None %}
+                                                disabled
+                                            {% endif %}
+                                        >
+
+
+                                        <button
+                                            type="submit"
+                                            class="revision-save-button"
+                                            {% if study_days_left == None %}
+                                                disabled
+                                            {% endif %}
+                                        >
+                                            Save
+                                        </button>
+
+
+                                    </div>
+
+
+                                </div>
+
+
+                            </form>
+
+
+                            {% if revision_error %}
+
+                                <div class="revision-error">
+                                    {{ revision_error }}
+                                </div>
+
+                            {% endif %}
+
+
+                            {% if revision_days != None %}
+
+                                <div class="revision-saved">
+
+                                    {{ revision_days }}
+                                    study day{{ revision_days|pluralize }}
+                                    currently reserved for revision.
+
+                                </div>
+
+                            {% endif %}
+
+
+                        </div>
+
+
+                    </div>
+
+
+                    <!-- =============================
+                         COUNTDOWN
+                    ============================== -->
 
                     {% if subject.exam_date %}
 
 
                         <div class="subject-countdown-grid">
 
-
-                            <!-- DAYS UNTIL EXAM -->
 
                             <div class="countdown-card">
 
@@ -1650,25 +2059,13 @@
                                 </div>
 
 
-                                {% if days_until_exam != None %}
-
-                                    <span class="countdown-value">
-                                        {{ days_until_exam }}
-                                    </span>
-
-                                {% else %}
-
-                                    <span class="countdown-value countdown-value-empty">
-                                        —
-                                    </span>
-
-                                {% endif %}
+                                <span class="countdown-value">
+                                    {{ days_until_exam }}
+                                </span>
 
 
                             </div>
 
-
-                            <!-- STUDY DAYS LEFT -->
 
                             <div class="countdown-card">
 
@@ -1680,25 +2077,15 @@
                                     </span>
 
                                     <span class="countdown-description">
-                                        Based on your selected study days.
+                                        Based on your Study Availability.
                                     </span>
 
                                 </div>
 
 
-                                {% if study_days_left != None %}
-
-                                    <span class="countdown-value">
-                                        {{ study_days_left }}
-                                    </span>
-
-                                {% else %}
-
-                                    <span class="countdown-value countdown-value-empty">
-                                        —
-                                    </span>
-
-                                {% endif %}
+                                <span class="countdown-value">
+                                    {{ study_days_left }}
+                                </span>
 
 
                             </div>
@@ -1713,14 +2100,13 @@
                 </div>
 
 
-                <!-- =====================================
-                     EDIT MODE
-                ====================================== -->
+                <!-- =============================
+                     EDIT SUBJECT
+                ============================== -->
 
                 <form
                     method="POST"
                     class="subject-edit-form"
-                    id="subject-edit-form"
                 >
 
                     {% csrf_token %}
@@ -1738,15 +2124,15 @@
 
                         <div class="field">
 
-                            <label for="subject-name">
+                            <label>
                                 Subject name
                             </label>
 
                             <input
                                 id="subject-name"
                                 type="text"
-                                value="{{ subject.name }}"
                                 name="name"
+                                value="{{ subject.name }}"
                                 required
                             >
 
@@ -1755,15 +2141,14 @@
 
                         <div class="field">
 
-                            <label for="target-grade">
+                            <label>
                                 Target grade
                             </label>
 
                             <input
-                                id="target-grade"
                                 type="number"
-                                value="{{ subject.target_grade }}"
                                 name="target_grade"
+                                value="{{ subject.target_grade }}"
                                 min="0"
                                 max="100"
                                 required
@@ -1774,15 +2159,14 @@
 
                         <div class="field">
 
-                            <label for="exam-date">
+                            <label>
                                 Exam date
                             </label>
 
                             <input
-                                id="exam-date"
                                 type="date"
-                                value="{{ subject.exam_date }}"
                                 name="exam_date"
+                                value="{{ subject.exam_date }}"
                             >
 
                         </div>
@@ -1820,36 +2204,30 @@
             </section>
 
 
-            <!-- =========================================
+            <!-- =================================
                  WORKSPACE
-            ========================================= -->
+            ================================== -->
 
             <section class="workspace">
 
 
-                <!-- LEFT COLUMN -->
+                <!-- LEFT -->
 
                 <div class="workspace-column">
 
-
-                    <!-- SUMMARIZE -->
 
                     <div class="workspace-box">
 
 
                         <div class="workspace-header">
 
-                            <div>
+                            <h2>
+                                Summarize
+                            </h2>
 
-                                <h2>
-                                    Summarize
-                                </h2>
-
-                                <p>
-                                    Choose what you want to summarize.
-                                </p>
-
-                            </div>
+                            <p>
+                                Choose what you want to summarize.
+                            </p>
 
                         </div>
 
@@ -1859,68 +2237,24 @@
 
                             {% if database_subject %}
 
+
                                 <a
                                     href="{% url 'create_definition' subject_id=database_subject.id %}?subject_index={{ subject_index }}"
                                     class="summary-option"
                                 >
-
-                                    <h3>
-                                        Definition
-                                    </h3>
-
-                                    <p>
-                                        Define important terms and concepts.
-                                    </p>
-
+                                    <h3>Definition</h3>
+                                    <p>Define important terms and concepts.</p>
                                 </a>
 
-                            {% else %}
-
-                                <div class="summary-option">
-
-                                    <h3>
-                                        Definition
-                                    </h3>
-
-                                    <p>
-                                        Save the subject first before adding definitions.
-                                    </p>
-
-                                </div>
-
-                            {% endif %}
-
-
-                            {% if database_subject %}
 
                                 <a
                                     href="{% url 'create_formula' subject_id=database_subject.id %}"
                                     class="summary-option"
                                 >
-
-                                    <h3>
-                                        Formula
-                                    </h3>
-
-                                    <p>
-                                        Add important formulas for this subject.
-                                    </p>
-
+                                    <h3>Formula</h3>
+                                    <p>Add important formulas for this subject.</p>
                                 </a>
 
-                            {% else %}
-
-                                <div class="summary-option">
-
-                                    <h3>
-                                        Formula
-                                    </h3>
-
-                                    <p>
-                                        Save the subject first before adding formulas.
-                                    </p>
-
-                                </div>
 
                             {% endif %}
 
@@ -1929,15 +2263,8 @@
                                 type="button"
                                 class="summary-option"
                             >
-
-                                <h3>
-                                    List
-                                </h3>
-
-                                <p>
-                                    Summarize important items or characteristics.
-                                </p>
-
+                                <h3>List</h3>
+                                <p>Summarize important items or characteristics.</p>
                             </button>
 
 
@@ -1945,15 +2272,8 @@
                                 type="button"
                                 class="summary-option"
                             >
-
-                                <h3>
-                                    Steps
-                                </h3>
-
-                                <p>
-                                    Record a process or procedure step by step.
-                                </p>
-
+                                <h3>Steps</h3>
+                                <p>Record a process or procedure step by step.</p>
                             </button>
 
 
@@ -1961,15 +2281,8 @@
                                 type="button"
                                 class="summary-option"
                             >
-
-                                <h3>
-                                    Key Idea
-                                </h3>
-
-                                <p>
-                                    Capture the central idea of a topic.
-                                </p>
-
+                                <h3>Key Idea</h3>
+                                <p>Capture the central idea of a topic.</p>
                             </button>
 
 
@@ -1977,15 +2290,8 @@
                                 type="button"
                                 class="summary-option"
                             >
-
-                                <h3>
-                                    Comparison
-                                </h3>
-
-                                <p>
-                                    Summarize the differences between concepts.
-                                </p>
-
+                                <h3>Comparison</h3>
+                                <p>Summarize differences between concepts.</p>
                             </button>
 
 
@@ -1995,9 +2301,7 @@
                     </div>
 
 
-                    <!-- DELETE -->
-
-                    <div class="delete-subject-section">
+                    <div>
 
 
                         <button
@@ -2005,13 +2309,7 @@
                             class="delete-subject-button"
                             onclick="openDeleteModal()"
                         >
-
-                            <span class="bin-icon">
-                                🗑
-                            </span>
-
-                            Delete Subject
-
+                            🗑 Delete Subject
                         </button>
 
 
@@ -2021,7 +2319,7 @@
                 </div>
 
 
-                <!-- RIGHT COLUMN -->
+                <!-- RIGHT -->
 
                 <div class="workspace-column">
 
@@ -2031,17 +2329,13 @@
 
                         <div class="workspace-header">
 
-                            <div>
+                            <h2>
+                                Review
+                            </h2>
 
-                                <h2>
-                                    Review
-                                </h2>
-
-                                <p>
-                                    Reviews scheduled for this subject.
-                                </p>
-
-                            </div>
+                            <p>
+                                Reviews scheduled for this subject.
+                            </p>
 
                         </div>
 
@@ -2056,15 +2350,12 @@
 
                                 {% csrf_token %}
 
-
                                 <button
                                     type="submit"
                                     class="reset-reviews-button"
-                                    onclick="return confirm('Make all formulas and definitions available for review again today?');"
                                 >
                                     Reset Today's Reviews
                                 </button>
-
 
                             </form>
 
@@ -2082,9 +2373,7 @@
                                     class="review-category"
                                 >
 
-
                                     <div class="review-category-header">
-
 
                                         <div class="review-category-title">
 
@@ -2098,19 +2387,13 @@
 
                                         </div>
 
-
-                                        <span class="review-arrow">
-                                            →
-                                        </span>
-
+                                        <span>→</span>
 
                                     </div>
-
 
                                     <p class="review-description">
                                         Formulas you need to review today.
                                     </p>
-
 
                                 </a>
 
@@ -2124,9 +2407,7 @@
                                     class="review-category"
                                 >
 
-
                                     <div class="review-category-header">
-
 
                                         <div class="review-category-title">
 
@@ -2140,98 +2421,15 @@
 
                                         </div>
 
-
-                                        <span class="review-arrow">
-                                            →
-                                        </span>
-
+                                        <span>→</span>
 
                                     </div>
-
 
                                     <p class="review-description">
                                         Definitions you need to review today.
                                     </p>
 
-
                                 </a>
-
-                            {% endif %}
-
-
-                            {% if due_bullet_lists %}
-
-                                <div class="review-category">
-
-
-                                    <div
-                                        class="review-category-header"
-                                        onclick="toggleReview(this)"
-                                    >
-
-                                        <div class="review-category-title">
-
-                                            <h3>
-                                                Lists to Review
-                                            </h3>
-
-                                            <span class="review-count">
-                                                {{ due_bullet_list_count }}
-                                            </span>
-
-                                        </div>
-
-
-                                        <span class="review-arrow">
-                                            ▼
-                                        </span>
-
-                                    </div>
-
-
-                                    <p class="review-description">
-                                        Lists you need to review today.
-                                    </p>
-
-
-                                    <div class="review-content">
-
-
-                                        {% for bullet_list in due_bullet_lists %}
-
-
-                                            <div class="review-item">
-
-
-                                                <h4>
-                                                    {{ bullet_list.question }}
-                                                </h4>
-
-
-                                                {% for item in bullet_list.items.all %}
-
-                                                    <p>
-                                                        • {{ item.text }}
-                                                    </p>
-
-                                                {% endfor %}
-
-
-                                                <span class="review-date">
-                                                    Review today
-                                                </span>
-
-
-                                            </div>
-
-
-                                        {% endfor %}
-
-
-                                    </div>
-
-
-                                </div>
 
                             {% endif %}
 
@@ -2239,9 +2437,7 @@
                             {% if not due_formulas and not due_definitions and not due_bullet_lists %}
 
                                 <div class="empty-review">
-
                                     No reviews due today.
-
                                 </div>
 
                             {% endif %}
@@ -2268,18 +2464,130 @@
 </div>
 
 
-<!-- =========================================
-     DELETE MODAL
-========================================= -->
+<!-- =================================
+     ADD TEXTBOOK MODAL
+================================== -->
 
 <div
-    class="delete-modal-overlay"
-    id="delete-modal"
-    onclick="handleModalBackground(event)"
+    class="modal-overlay"
+    id="textbook-modal"
+    onclick="handleTextbookBackground(event)"
 >
 
 
-    <div class="delete-modal">
+    <div class="modal">
+
+
+        <h2>
+            Add Textbook
+        </h2>
+
+
+        <p class="modal-description">
+            Add a textbook or other page-based study resource to this subject.
+        </p>
+
+
+        <form method="POST">
+
+            {% csrf_token %}
+
+
+            <input
+                type="hidden"
+                name="action"
+                value="add_textbook"
+            >
+
+
+            {% if textbook_error %}
+
+                <div class="modal-error">
+                    {{ textbook_error }}
+                </div>
+
+            {% endif %}
+
+
+            <div class="modal-field">
+
+                <label for="textbook-name">
+                    Textbook name
+                </label>
+
+                <input
+                    id="textbook-name"
+                    type="text"
+                    name="textbook_name"
+                    maxlength="255"
+                    required
+                >
+
+            </div>
+
+
+            <div class="modal-field">
+
+                <label for="textbook-pages">
+                    Number of pages
+                </label>
+
+                <input
+                    id="textbook-pages"
+                    type="number"
+                    name="page_count"
+                    min="1"
+                    step="1"
+                    required
+                >
+
+            </div>
+
+
+            <div class="modal-actions">
+
+
+                <button
+                    type="button"
+                    class="modal-cancel-button"
+                    onclick="closeTextbookModal()"
+                >
+                    Cancel
+                </button>
+
+
+                <button
+                    type="submit"
+                    class="modal-save-button"
+                >
+                    Save Textbook
+                </button>
+
+
+            </div>
+
+
+        </form>
+
+
+    </div>
+
+
+</div>
+
+
+<!-- =================================
+     DELETE SUBJECT MODAL
+================================== -->
+
+<div
+    class="modal-overlay"
+    id="delete-modal"
+    onclick="handleDeleteBackground(event)"
+>
+
+
+    <div class="modal">
 
 
         <h2>
@@ -2287,17 +2595,16 @@
         </h2>
 
 
-        <p>
+        <p class="modal-description">
 
             Are you sure you want to delete
 
             <strong>
-                {{ subject.name|default:"this subject" }}
+                {{ subject.name }}
             </strong>?
 
-            This will also remove the formulas,
-            definitions and review progress
-            connected to this subject.
+            This will also delete its textbooks,
+            formulas, definitions and review progress.
 
         </p>
 
@@ -2314,7 +2621,16 @@
             >
 
 
-            <div class="delete-modal-actions">
+            <div class="modal-actions">
+
+
+                <button
+                    type="button"
+                    class="modal-cancel-button"
+                    onclick="closeDeleteModal()"
+                >
+                    Cancel
+                </button>
 
 
                 <button
@@ -2322,15 +2638,6 @@
                     class="confirm-delete-button"
                 >
                     Yes, Delete Subject
-                </button>
-
-
-                <button
-                    type="button"
-                    class="cancel-delete-button"
-                    onclick="closeDeleteModal()"
-                >
-                    Cancel
                 </button>
 
 
@@ -2345,8 +2652,18 @@
 
 </div>
 
+<div
+    id="textbook-error-state"
+    data-has-error="{% if textbook_error %}true{% else %}false{% endif %}"
+    hidden
+></div>
+
 
 <script>
+
+    // =============================================
+    // SUBJECT SWITCH
+    // =============================================
 
     function changeSubject(select) {
 
@@ -2360,28 +2677,20 @@
     }
 
 
+    // =============================================
+    // SUBJECT EDITOR
+    // =============================================
+
     function openSubjectEditor() {
 
-        const subjectInformation =
-            document.getElementById(
+        document
+            .getElementById(
                 "subject-information"
+            )
+            .classList
+            .add(
+                "editing"
             );
-
-        subjectInformation.classList.add(
-            "editing"
-        );
-
-
-        const subjectName =
-            document.getElementById(
-                "subject-name"
-            );
-
-        if (subjectName) {
-
-            subjectName.focus();
-
-        }
 
     }
 
@@ -2400,19 +2709,75 @@
     }
 
 
-    function toggleReview(header) {
+    // =============================================
+    // TEXTBOOK MODAL
+    // =============================================
 
-        const category =
-            header.closest(
-                ".review-category"
+    function openTextbookModal() {
+
+        document
+            .getElementById(
+                "textbook-modal"
+            )
+            .classList
+            .add(
+                "open"
             );
 
-        category.classList.toggle(
-            "open"
-        );
+
+        const nameInput =
+            document.getElementById(
+                "textbook-name"
+            );
+
+
+        if (nameInput) {
+
+            setTimeout(
+                function() {
+
+                    nameInput.focus();
+
+                },
+                50
+            );
+
+        }
 
     }
 
+
+    function closeTextbookModal() {
+
+        document
+            .getElementById(
+                "textbook-modal"
+            )
+            .classList
+            .remove(
+                "open"
+            );
+
+    }
+
+
+    function handleTextbookBackground(event) {
+
+        if (
+            event.target.id
+            === "textbook-modal"
+        ) {
+
+            closeTextbookModal();
+
+        }
+
+    }
+
+
+    // =============================================
+    // DELETE MODAL
+    // =============================================
 
     function openDeleteModal() {
 
@@ -2442,7 +2807,7 @@
     }
 
 
-    function handleModalBackground(event) {
+    function handleDeleteBackground(event) {
 
         if (
             event.target.id
@@ -2456,6 +2821,10 @@
     }
 
 
+    // =============================================
+    // ESCAPE KEY
+    // =============================================
+
     document.addEventListener(
         "keydown",
         function(event) {
@@ -2465,6 +2834,8 @@
                 === "Escape"
             ) {
 
+                closeTextbookModal();
+
                 closeDeleteModal();
 
                 closeSubjectEditor();
@@ -2473,6 +2844,36 @@
 
         }
     );
+
+
+// =============================================
+// REOPEN TEXTBOOK MODAL IF SERVER VALIDATION
+// FAILED
+// =============================================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function() {
+
+        const textbookErrorState =
+            document.getElementById(
+                "textbook-error-state"
+            );
+
+
+        if (
+            textbookErrorState
+            &&
+            textbookErrorState.dataset.hasError
+            === "true"
+        ) {
+
+            openTextbookModal();
+
+        }
+
+    }
+);
 
 </script>
 

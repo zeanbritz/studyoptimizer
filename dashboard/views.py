@@ -13,7 +13,11 @@ from learning.models import (
     StudentKnowledge,
 )
 
-from .models import StudyAvailability
+from .models import (
+    StudyAvailability,
+    SubjectTextbook,
+    SubjectRevisionPlan,
+)
 
 
 # ============================================================
@@ -1382,7 +1386,7 @@ def subject_detail(
 ):
 
     # --------------------------------------------------------
-    # GET ONBOARDING PROFILE
+    # PROFILE
     # --------------------------------------------------------
 
     profile = request.session.get(
@@ -1396,7 +1400,7 @@ def subject_detail(
         )
 
     # --------------------------------------------------------
-    # GET SUBJECTS
+    # SUBJECTS
     # --------------------------------------------------------
 
     subjects = request.session.get(
@@ -1405,7 +1409,7 @@ def subject_detail(
     )
 
     # --------------------------------------------------------
-    # VALIDATE SUBJECT INDEX
+    # VALIDATE INDEX
     # --------------------------------------------------------
 
     try:
@@ -1445,148 +1449,171 @@ def subject_detail(
     # REQUIRED FIELDS
     # --------------------------------------------------------
 
-    if "definitions" not in subject_data:
+    subject_data.setdefault(
+        "definitions",
+        []
+    )
 
-        subject_data[
-            "definitions"
-        ] = []
+    subject_data.setdefault(
+        "formulas",
+        []
+    )
 
-    if "formulas" not in subject_data:
+    subject_data.setdefault(
+        "database_id",
+        None
+    )
 
-        subject_data[
-            "formulas"
-        ] = []
+    # --------------------------------------------------------
+    # CURRENT ACTION
+    # --------------------------------------------------------
 
-    if "database_id" not in subject_data:
-
-        subject_data[
-            "database_id"
-        ] = None
-
-    # ========================================================
-    # POST ACTION
-    # ========================================================
+    action = ""
 
     if request.method == "POST":
 
         action = request.POST.get(
             "action",
-            "save_subject"
+            ""
         )
 
-        # ====================================================
-        # DELETE SUBJECT
-        # ====================================================
+    # ========================================================
+    # DELETE SUBJECT
+    # ========================================================
 
-        if action == "delete_subject":
+    if (
+        request.method == "POST"
+        and
+        action == "delete_subject"
+    ):
 
-            database_subject = None
+        database_subject = None
 
-            database_subject_id = (
+        database_subject_id = (
+            subject_data.get(
+                "database_id"
+            )
+        )
+
+        # ----------------------------------------------------
+        # FIND BY DATABASE ID
+        # ----------------------------------------------------
+
+        if database_subject_id:
+
+            database_subject = (
+                Subject.objects
+                .filter(
+                    id=database_subject_id,
+                    user=request.user,
+                )
+                .first()
+            )
+
+        # ----------------------------------------------------
+        # FALLBACK TO NAME
+        # ----------------------------------------------------
+
+        if not database_subject:
+
+            subject_name = (
                 subject_data.get(
-                    "database_id"
-                )
-            )
-
-            if database_subject_id:
-
-                database_subject = (
-                    Subject.objects
-                    .filter(
-                        id=database_subject_id,
-                        user=request.user,
-                    )
-                    .first()
-                )
-
-            if not database_subject:
-
-                subject_name = (
-                    subject_data.get(
-                        "name",
-                        ""
-                    )
-                    .strip()
-                )
-
-                if subject_name:
-
-                    database_subject = (
-                        Subject.objects
-                        .filter(
-                            user=request.user,
-                            name=subject_name,
-                        )
-                        .first()
-                    )
-
-            if database_subject:
-
-                database_subject.delete()
-
-            subjects.pop(
-                subject_index
-            )
-
-            profile[
-                "subject_count"
-            ] = len(
-                subjects
-            )
-
-            request.session[
-                "onboarding_subjects"
-            ] = subjects
-
-            request.session[
-                "onboarding_profile"
-            ] = profile
-
-            request.session.modified = True
-
-            return redirect(
-                "goals"
-            )
-
-        # ====================================================
-        # SAVE SUBJECT
-        # ====================================================
-
-        if action == "save_subject":
-
-            subject_data[
-                "name"
-            ] = (
-                request.POST.get(
                     "name",
                     ""
                 )
                 .strip()
             )
 
-            subject_data[
-                "target_grade"
-            ] = request.POST.get(
-                "target_grade",
+            if subject_name:
+
+                database_subject = (
+                    Subject.objects
+                    .filter(
+                        user=request.user,
+                        name=subject_name,
+                    )
+                    .first()
+                )
+
+        # ----------------------------------------------------
+        # DELETE DATABASE SUBJECT
+        # ----------------------------------------------------
+
+        if database_subject:
+
+            database_subject.delete()
+
+        # ----------------------------------------------------
+        # DELETE SESSION SUBJECT
+        # ----------------------------------------------------
+
+        subjects.pop(
+            subject_index
+        )
+
+        profile[
+            "subject_count"
+        ] = len(
+            subjects
+        )
+
+        request.session[
+            "onboarding_subjects"
+        ] = subjects
+
+        request.session[
+            "onboarding_profile"
+        ] = profile
+
+        request.session.modified = True
+
+        return redirect(
+            "goals"
+        )
+
+    # ========================================================
+    # SAVE SUBJECT INFORMATION
+    # ========================================================
+
+    if (
+        request.method == "POST"
+        and
+        action == "save_subject"
+    ):
+
+        subject_data[
+            "name"
+        ] = (
+            request.POST.get(
+                "name",
                 ""
             )
+            .strip()
+        )
 
-            subject_data[
-                "exam_date"
-            ] = request.POST.get(
-                "exam_date",
-                ""
-            )
+        subject_data[
+            "target_grade"
+        ] = request.POST.get(
+            "target_grade",
+            ""
+        )
 
-            subjects[
-                subject_index
-            ] = subject_data
+        subject_data[
+            "exam_date"
+        ] = request.POST.get(
+            "exam_date",
+            ""
+        )
 
-            request.session[
-                "onboarding_subjects"
-            ] = subjects
+        subjects[
+            subject_index
+        ] = subject_data
 
-            request.session.modified = True
+        request.session[
+            "onboarding_subjects"
+        ] = subjects
+
+        request.session.modified = True
 
     # ========================================================
     # FIND DATABASE SUBJECT
@@ -1616,7 +1643,7 @@ def subject_detail(
         )
 
     # --------------------------------------------------------
-    # SUBJECT NAME FALLBACK
+    # FALLBACK TO NAME
     # --------------------------------------------------------
 
     if not database_subject:
@@ -1664,7 +1691,7 @@ def subject_detail(
             )
 
     # --------------------------------------------------------
-    # UPDATE DATABASE SUBJECT NAME
+    # SYNCHRONIZE DATABASE NAME
     # --------------------------------------------------------
 
     if database_subject:
@@ -1695,24 +1722,31 @@ def subject_detail(
             )
 
     # --------------------------------------------------------
-    # SAVE DATABASE ID
+    # SAVE DATABASE ID INTO SESSION
     # --------------------------------------------------------
 
     if database_subject:
 
-        subject_data[
-            "database_id"
-        ] = database_subject.id
+        if (
+            subject_data.get(
+                "database_id"
+            )
+            != database_subject.id
+        ):
 
-        subjects[
-            subject_index
-        ] = subject_data
+            subject_data[
+                "database_id"
+            ] = database_subject.id
 
-        request.session[
-            "onboarding_subjects"
-        ] = subjects
+            subjects[
+                subject_index
+            ] = subject_data
 
-        request.session.modified = True
+            request.session[
+                "onboarding_subjects"
+            ] = subjects
+
+            request.session.modified = True
 
     # ========================================================
     # TODAY
@@ -1728,13 +1762,13 @@ def subject_detail(
 
     study_days_left = None
 
+    parsed_exam_date = None
+
     exam_date_value = (
         subject_data.get(
             "exam_date"
         )
     )
-
-    parsed_exam_date = None
 
     # --------------------------------------------------------
     # PARSE EXAM DATE
@@ -1780,13 +1814,13 @@ def subject_detail(
             parsed_exam_date = None
 
     # ========================================================
-    # CALCULATE EXAM + STUDY DAYS LEFT
+    # CALCULATE DAYS
     # ========================================================
 
     if parsed_exam_date is not None:
 
         # ----------------------------------------------------
-        # NORMAL CALENDAR DAYS
+        # CALENDAR DAYS
         # ----------------------------------------------------
 
         days_until_exam = max(
@@ -1798,7 +1832,7 @@ def subject_detail(
         )
 
         # ----------------------------------------------------
-        # GET STORED STUDY AVAILABILITY
+        # STUDY AVAILABILITY
         # ----------------------------------------------------
 
         availability = (
@@ -1808,19 +1842,6 @@ def subject_detail(
             )
             .first()
         )
-
-        # ----------------------------------------------------
-        # ENABLED WEEKDAYS
-        #
-        # Python:
-        # Monday = 0
-        # Tuesday = 1
-        # Wednesday = 2
-        # Thursday = 3
-        # Friday = 4
-        # Saturday = 5
-        # Sunday = 6
-        # ----------------------------------------------------
 
         enabled_weekdays = set()
 
@@ -1873,10 +1894,10 @@ def subject_detail(
                     )
 
         # ----------------------------------------------------
-        # COUNT ACTUAL STUDY DAYS
+        # COUNT STUDY DAYS
         #
         # Today counts if selected.
-        # Exam day itself DOES NOT count.
+        # Exam day does not count.
         # ----------------------------------------------------
 
         study_days_left = 0
@@ -1905,6 +1926,301 @@ def subject_detail(
                 )
 
     # ========================================================
+    # FORM ERRORS
+    # ========================================================
+
+    textbook_error = None
+
+    revision_error = None
+
+    revision_form_attempted = False
+
+    revision_input_value = ""
+
+    # ========================================================
+    # ADD TEXTBOOK
+    # ========================================================
+
+    if (
+        request.method == "POST"
+        and
+        action == "add_textbook"
+    ):
+
+        textbook_name = (
+            request.POST.get(
+                "textbook_name",
+                ""
+            )
+            .strip()
+        )
+
+        page_count_raw = (
+            request.POST.get(
+                "page_count",
+                ""
+            )
+            .strip()
+        )
+
+        # ----------------------------------------------------
+        # SUBJECT MUST EXIST
+        # ----------------------------------------------------
+
+        if not database_subject:
+
+            textbook_error = (
+                "Save the subject before adding a textbook."
+            )
+
+        # ----------------------------------------------------
+        # NAME REQUIRED
+        # ----------------------------------------------------
+
+        elif not textbook_name:
+
+            textbook_error = (
+                "Please enter the textbook name."
+            )
+
+        else:
+
+            try:
+
+                page_count = int(
+                    page_count_raw
+                )
+
+                if page_count <= 0:
+
+                    raise ValueError
+
+            except (
+                TypeError,
+                ValueError
+            ):
+
+                textbook_error = (
+                    "Page count must be a whole number "
+                    "greater than 0."
+                )
+
+        # ----------------------------------------------------
+        # SAVE
+        # ----------------------------------------------------
+
+        if textbook_error is None:
+
+            SubjectTextbook.objects.create(
+                subject=database_subject,
+                name=textbook_name,
+                page_count=page_count,
+            )
+
+            return redirect(
+                "subject_detail",
+                subject_index=subject_index
+            )
+
+    # ========================================================
+    # SAVE REVISION DAYS
+    # ========================================================
+
+    if (
+        request.method == "POST"
+        and
+        action == "save_revision_days"
+    ):
+
+        revision_form_attempted = True
+
+        revision_days_raw = (
+            request.POST.get(
+                "revision_days",
+                ""
+            )
+            .strip()
+        )
+
+        revision_input_value = (
+            revision_days_raw
+        )
+
+        # ----------------------------------------------------
+        # NEED A DATABASE SUBJECT
+        # ----------------------------------------------------
+
+        if not database_subject:
+
+            revision_error = (
+                "Save the subject first."
+            )
+
+        # ----------------------------------------------------
+        # NEED EXAM DATE
+        # ----------------------------------------------------
+
+        elif study_days_left is None:
+
+            revision_error = (
+                "Set an exam date before choosing "
+                "revision days."
+            )
+
+        # ----------------------------------------------------
+        # BLANK CLEARS REVISION ALLOCATION
+        # ----------------------------------------------------
+
+        elif revision_days_raw == "":
+
+            revision_plan, created = (
+                SubjectRevisionPlan.objects
+                .get_or_create(
+                    subject=database_subject
+                )
+            )
+
+            revision_plan.revision_days = None
+
+            revision_plan.save()
+
+            return redirect(
+                "subject_detail",
+                subject_index=subject_index
+            )
+
+        else:
+
+            try:
+
+                revision_days_value = int(
+                    revision_days_raw
+                )
+
+                if revision_days_value < 0:
+
+                    raise ValueError
+
+            except (
+                TypeError,
+                ValueError
+            ):
+
+                revision_error = (
+                    "Revision days must be 0 or more."
+                )
+
+            # ------------------------------------------------
+            # CANNOT EXCEED STUDY DAYS LEFT
+            # ------------------------------------------------
+
+            if (
+                revision_error is None
+                and
+                revision_days_value
+                > study_days_left
+            ):
+
+                revision_error = (
+                    f"You only have "
+                    f"{study_days_left} study days left. "
+                    f"Revision days cannot exceed this. "
+                    f"Reduce the revision days or change "
+                    f"your Study Availability."
+                )
+
+            # ------------------------------------------------
+            # SAVE
+            # ------------------------------------------------
+
+            if revision_error is None:
+
+                revision_plan, created = (
+                    SubjectRevisionPlan.objects
+                    .get_or_create(
+                        subject=database_subject
+                    )
+                )
+
+                revision_plan.revision_days = (
+                    revision_days_value
+                )
+
+                revision_plan.save()
+
+                return redirect(
+                    "subject_detail",
+                    subject_index=subject_index
+                )
+
+    # ========================================================
+    # TEXTBOOKS
+    # ========================================================
+
+    textbooks = []
+
+    total_textbook_pages = 0
+
+    if database_subject:
+
+        textbooks = list(
+            SubjectTextbook.objects
+            .filter(
+                subject=database_subject
+            )
+            .order_by(
+                "created",
+                "id",
+            )
+        )
+
+        total_textbook_pages = sum(
+            textbook.page_count
+            for textbook
+            in textbooks
+        )
+
+    # ========================================================
+    # REVISION PLAN
+    # ========================================================
+
+    revision_plan = None
+
+    revision_days = None
+
+    if database_subject:
+
+        revision_plan = (
+            SubjectRevisionPlan.objects
+            .filter(
+                subject=database_subject
+            )
+            .first()
+        )
+
+        if revision_plan:
+
+            revision_days = (
+                revision_plan.revision_days
+            )
+
+    # --------------------------------------------------------
+    # VALUE DISPLAYED IN INPUT
+    # --------------------------------------------------------
+
+    if not revision_form_attempted:
+
+        if revision_days is None:
+
+            revision_input_value = ""
+
+        else:
+
+            revision_input_value = str(
+                revision_days
+            )
+
+    # ========================================================
     # REVIEW LISTS
     # ========================================================
 
@@ -1914,9 +2230,9 @@ def subject_detail(
 
     due_bullet_lists = []
 
-    # --------------------------------------------------------
+    # ========================================================
     # FIND DUE ITEMS
-    # --------------------------------------------------------
+    # ========================================================
 
     if database_subject:
 
@@ -1958,33 +2274,29 @@ def subject_detail(
                 StudentKnowledge.objects
                 .filter(
                     student=request.user,
-                    knowledge_unit=(
-                        knowledge_unit
-                    ),
+                    knowledge_unit=knowledge_unit,
                 )
                 .first()
             )
 
+            is_due = False
+
             if progress is None:
 
-                due_formulas.append(
-                    formula
-                )
+                is_due = True
 
-                continue
+            elif progress.next_review is None:
 
-            if progress.next_review is None:
+                is_due = True
 
-                due_formulas.append(
-                    formula
-                )
-
-                continue
-
-            if (
+            elif (
                 progress.next_review.date()
                 <= today
             ):
+
+                is_due = True
+
+            if is_due:
 
                 due_formulas.append(
                     formula
@@ -2028,33 +2340,29 @@ def subject_detail(
                 StudentKnowledge.objects
                 .filter(
                     student=request.user,
-                    knowledge_unit=(
-                        knowledge_unit
-                    ),
+                    knowledge_unit=knowledge_unit,
                 )
                 .first()
             )
 
+            is_due = False
+
             if progress is None:
 
-                due_definitions.append(
-                    definition
-                )
+                is_due = True
 
-                continue
+            elif progress.next_review is None:
 
-            if progress.next_review is None:
+                is_due = True
 
-                due_definitions.append(
-                    definition
-                )
-
-                continue
-
-            if (
+            elif (
                 progress.next_review.date()
                 <= today
             ):
+
+                is_due = True
+
+            if is_due:
 
                 due_definitions.append(
                     definition
@@ -2112,7 +2420,33 @@ def subject_detail(
                 ),
 
             # --------------------------------------------
-            # EXAM / STUDY COUNTDOWN
+            # TEXTBOOKS
+            # --------------------------------------------
+
+            "textbooks":
+                textbooks,
+
+            "total_textbook_pages":
+                total_textbook_pages,
+
+            "textbook_error":
+                textbook_error,
+
+            # --------------------------------------------
+            # REVISION
+            # --------------------------------------------
+
+            "revision_days":
+                revision_days,
+
+            "revision_input_value":
+                revision_input_value,
+
+            "revision_error":
+                revision_error,
+
+            # --------------------------------------------
+            # COUNTDOWN
             # --------------------------------------------
 
             "days_until_exam":
@@ -2122,7 +2456,7 @@ def subject_detail(
                 study_days_left,
 
             # --------------------------------------------
-            # REVIEW
+            # REVIEWS
             # --------------------------------------------
 
             "due_formulas":
