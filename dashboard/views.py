@@ -2022,8 +2022,9 @@ def subject_detail(
                 subject_index=subject_index
             )
 
+
     # ========================================================
-    # SAVE REVISION DAYS
+    # AUTOSAVE REVISION DAYS
     # ========================================================
 
     if (
@@ -2032,126 +2033,156 @@ def subject_detail(
         action == "save_revision_days"
     ):
 
-        revision_form_attempted = True
-
-        revision_days_raw = (
-            request.POST.get(
-                "revision_days",
-                ""
-            )
-            .strip()
-        )
-
-        revision_input_value = (
-            revision_days_raw
-        )
-
         # ----------------------------------------------------
-        # NEED A DATABASE SUBJECT
+        # SUBJECT MUST EXIST
         # ----------------------------------------------------
 
         if not database_subject:
 
-            revision_error = (
-                "Save the subject first."
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": (
+                        "Save the subject before "
+                        "setting revision days."
+                    ),
+                },
+                status=400,
             )
 
         # ----------------------------------------------------
-        # NEED EXAM DATE
+        # EXAM DATE MUST EXIST
         # ----------------------------------------------------
 
-        elif study_days_left is None:
+        if study_days_left is None:
 
-            revision_error = (
-                "Set an exam date before choosing "
-                "revision days."
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": (
+                        "Set an exam date before "
+                        "choosing revision days."
+                    ),
+                },
+                status=400,
             )
 
         # ----------------------------------------------------
-        # BLANK CLEARS REVISION ALLOCATION
+        # GET VALUE
         # ----------------------------------------------------
 
-        elif revision_days_raw == "":
+        raw_revision_days = (
+            request.POST.get(
+                "revision_days",
+                "0"
+            )
+            .strip()
+        )
 
-            revision_plan, created = (
-                SubjectRevisionPlan.objects
-                .get_or_create(
-                    subject=database_subject
-                )
+        try:
+
+            revision_days_value = int(
+                raw_revision_days
             )
 
-            revision_plan.revision_days = None
+        except (
+            TypeError,
+            ValueError
+        ):
 
-            revision_plan.save()
-
-            return redirect(
-                "subject_detail",
-                subject_index=subject_index
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": (
+                        "Revision days must be "
+                        "a whole number."
+                    ),
+                },
+                status=400,
             )
 
-        else:
+        # ----------------------------------------------------
+        # MINIMUM
+        # ----------------------------------------------------
 
-            try:
+        if revision_days_value < 0:
 
-                revision_days_value = int(
-                    revision_days_raw
-                )
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": (
+                        "Revision days cannot "
+                        "be negative."
+                    ),
+                },
+                status=400,
+            )
 
-                if revision_days_value < 0:
+        # ----------------------------------------------------
+        # MAXIMUM
+        # ----------------------------------------------------
 
-                    raise ValueError
+        if (
+            revision_days_value
+            > study_days_left
+        ):
 
-            except (
-                TypeError,
-                ValueError
-            ):
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": (
+                        f"You only have "
+                        f"{study_days_left} "
+                        f"study days left."
+                    ),
+                },
+                status=400,
+            )
 
-                revision_error = (
-                    "Revision days must be 0 or more."
-                )
+        # ----------------------------------------------------
+        # SAVE
+        # ----------------------------------------------------
 
-            # ------------------------------------------------
-            # CANNOT EXCEED STUDY DAYS LEFT
-            # ------------------------------------------------
+        revision_plan, created = (
+            SubjectRevisionPlan.objects
+            .get_or_create(
+                subject=database_subject
+            )
+        )
 
-            if (
-                revision_error is None
-                and
-                revision_days_value
-                > study_days_left
-            ):
+        revision_plan.revision_days = (
+            revision_days_value
+        )
 
-                revision_error = (
-                    f"You only have "
-                    f"{study_days_left} study days left. "
-                    f"Revision days cannot exceed this. "
-                    f"Reduce the revision days or change "
-                    f"your Study Availability."
-                )
+        revision_plan.save()
 
-            # ------------------------------------------------
-            # SAVE
-            # ------------------------------------------------
+        # ----------------------------------------------------
+        # AJAX RESPONSE
+        # ----------------------------------------------------
 
-            if revision_error is None:
+        if (
+            request.headers.get(
+                "X-Requested-With"
+            )
+            == "XMLHttpRequest"
+        ):
 
-                revision_plan, created = (
-                    SubjectRevisionPlan.objects
-                    .get_or_create(
-                        subject=database_subject
-                    )
-                )
+            return JsonResponse(
+                {
+                    "success": True,
+                    "revision_days":
+                        revision_days_value,
 
-                revision_plan.revision_days = (
-                    revision_days_value
-                )
+                    "study_days_left":
+                        study_days_left,
+                }
+            )
 
-                revision_plan.save()
+        return redirect(
+            "subject_detail",
+            subject_index=subject_index
+        )
 
-                return redirect(
-                    "subject_detail",
-                    subject_index=subject_index
-                )
 
     # ========================================================
     # TEXTBOOKS
@@ -2180,13 +2211,15 @@ def subject_detail(
             in textbooks
         )
 
+
     # ========================================================
     # REVISION PLAN
     # ========================================================
 
     revision_plan = None
 
-    revision_days = None
+    revision_days = 0
+
 
     if database_subject:
 
@@ -2198,11 +2231,51 @@ def subject_detail(
             .first()
         )
 
-        if revision_plan:
+
+        if (
+            revision_plan
+            and
+            revision_plan.revision_days
+            is not None
+        ):
 
             revision_days = (
                 revision_plan.revision_days
             )
+
+
+    # ========================================================
+    # AUTOMATICALLY CAP REVISION DAYS
+    #
+    # Example:
+    # Student originally had 15 study days left and chose
+    # 10 revision days.
+    #
+    # Later their availability changes and they now only
+    # have 8 study days left.
+    #
+    # Revision days automatically becomes 8.
+    # ========================================================
+
+    if (
+        study_days_left is not None
+        and
+        revision_days
+        > study_days_left
+    ):
+
+        revision_days = (
+            study_days_left
+        )
+
+
+        if revision_plan:
+
+            revision_plan.revision_days = (
+                revision_days
+            )
+
+            revision_plan.save()
 
     # --------------------------------------------------------
     # VALUE DISPLAYED IN INPUT
