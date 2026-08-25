@@ -298,7 +298,7 @@
 
 
         /* =========================================
-           SUBJECT DISPLAY MODE
+           DISPLAY MODE
         ========================================= */
 
         .subject-information-display {
@@ -375,6 +375,117 @@
             color: #999;
 
             font-weight: 500;
+
+        }
+
+
+        /* =========================================
+           EXAM / STUDY COUNTDOWN
+        ========================================= */
+
+        .subject-countdown-grid {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(
+                    2,
+                    minmax(0, 1fr)
+                );
+
+            gap: 12px;
+
+            margin-top: 22px;
+
+            padding-top: 20px;
+
+            border-top:
+                1px solid
+                #eeeeee;
+
+        }
+
+
+        .countdown-card {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            gap: 15px;
+
+            min-height: 74px;
+
+            padding:
+                15px
+                18px;
+
+            border:
+                1px solid
+                #e2e5e8;
+
+            border-radius: 10px;
+
+            background: #f5f6f8;
+
+        }
+
+
+        .countdown-info {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 3px;
+
+        }
+
+
+        .countdown-label {
+
+            color: #555;
+
+            font-size: 14px;
+
+            font-weight: 700;
+
+        }
+
+
+        .countdown-description {
+
+            color: #888;
+
+            font-size: 12px;
+
+            line-height: 1.35;
+
+        }
+
+
+        .countdown-value {
+
+            flex-shrink: 0;
+
+            color: #222;
+
+            font-size: 28px;
+
+            line-height: 1;
+
+            font-weight: 800;
+
+        }
+
+
+        .countdown-value-empty {
+
+            color: #aaa;
+
+            font-size: 18px;
 
         }
 
@@ -600,10 +711,6 @@
         }
 
 
-        /* =========================================
-           WORKSPACE COLUMN
-        ========================================= */
-
         .workspace-column {
 
             display: flex;
@@ -757,7 +864,7 @@
 
 
         /* =========================================
-           DELETE SUBJECT SECTION
+           DELETE SUBJECT
         ========================================= */
 
         .delete-subject-section {
@@ -801,11 +908,6 @@
 
             cursor: pointer;
 
-            transition:
-                background 0.15s ease,
-                border-color 0.15s ease,
-                transform 0.15s ease;
-
         }
 
 
@@ -814,9 +916,6 @@
             background: #fff5f5;
 
             border-color: #c98f8f;
-
-            transform:
-                translateY(-1px);
 
         }
 
@@ -1234,13 +1333,6 @@
         }
 
 
-        .confirm-delete-button:hover {
-
-            background: #913333;
-
-        }
-
-
         .cancel-delete-button {
 
             border:
@@ -1250,13 +1342,6 @@
             background: white;
 
             color: #333;
-
-        }
-
-
-        .cancel-delete-button:hover {
-
-            background: #f5f5f5;
 
         }
 
@@ -1296,6 +1381,13 @@
 
         @media (max-width: 600px) {
 
+            .subject-countdown-grid {
+
+                grid-template-columns: 1fr;
+
+            }
+
+
             .summary-options {
 
                 grid-template-columns: 1fr;
@@ -1328,13 +1420,7 @@
 
 
             .save-button,
-            .cancel-edit-button {
-
-                width: 100%;
-
-            }
-
-
+            .cancel-edit-button,
             .delete-subject-button {
 
                 width: 100%;
@@ -1434,10 +1520,6 @@
             >
 
 
-                <!-- =====================================
-                     EDIT PENCIL
-                ====================================== -->
-
                 <button
                     type="button"
                     class="subject-edit-button"
@@ -1459,9 +1541,7 @@
                     <div class="information-display-grid">
 
 
-                        <!-- =============================
-                             SUBJECT NAME
-                        ============================== -->
+                        <!-- SUBJECT NAME -->
 
                         <div class="display-field">
 
@@ -1484,13 +1564,10 @@
 
                             {% endif %}
 
-
                         </div>
 
 
-                        <!-- =============================
-                             TARGET
-                        ============================== -->
+                        <!-- TARGET GRADE -->
 
                         <div class="display-field">
 
@@ -1513,13 +1590,10 @@
 
                             {% endif %}
 
-
                         </div>
 
 
-                        <!-- =============================
-                             EXAM DATE
-                        ============================== -->
+                        <!-- EXAM DATE -->
 
                         <div class="display-field">
 
@@ -1542,11 +1616,98 @@
 
                             {% endif %}
 
-
                         </div>
 
 
                     </div>
+
+
+                    <!-- =================================
+                         EXAM / STUDY COUNTDOWN
+                    ================================== -->
+
+                    {% if subject.exam_date %}
+
+
+                        <div class="subject-countdown-grid">
+
+
+                            <!-- DAYS UNTIL EXAM -->
+
+                            <div class="countdown-card">
+
+
+                                <div class="countdown-info">
+
+                                    <span class="countdown-label">
+                                        Days Until Exam
+                                    </span>
+
+                                    <span class="countdown-description">
+                                        Calendar days remaining.
+                                    </span>
+
+                                </div>
+
+
+                                {% if days_until_exam != None %}
+
+                                    <span class="countdown-value">
+                                        {{ days_until_exam }}
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="countdown-value countdown-value-empty">
+                                        —
+                                    </span>
+
+                                {% endif %}
+
+
+                            </div>
+
+
+                            <!-- STUDY DAYS LEFT -->
+
+                            <div class="countdown-card">
+
+
+                                <div class="countdown-info">
+
+                                    <span class="countdown-label">
+                                        Study Days Left
+                                    </span>
+
+                                    <span class="countdown-description">
+                                        Based on your selected study days.
+                                    </span>
+
+                                </div>
+
+
+                                {% if study_days_left != None %}
+
+                                    <span class="countdown-value">
+                                        {{ study_days_left }}
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="countdown-value countdown-value-empty">
+                                        —
+                                    </span>
+
+                                {% endif %}
+
+
+                            </div>
+
+
+                        </div>
+
+
+                    {% endif %}
 
 
                 </div>
@@ -1562,7 +1723,6 @@
                     id="subject-edit-form"
                 >
 
-
                     {% csrf_token %}
 
 
@@ -1575,10 +1735,6 @@
 
                     <div class="information-grid">
 
-
-                        <!-- =============================
-                             SUBJECT NAME
-                        ============================== -->
 
                         <div class="field">
 
@@ -1596,10 +1752,6 @@
 
                         </div>
 
-
-                        <!-- =============================
-                             TARGET GRADE
-                        ============================== -->
 
                         <div class="field">
 
@@ -1620,10 +1772,6 @@
                         </div>
 
 
-                        <!-- =============================
-                             EXAM DATE
-                        ============================== -->
-
                         <div class="field">
 
                             <label for="exam-date">
@@ -1642,10 +1790,6 @@
 
                     </div>
 
-
-                    <!-- =================================
-                         SAVE / CANCEL
-                    ================================== -->
 
                     <div class="information-footer">
 
@@ -1683,16 +1827,12 @@
             <section class="workspace">
 
 
-                <!-- =====================================
-                     LEFT COLUMN
-                ====================================== -->
+                <!-- LEFT COLUMN -->
 
                 <div class="workspace-column">
 
 
-                    <!-- =================================
-                         SUMMARIZE
-                    ================================== -->
+                    <!-- SUMMARIZE -->
 
                     <div class="workspace-box">
 
@@ -1717,12 +1857,7 @@
                         <div class="summary-options">
 
 
-                            <!-- =========================
-                                 DEFINITION
-                            ========================== -->
-
                             {% if database_subject %}
-
 
                                 <a
                                     href="{% url 'create_definition' subject_id=database_subject.id %}?subject_index={{ subject_index }}"
@@ -1739,9 +1874,7 @@
 
                                 </a>
 
-
                             {% else %}
-
 
                                 <div class="summary-option">
 
@@ -1755,16 +1888,10 @@
 
                                 </div>
 
-
                             {% endif %}
 
 
-                            <!-- =========================
-                                 FORMULA
-                            ========================== -->
-
                             {% if database_subject %}
-
 
                                 <a
                                     href="{% url 'create_formula' subject_id=database_subject.id %}"
@@ -1781,9 +1908,7 @@
 
                                 </a>
 
-
                             {% else %}
-
 
                                 <div class="summary-option">
 
@@ -1797,13 +1922,8 @@
 
                                 </div>
 
-
                             {% endif %}
 
-
-                            <!-- =========================
-                                 LIST
-                            ========================== -->
 
                             <button
                                 type="button"
@@ -1821,10 +1941,6 @@
                             </button>
 
 
-                            <!-- =========================
-                                 STEPS
-                            ========================== -->
-
                             <button
                                 type="button"
                                 class="summary-option"
@@ -1841,10 +1957,6 @@
                             </button>
 
 
-                            <!-- =========================
-                                 KEY IDEA
-                            ========================== -->
-
                             <button
                                 type="button"
                                 class="summary-option"
@@ -1860,10 +1972,6 @@
 
                             </button>
 
-
-                            <!-- =========================
-                                 COMPARISON
-                            ========================== -->
 
                             <button
                                 type="button"
@@ -1887,9 +1995,7 @@
                     </div>
 
 
-                    <!-- =================================
-                         DELETE SUBJECT
-                    ================================== -->
+                    <!-- DELETE -->
 
                     <div class="delete-subject-section">
 
@@ -1915,9 +2021,7 @@
                 </div>
 
 
-                <!-- =====================================
-                     RIGHT COLUMN / REVIEW
-                ====================================== -->
+                <!-- RIGHT COLUMN -->
 
                 <div class="workspace-column">
 
@@ -1942,10 +2046,6 @@
                         </div>
 
 
-                        <!-- =============================
-                             RESET REVIEWS
-                        ============================== -->
-
                         <div class="reset-reviews-container">
 
 
@@ -1960,11 +2060,7 @@
                                 <button
                                     type="submit"
                                     class="reset-reviews-button"
-                                    onclick="
-                                        return confirm(
-                                            'Make all formulas and definitions available for review again today?'
-                                        );
-                                    "
+                                    onclick="return confirm('Make all formulas and definitions available for review again today?');"
                                 >
                                     Reset Today's Reviews
                                 </button>
@@ -1976,19 +2072,10 @@
                         </div>
 
 
-                        <!-- =============================
-                             REVIEW CATEGORIES
-                        ============================== -->
-
                         <div class="review-categories">
 
 
-                            <!-- =========================
-                                 FORMULAS
-                            ========================== -->
-
                             {% if due_formulas %}
-
 
                                 <a
                                     href="{% url 'formula_review_list' subject_index=subject_index %}"
@@ -2027,16 +2114,10 @@
 
                                 </a>
 
-
                             {% endif %}
 
 
-                            <!-- =========================
-                                 DEFINITIONS
-                            ========================== -->
-
                             {% if due_definitions %}
-
 
                                 <a
                                     href="{% url 'definition_review_list' subject_index=subject_index %}"
@@ -2075,16 +2156,10 @@
 
                                 </a>
 
-
                             {% endif %}
 
 
-                            <!-- =========================
-                                 LISTS
-                            ========================== -->
-
                             {% if due_bullet_lists %}
-
 
                                 <div class="review-category">
 
@@ -2093,7 +2168,6 @@
                                         class="review-category-header"
                                         onclick="toggleReview(this)"
                                     >
-
 
                                         <div class="review-category-title">
 
@@ -2111,7 +2185,6 @@
                                         <span class="review-arrow">
                                             ▼
                                         </span>
-
 
                                     </div>
 
@@ -2160,23 +2233,16 @@
 
                                 </div>
 
-
                             {% endif %}
 
 
-                            <!-- =========================
-                                 EMPTY REVIEW
-                            ========================== -->
-
                             {% if not due_formulas and not due_definitions and not due_bullet_lists %}
-
 
                                 <div class="empty-review">
 
                                     No reviews due today.
 
                                 </div>
-
 
                             {% endif %}
 
@@ -2203,7 +2269,7 @@
 
 
 <!-- =========================================
-     DELETE SUBJECT MODAL
+     DELETE MODAL
 ========================================= -->
 
 <div
@@ -2282,10 +2348,6 @@
 
 <script>
 
-    // =============================================
-    // CHANGE SUBJECT
-    // =============================================
-
     function changeSubject(select) {
 
         if (select.value) {
@@ -2297,10 +2359,6 @@
 
     }
 
-
-    // =============================================
-    // OPEN SUBJECT EDITOR
-    // =============================================
 
     function openSubjectEditor() {
 
@@ -2328,27 +2386,19 @@
     }
 
 
-    // =============================================
-    // CLOSE SUBJECT EDITOR
-    // =============================================
-
     function closeSubjectEditor() {
 
-        const subjectInformation =
-            document.getElementById(
+        document
+            .getElementById(
                 "subject-information"
+            )
+            .classList
+            .remove(
+                "editing"
             );
-
-        subjectInformation.classList.remove(
-            "editing"
-        );
 
     }
 
-
-    // =============================================
-    // REVIEW TOGGLE
-    // =============================================
 
     function toggleReview(header) {
 
@@ -2364,45 +2414,33 @@
     }
 
 
-    // =============================================
-    // OPEN DELETE MODAL
-    // =============================================
-
     function openDeleteModal() {
 
-        const modal =
-            document.getElementById(
+        document
+            .getElementById(
                 "delete-modal"
+            )
+            .classList
+            .add(
+                "open"
             );
-
-        modal.classList.add(
-            "open"
-        );
 
     }
 
-
-    // =============================================
-    // CLOSE DELETE MODAL
-    // =============================================
 
     function closeDeleteModal() {
 
-        const modal =
-            document.getElementById(
+        document
+            .getElementById(
                 "delete-modal"
+            )
+            .classList
+            .remove(
+                "open"
             );
-
-        modal.classList.remove(
-            "open"
-        );
 
     }
 
-
-    // =============================================
-    // CLICK OUTSIDE DELETE MODAL
-    // =============================================
 
     function handleModalBackground(event) {
 
@@ -2418,16 +2456,13 @@
     }
 
 
-    // =============================================
-    // ESCAPE KEY
-    // =============================================
-
     document.addEventListener(
         "keydown",
         function(event) {
 
             if (
-                event.key === "Escape"
+                event.key
+                === "Escape"
             ) {
 
                 closeDeleteModal();

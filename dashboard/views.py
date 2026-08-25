@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
@@ -163,6 +163,10 @@ def dashboard(request):
             database_subject = (
                 knowledge_unit.subject
             )
+
+            if not database_subject:
+
+                continue
 
             # ------------------------------------------------
             # FIND SUBJECT INDEX
@@ -376,6 +380,10 @@ def dashboard(request):
                 knowledge_unit.subject
             )
 
+            if not database_subject:
+
+                continue
+
             # ------------------------------------------------
             # FIND SUBJECT INDEX
             # ------------------------------------------------
@@ -521,6 +529,7 @@ def dashboard(request):
                 due_formula_total,
         }
     )
+
 
 # ============================================================
 # REVIEW
@@ -903,19 +912,11 @@ def goals(request):
                 .strip()
             )
 
-            # ------------------------------------------------
-            # WORKSPACE NAME
-            # ------------------------------------------------
-
             if workspace_name:
 
                 profile[
                     "workspace_name"
                 ] = workspace_name
-
-            # ------------------------------------------------
-            # TARGET GRADE
-            # ------------------------------------------------
 
             try:
 
@@ -942,19 +943,11 @@ def goals(request):
 
                 pass
 
-            # ------------------------------------------------
-            # SUBJECT COUNT
-            # ------------------------------------------------
-
             profile[
                 "subject_count"
             ] = len(
                 subjects
             )
-
-            # ------------------------------------------------
-            # SAVE PROFILE
-            # ------------------------------------------------
 
             request.session[
                 "onboarding_profile"
@@ -1023,15 +1016,7 @@ def goals(request):
 
             errors = {}
 
-            # =================================================
-            # PROCESS EACH DAY
-            # =================================================
-
             for day in days:
-
-                # --------------------------------------------
-                # ENABLED
-                # --------------------------------------------
 
                 enabled = (
                     request.POST.get(
@@ -1040,10 +1025,6 @@ def goals(request):
                     )
                     == "1"
                 )
-
-                # --------------------------------------------
-                # TIME
-                # --------------------------------------------
 
                 raw_time = (
                     request.POST.get(
@@ -1054,7 +1035,7 @@ def goals(request):
                 )
 
                 # --------------------------------------------
-                # DAY DISABLED
+                # DISABLED DAY
                 # --------------------------------------------
 
                 if not enabled:
@@ -1074,7 +1055,7 @@ def goals(request):
                     continue
 
                 # --------------------------------------------
-                # DAY ENABLED
+                # ENABLE DAY
                 # --------------------------------------------
 
                 setattr(
@@ -1084,10 +1065,7 @@ def goals(request):
                 )
 
                 # --------------------------------------------
-                # NO TIME ENTERED YET
-                #
-                # Valid because student may click the day
-                # before entering the number of hours.
+                # ENABLED BUT TIME NOT ENTERED YET
                 # --------------------------------------------
 
                 if raw_time == "":
@@ -1122,10 +1100,6 @@ def goals(request):
                         parts[1]
                     )
 
-                    # ----------------------------------------
-                    # HOURS 0 - 24
-                    # ----------------------------------------
-
                     if (
                         hours < 0
                         or
@@ -1133,10 +1107,6 @@ def goals(request):
                     ):
 
                         raise ValueError
-
-                    # ----------------------------------------
-                    # MINUTES 0 - 59
-                    # ----------------------------------------
 
                     if (
                         minutes < 0
@@ -1146,10 +1116,6 @@ def goals(request):
 
                         raise ValueError
 
-                    # ----------------------------------------
-                    # 24 HOURS CAN ONLY BE 24:00
-                    # ----------------------------------------
-
                     if (
                         hours == 24
                         and
@@ -1157,10 +1123,6 @@ def goals(request):
                     ):
 
                         raise ValueError
-
-                    # ----------------------------------------
-                    # NORMALIZE
-                    # ----------------------------------------
 
                     normalized_time = (
                         f"{hours:02d}:"
@@ -1186,7 +1148,7 @@ def goals(request):
                     )
 
             # =================================================
-            # INVALID VALUE
+            # INVALID
             # =================================================
 
             if errors:
@@ -1200,14 +1162,10 @@ def goals(request):
                 )
 
             # =================================================
-            # SAVE DATABASE RECORD
+            # SAVE DATABASE
             # =================================================
 
             availability_record.save()
-
-            # =================================================
-            # AJAX RESPONSE
-            # =================================================
 
             if (
                 request.headers.get(
@@ -1238,10 +1196,6 @@ def goals(request):
                     "goals"
                 )
 
-            # ------------------------------------------------
-            # NEW SUBJECT
-            # ------------------------------------------------
-
             new_subject = {
 
                 "name":
@@ -1268,19 +1222,11 @@ def goals(request):
                 new_subject
             )
 
-            # ------------------------------------------------
-            # UPDATE SUBJECT COUNT
-            # ------------------------------------------------
-
             profile[
                 "subject_count"
             ] = len(
                 subjects
             )
-
-            # ------------------------------------------------
-            # SAVE SESSION
-            # ------------------------------------------------
 
             request.session[
                 "onboarding_subjects"
@@ -1291,10 +1237,6 @@ def goals(request):
             ] = profile
 
             request.session.modified = True
-
-            # ------------------------------------------------
-            # OPEN NEW SUBJECT
-            # ------------------------------------------------
 
             new_subject_index = (
                 len(subjects)
@@ -1335,7 +1277,7 @@ def goals(request):
         }
 
     # ========================================================
-    # DAYS UNTIL EXAM
+    # DAYS UNTIL EXAM FOR GOALS CARDS
     # ========================================================
 
     today = timezone.localdate()
@@ -1386,14 +1328,12 @@ def goals(request):
                         )
                     )
 
-                days_until_exam = (
-                    parsed_exam_date
-                    - today
-                ).days
-
                 days_until_exam = max(
                     0,
-                    days_until_exam
+                    (
+                        parsed_exam_date
+                        - today
+                    ).days
                 )
 
             except (
@@ -1502,7 +1442,7 @@ def subject_detail(
     ]
 
     # --------------------------------------------------------
-    # MAKE SURE REQUIRED FIELDS EXIST
+    # REQUIRED FIELDS
     # --------------------------------------------------------
 
     if "definitions" not in subject_data:
@@ -1548,10 +1488,6 @@ def subject_detail(
                 )
             )
 
-            # ------------------------------------------------
-            # TRY DATABASE ID
-            # ------------------------------------------------
-
             if database_subject_id:
 
                 database_subject = (
@@ -1562,10 +1498,6 @@ def subject_detail(
                     )
                     .first()
                 )
-
-            # ------------------------------------------------
-            # FALLBACK TO NAME
-            # ------------------------------------------------
 
             if not database_subject:
 
@@ -1588,38 +1520,19 @@ def subject_detail(
                         .first()
                     )
 
-            # ------------------------------------------------
-            # DELETE DATABASE SUBJECT
-            #
-            # Related formulas / definitions / knowledge
-            # units will follow the model relationships.
-            # ------------------------------------------------
-
             if database_subject:
 
                 database_subject.delete()
 
-            # ------------------------------------------------
-            # REMOVE SESSION SUBJECT
-            # ------------------------------------------------
-
             subjects.pop(
                 subject_index
             )
-
-            # ------------------------------------------------
-            # UPDATE PROFILE SUBJECT COUNT
-            # ------------------------------------------------
 
             profile[
                 "subject_count"
             ] = len(
                 subjects
             )
-
-            # ------------------------------------------------
-            # SAVE SESSION
-            # ------------------------------------------------
 
             request.session[
                 "onboarding_subjects"
@@ -1630,10 +1543,6 @@ def subject_detail(
             ] = profile
 
             request.session.modified = True
-
-            # ------------------------------------------------
-            # RETURN TO GOALS
-            # ------------------------------------------------
 
             return redirect(
                 "goals"
@@ -1692,7 +1601,7 @@ def subject_detail(
     )
 
     # --------------------------------------------------------
-    # FIRST: DATABASE ID
+    # DATABASE ID
     # --------------------------------------------------------
 
     if database_subject_id:
@@ -1707,7 +1616,7 @@ def subject_detail(
         )
 
     # --------------------------------------------------------
-    # SECOND: SUBJECT NAME
+    # SUBJECT NAME FALLBACK
     # --------------------------------------------------------
 
     if not database_subject:
@@ -1732,7 +1641,7 @@ def subject_detail(
             )
 
     # --------------------------------------------------------
-    # THIRD: CREATE DATABASE SUBJECT
+    # CREATE DATABASE SUBJECT
     # --------------------------------------------------------
 
     if not database_subject:
@@ -1806,6 +1715,196 @@ def subject_detail(
         request.session.modified = True
 
     # ========================================================
+    # TODAY
+    # ========================================================
+
+    today = timezone.localdate()
+
+    # ========================================================
+    # EXAM COUNTDOWN
+    # ========================================================
+
+    days_until_exam = None
+
+    study_days_left = None
+
+    exam_date_value = (
+        subject_data.get(
+            "exam_date"
+        )
+    )
+
+    parsed_exam_date = None
+
+    # --------------------------------------------------------
+    # PARSE EXAM DATE
+    # --------------------------------------------------------
+
+    if exam_date_value:
+
+        try:
+
+            if isinstance(
+                exam_date_value,
+                datetime
+            ):
+
+                parsed_exam_date = (
+                    exam_date_value.date()
+                )
+
+            elif isinstance(
+                exam_date_value,
+                date
+            ):
+
+                parsed_exam_date = (
+                    exam_date_value
+                )
+
+            else:
+
+                parsed_exam_date = (
+                    date.fromisoformat(
+                        str(
+                            exam_date_value
+                        )[:10]
+                    )
+                )
+
+        except (
+            TypeError,
+            ValueError
+        ):
+
+            parsed_exam_date = None
+
+    # ========================================================
+    # CALCULATE EXAM + STUDY DAYS LEFT
+    # ========================================================
+
+    if parsed_exam_date is not None:
+
+        # ----------------------------------------------------
+        # NORMAL CALENDAR DAYS
+        # ----------------------------------------------------
+
+        days_until_exam = max(
+            0,
+            (
+                parsed_exam_date
+                - today
+            ).days
+        )
+
+        # ----------------------------------------------------
+        # GET STORED STUDY AVAILABILITY
+        # ----------------------------------------------------
+
+        availability = (
+            StudyAvailability.objects
+            .filter(
+                user=request.user
+            )
+            .first()
+        )
+
+        # ----------------------------------------------------
+        # ENABLED WEEKDAYS
+        #
+        # Python:
+        # Monday = 0
+        # Tuesday = 1
+        # Wednesday = 2
+        # Thursday = 3
+        # Friday = 4
+        # Saturday = 5
+        # Sunday = 6
+        # ----------------------------------------------------
+
+        enabled_weekdays = set()
+
+        if availability:
+
+            weekday_fields = [
+                (
+                    0,
+                    "monday_enabled"
+                ),
+                (
+                    1,
+                    "tuesday_enabled"
+                ),
+                (
+                    2,
+                    "wednesday_enabled"
+                ),
+                (
+                    3,
+                    "thursday_enabled"
+                ),
+                (
+                    4,
+                    "friday_enabled"
+                ),
+                (
+                    5,
+                    "saturday_enabled"
+                ),
+                (
+                    6,
+                    "sunday_enabled"
+                ),
+            ]
+
+            for (
+                weekday_number,
+                field_name
+            ) in weekday_fields:
+
+                if getattr(
+                    availability,
+                    field_name,
+                    False
+                ):
+
+                    enabled_weekdays.add(
+                        weekday_number
+                    )
+
+        # ----------------------------------------------------
+        # COUNT ACTUAL STUDY DAYS
+        #
+        # Today counts if selected.
+        # Exam day itself DOES NOT count.
+        # ----------------------------------------------------
+
+        study_days_left = 0
+
+        if (
+            parsed_exam_date
+            > today
+        ):
+
+            current_date = today
+
+            while (
+                current_date
+                < parsed_exam_date
+            ):
+
+                if (
+                    current_date.weekday()
+                    in enabled_weekdays
+                ):
+
+                    study_days_left += 1
+
+                current_date += timedelta(
+                    days=1
+                )
+
+    # ========================================================
     # REVIEW LISTS
     # ========================================================
 
@@ -1813,13 +1912,13 @@ def subject_detail(
 
     due_definitions = []
 
+    due_bullet_lists = []
+
     # --------------------------------------------------------
     # FIND DUE ITEMS
     # --------------------------------------------------------
 
     if database_subject:
-
-        today = timezone.localdate()
 
         # ====================================================
         # FORMULAS
@@ -1866,10 +1965,6 @@ def subject_detail(
                 .first()
             )
 
-            # ------------------------------------------------
-            # NEVER REVIEWED
-            # ------------------------------------------------
-
             if progress is None:
 
                 due_formulas.append(
@@ -1878,10 +1973,6 @@ def subject_detail(
 
                 continue
 
-            # ------------------------------------------------
-            # PROGRESS EXISTS BUT NO DATE
-            # ------------------------------------------------
-
             if progress.next_review is None:
 
                 due_formulas.append(
@@ -1889,10 +1980,6 @@ def subject_detail(
                 )
 
                 continue
-
-            # ------------------------------------------------
-            # DUE TODAY
-            # ------------------------------------------------
 
             if (
                 progress.next_review.date()
@@ -1948,10 +2035,6 @@ def subject_detail(
                 .first()
             )
 
-            # ------------------------------------------------
-            # NEVER REVIEWED
-            # ------------------------------------------------
-
             if progress is None:
 
                 due_definitions.append(
@@ -1960,10 +2043,6 @@ def subject_detail(
 
                 continue
 
-            # ------------------------------------------------
-            # NO REVIEW DATE
-            # ------------------------------------------------
-
             if progress.next_review is None:
 
                 due_definitions.append(
@@ -1971,10 +2050,6 @@ def subject_detail(
                 )
 
                 continue
-
-            # ------------------------------------------------
-            # DUE
-            # ------------------------------------------------
 
             if (
                 progress.next_review.date()
@@ -1997,9 +2072,16 @@ def subject_detail(
         due_definitions
     )
 
+    due_bullet_list_count = len(
+        due_bullet_lists
+    )
+
     total_due_reviews = (
         due_formula_count
-        + due_definition_count
+        +
+        due_definition_count
+        +
+        due_bullet_list_count
     )
 
     # ========================================================
@@ -2010,6 +2092,9 @@ def subject_detail(
         request,
         "dashboard/subject_detail.html",
         {
+            "profile":
+                profile,
+
             "subject":
                 subject_data,
 
@@ -2026,6 +2111,20 @@ def subject_detail(
                     else None
                 ),
 
+            # --------------------------------------------
+            # EXAM / STUDY COUNTDOWN
+            # --------------------------------------------
+
+            "days_until_exam":
+                days_until_exam,
+
+            "study_days_left":
+                study_days_left,
+
+            # --------------------------------------------
+            # REVIEW
+            # --------------------------------------------
+
             "due_formulas":
                 due_formulas,
 
@@ -2038,10 +2137,17 @@ def subject_detail(
             "due_definition_count":
                 due_definition_count,
 
+            "due_bullet_lists":
+                due_bullet_lists,
+
+            "due_bullet_list_count":
+                due_bullet_list_count,
+
             "total_due_reviews":
                 total_due_reviews,
         }
     )
+
 
 # ============================================================
 # DEFINITIONS
@@ -2113,10 +2219,6 @@ def definition(
         )
     )
 
-    # --------------------------------------------------------
-    # FIRST TRY DATABASE ID
-    # --------------------------------------------------------
-
     if database_subject_id:
 
         database_subject = (
@@ -2127,10 +2229,6 @@ def definition(
             )
             .first()
         )
-
-    # --------------------------------------------------------
-    # FALL BACK TO SUBJECT NAME
-    # --------------------------------------------------------
 
     if not database_subject:
 
@@ -2174,10 +2272,6 @@ def definition(
             and database_subject
         ):
 
-            # -----------------------------------------------
-            # CREATE KNOWLEDGE UNIT
-            # -----------------------------------------------
-
             knowledge_unit = (
                 KnowledgeUnit.objects.create(
                     subject=database_subject,
@@ -2192,10 +2286,6 @@ def definition(
                     active=True,
                 )
             )
-
-            # -----------------------------------------------
-            # CREATE DEFINITION
-            # -----------------------------------------------
 
             Definition.objects.create(
                 knowledge_unit=knowledge_unit,
@@ -2530,10 +2620,6 @@ def progress(request):
 
     for subject in subjects:
 
-        # ----------------------------------------------------
-        # KNOWLEDGE UNITS FOR THIS SUBJECT
-        # ----------------------------------------------------
-
         subject_units = (
             knowledge_units
             .filter(
@@ -2545,17 +2631,9 @@ def progress(request):
             subject_units.count()
         )
 
-        # ----------------------------------------------------
-        # SKIP EMPTY SUBJECTS
-        # ----------------------------------------------------
-
         if subject_unit_count == 0:
 
             continue
-
-        # ----------------------------------------------------
-        # PROGRESS RECORDS FOR THIS SUBJECT
-        # ----------------------------------------------------
 
         subject_progress_records = (
             progress_records
@@ -2566,10 +2644,6 @@ def progress(request):
             )
         )
 
-        # ----------------------------------------------------
-        # MASTERED
-        # ----------------------------------------------------
-
         subject_mastered = (
             subject_progress_records
             .filter(
@@ -2578,19 +2652,11 @@ def progress(request):
             .count()
         )
 
-        # ----------------------------------------------------
-        # REVIEWS
-        # ----------------------------------------------------
-
         subject_reviews = sum(
             record.review_count
             for record
             in subject_progress_records
         )
-
-        # ----------------------------------------------------
-        # CORRECT / INCORRECT
-        # ----------------------------------------------------
 
         subject_correct = sum(
             record.correct_count
@@ -2609,10 +2675,6 @@ def progress(request):
             + subject_incorrect
         )
 
-        # ----------------------------------------------------
-        # SUBJECT ACCURACY
-        # ----------------------------------------------------
-
         if subject_total_answers > 0:
 
             subject_accuracy = round(
@@ -2627,10 +2689,6 @@ def progress(request):
 
             subject_accuracy = 0
 
-        # ----------------------------------------------------
-        # SUBJECT MASTERY
-        # ----------------------------------------------------
-
         subject_mastery = round(
             (
                 subject_mastered
@@ -2638,10 +2696,6 @@ def progress(request):
             )
             * 100
         )
-
-        # ----------------------------------------------------
-        # ADD SUBJECT RESULT
-        # ----------------------------------------------------
 
         subject_progress.append(
             {
