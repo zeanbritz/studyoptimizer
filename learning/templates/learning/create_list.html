@@ -1,0 +1,1484 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Create List - StudyOptimizer
+    </title>
+
+
+    <link
+        rel="stylesheet"
+        href="{% static 'dashboard/css/sidebar.css' %}"
+    >
+
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        body {
+
+            margin: 0;
+
+            background: #f5f6f8;
+
+            color: #222;
+
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Arial,
+                sans-serif;
+
+        }
+
+
+        /* =========================================
+           APP
+        ========================================= */
+
+        .app {
+
+            display: flex;
+
+            min-height: 100vh;
+
+        }
+
+
+        .main {
+
+            flex: 1;
+
+            min-width: 0;
+
+        }
+
+
+        /* =========================================
+           PAGE
+        ========================================= */
+
+        .page {
+
+            width: 100%;
+
+            max-width: 1050px;
+
+            padding:
+                35px
+                40px
+                60px;
+
+        }
+
+
+        /* =========================================
+           HEADER
+        ========================================= */
+
+        .page-header {
+
+            display: flex;
+
+            align-items: flex-start;
+
+            justify-content: space-between;
+
+            gap: 20px;
+
+            margin-bottom: 28px;
+
+        }
+
+
+        .page-header h1 {
+
+            margin:
+                0
+                0
+                6px;
+
+            font-size: 30px;
+
+        }
+
+
+        .page-header p {
+
+            margin: 0;
+
+            color: #777;
+
+            font-size: 14px;
+
+        }
+
+
+        .back-link {
+
+            flex-shrink: 0;
+
+            padding:
+                9px
+                14px;
+
+            border:
+                1px solid
+                #d9d9d9;
+
+            border-radius: 8px;
+
+            background: white;
+
+            color: #444;
+
+            font-size: 13px;
+
+            font-weight: 600;
+
+            text-decoration: none;
+
+        }
+
+
+        .back-link:hover {
+
+            background: #f3f3f3;
+
+        }
+
+
+        /* =========================================
+           FORM CARD
+        ========================================= */
+
+        .form-card {
+
+            padding: 28px;
+
+            border:
+                1px solid
+                #e4e4e4;
+
+            border-radius: 14px;
+
+            background: white;
+
+        }
+
+
+        /* =========================================
+           ERROR
+        ========================================= */
+
+        .error-box {
+
+            margin-bottom: 22px;
+
+            padding:
+                12px
+                14px;
+
+            border:
+                1px solid
+                #e4bcbc;
+
+            border-radius: 9px;
+
+            background: #fff4f4;
+
+            color: #9b3535;
+
+            font-size: 13px;
+
+            font-weight: 600;
+
+        }
+
+
+        /* =========================================
+           FIELD
+        ========================================= */
+
+        .field {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 7px;
+
+        }
+
+
+        .field-label {
+
+            color: #333;
+
+            font-size: 13px;
+
+            font-weight: 700;
+
+        }
+
+
+        .field-help {
+
+            color: #888;
+
+            font-size: 12px;
+
+            line-height: 1.45;
+
+        }
+
+
+        .text-input,
+        .select-input {
+
+            width: 100%;
+
+            padding:
+                12px
+                13px;
+
+            border:
+                1px solid
+                #d8dadd;
+
+            border-radius: 8px;
+
+            background: white;
+
+            color: #222;
+
+            font-family: inherit;
+
+            font-size: 14px;
+
+            outline: none;
+
+        }
+
+
+        .text-input:focus,
+        .select-input:focus {
+
+            border-color: #222;
+
+        }
+
+
+        /* =========================================
+           LIST NAME
+        ========================================= */
+
+        .list-name-section {
+
+            margin-bottom: 28px;
+
+        }
+
+
+        /* =========================================
+           ITEMS
+        ========================================= */
+
+        .items-section {
+
+            margin-top: 28px;
+
+            padding-top: 25px;
+
+            border-top:
+                1px solid
+                #eeeeee;
+
+        }
+
+
+        .section-header {
+
+            display: flex;
+
+            align-items: flex-start;
+
+            justify-content: space-between;
+
+            gap: 20px;
+
+            margin-bottom: 18px;
+
+        }
+
+
+        .section-header h2 {
+
+            margin:
+                0
+                0
+                4px;
+
+            font-size: 18px;
+
+        }
+
+
+        .section-header p {
+
+            margin: 0;
+
+            color: #888;
+
+            font-size: 12px;
+
+        }
+
+
+        .add-item-button {
+
+            flex-shrink: 0;
+
+            padding:
+                9px
+                14px;
+
+            border: none;
+
+            border-radius: 8px;
+
+            background: #222;
+
+            color: white;
+
+            font-family: inherit;
+
+            font-size: 13px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+
+        }
+
+
+        .add-item-button:hover {
+
+            background: #333;
+
+        }
+
+
+        /* =========================================
+           ITEM CARD
+        ========================================= */
+
+        .list-items {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 12px;
+
+        }
+
+
+        .list-item-card {
+
+            position: relative;
+
+            padding:
+                18px
+                55px
+                18px
+                18px;
+
+            border:
+                1px solid
+                #e1e3e5;
+
+            border-radius: 10px;
+
+            background: #f8f9fa;
+
+        }
+
+
+        .item-number {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            width: 26px;
+
+            height: 26px;
+
+            margin-bottom: 13px;
+
+            border-radius: 50%;
+
+            background: #222;
+
+            color: white;
+
+            font-size: 12px;
+
+            font-weight: 800;
+
+        }
+
+
+        .item-fields {
+
+            display: grid;
+
+            grid-template-columns:
+                minmax(0, 1fr)
+                minmax(0, 1fr);
+
+            gap: 14px;
+
+        }
+
+
+        .remove-item-button {
+
+            position: absolute;
+
+            top: 15px;
+
+            right: 15px;
+
+            width: 30px;
+
+            height: 30px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding: 0;
+
+            border:
+                1px solid
+                #e1c4c4;
+
+            border-radius: 7px;
+
+            background: white;
+
+            color: #a33d3d;
+
+            font-size: 16px;
+
+            cursor: pointer;
+
+        }
+
+
+        .remove-item-button:hover {
+
+            background: #fff0f0;
+
+        }
+
+
+        /* =========================================
+           ADDITIONAL DETAILS
+        ========================================= */
+
+        .additional-details {
+
+            margin-top: 28px;
+
+            padding-top: 25px;
+
+            border-top:
+                1px solid
+                #eeeeee;
+
+        }
+
+
+        .details-toggle {
+
+            width: 100%;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            padding: 0;
+
+            border: none;
+
+            background: transparent;
+
+            color: #222;
+
+            font-family: inherit;
+
+            cursor: pointer;
+
+            text-align: left;
+
+        }
+
+
+        .details-toggle-title {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 4px;
+
+        }
+
+
+        .details-toggle-title strong {
+
+            font-size: 16px;
+
+        }
+
+
+        .details-toggle-title span {
+
+            color: #888;
+
+            font-size: 12px;
+
+            font-weight: 400;
+
+        }
+
+
+        .details-arrow {
+
+            font-size: 18px;
+
+            transition:
+                transform 0.2s ease;
+
+        }
+
+
+        .additional-details.open
+        .details-arrow {
+
+            transform:
+                rotate(180deg);
+
+        }
+
+
+        .details-content {
+
+            display: none;
+
+            grid-template-columns:
+                minmax(0, 1fr)
+                minmax(0, 1fr);
+
+            gap: 16px;
+
+            margin-top: 20px;
+
+        }
+
+
+        .additional-details.open
+        .details-content {
+
+            display: grid;
+
+        }
+
+
+        /* =========================================
+           FOOTER
+        ========================================= */
+
+        .form-footer {
+
+            display: flex;
+
+            justify-content: flex-end;
+
+            gap: 10px;
+
+            margin-top: 30px;
+
+            padding-top: 22px;
+
+            border-top:
+                1px solid
+                #eeeeee;
+
+        }
+
+
+        .cancel-button {
+
+            padding:
+                11px
+                20px;
+
+            border:
+                1px solid
+                #d8d8d8;
+
+            border-radius: 8px;
+
+            background: white;
+
+            color: #444;
+
+            font-family: inherit;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            text-decoration: none;
+
+        }
+
+
+        .cancel-button:hover {
+
+            background: #f5f5f5;
+
+        }
+
+
+        .save-button {
+
+            padding:
+                11px
+                22px;
+
+            border: none;
+
+            border-radius: 8px;
+
+            background: #8BF527;
+
+            color: #263b17;
+
+            font-family: inherit;
+
+            font-size: 14px;
+
+            font-weight: 800;
+
+            cursor: pointer;
+
+        }
+
+
+        .save-button:hover {
+
+            filter:
+                brightness(0.96);
+
+        }
+
+
+        /* =========================================
+           RESPONSIVE
+        ========================================= */
+
+        @media (max-width: 750px) {
+
+            .page {
+
+                padding:
+                    25px
+                    20px
+                    45px;
+
+            }
+
+
+            .page-header {
+
+                flex-direction: column;
+
+            }
+
+
+            .item-fields,
+            .details-content {
+
+                grid-template-columns: 1fr;
+
+            }
+
+
+            .section-header {
+
+                flex-direction: column;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="app">
+
+
+    {% include 'partials/sidebar.html' with active_page='summarize' %}
+
+
+    <main class="main">
+
+
+        <div class="page">
+
+
+            <!-- =====================================
+                 HEADER
+            ====================================== -->
+
+            <header class="page-header">
+
+
+                <div>
+
+
+                    <h1>
+                        Create List
+                    </h1>
+
+
+                    <p>
+                        {{ subject.name }}
+                    </p>
+
+
+                </div>
+
+
+                {% if subject_index != None %}
+
+                    <a
+                        href="{% url 'subject_detail' subject_index=subject_index %}"
+                        class="back-link"
+                    >
+                        ← Back to Subject
+                    </a>
+
+                {% endif %}
+
+
+            </header>
+
+
+            <!-- =====================================
+                 FORM
+            ====================================== -->
+
+            <form
+                method="POST"
+                class="form-card"
+                id="list-form"
+            >
+
+                {% csrf_token %}
+
+
+                <input
+                    type="hidden"
+                    name="subject_index"
+                    value="{{ subject_index|default_if_none:'' }}"
+                >
+
+
+                {% if error %}
+
+                    <div class="error-box">
+                        {{ error }}
+                    </div>
+
+                {% endif %}
+
+
+                <!-- =================================
+                     LIST NAME
+                ================================== -->
+
+                <section class="list-name-section">
+
+
+                    <div class="field">
+
+
+                        <label
+                            for="list-name"
+                            class="field-label"
+                        >
+                            List name or description
+                        </label>
+
+
+                        <span class="field-help">
+                            Name the list or describe what the items represent.
+                        </span>
+
+
+                        <input
+                            id="list-name"
+                            class="text-input"
+                            type="text"
+                            name="list_name"
+                            maxlength="255"
+                            value="{{ list_name }}"
+                            placeholder="e.g. Characteristics of an efficient market"
+                            required
+                        >
+
+
+                    </div>
+
+
+                </section>
+
+
+                <!-- =================================
+                     LIST ITEMS
+                ================================== -->
+
+                <section class="items-section">
+
+
+                    <div class="section-header">
+
+
+                        <div>
+
+
+                            <h2>
+                                List Items
+                            </h2>
+
+
+                            <p>
+                                Add as many items as you need.
+                                A short description is optional.
+                            </p>
+
+
+                        </div>
+
+
+                        <button
+                            type="button"
+                            class="add-item-button"
+                            onclick="addListItem()"
+                        >
+                            + Add Item
+                        </button>
+
+
+                    </div>
+
+
+                    <div
+                        class="list-items"
+                        id="list-items"
+                    >
+
+
+                        {% for item in submitted_items %}
+
+
+                            <div class="list-item-card">
+
+
+                                <button
+                                    type="button"
+                                    class="remove-item-button"
+                                    onclick="removeListItem(this)"
+                                    title="Remove item"
+                                    aria-label="Remove item"
+                                >
+                                    ×
+                                </button>
+
+
+                                <span class="item-number">
+                                    {{ forloop.counter }}
+                                </span>
+
+
+                                <div class="item-fields">
+
+
+                                    <div class="field">
+
+
+                                        <label class="field-label">
+                                            List item
+                                        </label>
+
+
+                                        <input
+                                            type="text"
+                                            class="text-input"
+                                            name="item_text"
+                                            maxlength="255"
+                                            value="{{ item.text }}"
+                                            placeholder="Enter list item"
+                                        >
+
+
+                                    </div>
+
+
+                                    <div class="field">
+
+
+                                        <label class="field-label">
+                                            Short description
+                                        </label>
+
+
+                                        <input
+                                            type="text"
+                                            class="text-input"
+                                            name="item_description"
+                                            maxlength="500"
+                                            value="{{ item.description }}"
+                                            placeholder="Optional explanation"
+                                        >
+
+
+                                    </div>
+
+
+                                </div>
+
+
+                            </div>
+
+
+                        {% endfor %}
+
+
+                    </div>
+
+
+                </section>
+
+
+                <!-- =================================
+                     ADDITIONAL DETAILS
+                ================================== -->
+
+                <section
+                    class="additional-details {% if selected_book or chapter %}open{% endif %}"
+                    id="additional-details"
+                >
+
+
+                    <button
+                        type="button"
+                        class="details-toggle"
+                        onclick="toggleAdditionalDetails()"
+                    >
+
+
+                        <span class="details-toggle-title">
+
+
+                            <strong>
+                                Additional Details
+                            </strong>
+
+
+                            <span>
+                                Optional book and chapter information.
+                            </span>
+
+
+                        </span>
+
+
+                        <span class="details-arrow">
+                           ⌄
+                        </span>
+
+
+                    </button>
+
+
+                    <div class="details-content">
+
+
+                        <!-- BOOK -->
+
+                        <div class="field">
+
+
+                            <label
+                                for="book-name"
+                                class="field-label"
+                            >
+                                Book
+                            </label>
+
+
+                            <span class="field-help">
+                                Optional. Only books added to this subject are shown.
+                            </span>
+
+
+                            <select
+                                id="book-name"
+                                class="select-input"
+                                name="book_name"
+                            >
+
+
+                                <option value="">
+                                    No book selected
+                                </option>
+
+
+                                {% for textbook in textbooks %}
+
+
+                                    <option
+                                        value="{{ textbook.name }}"
+                                        {% if selected_book == textbook.name %}
+                                            selected
+                                        {% endif %}
+                                    >
+                                        {{ textbook.name }}
+                                    </option>
+
+
+                                {% endfor %}
+
+
+                            </select>
+
+
+                        </div>
+
+
+                        <!-- CHAPTER -->
+
+                        <div class="field">
+
+
+                            <label
+                                for="chapter"
+                                class="field-label"
+                            >
+                                Chapter
+                            </label>
+
+
+                            <span class="field-help">
+                                Optional chapter number or chapter name.
+                            </span>
+
+
+                            <input
+                                id="chapter"
+                                class="text-input"
+                                type="text"
+                                name="chapter"
+                                maxlength="255"
+                                value="{{ chapter }}"
+                                placeholder="e.g. Chapter 4"
+                            >
+
+
+                        </div>
+
+
+                    </div>
+
+
+                </section>
+
+
+                <!-- =================================
+                     FOOTER
+                ================================== -->
+
+                <div class="form-footer">
+
+
+                    {% if subject_index != None %}
+
+                        <a
+                            href="{% url 'subject_detail' subject_index=subject_index %}"
+                            class="cancel-button"
+                        >
+                            Cancel
+                        </a>
+
+                    {% endif %}
+
+
+                    <button
+                        type="submit"
+                        class="save-button"
+                    >
+                        Save List
+                    </button>
+
+
+                </div>
+
+
+            </form>
+
+
+        </div>
+
+
+    </main>
+
+
+</div>
+
+
+<!-- =========================================
+     ITEM TEMPLATE
+========================================= -->
+
+<template id="list-item-template">
+
+
+    <div class="list-item-card">
+
+
+        <button
+            type="button"
+            class="remove-item-button"
+            onclick="removeListItem(this)"
+            title="Remove item"
+            aria-label="Remove item"
+        >
+            ×
+        </button>
+
+
+        <span class="item-number">
+            1
+        </span>
+
+
+        <div class="item-fields">
+
+
+            <div class="field">
+
+
+                <label class="field-label">
+                    List item
+                </label>
+
+
+                <input
+                    type="text"
+                    class="text-input"
+                    name="item_text"
+                    maxlength="255"
+                    placeholder="Enter list item"
+                >
+
+
+            </div>
+
+
+            <div class="field">
+
+
+                <label class="field-label">
+                    Short description
+                </label>
+
+
+                <input
+                    type="text"
+                    class="text-input"
+                    name="item_description"
+                    maxlength="500"
+                    placeholder="Optional explanation"
+                >
+
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+</template>
+
+
+<script>
+
+    // =============================================
+    // ADD ITEM
+    // =============================================
+
+    function addListItem() {
+
+        const container =
+            document.getElementById(
+                "list-items"
+            );
+
+
+        const template =
+            document.getElementById(
+                "list-item-template"
+            );
+
+
+        if (
+            !container
+            ||
+            !template
+        ) {
+
+            return;
+
+        }
+
+
+        const clone =
+            template.content.cloneNode(
+                true
+            );
+
+
+        container.appendChild(
+            clone
+        );
+
+
+        updateItemNumbers();
+
+
+        const cards =
+            container.querySelectorAll(
+                ".list-item-card"
+            );
+
+
+        const newestCard =
+            cards[
+                cards.length - 1
+            ];
+
+
+        if (newestCard) {
+
+            const input =
+                newestCard.querySelector(
+                    'input[name="item_text"]'
+                );
+
+
+            if (input) {
+
+                input.focus();
+
+            }
+
+        }
+
+    }
+
+
+    // =============================================
+    // REMOVE ITEM
+    // =============================================
+
+    function removeListItem(
+        button
+    ) {
+
+        const container =
+            document.getElementById(
+                "list-items"
+            );
+
+
+        if (
+            !button
+            ||
+            !container
+        ) {
+
+            return;
+
+        }
+
+
+        const card =
+            button.closest(
+                ".list-item-card"
+            );
+
+
+        if (card) {
+
+            card.remove();
+
+        }
+
+
+        // Always leave at least one input card.
+
+        const remainingCards =
+            container.querySelectorAll(
+                ".list-item-card"
+            );
+
+
+        if (
+            remainingCards.length
+            === 0
+        ) {
+
+            addListItem();
+
+        }
+
+
+        updateItemNumbers();
+
+    }
+
+
+    // =============================================
+    // ITEM NUMBERS
+    // =============================================
+
+    function updateItemNumbers() {
+
+        const cards =
+            document.querySelectorAll(
+                "#list-items .list-item-card"
+            );
+
+
+        cards.forEach(
+            function(
+                card,
+                index
+            ) {
+
+                const number =
+                    card.querySelector(
+                        ".item-number"
+                    );
+
+
+                if (number) {
+
+                    number.textContent =
+                        index + 1;
+
+                }
+
+            }
+        );
+
+    }
+
+
+    // =============================================
+    // ADDITIONAL DETAILS
+    // =============================================
+
+    function toggleAdditionalDetails() {
+
+        const section =
+            document.getElementById(
+                "additional-details"
+            );
+
+
+        if (!section) {
+
+            return;
+
+        }
+
+
+        section.classList.toggle(
+            "open"
+        );
+
+    }
+
+
+    // =============================================
+    // INITIALIZE
+    // =============================================
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function() {
+
+            updateItemNumbers();
+
+        }
+    );
+
+</script>
+
+
+<script
+    src="{% static 'dashboard/js/sidebar.js' %}"
+></script>
+
+
+</body>
+
+</html>

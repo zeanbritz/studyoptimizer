@@ -184,6 +184,10 @@ class Definition(models.Model):
         return self.term
 
 
+# ============================================================
+# BULLET LIST
+# ============================================================
+
 class BulletList(models.Model):
 
     knowledge_unit = models.OneToOneField(
@@ -191,11 +195,30 @@ class BulletList(models.Model):
         on_delete=models.CASCADE,
     )
 
-    question = models.CharField(max_length=255)
+    question = models.CharField(
+        max_length=255
+    )
+
+    book_name = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+    )
+
+    chapter = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+    )
 
     def __str__(self):
+
         return self.question
 
+
+# ============================================================
+# BULLET ITEM
+# ============================================================
 
 class BulletItem(models.Model):
 
@@ -205,11 +228,22 @@ class BulletItem(models.Model):
         related_name="items",
     )
 
-    text = models.CharField(max_length=255)
+    text = models.CharField(
+        max_length=255
+    )
 
-    order = models.PositiveIntegerField(default=1)
+    description = models.CharField(
+        max_length=500,
+        blank=True,
+        default="",
+    )
+
+    order = models.PositiveIntegerField(
+        default=1
+    )
 
     def __str__(self):
+
         return self.text
 
 

@@ -13,6 +13,8 @@ from .models import (
     Formula,
     FormulaVariable,
     Definition,
+    BulletList,
+    BulletItem,
     StudentKnowledge,
 )
 
@@ -2835,5 +2837,377 @@ def book_summary(
 
             "custom_book_id":
                 custom_book_id,
+        }
+    )
+
+
+
+# ============================================================
+# CREATE LIST
+# ============================================================
+
+@login_required
+def create_list(
+    request,
+    subject_id
+):
+
+    # ========================================================
+    # SUBJECT
+    # ========================================================
+
+    subject = get_object_or_404(
+        Subject,
+        id=subject_id,
+        user=request.user,
+    )
+
+    # ========================================================
+    # SUBJECT INDEX
+    # ========================================================
+
+    subject_index = (
+        request.GET.get(
+            "subject_index"
+        )
+        or
+        request.POST.get(
+            "subject_index"
+        )
+    )
+
+    # ========================================================
+    # TEXTBOOKS
+    # ========================================================
+
+    textbooks = (
+        SubjectTextbook.objects
+        .filter(
+            subject=subject
+        )
+        .order_by(
+            "created",
+            "id",
+        )
+    )
+
+    # ========================================================
+    # FORM VALUES
+    # ========================================================
+
+    list_name = ""
+
+    selected_book = ""
+
+    chapter = ""
+
+    submitted_items = []
+
+    error = None
+
+    # ========================================================
+    # POST
+    # ========================================================
+
+    if request.method == "POST":
+
+        # ----------------------------------------------------
+        # LIST NAME / DESCRIPTION
+        # ----------------------------------------------------
+
+        list_name = (
+            request.POST.get(
+                "list_name",
+                ""
+            )
+            .strip()
+        )
+
+        # ----------------------------------------------------
+        # OPTIONAL DETAILS
+        # ----------------------------------------------------
+
+        selected_book = (
+            request.POST.get(
+                "book_name",
+                ""
+            )
+            .strip()
+        )
+
+        chapter = (
+            request.POST.get(
+                "chapter",
+                ""
+            )
+            .strip()
+        )
+
+        # ----------------------------------------------------
+        # ITEM ARRAYS
+        # ----------------------------------------------------
+
+        item_texts = (
+            request.POST.getlist(
+                "item_text"
+            )
+        )
+
+        item_descriptions = (
+            request.POST.getlist(
+                "item_description"
+            )
+        )
+
+        # ----------------------------------------------------
+        # REBUILD ITEMS
+        #
+        # This is also used if validation fails so the
+        # student's entered values stay on screen.
+        # ----------------------------------------------------
+
+        submitted_items = []
+
+        for index, item_text in enumerate(
+            item_texts
+        ):
+
+            item_text = (
+                item_text.strip()
+            )
+
+            item_description = ""
+
+            if (
+                index
+                <
+                len(
+                    item_descriptions
+                )
+            ):
+
+                item_description = (
+                    item_descriptions[
+                        index
+                    ]
+                    .strip()
+                )
+
+            submitted_items.append(
+                {
+                    "text":
+                        item_text,
+
+                    "description":
+                        item_description,
+                }
+            )
+
+        # ====================================================
+        # VALIDATE LIST NAME
+        # ====================================================
+
+        if not list_name:
+
+            error = (
+                "Enter a name or description "
+                "for the list."
+            )
+
+        # ====================================================
+        # VALIDATE BOOK
+        # ====================================================
+
+        if (
+            error is None
+            and
+            selected_book
+        ):
+
+            valid_book = (
+                textbooks
+                .filter(
+                    name=selected_book
+                )
+                .exists()
+            )
+
+            if not valid_book:
+
+                error = (
+                    "The selected textbook "
+                    "does not belong to this subject."
+                )
+
+        # ====================================================
+        # REMOVE COMPLETELY EMPTY ITEMS
+        # ====================================================
+
+        valid_items = []
+
+        for item in submitted_items:
+
+            if item[
+                "text"
+            ]:
+
+                valid_items.append(
+                    item
+                )
+
+        # ====================================================
+        # REQUIRE AT LEAST ONE LIST ITEM
+        # ====================================================
+
+        if (
+            error is None
+            and
+            not valid_items
+        ):
+
+            error = (
+                "Add at least one item "
+                "to the list."
+            )
+
+        # ====================================================
+        # CREATE
+        # ====================================================
+
+        if error is None:
+
+            # ------------------------------------------------
+            # KNOWLEDGE UNIT
+            # ------------------------------------------------
+
+            knowledge_unit = (
+                KnowledgeUnit.objects.create(
+                    subject=subject,
+                    title=list_name,
+                    knowledge_type=(
+                        KnowledgeUnit
+                        .KnowledgeType
+                        .BULLET_LIST
+                    ),
+                    difficulty=1,
+                    estimated_minutes=max(
+                        2,
+                        len(
+                            valid_items
+                        )
+                    ),
+                    active=True,
+                )
+            )
+
+            # ------------------------------------------------
+            # BULLET LIST
+            # ------------------------------------------------
+
+            bullet_list = (
+                BulletList.objects.create(
+                    knowledge_unit=knowledge_unit,
+                    question=list_name,
+                    book_name=selected_book,
+                    chapter=chapter,
+                )
+            )
+
+            # ------------------------------------------------
+            # ITEMS
+            # ------------------------------------------------
+
+            for order, item in enumerate(
+                valid_items,
+                start=1,
+            ):
+
+                BulletItem.objects.create(
+                    bullet_list=bullet_list,
+                    text=item[
+                        "text"
+                    ],
+                    description=item[
+                        "description"
+                    ],
+                    order=order,
+                )
+
+            # ------------------------------------------------
+            # RETURN TO SUBJECT
+            # ------------------------------------------------
+
+            if subject_index is not None:
+
+                return redirect(
+                    "subject_detail",
+                    subject_index=subject_index
+                )
+
+            return redirect(
+                "goals"
+            )
+
+    # ========================================================
+    # DEFAULT EMPTY ITEMS
+    # ========================================================
+
+    if not submitted_items:
+
+        submitted_items = [
+            {
+                "text":
+                    "",
+
+                "description":
+                    "",
+            },
+            {
+                "text":
+                    "",
+
+                "description":
+                    "",
+            },
+            {
+                "text":
+                    "",
+
+                "description":
+                    "",
+            },
+        ]
+
+    # ========================================================
+    # RENDER
+    # ========================================================
+
+    return render(
+        request,
+        "learning/create_list.html",
+        {
+            "subject":
+                subject,
+
+            "subject_index":
+                subject_index,
+
+            "textbooks":
+                textbooks,
+
+            "list_name":
+                list_name,
+
+            "selected_book":
+                selected_book,
+
+            "chapter":
+                chapter,
+
+            "submitted_items":
+                submitted_items,
+
+            "error":
+                error,
         }
     )

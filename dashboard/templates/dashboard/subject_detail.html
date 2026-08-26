@@ -2536,20 +2536,39 @@
 
                             <!-- LIST -->
 
-                            <button
-                                type="button"
-                                class="summary-option"
-                            >
+                            {% if database_subject %}
 
-                                <h3>
-                                    List
-                                </h3>
+                                <a
+                                    href="{% url 'create_list' subject_id=database_subject.id %}?subject_index={{ subject_index }}"
+                                    class="summary-option"
+                                >
 
-                                <p>
-                                    Summarize important items or characteristics.
-                                </p>
+                                    <h3>
+                                        List
+                                    </h3>
 
-                            </button>
+                                    <p>
+                                        Create a list of important items,
+                                        characteristics, examples or concepts.
+                                    </p>
+
+                                </a>
+
+                            {% else %}
+
+                                <div class="summary-option">
+
+                                    <h3>
+                                        List
+                                    </h3>
+
+                                    <p>
+                                        Save the subject first before adding lists.
+                                    </p>
+
+                                </div>
+
+                            {% endif %}
 
 
                             <!-- STEPS -->

@@ -104,4 +104,10 @@ urlpatterns = [
         name="book_summary",
     ),
 
+    path(
+        "subjects/<int:subject_id>/list/create/",
+        views.create_list,
+        name="create_list",
+    ),
+
 ]
