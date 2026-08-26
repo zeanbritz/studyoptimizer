@@ -3970,6 +3970,10 @@ def review_formulas(request):
 @login_required
 def progress(request):
 
+    # ========================================================
+    # SUBJECTS
+    # ========================================================
+
     subjects = (
         Subject.objects
         .filter(
@@ -3979,6 +3983,10 @@ def progress(request):
             "name"
         )
     )
+
+    # ========================================================
+    # KNOWLEDGE UNITS
+    # ========================================================
 
     knowledge_units = (
         KnowledgeUnit.objects
@@ -3991,6 +3999,10 @@ def progress(request):
         )
     )
 
+    # ========================================================
+    # KNOWLEDGE PROGRESS RECORDS
+    # ========================================================
+
     progress_records = (
         StudentKnowledge.objects
         .filter(
@@ -4002,6 +4014,29 @@ def progress(request):
             "knowledge_unit__subject",
         )
     )
+
+    # ========================================================
+    # TEXTBOOKS
+    # ========================================================
+
+    textbooks = list(
+        SubjectTextbook.objects
+        .filter(
+            subject__user=request.user
+        )
+        .select_related(
+            "subject"
+        )
+        .order_by(
+            "subject__name",
+            "created",
+            "id",
+        )
+    )
+
+    # ========================================================
+    # OVERALL KNOWLEDGE STATISTICS
+    # ========================================================
 
     total_knowledge = (
         knowledge_units.count()
@@ -4020,17 +4055,13 @@ def progress(request):
     )
 
     total_correct = sum(
-
         record.correct_count
-
         for record
         in progress_records
     )
 
     total_incorrect = sum(
-
         record.incorrect_count
-
         for record
         in progress_records
     )
@@ -4040,6 +4071,10 @@ def progress(request):
         +
         total_incorrect
     )
+
+    # --------------------------------------------------------
+    # ACCURACY
+    # --------------------------------------------------------
 
     if total_reviews > 0:
 
@@ -4056,6 +4091,10 @@ def progress(request):
 
         accuracy = 0
 
+    # --------------------------------------------------------
+    # OVERALL MASTERY
+    # --------------------------------------------------------
+
     if total_knowledge > 0:
 
         overall_mastery = round(
@@ -4071,9 +4110,92 @@ def progress(request):
 
         overall_mastery = 0
 
+    # ========================================================
+    # OVERALL TEXTBOOK PAGE PROGRESS
+    # ========================================================
+
+    total_textbook_pages = sum(
+        textbook.page_count
+        for textbook
+        in textbooks
+    )
+
+    total_pages_summarized = sum(
+        min(
+            textbook.pages_summarized,
+            textbook.page_count
+        )
+        for textbook
+        in textbooks
+    )
+
+    total_pages_remaining = max(
+        0,
+        (
+            total_textbook_pages
+            -
+            total_pages_summarized
+        )
+    )
+
+    # --------------------------------------------------------
+    # OVERALL PAGE PERCENTAGE
+    # --------------------------------------------------------
+
+    if total_textbook_pages > 0:
+
+        overall_page_progress = round(
+            (
+                total_pages_summarized
+                /
+                total_textbook_pages
+            )
+            * 100,
+            1,
+        )
+
+    else:
+
+        overall_page_progress = 0
+
+    # ========================================================
+    # GROUP TEXTBOOKS BY SUBJECT
+    # ========================================================
+
+    textbooks_by_subject = {}
+
+    for textbook in textbooks:
+
+        subject_id = (
+            textbook.subject_id
+        )
+
+        if (
+            subject_id
+            not in textbooks_by_subject
+        ):
+
+            textbooks_by_subject[
+                subject_id
+            ] = []
+
+        textbooks_by_subject[
+            subject_id
+        ].append(
+            textbook
+        )
+
+    # ========================================================
+    # SUBJECT PROGRESS
+    # ========================================================
+
     subject_progress = []
 
     for subject in subjects:
+
+        # ====================================================
+        # KNOWLEDGE FOR SUBJECT
+        # ====================================================
 
         subject_units = (
             knowledge_units
@@ -4086,18 +4208,43 @@ def progress(request):
             subject_units.count()
         )
 
-        if subject_unit_count == 0:
-
-            continue
-
         subject_progress_records = (
             progress_records
             .filter(
-                knowledge_unit__in=(
-                    subject_units
-                )
+                knowledge_unit__subject=subject
             )
         )
+
+        # ====================================================
+        # TEXTBOOKS FOR SUBJECT
+        # ====================================================
+
+        subject_textbooks = (
+            textbooks_by_subject.get(
+                subject.id,
+                []
+            )
+        )
+
+        # ----------------------------------------------------
+        # SKIP COMPLETELY EMPTY SUBJECTS
+        #
+        # A subject is shown if it has either:
+        # - knowledge units
+        # - textbooks
+        # ----------------------------------------------------
+
+        if (
+            subject_unit_count == 0
+            and
+            not subject_textbooks
+        ):
+
+            continue
+
+        # ====================================================
+        # KNOWLEDGE MASTERY
+        # ====================================================
 
         subject_mastered = (
             subject_progress_records
@@ -4108,25 +4255,19 @@ def progress(request):
         )
 
         subject_reviews = sum(
-
             record.review_count
-
             for record
             in subject_progress_records
         )
 
         subject_correct = sum(
-
             record.correct_count
-
             for record
             in subject_progress_records
         )
 
         subject_incorrect = sum(
-
             record.incorrect_count
-
             for record
             in subject_progress_records
         )
@@ -4136,6 +4277,10 @@ def progress(request):
             +
             subject_incorrect
         )
+
+        # ----------------------------------------------------
+        # SUBJECT ACCURACY
+        # ----------------------------------------------------
 
         if subject_total_answers > 0:
 
@@ -4152,19 +4297,85 @@ def progress(request):
 
             subject_accuracy = 0
 
-        subject_mastery = round(
-            (
-                subject_mastered
-                /
-                subject_unit_count
+        # ----------------------------------------------------
+        # SUBJECT MASTERY
+        # ----------------------------------------------------
+
+        if subject_unit_count > 0:
+
+            subject_mastery = round(
+                (
+                    subject_mastered
+                    /
+                    subject_unit_count
+                )
+                * 100
             )
-            * 100
+
+        else:
+
+            subject_mastery = 0
+
+        # ====================================================
+        # SUBJECT PAGE PROGRESS
+        # ====================================================
+
+        subject_total_pages = sum(
+            textbook.page_count
+            for textbook
+            in subject_textbooks
         )
+
+        subject_pages_summarized = sum(
+            min(
+                textbook.pages_summarized,
+                textbook.page_count
+            )
+            for textbook
+            in subject_textbooks
+        )
+
+        subject_pages_remaining = max(
+            0,
+            (
+                subject_total_pages
+                -
+                subject_pages_summarized
+            )
+        )
+
+        # ----------------------------------------------------
+        # SUBJECT PAGE PERCENTAGE
+        # ----------------------------------------------------
+
+        if subject_total_pages > 0:
+
+            subject_page_progress = round(
+                (
+                    subject_pages_summarized
+                    /
+                    subject_total_pages
+                )
+                * 100,
+                1,
+            )
+
+        else:
+
+            subject_page_progress = 0
+
+        # ====================================================
+        # ADD SUBJECT
+        # ====================================================
 
         subject_progress.append(
             {
                 "subject":
                     subject,
+
+                # ----------------------------------------
+                # KNOWLEDGE
+                # ----------------------------------------
 
                 "total_units":
                     subject_unit_count,
@@ -4189,13 +4400,42 @@ def progress(request):
 
                 "mastery":
                     subject_mastery,
+
+                # ----------------------------------------
+                # TEXTBOOK PAGES
+                # ----------------------------------------
+
+                "textbook_count":
+                    len(
+                        subject_textbooks
+                    ),
+
+                "total_pages":
+                    subject_total_pages,
+
+                "pages_summarized":
+                    subject_pages_summarized,
+
+                "pages_remaining":
+                    subject_pages_remaining,
+
+                "page_progress":
+                    subject_page_progress,
             }
         )
+
+    # ========================================================
+    # RENDER
+    # ========================================================
 
     return render(
         request,
         "dashboard/progress.html",
         {
+            # --------------------------------------------
+            # KNOWLEDGE TOTALS
+            # --------------------------------------------
+
             "total_knowledge":
                 total_knowledge,
 
@@ -4219,6 +4459,26 @@ def progress(request):
 
             "overall_mastery":
                 overall_mastery,
+
+            # --------------------------------------------
+            # PAGE TOTALS
+            # --------------------------------------------
+
+            "total_textbook_pages":
+                total_textbook_pages,
+
+            "total_pages_summarized":
+                total_pages_summarized,
+
+            "total_pages_remaining":
+                total_pages_remaining,
+
+            "overall_page_progress":
+                overall_page_progress,
+
+            # --------------------------------------------
+            # SUBJECTS
+            # --------------------------------------------
 
             "subject_progress":
                 subject_progress,
