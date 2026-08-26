@@ -11,6 +11,7 @@ from learning.models import (
     KnowledgeUnit,
     Formula,
     Definition,
+    BulletList,
     StudentKnowledge,
 )
 
@@ -3472,6 +3473,66 @@ def subject_detail(
 
                 due_definitions.append(
                     definition
+                )
+
+        # ====================================================
+        # LISTS
+        # ====================================================
+
+        bullet_lists = (
+            BulletList.objects
+            .filter(
+                knowledge_unit__subject=database_subject,
+                knowledge_unit__active=True,
+            )
+            .select_related(
+                "knowledge_unit"
+            )
+            .prefetch_related(
+                "items"
+            )
+            .order_by(
+                "knowledge_unit__created",
+                "id",
+            )
+        )
+
+        for bullet_list in (
+            bullet_lists
+        ):
+
+            progress = (
+                StudentKnowledge.objects
+                .filter(
+                    student=request.user,
+                    knowledge_unit=(
+                        bullet_list.knowledge_unit
+                    ),
+                )
+                .first()
+            )
+
+            is_due = False
+
+            if progress is None:
+
+                is_due = True
+
+            elif progress.next_review is None:
+
+                is_due = True
+
+            elif (
+                progress.next_review.date()
+                <= today
+            ):
+
+                is_due = True
+
+            if is_due:
+
+                due_bullet_lists.append(
+                    bullet_list
                 )
 
     # ========================================================

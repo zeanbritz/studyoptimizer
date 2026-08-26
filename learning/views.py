@@ -1157,6 +1157,217 @@ def definition_review_list(
         subject_index
     ]
 
+# ============================================================
+# LIST REVIEW LIST
+# ============================================================
+
+@login_required
+def list_review_list(
+    request,
+    subject_index
+):
+
+    # ========================================================
+    # SESSION SUBJECTS
+    # ========================================================
+
+    subjects = request.session.get(
+        "onboarding_subjects",
+        []
+    )
+
+    # ========================================================
+    # VALIDATE SUBJECT INDEX
+    # ========================================================
+
+    try:
+
+        subject_index = int(
+            subject_index
+        )
+
+    except (
+        TypeError,
+        ValueError
+    ):
+
+        return redirect(
+            "goals"
+        )
+
+    if (
+        subject_index < 0
+        or
+        subject_index >= len(subjects)
+    ):
+
+        return redirect(
+            "goals"
+        )
+
+    subject_data = (
+        subjects[
+            subject_index
+        ]
+    )
+
+    # ========================================================
+    # FIND DATABASE SUBJECT
+    # ========================================================
+
+    database_subject = None
+
+    database_subject_id = (
+        subject_data.get(
+            "database_id"
+        )
+    )
+
+    if database_subject_id:
+
+        database_subject = (
+            Subject.objects
+            .filter(
+                id=database_subject_id,
+                user=request.user,
+            )
+            .first()
+        )
+
+    # --------------------------------------------------------
+    # FALLBACK TO NAME
+    # --------------------------------------------------------
+
+    if not database_subject:
+
+        subject_name = (
+            subject_data.get(
+                "name",
+                ""
+            )
+            .strip()
+        )
+
+        if subject_name:
+
+            database_subject = (
+                Subject.objects
+                .filter(
+                    user=request.user,
+                    name=subject_name,
+                )
+                .first()
+            )
+
+    if not database_subject:
+
+        return redirect(
+            "subject_detail",
+            subject_index=subject_index
+        )
+
+    # ========================================================
+    # TODAY
+    # ========================================================
+
+    today = timezone.localdate()
+
+    # ========================================================
+    # ALL ACTIVE LISTS FOR SUBJECT
+    # ========================================================
+
+    bullet_lists = (
+        BulletList.objects
+        .filter(
+            knowledge_unit__subject=database_subject,
+            knowledge_unit__knowledge_type=(
+                KnowledgeUnit
+                .KnowledgeType
+                .BULLET_LIST
+            ),
+            knowledge_unit__active=True,
+        )
+        .select_related(
+            "knowledge_unit"
+        )
+        .prefetch_related(
+            "items"
+        )
+        .order_by(
+            "knowledge_unit__created",
+            "id",
+        )
+    )
+
+    # ========================================================
+    # ONLY LISTS DUE TODAY
+    # ========================================================
+
+    due_lists = []
+
+    for bullet_list in bullet_lists:
+
+        progress = (
+            StudentKnowledge.objects
+            .filter(
+                student=request.user,
+                knowledge_unit=(
+                    bullet_list.knowledge_unit
+                ),
+            )
+            .first()
+        )
+
+        is_due = False
+
+        if progress is None:
+
+            is_due = True
+
+        elif progress.next_review is None:
+
+            is_due = True
+
+        elif (
+            progress.next_review.date()
+            <= today
+        ):
+
+            is_due = True
+
+        if is_due:
+
+            due_lists.append(
+                bullet_list
+            )
+
+    # ========================================================
+    # RENDER
+    # ========================================================
+
+    return render(
+        request,
+        "learning/list_review_list.html",
+        {
+            "subject":
+                database_subject,
+
+            "subject_data":
+                subject_data,
+
+            "subject_index":
+                subject_index,
+
+            "due_lists":
+                due_lists,
+
+            "due_list_count":
+                len(
+                    due_lists
+                ),
+        }
+    )
+
     # ========================================================
     # FIND DATABASE SUBJECT
     # ========================================================
@@ -1287,6 +1498,70 @@ def definition_review_list(
         }
     )
 
+    # ====================================================
+    # LISTS
+    # ====================================================
+
+    bullet_lists = (
+        BulletList.objects
+        .filter(
+            knowledge_unit__subject=database_subject,
+            knowledge_unit__knowledge_type=(
+                KnowledgeUnit
+                .KnowledgeType
+                .BULLET_LIST
+            ),
+            knowledge_unit__active=True,
+        )
+        .select_related(
+            "knowledge_unit"
+        )
+        .prefetch_related(
+            "items"
+        )
+        .order_by(
+            "knowledge_unit__created",
+            "id",
+        )
+    )
+
+    for bullet_list in (
+        bullet_lists
+    ):
+
+        progress = (
+            StudentKnowledge.objects
+            .filter(
+                student=request.user,
+                knowledge_unit=(
+                    bullet_list.knowledge_unit
+                ),
+            )
+            .first()
+        )
+
+        is_due = False
+
+        if progress is None:
+
+            is_due = True
+
+        elif progress.next_review is None:
+
+            is_due = True
+
+        elif (
+            progress.next_review.date()
+            <= today
+        ):
+
+            is_due = True
+
+        if is_due:
+
+            due_bullet_lists.append(
+                bullet_list
+            )
 
 # ============================================================
 # REVIEW DEFINITION

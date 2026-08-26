@@ -2908,6 +2908,56 @@
 
                             {% endif %}
 
+                            <!-- =================================
+     LISTS
+================================== -->
+
+{% if due_bullet_lists %}
+
+
+    <a
+        href="{% url 'list_review_list' subject_index=subject_index %}"
+        class="review-category"
+    >
+
+
+        <div class="review-category-header">
+
+
+            <div class="review-category-title">
+
+
+                <h3>
+                    Lists to Review
+                </h3>
+
+
+                <span class="review-count">
+                    {{ due_bullet_list_count }}
+                </span>
+
+
+            </div>
+
+
+            <span>
+                →
+            </span>
+
+
+        </div>
+
+
+        <p class="review-description">
+            Lists you need to review today.
+        </p>
+
+
+    </a>
+
+
+{% endif %}
+
 
                             <!-- =================================
                                  EMPTY
