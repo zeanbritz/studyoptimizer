@@ -19,7 +19,7 @@
 
     <!-- =========================================
          SHARED SIDEBAR CSS
-    ========================================= -->
+    ========================================== -->
 
     <link
         rel="stylesheet"
@@ -29,12 +29,56 @@
 
     <!-- =========================================
          DASHBOARD CSS
-    ========================================= -->
+    ========================================== -->
 
     <link
         rel="stylesheet"
         href="{% static 'dashboard/css/dashboard.css' %}"
     >
+
+
+    <!-- =========================================
+         TODAY PLAN COLUMN OVERRIDE
+
+         We now have:
+         1. Definitions
+         2. Formulas
+         3. Book Summaries
+    ========================================== -->
+
+    <style>
+
+        .today-plan-columns {
+            grid-template-columns:
+                repeat(
+                    3,
+                    minmax(0, 1fr)
+                );
+        }
+
+
+        @media (max-width: 1100px) {
+
+            .today-plan-columns {
+                grid-template-columns:
+                    repeat(
+                        2,
+                        minmax(0, 1fr)
+                    );
+            }
+
+        }
+
+
+        @media (max-width: 750px) {
+
+            .today-plan-columns {
+                grid-template-columns: 1fr;
+            }
+
+        }
+
+    </style>
 
 </head>
 
@@ -47,14 +91,14 @@
 
     <!-- =========================================
          SIDEBAR
-    ========================================= -->
+    ========================================== -->
 
     {% include 'partials/sidebar.html' with active_page='dashboard' %}
 
 
     <!-- =========================================
          MAIN
-    ========================================= -->
+    ========================================== -->
 
     <main class="main">
 
@@ -122,10 +166,10 @@
 
 
                 <!-- =============================
-                     HAS SOMETHING DUE
+                     HAS PLAN ITEMS
                 ============================== -->
 
-                {% elif due_definition_subjects or due_formula_subjects %}
+                {% elif due_definition_subjects or due_formula_subjects or book_summary_subjects %}
 
 
                     <div class="today-plan-columns">
@@ -317,11 +361,114 @@
                         {% endif %}
 
 
+                        <!-- =================================
+                             BOOK SUMMARIES COLUMN
+                        ================================== -->
+
+                        {% if book_summary_subjects %}
+
+
+                            <div class="today-plan-column">
+
+
+                                <!-- =====================
+                                     COLUMN HEADER
+                                ====================== -->
+
+                                <div class="plan-column-header">
+
+
+                                    <div>
+
+                                        <h3>
+                                            Book Summaries
+                                        </h3>
+
+                                        <p>
+                                            Open your textbook summarization plan.
+                                        </p>
+
+                                    </div>
+
+
+                                    <span class="plan-total-count">
+
+                                        {{ book_summary_total }}
+
+                                    </span>
+
+
+                                </div>
+
+
+                                <!-- =====================
+                                     SUBJECT LIST
+                                ====================== -->
+
+                                <div class="plan-subject-list">
+
+
+                                    {% for item in book_summary_subjects %}
+
+
+                                        <a
+                                            href="{% url 'book_summary' subject_index=item.subject_index %}"
+                                            class="plan-subject-card"
+                                        >
+
+
+                                            <div class="plan-card-content">
+
+
+                                                <span class="plan-card-title">
+
+                                                    {{ item.subject.name }}
+                                                    Pages to Summarize
+
+                                                </span>
+
+
+                                                <span class="plan-card-count">
+
+
+                                                    {% if item.count == 0 %}
+
+                                                        No textbooks added
+
+                                                    {% else %}
+
+                                                        {{ item.count }}
+                                                        textbook{{ item.count|pluralize }}
+
+                                                    {% endif %}
+
+
+                                                </span>
+
+
+                                            </div>
+
+
+                                        </a>
+
+
+                                    {% endfor %}
+
+
+                                </div>
+
+
+                            </div>
+
+
+                        {% endif %}
+
+
                     </div>
 
 
                 <!-- =============================
-                     NOTHING DUE
+                     NOTHING AVAILABLE
                 ============================== -->
 
                 {% else %}
