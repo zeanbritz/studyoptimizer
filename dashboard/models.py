@@ -151,6 +151,19 @@ class SubjectTextbook(models.Model):
         ]
     )
 
+    # ========================================================
+    # SUMMARY PROGRESS
+    # ========================================================
+
+    pages_summarized = models.PositiveIntegerField(
+        default=0
+    )
+
+    last_summary_date = models.DateField(
+        null=True,
+        blank=True,
+    )
+
     created = models.DateTimeField(
         auto_now_add=True
     )
@@ -161,7 +174,6 @@ class SubjectTextbook(models.Model):
             f"{self.name} "
             f"({self.page_count} pages)"
         )
-
 
 # ============================================================
 # SUBJECT REVISION PLAN

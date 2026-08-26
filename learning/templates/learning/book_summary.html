@@ -1,0 +1,1392 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Summarize {{ subject.name }} - StudyOptimizer
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{% static 'dashboard/css/sidebar.css' %}"
+    >
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        body {
+            margin: 0;
+            background: #f5f6f8;
+            color: #222;
+
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Arial,
+                sans-serif;
+        }
+
+
+        /* =========================================
+           APP
+        ========================================= */
+
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+
+
+        .main {
+            flex: 1;
+            min-width: 0;
+        }
+
+
+        .page {
+            width: 100%;
+            max-width: 1200px;
+
+            margin: 0 auto;
+
+            padding:
+                34px
+                40px
+                60px;
+        }
+
+
+        /* =========================================
+           HEADER
+        ========================================= */
+
+        .page-header {
+            display: flex;
+
+            align-items: flex-start;
+            justify-content: space-between;
+
+            gap: 20px;
+
+            margin-bottom: 28px;
+        }
+
+
+        .page-title {
+            margin: 0;
+
+            font-size: 30px;
+            font-weight: 750;
+
+            letter-spacing: -0.5px;
+        }
+
+
+        .page-subtitle {
+            margin:
+                6px
+                0
+                0;
+
+            color: #777;
+
+            font-size: 14px;
+        }
+
+
+        .back-button {
+            display: inline-flex;
+
+            align-items: center;
+            justify-content: center;
+
+            flex-shrink: 0;
+
+            min-height: 40px;
+
+            padding:
+                0
+                15px;
+
+            border:
+                1px solid
+                #d8d8d8;
+
+            border-radius: 9px;
+
+            background: white;
+
+            color: #444;
+
+            text-decoration: none;
+
+            font-size: 13px;
+            font-weight: 650;
+
+            transition:
+                background 0.15s ease,
+                border-color 0.15s ease;
+        }
+
+
+        .back-button:hover {
+            background: #f4f4f4;
+            border-color: #c8c8c8;
+        }
+
+
+        /* =========================================
+           OVERVIEW
+        ========================================= */
+
+        .overview-grid {
+            display: grid;
+
+            grid-template-columns:
+                repeat(
+                    4,
+                    minmax(0, 1fr)
+                );
+
+            gap: 12px;
+
+            margin-bottom: 25px;
+        }
+
+
+        .overview-card {
+            min-height: 90px;
+
+            padding: 17px;
+
+            border:
+                1px solid
+                #e1e4e7;
+
+            border-radius: 11px;
+
+            background: white;
+        }
+
+
+        .overview-label {
+            display: block;
+
+            margin-bottom: 8px;
+
+            color: #777;
+
+            font-size: 11px;
+            font-weight: 700;
+
+            text-transform: uppercase;
+
+            letter-spacing: 0.4px;
+        }
+
+
+        .overview-value {
+            color: #222;
+
+            font-size: 24px;
+            font-weight: 800;
+        }
+
+
+        .overview-unit {
+            margin-left: 4px;
+
+            color: #777;
+
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+
+        /* =========================================
+           ERROR
+        ========================================= */
+
+        .page-error {
+            margin-bottom: 18px;
+
+            padding:
+                12px
+                14px;
+
+            border:
+                1px solid
+                #e2bcbc;
+
+            border-radius: 9px;
+
+            background: #fff4f4;
+
+            color: #9c3434;
+
+            font-size: 13px;
+            font-weight: 650;
+
+            line-height: 1.45;
+        }
+
+
+        /* =========================================
+           BOOKS PANEL
+        ========================================= */
+
+        .books-panel {
+            padding: 25px;
+
+            border:
+                1px solid
+                #e5e5e5;
+
+            border-radius: 14px;
+
+            background: white;
+        }
+
+
+        .books-header {
+            margin-bottom: 20px;
+        }
+
+
+        .books-header h2 {
+            margin: 0;
+
+            font-size: 21px;
+        }
+
+
+        .books-header p {
+            margin:
+                5px
+                0
+                0;
+
+            color: #888;
+
+            font-size: 13px;
+
+            line-height: 1.45;
+        }
+
+
+        /* =========================================
+           BOOK LIST
+        ========================================= */
+
+        .book-list {
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 12px;
+        }
+
+
+        /* =========================================
+           BOOK CARD
+        ========================================= */
+
+        .book-card {
+            padding:
+                18px
+                19px;
+
+            border:
+                1px solid
+                #e1e4e7;
+
+            border-radius: 11px;
+
+            background: #fafafa;
+        }
+
+
+        .book-main-row {
+            display: grid;
+
+            grid-template-columns:
+                minmax(0, 1fr)
+                auto
+                auto;
+
+            align-items: center;
+
+            gap: 20px;
+        }
+
+
+        .book-info {
+            min-width: 0;
+        }
+
+
+        .book-name {
+            margin:
+                0
+                0
+                5px;
+
+            color: #222;
+
+            font-size: 16px;
+            font-weight: 750;
+
+            overflow-wrap: anywhere;
+        }
+
+
+        .book-progress-text {
+            color: #777;
+
+            font-size: 12px;
+            font-weight: 600;
+
+            line-height: 1.5;
+        }
+
+
+        /* =========================================
+           TARGET
+        ========================================= */
+
+        .book-target {
+            min-width: 125px;
+
+            text-align: right;
+        }
+
+
+        .target-label {
+            display: block;
+
+            margin-bottom: 3px;
+
+            color: #888;
+
+            font-size: 11px;
+            font-weight: 700;
+
+            text-transform: uppercase;
+
+            letter-spacing: 0.4px;
+        }
+
+
+        .target-value {
+            color: #222;
+
+            font-size: 25px;
+            font-weight: 850;
+        }
+
+
+        .target-pages-text {
+            margin-left: 3px;
+
+            color: #777;
+
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+
+        /* =========================================
+           GREEN COMPLETE BUTTON
+        ========================================= */
+
+        .complete-target-form {
+            margin: 0;
+        }
+
+
+        .complete-target-button {
+            width: 48px;
+            height: 48px;
+
+            display: inline-flex;
+
+            align-items: center;
+            justify-content: center;
+
+            padding: 0;
+
+            border: none;
+            border-radius: 50%;
+
+            background: #8BF527;
+
+            color: #1f3517;
+
+            font-family: inherit;
+
+            font-size: 22px;
+            font-weight: 900;
+
+            cursor: pointer;
+
+            transition:
+                transform 0.15s ease,
+                box-shadow 0.15s ease,
+                background 0.15s ease;
+        }
+
+
+        .complete-target-button:hover {
+            background: #7de91c;
+
+            transform:
+                translateY(-1px);
+
+            box-shadow:
+                0
+                5px
+                14px
+                rgba(
+                    92,
+                    157,
+                    46,
+                    0.22
+                );
+        }
+
+
+        .complete-target-button:active {
+            transform:
+                translateY(0);
+        }
+
+
+        /* =========================================
+           STATUS
+        ========================================= */
+
+        .book-status {
+            min-width: 150px;
+
+            padding:
+                9px
+                12px;
+
+            border-radius: 8px;
+
+            background: #eeeeee;
+
+            color: #666;
+
+            font-size: 12px;
+            font-weight: 700;
+
+            text-align: center;
+        }
+
+
+        .book-status.complete {
+            background: #dfffcf;
+
+            color: #315a20;
+        }
+
+
+        .book-status.today-complete {
+            background: #edffe5;
+
+            color: #416b30;
+        }
+
+
+        /* =========================================
+           PROGRESS
+        ========================================= */
+
+        .progress-track {
+            width: 100%;
+            height: 7px;
+
+            margin-top: 15px;
+
+            border-radius: 10px;
+
+            background: #e4e7e9;
+
+            overflow: hidden;
+        }
+
+
+        .progress-fill {
+            width: 0;
+            height: 100%;
+
+            border-radius: inherit;
+
+            background: #8BF527;
+
+            transition:
+                width 0.3s ease;
+        }
+
+
+        /* =========================================
+           CUSTOM AMOUNT
+        ========================================= */
+
+        .book-actions {
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+            margin-top: 13px;
+        }
+
+
+        .custom-toggle-button {
+            padding:
+                8px
+                11px;
+
+            border:
+                1px solid
+                #d8dadd;
+
+            border-radius: 7px;
+
+            background: white;
+
+            color: #555;
+
+            font-family: inherit;
+
+            font-size: 12px;
+            font-weight: 650;
+
+            cursor: pointer;
+
+            transition:
+                background 0.15s ease,
+                border-color 0.15s ease;
+        }
+
+
+        .custom-toggle-button:hover {
+            background: #f2f2f2;
+
+            border-color: #c7c7c7;
+        }
+
+
+        .custom-form {
+            display: none;
+
+            align-items: center;
+
+            gap: 8px;
+
+            margin: 0;
+        }
+
+
+        .custom-form.open {
+            display: flex;
+        }
+
+
+        .custom-pages-input {
+            width: 110px;
+
+            padding:
+                8px
+                10px;
+
+            border:
+                1px solid
+                #d5d8da;
+
+            border-radius: 7px;
+
+            background: white;
+
+            color: #222;
+
+            font-family: inherit;
+
+            font-size: 13px;
+
+            outline: none;
+        }
+
+
+        .custom-pages-input:focus {
+            border-color: #222;
+        }
+
+
+        .custom-save-button {
+            padding:
+                9px
+                13px;
+
+            border: none;
+            border-radius: 7px;
+
+            background: #222;
+
+            color: white;
+
+            font-family: inherit;
+
+            font-size: 12px;
+            font-weight: 700;
+
+            cursor: pointer;
+        }
+
+
+        .custom-save-button:hover {
+            background: #333;
+        }
+
+
+        /* =========================================
+           EMPTY
+        ========================================= */
+
+        .empty-state {
+            padding:
+                50px
+                20px;
+
+            border:
+                1px dashed
+                #d6d6d6;
+
+            border-radius: 10px;
+
+            color: #888;
+
+            text-align: center;
+
+            font-size: 14px;
+        }
+
+
+        /* =========================================
+           RESPONSIVE
+        ========================================= */
+
+        @media (max-width: 900px) {
+
+            .overview-grid {
+                grid-template-columns:
+                    repeat(
+                        2,
+                        minmax(0, 1fr)
+                    );
+            }
+
+
+            .book-main-row {
+                grid-template-columns:
+                    minmax(0, 1fr)
+                    auto;
+            }
+
+
+            .book-target {
+                text-align: left;
+            }
+
+        }
+
+
+        @media (max-width: 600px) {
+
+            .page {
+                padding:
+                    25px
+                    18px
+                    45px;
+            }
+
+
+            .page-header {
+                flex-direction: column;
+            }
+
+
+            .overview-grid {
+                grid-template-columns: 1fr;
+            }
+
+
+            .book-main-row {
+                grid-template-columns: 1fr;
+            }
+
+
+            .book-target {
+                text-align: left;
+            }
+
+
+            .complete-target-button {
+                width: 44px;
+                height: 44px;
+            }
+
+
+            .book-status {
+                width: 100%;
+            }
+
+
+            .book-actions {
+                align-items: stretch;
+
+                flex-direction: column;
+            }
+
+
+            .custom-form {
+                align-items: stretch;
+            }
+
+
+            .custom-pages-input {
+                flex: 1;
+
+                width: auto;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="app">
+
+
+    {% include 'partials/sidebar.html' with active_page='summarize' %}
+
+
+    <main class="main">
+
+
+        <div class="page">
+
+
+            <!-- =========================================
+                 HEADER
+            ========================================= -->
+
+            <div class="page-header">
+
+
+                <div>
+
+
+                    <h1 class="page-title">
+                        Pages to Summarize
+                    </h1>
+
+
+                    <p class="page-subtitle">
+
+                        {{ subject.name }}
+
+                        · Complete today's page targets
+                        or record a custom amount.
+
+                    </p>
+
+
+                </div>
+
+
+                <a
+                    href="{% url 'subject_detail' subject_index=subject_index %}"
+                    class="back-button"
+                >
+                    ← Back to Subject
+                </a>
+
+
+            </div>
+
+
+            <!-- =========================================
+                 OVERVIEW
+            ========================================= -->
+
+            <div class="overview-grid">
+
+
+                <!-- TODAY'S TARGET -->
+
+                <div class="overview-card">
+
+
+                    <span class="overview-label">
+                        Today's Target
+                    </span>
+
+
+                    <span class="overview-value">
+                        {{ target_total_today }}
+                    </span>
+
+
+                    <span class="overview-unit">
+                        pages
+                    </span>
+
+
+                </div>
+
+
+                <!-- PAGES REMAINING -->
+
+                <div class="overview-card">
+
+
+                    <span class="overview-label">
+                        Pages Remaining
+                    </span>
+
+
+                    <span class="overview-value">
+                        {{ total_pages_remaining }}
+                    </span>
+
+
+                    <span class="overview-unit">
+                        pages
+                    </span>
+
+
+                </div>
+
+
+                <!-- LEARNING DAYS -->
+
+                <div class="overview-card">
+
+
+                    <span class="overview-label">
+                        Learning Days Left
+                    </span>
+
+
+                    <span class="overview-value">
+                        {{ learning_days_left }}
+                    </span>
+
+
+                </div>
+
+
+                <!-- STUDY TIME TODAY -->
+
+                <div class="overview-card">
+
+
+                    <span class="overview-label">
+                        Study Time Today
+                    </span>
+
+
+                    <span class="overview-value">
+                        {{ today_study_time }}
+                    </span>
+
+
+                </div>
+
+
+            </div>
+
+
+            <!-- =========================================
+                 ERROR
+            ========================================= -->
+
+            {% if error %}
+
+                <div class="page-error">
+                    {{ error }}
+                </div>
+
+            {% endif %}
+
+
+            <!-- =========================================
+                 BOOKS
+            ========================================= -->
+
+            <section class="books-panel">
+
+
+                <div class="books-header">
+
+
+                    <h2>
+                        Your Textbooks
+                    </h2>
+
+
+                    <p>
+
+                        Targets are recalculated from the pages you still
+                        have left and the study time remaining before your
+                        revision period begins.
+
+                    </p>
+
+
+                </div>
+
+
+                {% if book_items %}
+
+
+                    <div class="book-list">
+
+
+                        {% for item in book_items %}
+
+
+                            <div class="book-card">
+
+
+                                <div class="book-main-row">
+
+
+                                    <!-- =============================
+                                         BOOK INFORMATION
+                                    ============================== -->
+
+                                    <div class="book-info">
+
+
+                                        <h3 class="book-name">
+                                            {{ item.textbook.name }}
+                                        </h3>
+
+
+                                        <div class="book-progress-text">
+
+                                            {{ item.pages_summarized }}
+
+                                            of
+
+                                            {{ item.textbook.page_count }}
+
+                                            pages summarized
+
+                                            ·
+
+                                            {{ item.remaining_pages }}
+
+                                            remaining
+
+                                        </div>
+
+
+                                    </div>
+
+
+                                    <!-- =============================
+                                         BOOK STATUS / TARGET
+                                    ============================== -->
+
+                                    {% if item.complete %}
+
+
+                                        <div class="book-status complete">
+                                            ✓ Book complete
+                                        </div>
+
+
+                                    {% elif item.completed_today %}
+
+
+                                        <div class="book-status today-complete">
+                                            ✓ Completed today
+                                        </div>
+
+
+                                    {% elif item.target_pages > 0 %}
+
+
+                                        <div class="book-target">
+
+
+                                            <span class="target-label">
+                                                Today's target
+                                            </span>
+
+
+                                            <span class="target-value">
+                                                {{ item.target_pages }}
+                                            </span>
+
+
+                                            <span class="target-pages-text">
+                                                pages
+                                            </span>
+
+
+                                        </div>
+
+
+                                        <!-- =========================
+                                             GREEN COMPLETE BUTTON
+                                        ========================== -->
+
+                                        <form
+                                            method="POST"
+                                            class="complete-target-form"
+                                        >
+
+                                            {% csrf_token %}
+
+
+                                            <input
+                                                type="hidden"
+                                                name="action"
+                                                value="complete_target"
+                                            >
+
+
+                                            <input
+                                                type="hidden"
+                                                name="textbook_id"
+                                                value="{{ item.textbook.id }}"
+                                            >
+
+
+                                            <button
+                                                type="submit"
+                                                class="complete-target-button"
+                                                title="I summarized today's target"
+                                                aria-label="Mark today's target as summarized"
+                                            >
+                                                ✓
+                                            </button>
+
+
+                                        </form>
+
+
+                                    {% else %}
+
+
+                                        <div class="book-status">
+                                            No pages scheduled today
+                                        </div>
+
+
+                                    {% endif %}
+
+
+                                </div>
+
+
+                                <!-- =================================
+                                     PROGRESS BAR
+                                ================================== -->
+
+                                <div class="progress-track">
+
+
+                                    <div
+                                        class="progress-fill"
+                                        data-progress="{{ item.progress_percentage }}"
+                                    ></div>
+
+
+                                </div>
+
+
+                                <!-- =================================
+                                     CUSTOM PAGES
+                                ================================== -->
+
+                                {% if not item.complete and not item.completed_today %}
+
+
+                                    <div class="book-actions">
+
+
+                                        <button
+                                            type="button"
+                                            class="custom-toggle-button"
+                                            data-custom-form-id="custom-form-{{ item.textbook.id }}"
+                                            onclick="toggleCustomPages(this)"
+                                        >
+                                            Enter custom amount
+                                        </button>
+
+
+                                        <form
+                                            method="POST"
+                                            class="custom-form {% if custom_book_id == item.textbook.id %}open{% endif %}"
+                                            id="custom-form-{{ item.textbook.id }}"
+                                        >
+
+                                            {% csrf_token %}
+
+
+                                            <input
+                                                type="hidden"
+                                                name="action"
+                                                value="save_custom_pages"
+                                            >
+
+
+                                            <input
+                                                type="hidden"
+                                                name="textbook_id"
+                                                value="{{ item.textbook.id }}"
+                                            >
+
+
+                                            <input
+                                                type="number"
+                                                class="custom-pages-input"
+                                                name="custom_pages"
+                                                min="1"
+                                                max="{{ item.remaining_pages }}"
+                                                step="1"
+                                                placeholder="Pages"
+                                                required
+                                            >
+
+
+                                            <button
+                                                type="submit"
+                                                class="custom-save-button"
+                                            >
+                                                Save
+                                            </button>
+
+
+                                        </form>
+
+
+                                    </div>
+
+
+                                {% endif %}
+
+
+                            </div>
+
+
+                        {% endfor %}
+
+
+                    </div>
+
+
+                {% else %}
+
+
+                    <div class="empty-state">
+
+                        No textbooks have been added to this subject yet.
+
+                    </div>
+
+
+                {% endif %}
+
+
+            </section>
+
+
+        </div>
+
+
+    </main>
+
+
+</div>
+
+
+<script>
+
+    // =============================================
+    // INITIALIZE PROGRESS BARS
+    // =============================================
+
+    function initializeProgressBars() {
+
+        const progressBars =
+            document.querySelectorAll(
+                ".progress-fill"
+            );
+
+
+        progressBars.forEach(
+            function(progressBar) {
+
+                let percentage =
+                    Number(
+                        progressBar.dataset.progress
+                    );
+
+
+                if (
+                    Number.isNaN(
+                        percentage
+                    )
+                ) {
+
+                    percentage = 0;
+
+                }
+
+
+                // -----------------------------------------
+                // NEVER ALLOW LESS THAN 0%
+                // OR MORE THAN 100%
+                // -----------------------------------------
+
+                percentage =
+                    Math.max(
+                        0,
+                        Math.min(
+                            100,
+                            percentage
+                        )
+                    );
+
+
+                progressBar.style.width =
+                    percentage + "%";
+
+            }
+        );
+
+    }
+
+
+    // =============================================
+    // CUSTOM PAGE FORM
+    // =============================================
+
+    function toggleCustomPages(
+        button
+    ) {
+
+        if (!button) {
+
+            return;
+
+        }
+
+
+        const formId =
+            button.dataset.customFormId;
+
+
+        if (!formId) {
+
+            return;
+
+        }
+
+
+        const form =
+            document.getElementById(
+                formId
+            );
+
+
+        if (!form) {
+
+            return;
+
+        }
+
+
+        form.classList.toggle(
+            "open"
+        );
+
+
+        if (
+            form.classList.contains(
+                "open"
+            )
+        ) {
+
+            const input =
+                form.querySelector(
+                    'input[name="custom_pages"]'
+                );
+
+
+            if (input) {
+
+                input.focus();
+
+                input.select();
+
+            }
+
+        }
+
+    }
+
+
+    // =============================================
+    // PAGE READY
+    // =============================================
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function() {
+
+            initializeProgressBars();
+
+        }
+    );
+
+</script>
+
+
+<script
+    src="{% static 'dashboard/js/sidebar.js' %}"
+></script>
+
+
+</body>
+
+</html>

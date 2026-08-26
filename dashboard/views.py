@@ -2745,12 +2745,44 @@ def subject_detail(
 
             for textbook in textbooks:
 
-                # --------------------------------------------
-                # TOTAL PAGES FOR THIS WEEKDAY TYPE
-                # --------------------------------------------
+                # ------------------------------------------------
+                # REMAINING PAGES
+                # ------------------------------------------------
+
+                remaining_pages = max(
+                    0,
+                    (
+                        textbook.page_count
+                        -
+                        textbook.pages_summarized
+                    )
+                )
+
+                # ------------------------------------------------
+                # SKIP FINISHED BOOKS
+                # ------------------------------------------------
+
+                if remaining_pages <= 0:
+
+                    continue
+
+                # ------------------------------------------------
+                # SKIP BOOKS ALREADY COMPLETED TODAY
+                # ------------------------------------------------
+
+                if (
+                    textbook.last_summary_date
+                    == today
+                ):
+
+                    continue
+
+                # ------------------------------------------------
+                # ALLOCATE ONLY THE PAGES STILL REMAINING
+                # ------------------------------------------------
 
                 weekday_pages_exact = (
-                    textbook.page_count
+                    remaining_pages
                     *
                     (
                         weekday_total_minutes
@@ -2792,6 +2824,11 @@ def subject_detail(
                     pages_today = max(
                         1,
                         pages_today
+                    )
+
+                    pages_today = min(
+                        pages_today,
+                        remaining_pages
                     )
 
                 else:

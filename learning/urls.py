@@ -98,4 +98,10 @@ urlpatterns = [
         name="delete_definition",
     ),
 
+    path(
+        "subjects/<int:subject_index>/book-summary/",
+        views.book_summary,
+        name="book_summary",
+    ),
+
 ]

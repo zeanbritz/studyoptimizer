@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
-from datetime import timedelta
+from datetime import date, datetime, timedelta
 
 import json
 
@@ -14,6 +14,12 @@ from .models import (
     FormulaVariable,
     Definition,
     StudentKnowledge,
+)
+
+from dashboard.models import (
+    StudyAvailability,
+    SubjectTextbook,
+    SubjectRevisionPlan,
 )
 
 
@@ -1716,4 +1722,1118 @@ def delete_definition(
     return redirect(
         "definition_list",
         subject_id=subject.id
+    )
+
+
+# ============================================================
+# BOOK SUMMARY HELPERS
+# ============================================================
+
+def summary_duration_to_minutes(
+    value
+):
+
+    if not value:
+        return 0
+
+    try:
+
+        hours_text, minutes_text = (
+            str(value).split(
+                ":",
+                1
+            )
+        )
+
+        hours = int(
+            hours_text
+        )
+
+        minutes = int(
+            minutes_text
+        )
+
+        if (
+            hours < 0
+            or
+            hours > 24
+            or
+            minutes < 0
+            or
+            minutes > 59
+        ):
+
+            return 0
+
+        if (
+            hours == 24
+            and
+            minutes != 0
+        ):
+
+            return 0
+
+        return (
+            hours * 60
+            +
+            minutes
+        )
+
+    except (
+        TypeError,
+        ValueError
+    ):
+
+        return 0
+
+
+def summary_format_minutes(
+    total_minutes
+):
+
+    total_minutes = int(
+        total_minutes
+        or 0
+    )
+
+    hours = (
+        total_minutes
+        // 60
+    )
+
+    minutes = (
+        total_minutes
+        % 60
+    )
+
+    if (
+        hours > 0
+        and
+        minutes > 0
+    ):
+
+        return (
+            f"{hours}h "
+            f"{minutes}m"
+        )
+
+    if hours > 0:
+
+        return (
+            f"{hours}h"
+        )
+
+    return (
+        f"{minutes}m"
+    )
+
+
+def get_summary_weekday_schedule(
+    availability
+):
+
+    schedule = {
+
+        0: {
+            "enabled": False,
+            "minutes": 0,
+        },
+
+        1: {
+            "enabled": False,
+            "minutes": 0,
+        },
+
+        2: {
+            "enabled": False,
+            "minutes": 0,
+        },
+
+        3: {
+            "enabled": False,
+            "minutes": 0,
+        },
+
+        4: {
+            "enabled": False,
+            "minutes": 0,
+        },
+
+        5: {
+            "enabled": False,
+            "minutes": 0,
+        },
+
+        6: {
+            "enabled": False,
+            "minutes": 0,
+        },
+
+    }
+
+    if not availability:
+
+        return schedule
+
+    fields = {
+
+        0: (
+            "monday_enabled",
+            "monday_time",
+        ),
+
+        1: (
+            "tuesday_enabled",
+            "tuesday_time",
+        ),
+
+        2: (
+            "wednesday_enabled",
+            "wednesday_time",
+        ),
+
+        3: (
+            "thursday_enabled",
+            "thursday_time",
+        ),
+
+        4: (
+            "friday_enabled",
+            "friday_time",
+        ),
+
+        5: (
+            "saturday_enabled",
+            "saturday_time",
+        ),
+
+        6: (
+            "sunday_enabled",
+            "sunday_time",
+        ),
+
+    }
+
+    for (
+        weekday,
+        field_names
+    ) in fields.items():
+
+        enabled_field = (
+            field_names[0]
+        )
+
+        time_field = (
+            field_names[1]
+        )
+
+        enabled = bool(
+            getattr(
+                availability,
+                enabled_field,
+                False
+            )
+        )
+
+        minutes = 0
+
+        if enabled:
+
+            minutes = (
+                summary_duration_to_minutes(
+                    getattr(
+                        availability,
+                        time_field,
+                        ""
+                    )
+                )
+            )
+
+        schedule[
+            weekday
+        ][
+            "enabled"
+        ] = enabled
+
+        schedule[
+            weekday
+        ][
+            "minutes"
+        ] = minutes
+
+    return schedule
+
+
+def parse_summary_exam_date(
+    subject_data
+):
+
+    exam_date_value = (
+        subject_data.get(
+            "exam_date"
+        )
+    )
+
+    if not exam_date_value:
+
+        return None
+
+    try:
+
+        if isinstance(
+            exam_date_value,
+            datetime
+        ):
+
+            return (
+                exam_date_value.date()
+            )
+
+        if isinstance(
+            exam_date_value,
+            date
+        ):
+
+            return exam_date_value
+
+        return date.fromisoformat(
+            str(
+                exam_date_value
+            )[:10]
+        )
+
+    except (
+        TypeError,
+        ValueError
+    ):
+
+        return None
+
+
+def calculate_book_summary_targets(
+    request,
+    subject,
+    subject_data,
+    textbooks,
+):
+
+    today = timezone.localdate()
+
+    parsed_exam_date = (
+        parse_summary_exam_date(
+            subject_data
+        )
+    )
+
+    # ========================================================
+    # AVAILABILITY
+    # ========================================================
+
+    availability = (
+        StudyAvailability.objects
+        .filter(
+            user=request.user
+        )
+        .first()
+    )
+
+    weekday_schedule = (
+        get_summary_weekday_schedule(
+            availability
+        )
+    )
+
+    # ========================================================
+    # BUILD REMAINING STUDY DATES
+    # ========================================================
+
+    remaining_study_dates = []
+
+    if (
+        parsed_exam_date
+        and
+        parsed_exam_date > today
+    ):
+
+        current_date = today
+
+        while (
+            current_date
+            < parsed_exam_date
+        ):
+
+            weekday = (
+                current_date.weekday()
+            )
+
+            if (
+                weekday_schedule[
+                    weekday
+                ][
+                    "enabled"
+                ]
+            ):
+
+                remaining_study_dates.append(
+                    current_date
+                )
+
+            current_date += timedelta(
+                days=1
+            )
+
+    # ========================================================
+    # REVISION DAYS
+    # ========================================================
+
+    revision_days = 0
+
+    revision_plan = (
+        SubjectRevisionPlan.objects
+        .filter(
+            subject=subject
+        )
+        .first()
+    )
+
+    if (
+        revision_plan
+        and
+        revision_plan.revision_days
+        is not None
+    ):
+
+        revision_days = int(
+            revision_plan.revision_days
+        )
+
+    revision_days = max(
+        0,
+        min(
+            revision_days,
+            len(
+                remaining_study_dates
+            )
+        )
+    )
+
+    # ========================================================
+    # REMOVE REVISION PERIOD
+    # ========================================================
+
+    if revision_days > 0:
+
+        learning_dates = (
+            remaining_study_dates[
+                :-revision_days
+            ]
+        )
+
+    else:
+
+        learning_dates = list(
+            remaining_study_dates
+        )
+
+    # ========================================================
+    # ONLY LEARNING DAYS WITH REAL STUDY TIME
+    # ========================================================
+
+    learning_dates_with_time = []
+
+    for learning_date in (
+        learning_dates
+    ):
+
+        weekday = (
+            learning_date.weekday()
+        )
+
+        minutes = (
+            weekday_schedule[
+                weekday
+            ][
+                "minutes"
+            ]
+        )
+
+        if minutes > 0:
+
+            learning_dates_with_time.append(
+                learning_date
+            )
+
+    # ========================================================
+    # TOTAL REMAINING LEARNING TIME
+    # ========================================================
+
+    total_learning_minutes = sum(
+
+        weekday_schedule[
+            learning_date.weekday()
+        ][
+            "minutes"
+        ]
+
+        for learning_date
+        in learning_dates_with_time
+
+    )
+
+    today_minutes = (
+        weekday_schedule[
+            today.weekday()
+        ][
+            "minutes"
+        ]
+    )
+
+    today_is_learning_day = (
+        today
+        in learning_dates_with_time
+        and
+        today_minutes > 0
+        and
+        total_learning_minutes > 0
+    )
+
+    # ========================================================
+    # BUILD BOOK TARGETS
+    # ========================================================
+
+    book_items = []
+
+    for textbook in textbooks:
+
+        pages_summarized = min(
+            textbook.pages_summarized,
+            textbook.page_count,
+        )
+
+        remaining_pages = max(
+            0,
+            (
+                textbook.page_count
+                -
+                pages_summarized
+            )
+        )
+
+        completed_today = (
+            textbook.last_summary_date
+            == today
+        )
+
+        target_pages = 0
+
+        exact_target = 0
+
+        # ----------------------------------------------------
+        # TODAY'S TARGET
+        #
+        # Remaining pages are distributed according to
+        # today's share of the remaining learning time.
+        #
+        # Tomorrow this calculation automatically uses:
+        #
+        # - fewer remaining pages
+        # - less remaining learning time
+        #
+        # therefore automatically rebalancing the plan.
+        # ----------------------------------------------------
+
+        if (
+            remaining_pages > 0
+            and
+            today_is_learning_day
+            and
+            not completed_today
+        ):
+
+            exact_target = (
+                remaining_pages
+                *
+                (
+                    today_minutes
+                    /
+                    total_learning_minutes
+                )
+            )
+
+            target_pages = int(
+                exact_target
+                + 0.5
+            )
+
+            target_pages = max(
+                1,
+                target_pages
+            )
+
+            target_pages = min(
+                target_pages,
+                remaining_pages
+            )
+
+        # ----------------------------------------------------
+        # PROGRESS PERCENT
+        # ----------------------------------------------------
+
+        if textbook.page_count > 0:
+
+            progress_percentage = round(
+                (
+                    pages_summarized
+                    /
+                    textbook.page_count
+                )
+                * 100
+            )
+
+        else:
+
+            progress_percentage = 0
+
+        book_items.append(
+            {
+                "textbook":
+                    textbook,
+
+                "pages_summarized":
+                    pages_summarized,
+
+                "remaining_pages":
+                    remaining_pages,
+
+                "target_pages":
+                    target_pages,
+
+                "exact_target":
+                    round(
+                        exact_target,
+                        2
+                    ),
+
+                "completed_today":
+                    completed_today,
+
+                "complete":
+                    (
+                        remaining_pages
+                        == 0
+                    ),
+
+                "progress_percentage":
+                    progress_percentage,
+            }
+        )
+
+    return {
+        "today":
+            today,
+
+        "parsed_exam_date":
+            parsed_exam_date,
+
+        "revision_days":
+            revision_days,
+
+        "learning_days_left":
+            len(
+                learning_dates
+            ),
+
+        "today_is_learning_day":
+            today_is_learning_day,
+
+        "today_minutes":
+            today_minutes,
+
+        "total_learning_minutes":
+            total_learning_minutes,
+
+        "today_study_time":
+            summary_format_minutes(
+                today_minutes
+            ),
+
+        "total_learning_time":
+            summary_format_minutes(
+                total_learning_minutes
+            ),
+
+        "book_items":
+            book_items,
+    }
+
+
+# ============================================================
+# BOOK SUMMARY
+# ============================================================
+
+@login_required
+def book_summary(
+    request,
+    subject_index
+):
+
+    # ========================================================
+    # SESSION SUBJECTS
+    # ========================================================
+
+    subjects = request.session.get(
+        "onboarding_subjects",
+        []
+    )
+
+    # ========================================================
+    # VALIDATE SUBJECT INDEX
+    # ========================================================
+
+    try:
+
+        subject_index = int(
+            subject_index
+        )
+
+    except (
+        TypeError,
+        ValueError
+    ):
+
+        return redirect(
+            "goals"
+        )
+
+    if (
+        subject_index < 0
+        or
+        subject_index >= len(subjects)
+    ):
+
+        return redirect(
+            "goals"
+        )
+
+    subject_data = (
+        subjects[
+            subject_index
+        ]
+    )
+
+    # ========================================================
+    # FIND DATABASE SUBJECT
+    # ========================================================
+
+    database_subject = None
+
+    database_subject_id = (
+        subject_data.get(
+            "database_id"
+        )
+    )
+
+    if database_subject_id:
+
+        database_subject = (
+            Subject.objects
+            .filter(
+                id=database_subject_id,
+                user=request.user,
+            )
+            .first()
+        )
+
+    # --------------------------------------------------------
+    # FALLBACK TO NAME
+    # --------------------------------------------------------
+
+    if not database_subject:
+
+        subject_name = (
+            subject_data.get(
+                "name",
+                ""
+            )
+            .strip()
+        )
+
+        if subject_name:
+
+            database_subject = (
+                Subject.objects
+                .filter(
+                    user=request.user,
+                    name=subject_name,
+                )
+                .first()
+            )
+
+    if not database_subject:
+
+        return redirect(
+            "subject_detail",
+            subject_index=subject_index
+        )
+
+    # ========================================================
+    # TEXTBOOKS
+    # ========================================================
+
+    textbooks = list(
+        SubjectTextbook.objects
+        .filter(
+            subject=database_subject
+        )
+        .order_by(
+            "created",
+            "id",
+        )
+    )
+
+    # ========================================================
+    # CALCULATE CURRENT TARGETS
+    # ========================================================
+
+    schedule_data = (
+        calculate_book_summary_targets(
+            request=request,
+            subject=database_subject,
+            subject_data=subject_data,
+            textbooks=textbooks,
+        )
+    )
+
+    book_items = (
+        schedule_data[
+            "book_items"
+        ]
+    )
+
+    # Fast lookup for POST actions.
+
+    book_item_lookup = {
+        item[
+            "textbook"
+        ].id: item
+        for item
+        in book_items
+    }
+
+    error = None
+
+    custom_book_id = None
+
+    # ========================================================
+    # POST
+    # ========================================================
+
+    if request.method == "POST":
+
+        action = request.POST.get(
+            "action",
+            ""
+        )
+
+        textbook_id_raw = (
+            request.POST.get(
+                "textbook_id",
+                ""
+            )
+            .strip()
+        )
+
+        try:
+
+            textbook_id = int(
+                textbook_id_raw
+            )
+
+        except (
+            TypeError,
+            ValueError
+        ):
+
+            textbook_id = None
+
+        # ----------------------------------------------------
+        # FIND TEXTBOOK
+        # ----------------------------------------------------
+
+        textbook = None
+
+        if textbook_id:
+
+            textbook = (
+                SubjectTextbook.objects
+                .filter(
+                    id=textbook_id,
+                    subject=database_subject,
+                )
+                .first()
+            )
+
+        if not textbook:
+
+            error = (
+                "Could not find that textbook."
+            )
+
+        else:
+
+            item = (
+                book_item_lookup.get(
+                    textbook.id
+                )
+            )
+
+            if not item:
+
+                error = (
+                    "Could not calculate "
+                    "the textbook target."
+                )
+
+            elif item[
+                "complete"
+            ]:
+
+                error = (
+                    "This textbook has already "
+                    "been completely summarized."
+                )
+
+            elif item[
+                "completed_today"
+            ]:
+
+                error = (
+                    "Today's pages for this "
+                    "textbook have already "
+                    "been saved."
+                )
+
+            # =================================================
+            # COMPLETE TODAY'S TARGET
+            # =================================================
+
+            elif action == "complete_target":
+
+                target_pages = (
+                    item[
+                        "target_pages"
+                    ]
+                )
+
+                if target_pages <= 0:
+
+                    error = (
+                        "There are no pages "
+                        "scheduled for this "
+                        "textbook today."
+                    )
+
+                else:
+
+                    textbook.pages_summarized = min(
+                        textbook.page_count,
+                        (
+                            textbook.pages_summarized
+                            +
+                            target_pages
+                        )
+                    )
+
+                    textbook.last_summary_date = (
+                        timezone.localdate()
+                    )
+
+                    textbook.save(
+                        update_fields=[
+                            "pages_summarized",
+                            "last_summary_date",
+                        ]
+                    )
+
+                    return redirect(
+                        "book_summary",
+                        subject_index=subject_index
+                    )
+
+            # =================================================
+            # CUSTOM PAGE AMOUNT
+            # =================================================
+
+            elif action == "save_custom_pages":
+
+                custom_book_id = (
+                    textbook.id
+                )
+
+                custom_pages_raw = (
+                    request.POST.get(
+                        "custom_pages",
+                        ""
+                    )
+                    .strip()
+                )
+
+                try:
+
+                    custom_pages = int(
+                        custom_pages_raw
+                    )
+
+                except (
+                    TypeError,
+                    ValueError
+                ):
+
+                    custom_pages = 0
+
+                if custom_pages <= 0:
+
+                    error = (
+                        "Enter a page amount "
+                        "greater than 0."
+                    )
+
+                elif (
+                    custom_pages
+                    >
+                    item[
+                        "remaining_pages"
+                    ]
+                ):
+
+                    error = (
+                        f"Only "
+                        f"{item['remaining_pages']} "
+                        f"pages remain in "
+                        f"{textbook.name}."
+                    )
+
+                else:
+
+                    textbook.pages_summarized = (
+                        textbook.pages_summarized
+                        +
+                        custom_pages
+                    )
+
+                    textbook.last_summary_date = (
+                        timezone.localdate()
+                    )
+
+                    textbook.save(
+                        update_fields=[
+                            "pages_summarized",
+                            "last_summary_date",
+                        ]
+                    )
+
+                    return redirect(
+                        "book_summary",
+                        subject_index=subject_index
+                    )
+
+    # ========================================================
+    # TOTALS
+    # ========================================================
+
+    total_pages = sum(
+        textbook.page_count
+        for textbook
+        in textbooks
+    )
+
+    total_pages_summarized = sum(
+        min(
+            textbook.pages_summarized,
+            textbook.page_count
+        )
+        for textbook
+        in textbooks
+    )
+
+    total_pages_remaining = max(
+        0,
+        (
+            total_pages
+            -
+            total_pages_summarized
+        )
+    )
+
+    target_total_today = sum(
+        item[
+            "target_pages"
+        ]
+        for item
+        in book_items
+    )
+
+    # ========================================================
+    # RENDER
+    # ========================================================
+
+    return render(
+        request,
+        "learning/book_summary.html",
+        {
+            "subject":
+                database_subject,
+
+            "subject_data":
+                subject_data,
+
+            "subject_index":
+                subject_index,
+
+            "book_items":
+                book_items,
+
+            "total_pages":
+                total_pages,
+
+            "total_pages_summarized":
+                total_pages_summarized,
+
+            "total_pages_remaining":
+                total_pages_remaining,
+
+            "target_total_today":
+                target_total_today,
+
+            "today_is_learning_day":
+                schedule_data[
+                    "today_is_learning_day"
+                ],
+
+            "today_study_time":
+                schedule_data[
+                    "today_study_time"
+                ],
+
+            "total_learning_time":
+                schedule_data[
+                    "total_learning_time"
+                ],
+
+            "learning_days_left":
+                schedule_data[
+                    "learning_days_left"
+                ],
+
+            "revision_days":
+                schedule_data[
+                    "revision_days"
+                ],
+
+            "error":
+                error,
+
+            "custom_book_id":
+                custom_book_id,
+        }
     )
