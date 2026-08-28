@@ -250,6 +250,17 @@
         }
 
 
+        .list-card-link {
+
+            display: block;
+
+            color: inherit;
+
+            text-decoration: none;
+
+        }
+
+
         .list-card {
 
             padding: 24px;
@@ -261,6 +272,38 @@
             border-radius: 14px;
 
             background: white;
+
+            cursor: pointer;
+
+            transition:
+                background 0.15s ease,
+                border-color 0.15s ease,
+                transform 0.15s ease,
+                box-shadow 0.15s ease;
+
+        }
+
+
+        .list-card-link:hover
+        .list-card {
+
+            background: #fafafa;
+
+            border-color: #cfd2d5;
+
+            transform:
+                translateY(-1px);
+
+            box-shadow:
+                0
+                4px
+                14px
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.04
+                );
 
         }
 
@@ -304,6 +347,8 @@
         .list-icon {
 
             flex-shrink: 0;
+
+            color: #777;
 
             font-size: 20px;
 
@@ -582,130 +627,145 @@
                     {% for list in due_lists %}
 
 
-                        <article class="list-card">
+                        <a
+                            href="{% url 'review_list' list_id=list.id %}?subject_index={{ subject_index }}"
+                            class="list-card-link"
+                        >
 
 
-                            <div class="list-card-header">
+                            <article class="list-card">
 
 
-                                <div>
+                                <div class="list-card-header">
 
 
-                                    <h2 class="list-card-title">
-                                        {{ list.question }}
-                                    </h2>
+                                    <div>
 
 
-                                    <div class="list-card-subtitle">
+                                        <h2 class="list-card-title">
+                                            {{ list.question }}
+                                        </h2>
 
-                                        {{ list.items.count }}
 
-                                        item{{ list.items.count|pluralize }}
+                                        <div class="list-card-subtitle">
+
+                                            {{ list.items.count }}
+
+                                            item{{ list.items.count|pluralize }}
+
+                                        </div>
+
 
                                     </div>
 
 
-                                </div>
-
-
-                                <span class="list-icon">
-                                    ☷
-                                </span>
-
-
-                            </div>
-
-
-                            <!-- OPTIONAL DETAILS -->
-
-                            {% if list.book_name or list.chapter %}
-
-
-                                <div class="list-details">
-
-
-                                    {% if list.book_name %}
-
-                                        <span class="detail-pill">
-                                            📖 {{ list.book_name }}
-                                        </span>
-
-                                    {% endif %}
-
-
-                                    {% if list.chapter %}
-
-                                        <span class="detail-pill">
-                                            Chapter: {{ list.chapter }}
-                                        </span>
-
-                                    {% endif %}
+                                    <span class="list-icon">
+                                        →
+                                    </span>
 
 
                                 </div>
 
 
-                            {% endif %}
+                                <!-- =========================
+                                     OPTIONAL DETAILS
+                                ========================== -->
+
+                                {% if list.book_name or list.chapter %}
 
 
-                            <!-- ITEMS -->
-
-                            <div class="items">
+                                    <div class="list-details">
 
 
-                                {% for item in list.items.all %}
+                                        {% if list.book_name %}
+
+                                            <span class="detail-pill">
+                                                📖 {{ list.book_name }}
+                                            </span>
+
+                                        {% endif %}
 
 
-                                    <div class="item">
+                                        {% if list.chapter %}
+
+                                            <span class="detail-pill">
+                                                Chapter: {{ list.chapter }}
+                                            </span>
+
+                                        {% endif %}
 
 
-                                        <span class="item-number">
-                                            {{ forloop.counter }}
-                                        </span>
+                                    </div>
 
 
-                                        <div class="item-main">
+                                {% endif %}
 
 
-                                            <div class="item-text">
-                                                {{ item.text }}
+                                <!-- =========================
+                                     ITEMS
+                                ========================== -->
+
+                                <div class="items">
+
+
+                                    {% for item in list.items.all %}
+
+
+                                        <div class="item">
+
+
+                                            <span class="item-number">
+                                                {{ forloop.counter }}
+                                            </span>
+
+
+                                            <div class="item-main">
+
+
+                                                <div class="item-text">
+                                                    {{ item.text }}
+                                                </div>
+
+
+                                                {% if item.description %}
+
+                                                    <div class="item-description">
+                                                        {{ item.description }}
+                                                    </div>
+
+                                                {% endif %}
+
+
                                             </div>
 
 
-                                            {% if item.description %}
+                                        </div>
 
-                                                <div class="item-description">
-                                                    {{ item.description }}
-                                                </div>
 
-                                            {% endif %}
+                                    {% empty %}
+
+
+                                        <div class="item">
+
+
+                                            <div class="item-main">
+                                                No items saved in this list.
+                                            </div>
 
 
                                         </div>
 
 
-                                    </div>
+                                    {% endfor %}
 
 
-                                {% empty %}
+                                </div>
 
 
-                                    <div class="item">
-
-                                        <div class="item-main">
-                                            No items saved in this list.
-                                        </div>
-
-                                    </div>
+                            </article>
 
 
-                                {% endfor %}
-
-
-                            </div>
-
-
-                        </article>
+                        </a>
 
 
                     {% endfor %}

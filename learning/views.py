@@ -4,6 +4,7 @@ from django.utils import timezone
 from datetime import date, datetime, timedelta
 
 import json
+import random
 
 from .forms import FormulaForm
 
@@ -884,6 +885,684 @@ def edit_formula(
         }
     )
 
+
+# ============================================================
+# LIST REVIEW HELPERS
+# ============================================================
+
+def normalize_list_answer(
+    value
+):
+    """
+    Make list answers case-insensitive and ignore
+    unnecessary spaces.
+    """
+
+    return " ".join(
+        str(
+            value
+            or ""
+        )
+        .strip()
+        .casefold()
+        .split()
+    )
+
+
+def get_list_hidden_count(
+    total_items,
+    mastery_level
+):
+    """
+    Number of list items hidden at each mastery level.
+
+    0/6 -> exactly 1 hidden item
+    6/6 -> all items hidden
+
+    Levels between 0 and 6 gradually increase
+    the number of hidden items.
+    """
+
+    total_items = int(
+        total_items
+        or 0
+    )
+
+    mastery_level = int(
+        mastery_level
+        or 0
+    )
+
+    mastery_level = max(
+        0,
+        min(
+            6,
+            mastery_level
+        )
+    )
+
+    if total_items <= 0:
+
+        return 0
+
+    if total_items == 1:
+
+        return 1
+
+    if mastery_level == 0:
+
+        return 1
+
+    if mastery_level >= 6:
+
+        return total_items
+
+    hidden_count = (
+        1
+        +
+        (
+            (
+                total_items - 1
+            )
+            *
+            mastery_level
+            //
+            6
+        )
+    )
+
+    return max(
+        1,
+        min(
+            hidden_count,
+            total_items
+        )
+    )
+
+
+# ============================================================
+# REVIEW INDIVIDUAL LIST
+# ============================================================
+
+@login_required
+def review_list(
+    request,
+    list_id
+):
+
+    # ========================================================
+    # FIND LIST
+    # ========================================================
+
+    bullet_list = get_object_or_404(
+        BulletList.objects
+        .select_related(
+            "knowledge_unit",
+            "knowledge_unit__subject",
+        ),
+        id=list_id,
+        knowledge_unit__subject__user=request.user,
+        knowledge_unit__active=True,
+    )
+
+    knowledge_unit = (
+        bullet_list.knowledge_unit
+    )
+
+    subject = (
+        knowledge_unit.subject
+    )
+
+    # ========================================================
+    # SUBJECT INDEX
+    # ========================================================
+
+    subject_index = (
+        request.GET.get(
+            "subject_index"
+        )
+        or
+        request.POST.get(
+            "subject_index"
+        )
+    )
+
+    try:
+
+        subject_index = int(
+            subject_index
+        )
+
+    except (
+        TypeError,
+        ValueError
+    ):
+
+        subject_index = None
+
+    # ========================================================
+    # PROGRESS
+    #
+    # New list = 0 / 6
+    # ========================================================
+
+    progress, created = (
+        StudentKnowledge.objects
+        .get_or_create(
+            student=request.user,
+            knowledge_unit=knowledge_unit,
+        )
+    )
+
+    # --------------------------------------------------------
+    # PROTECT MASTERY RANGE
+    # --------------------------------------------------------
+
+    progress.mastery_level = max(
+        0,
+        min(
+            6,
+            int(
+                progress.mastery_level
+                or 0
+            )
+        )
+    )
+
+    # ========================================================
+    # LIST ITEMS
+    # ========================================================
+
+    items = list(
+        bullet_list.items
+        .all()
+        .order_by(
+            "order",
+            "id",
+        )
+    )
+
+    total_items = len(
+        items
+    )
+
+    # ========================================================
+    # NO ITEMS
+    # ========================================================
+
+    if total_items == 0:
+
+        return render(
+            request,
+            "practice/list_review.html",
+            {
+                "bullet_list":
+                    bullet_list,
+
+                "subject":
+                    subject,
+
+                "subject_index":
+                    subject_index,
+
+                "progress":
+                    progress,
+
+                "mastery_level":
+                    progress.mastery_level,
+
+                "mastery_percentage":
+                    round(
+                        (
+                            progress.mastery_level
+                            /
+                            6
+                        )
+                        * 100
+                    ),
+
+                "total_items":
+                    0,
+
+                "hidden_count":
+                    0,
+
+                "review_items":
+                    [],
+
+                "error":
+                    (
+                        "This list does not "
+                        "contain any items."
+                    ),
+
+                "result":
+                    None,
+
+                "completed_review":
+                    False,
+            }
+        )
+
+    # ========================================================
+    # NUMBER TO HIDE
+    # ========================================================
+
+    hidden_count = (
+        get_list_hidden_count(
+            total_items,
+            progress.mastery_level,
+        )
+    )
+
+    # ========================================================
+    # STATE
+    # ========================================================
+
+    result = None
+
+    error = None
+
+    completed_review = False
+
+    hidden_item_ids = []
+
+    submitted_answers = {}
+
+    # ========================================================
+    # POST
+    # ========================================================
+
+    if request.method == "POST":
+
+        # ----------------------------------------------------
+        # GET THE SAME HIDDEN ITEMS THAT WERE DISPLAYED
+        #
+        # Important:
+        # We do NOT select a new random set after submit.
+        # ----------------------------------------------------
+
+        hidden_item_id_values = (
+            request.POST.getlist(
+                "hidden_item_id"
+            )
+        )
+
+        for value in (
+            hidden_item_id_values
+        ):
+
+            try:
+
+                item_id = int(
+                    value
+                )
+
+            except (
+                TypeError,
+                ValueError
+            ):
+
+                continue
+
+            if (
+                item_id
+                not in hidden_item_ids
+            ):
+
+                hidden_item_ids.append(
+                    item_id
+                )
+
+        # ----------------------------------------------------
+        # VALID ITEM IDS FOR THIS LIST
+        # ----------------------------------------------------
+
+        valid_item_ids = {
+            item.id
+            for item
+            in items
+        }
+
+        hidden_item_ids = [
+            item_id
+            for item_id
+            in hidden_item_ids
+            if item_id
+            in valid_item_ids
+        ]
+
+        # ----------------------------------------------------
+        # MAKE SURE THE FORM WAS NOT ALTERED
+        # ----------------------------------------------------
+
+        if (
+            len(
+                hidden_item_ids
+            )
+            != hidden_count
+        ):
+
+            error = (
+                "The review changed unexpectedly. "
+                "Please try again."
+            )
+
+        else:
+
+            # =================================================
+            # CHECK ANSWERS
+            # =================================================
+
+            all_correct = True
+
+            for item in items:
+
+                if (
+                    item.id
+                    not in hidden_item_ids
+                ):
+
+                    continue
+
+                answer_name = (
+                    f"answer_{item.id}"
+                )
+
+                submitted_answer = (
+                    request.POST.get(
+                        answer_name,
+                        ""
+                    )
+                )
+
+                submitted_answers[
+                    item.id
+                ] = submitted_answer
+
+                expected_answer = (
+                    normalize_list_answer(
+                        item.text
+                    )
+                )
+
+                student_answer = (
+                    normalize_list_answer(
+                        submitted_answer
+                    )
+                )
+
+                if (
+                    student_answer
+                    != expected_answer
+                ):
+
+                    all_correct = False
+
+            # =================================================
+            # UPDATE REVIEW COUNTERS
+            # =================================================
+
+            now = timezone.now()
+
+            progress.review_count = (
+                progress.review_count
+                +
+                1
+            )
+
+            progress.last_reviewed = (
+                now
+            )
+
+            # =================================================
+            # CORRECT
+            # =================================================
+
+            if all_correct:
+
+                progress.correct_count = (
+                    progress.correct_count
+                    +
+                    1
+                )
+
+                progress.mastery_level = min(
+                    6,
+                    (
+                        progress.mastery_level
+                        +
+                        1
+                    )
+                )
+
+                result = "correct"
+
+                completed_review = True
+
+            # =================================================
+            # INCORRECT
+            # =================================================
+
+            else:
+
+                progress.incorrect_count = (
+                    progress.incorrect_count
+                    +
+                    1
+                )
+
+                progress.mastery_level = max(
+                    0,
+                    (
+                        progress.mastery_level
+                        -
+                        1
+                    )
+                )
+
+                result = "incorrect"
+
+            # =================================================
+            # NEXT REVIEW
+            # =================================================
+
+            interval_days = (
+                get_review_interval(
+                    progress.mastery_level
+                )
+            )
+
+            progress.next_review = (
+                now
+                +
+                timedelta(
+                    days=interval_days
+                )
+            )
+
+            progress.save()
+
+            # =================================================
+            # CORRECT REVIEW COMPLETE
+            #
+            # Do not immediately give another review.
+            # Show the successful result first.
+            # =================================================
+
+            if completed_review:
+
+                return render(
+                    request,
+                    "practice/list_review.html",
+                    {
+                        "bullet_list":
+                            bullet_list,
+
+                        "subject":
+                            subject,
+
+                        "subject_index":
+                            subject_index,
+
+                        "progress":
+                            progress,
+
+                        "mastery_level":
+                            progress.mastery_level,
+
+                        "mastery_percentage":
+                            round(
+                                (
+                                    progress.mastery_level
+                                    /
+                                    6
+                                )
+                                * 100
+                            ),
+
+                        "total_items":
+                            total_items,
+
+                        "hidden_count":
+                            hidden_count,
+
+                        "review_items":
+                            [],
+
+                        "error":
+                            None,
+
+                        "result":
+                            "correct",
+
+                        "completed_review":
+                            True,
+                    }
+                )
+
+            # =================================================
+            # WRONG
+            #
+            # Keep the same missing items so they can see
+            # exactly what they got wrong.
+            # =================================================
+
+    # ========================================================
+    # GET
+    #
+    # RANDOMLY CHOOSE ITEMS TO REMOVE
+    # ========================================================
+
+    else:
+
+        hidden_items = (
+            random.sample(
+                items,
+                hidden_count
+            )
+        )
+
+        hidden_item_ids = [
+            item.id
+            for item
+            in hidden_items
+        ]
+
+    # ========================================================
+    # BUILD TEMPLATE ITEMS
+    # ========================================================
+
+    hidden_item_id_set = set(
+        hidden_item_ids
+    )
+
+    review_items = []
+
+    for item in items:
+
+        is_hidden = (
+            item.id
+            in hidden_item_id_set
+        )
+
+        review_items.append(
+            {
+                "item":
+                    item,
+
+                "hidden":
+                    is_hidden,
+
+                "input_name":
+                    f"answer_{item.id}",
+
+                "submitted_answer":
+                    submitted_answers.get(
+                        item.id,
+                        ""
+                    ),
+            }
+        )
+
+    # ========================================================
+    # MASTERY
+    # ========================================================
+
+    mastery_percentage = round(
+        (
+            progress.mastery_level
+            /
+            6
+        )
+        * 100
+    )
+
+    # ========================================================
+    # RENDER
+    # ========================================================
+
+    return render(
+        request,
+        "practice/list_review.html",
+        {
+            "bullet_list":
+                bullet_list,
+
+            "subject":
+                subject,
+
+            "subject_index":
+                subject_index,
+
+            "progress":
+                progress,
+
+            "mastery_level":
+                progress.mastery_level,
+
+            "mastery_percentage":
+                mastery_percentage,
+
+            "total_items":
+                total_items,
+
+            "hidden_count":
+                hidden_count,
+
+            "review_items":
+                review_items,
+
+            "error":
+                error,
+
+            "result":
+                result,
+
+            "completed_review":
+                completed_review,
+        }
+    )
 
 # ============================================================
 # REVIEW INTERVAL

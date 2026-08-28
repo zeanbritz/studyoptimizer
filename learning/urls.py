@@ -116,4 +116,10 @@ urlpatterns = [
         name="list_review_list",
     ),
 
+    path(
+        "lists/<int:list_id>/review/",
+        views.review_list,
+        name="review_list",
+    ),
+
 ]
