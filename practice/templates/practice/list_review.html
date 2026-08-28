@@ -48,10 +48,6 @@
         }
 
 
-        /* =========================================
-           APP
-        ========================================= */
-
         .app {
 
             display: flex;
@@ -69,10 +65,6 @@
 
         }
 
-
-        /* =========================================
-           PAGE
-        ========================================= */
 
         .page {
 
@@ -132,8 +124,6 @@
 
         .back-link {
 
-            flex-shrink: 0;
-
             padding:
                 9px
                 14px;
@@ -153,13 +143,6 @@
             font-weight: 600;
 
             text-decoration: none;
-
-        }
-
-
-        .back-link:hover {
-
-            background: #f3f3f3;
 
         }
 
@@ -189,11 +172,9 @@
 
             display: flex;
 
-            align-items: center;
-
             justify-content: space-between;
 
-            gap: 20px;
+            align-items: center;
 
             margin-bottom: 10px;
 
@@ -259,8 +240,6 @@
 
             font-size: 12px;
 
-            line-height: 1.45;
-
         }
 
 
@@ -309,44 +288,6 @@
             color: #777;
 
             font-size: 13px;
-
-            line-height: 1.45;
-
-        }
-
-
-        /* =========================================
-           DETAILS
-        ========================================= */
-
-        .list-details {
-
-            display: flex;
-
-            flex-wrap: wrap;
-
-            gap: 8px;
-
-            margin-bottom: 20px;
-
-        }
-
-
-        .detail-pill {
-
-            padding:
-                6px
-                10px;
-
-            border-radius: 7px;
-
-            background: #f1f2f3;
-
-            color: #666;
-
-            font-size: 12px;
-
-            font-weight: 600;
 
         }
 
@@ -452,8 +393,6 @@
 
             font-weight: 700;
 
-            line-height: 1.4;
-
         }
 
 
@@ -510,47 +449,222 @@
            RESULT
         ========================================= */
 
-        .result-box {
-
-            margin-bottom: 20px;
+        .result-panel {
 
             padding:
-                14px
+                35px
+                25px;
+
+            text-align: center;
+
+        }
+
+
+        .result-icon {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            width: 54px;
+
+            height: 54px;
+
+            margin:
+                0
+                auto
                 16px;
 
-            border-radius: 9px;
+            border-radius: 50%;
+
+            font-size: 25px;
+
+            font-weight: 900;
+
+        }
+
+
+        .result-icon.correct {
+
+            background: #8BF527;
+
+            color: #24351a;
+
+        }
+
+
+        .result-icon.incorrect {
+
+            background: #ffe6e6;
+
+            color: #a33a3a;
+
+        }
+
+
+        .result-panel h2 {
+
+            margin:
+                0
+                0
+                8px;
+
+            font-size: 23px;
+
+        }
+
+
+        .result-panel p {
+
+            margin:
+                0
+                0
+                20px;
+
+            color: #777;
 
             font-size: 13px;
 
-            font-weight: 700;
+        }
 
-            line-height: 1.45;
+
+        .success-mastery {
+
+            color: #7C3AED;
+
+            font-weight: 800;
 
         }
 
 
-        .result-correct {
+        /* =========================================
+           CORRECT ANSWERS
+        ========================================= */
 
-            border:
-                1px solid
-                #badca8;
+        .correct-answer-box {
 
-            background: #f3faef;
+            max-width: 550px;
 
-            color: #477336;
+            margin:
+                20px
+                auto
+                24px;
 
-        }
-
-
-        .result-incorrect {
+            padding: 18px;
 
             border:
                 1px solid
                 #e0b4b4;
 
-            background: #fff3f3;
+            border-radius: 10px;
 
-            color: #983939;
+            background: #fff5f5;
+
+            text-align: left;
+
+        }
+
+
+        .correct-answer-title {
+
+            margin-bottom: 12px;
+
+            color: #963939;
+
+            font-size: 13px;
+
+            font-weight: 800;
+
+        }
+
+
+        .correct-answer-list {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 8px;
+
+        }
+
+
+        .correct-answer-item {
+
+            padding:
+                9px
+                11px;
+
+            border-radius: 7px;
+
+            background: white;
+
+            color: #222;
+
+            font-size: 14px;
+
+            font-weight: 700;
+
+        }
+
+
+        /* =========================================
+           ACTIONS
+        ========================================= */
+
+        .review-actions {
+
+            display: flex;
+
+            justify-content: flex-end;
+
+            margin-top: 24px;
+
+            padding-top: 20px;
+
+            border-top:
+                1px solid
+                #eeeeee;
+
+        }
+
+
+        .submit-button,
+        .continue-button {
+
+            display: inline-block;
+
+            padding:
+                11px
+                22px;
+
+            border: none;
+
+            border-radius: 8px;
+
+            background: #222;
+
+            color: white;
+
+            font-family: inherit;
+
+            font-size: 14px;
+
+            font-weight: 700;
+
+            text-decoration: none;
+
+            cursor: pointer;
+
+        }
+
+
+        .submit-button:hover,
+        .continue-button:hover {
+
+            background: #333;
 
         }
 
@@ -579,175 +693,6 @@
 
         }
 
-
-        /* =========================================
-           SUCCESS
-        ========================================= */
-
-        .success-panel {
-
-            padding:
-                35px
-                25px;
-
-            text-align: center;
-
-        }
-
-
-        .success-icon {
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-            width: 54px;
-
-            height: 54px;
-
-            margin:
-                0
-                auto
-                16px;
-
-            border-radius: 50%;
-
-            background: #8BF527;
-
-            color: #24351a;
-
-            font-size: 25px;
-
-            font-weight: 900;
-
-        }
-
-
-        .success-panel h2 {
-
-            margin:
-                0
-                0
-                7px;
-
-            font-size: 23px;
-
-        }
-
-
-        .success-panel p {
-
-            margin:
-                0
-                0
-                22px;
-
-            color: #777;
-
-            font-size: 13px;
-
-        }
-
-
-        .success-mastery {
-
-            color: #7C3AED;
-
-            font-weight: 800;
-
-        }
-
-
-        /* =========================================
-           ACTIONS
-        ========================================= */
-
-        .review-actions {
-
-            display: flex;
-
-            justify-content: flex-end;
-
-            gap: 10px;
-
-            margin-top: 24px;
-
-            padding-top: 20px;
-
-            border-top:
-                1px solid
-                #eeeeee;
-
-        }
-
-
-        .submit-button {
-
-            padding:
-                11px
-                22px;
-
-            border: none;
-
-            border-radius: 8px;
-
-            background: #222;
-
-            color: white;
-
-            font-family: inherit;
-
-            font-size: 14px;
-
-            font-weight: 700;
-
-            cursor: pointer;
-
-        }
-
-
-        .submit-button:hover {
-
-            background: #333;
-
-        }
-
-
-        .continue-button {
-
-            display: inline-block;
-
-            padding:
-                11px
-                20px;
-
-            border-radius: 8px;
-
-            background: #222;
-
-            color: white;
-
-            font-size: 14px;
-
-            font-weight: 700;
-
-            text-decoration: none;
-
-        }
-
-
-        .continue-button:hover {
-
-            background: #333;
-
-        }
-
-
-        /* =========================================
-           RESPONSIVE
-        ========================================= */
 
         @media (max-width: 700px) {
 
@@ -788,10 +733,6 @@
 
         <div class="page">
 
-
-            <!-- =====================================
-                 HEADER
-            ====================================== -->
 
             <header class="page-header">
 
@@ -866,47 +807,25 @@
 
                 <div class="mastery-description">
 
-
                     {% if mastery_level == 0 %}
 
-                        Starting mastery. One random item is hidden.
-
-                    {% elif mastery_level == 1 %}
-
-                        One or more items will now be hidden.
-
-                    {% elif mastery_level == 2 %}
-
-                        More of the list must now be recalled.
-
-                    {% elif mastery_level == 3 %}
-
-                        Half or more of the list may be hidden.
-
-                    {% elif mastery_level == 4 %}
-
-                        Most of the list must now be recalled.
-
-                    {% elif mastery_level == 5 %}
-
-                        Almost the entire list must be recalled.
+                        Beginning review — one random item is hidden.
 
                     {% elif mastery_level == 6 %}
 
-                        Full mastery level. All list items must be recalled.
+                        Full recall — all items must be entered.
+
+                    {% else %}
+
+                        More items are hidden as mastery increases.
 
                     {% endif %}
-
 
                 </div>
 
 
             </section>
 
-
-            <!-- =====================================
-                 REVIEW
-            ====================================== -->
 
             <section class="review-card">
 
@@ -923,37 +842,104 @@
 
 
                 <!-- =================================
-                     SUCCESS
+                     ATTEMPT COMPLETE
                 ================================== -->
 
-                {% if completed_review %}
+                {% if attempt_complete %}
 
 
-                    <div class="success-panel">
+                    <div class="result-panel">
 
 
-                        <div class="success-icon">
-                            ✓
-                        </div>
+                        {% if result == "correct" %}
 
 
-                        <h2>
-                            Correct
-                        </h2>
+                            <div class="result-icon correct">
+                                ✓
+                            </div>
 
 
-                        <p>
-
-                            Your mastery is now
-
-                            <span class="success-mastery">
-                                {{ mastery_level }}/6
-                            </span>.
-
-                        </p>
+                            <h2>
+                                Correct
+                            </h2>
 
 
-                        {% if subject_index != None %}
+                            <p>
+
+                                Your mastery is now
+
+                                <span class="success-mastery">
+                                    {{ mastery_level }}/6
+                                </span>.
+
+                            </p>
+
+
+                        {% else %}
+
+
+                            <div class="result-icon incorrect">
+                                ×
+                            </div>
+
+
+                            <h2>
+                                Incorrect
+                            </h2>
+
+
+                            <p>
+                                Review the correct answer{{ correct_answers|length|pluralize }} below.
+                            </p>
+
+
+                            <div class="correct-answer-box">
+
+
+                                <div class="correct-answer-title">
+                                    Correct answer{{ correct_answers|length|pluralize }}
+                                </div>
+
+
+                                <div class="correct-answer-list">
+
+
+                                    {% for answer in correct_answers %}
+
+
+                                        <div class="correct-answer-item">
+                                            {{ answer }}
+                                        </div>
+
+
+                                    {% endfor %}
+
+
+                                </div>
+
+
+                            </div>
+
+
+                        {% endif %}
+
+
+                        <!-- =========================
+                             CONTINUE
+                        ========================== -->
+
+                        {% if next_list %}
+
+
+                            <a
+                                href="{% url 'review_list' list_id=next_list.id %}?subject_index={{ subject_index }}"
+                                class="continue-button"
+                            >
+                                Continue →
+                            </a>
+
+
+                        {% elif subject_index != None %}
 
 
                             <a
@@ -973,9 +959,9 @@
                 {% else %}
 
 
-                    <!-- =============================
-                         LIST TITLE
-                    ============================== -->
+                    <!-- =================================
+                         QUESTION
+                    ================================== -->
 
                     <div class="list-heading">
 
@@ -990,13 +976,14 @@
 
                             {% if hidden_count == 1 %}
 
-                                One list item has been removed.
-                                Enter the missing item correctly.
+                                Enter the missing list item.
 
                             {% else %}
 
-                                {{ hidden_count }} list items have been removed.
-                                Enter every missing item correctly.
+                                Enter the
+                                {{ hidden_count }}
+                                missing list items.
+                                Their order does not matter.
 
                             {% endif %}
 
@@ -1006,66 +993,6 @@
 
                     </div>
 
-
-                    <!-- =============================
-                         BOOK / CHAPTER
-                    ============================== -->
-
-                    {% if bullet_list.book_name or bullet_list.chapter %}
-
-
-                        <div class="list-details">
-
-
-                            {% if bullet_list.book_name %}
-
-
-                                <span class="detail-pill">
-                                    📖 {{ bullet_list.book_name }}
-                                </span>
-
-
-                            {% endif %}
-
-
-                            {% if bullet_list.chapter %}
-
-
-                                <span class="detail-pill">
-                                    Chapter: {{ bullet_list.chapter }}
-                                </span>
-
-
-                            {% endif %}
-
-
-                        </div>
-
-
-                    {% endif %}
-
-
-                    <!-- =============================
-                         WRONG RESULT
-                    ============================== -->
-
-                    {% if result == "incorrect" %}
-
-
-                        <div class="result-box result-incorrect">
-
-                            One or more answers were incorrect.
-                            Check your answers and try again.
-
-                        </div>
-
-
-                    {% endif %}
-
-
-                    <!-- =============================
-                         REVIEW FORM
-                    ============================== -->
 
                     <form method="POST">
 
@@ -1079,11 +1006,6 @@
                             value="{{ subject_index|default_if_none:'' }}"
                         >
 
-
-                        <!--
-                            Preserve exactly which random
-                            items were hidden.
-                        -->
 
                         {% for review_item in review_items %}
 
@@ -1130,7 +1052,6 @@
                                                 type="text"
                                                 class="answer-input"
                                                 name="{{ review_item.input_name }}"
-                                                value="{{ review_item.submitted_answer }}"
                                                 placeholder="Enter missing list item"
                                                 autocomplete="off"
                                                 required
@@ -1147,11 +1068,6 @@
 
                                         {% endif %}
 
-
-                                        <!--
-                                            Description remains visible
-                                            as an optional clue.
-                                        -->
 
                                         {% if review_item.item.description %}
 
@@ -1207,10 +1123,6 @@
 
 </div>
 
-
-<!-- =========================================
-     MASTERY BAR
-========================================= -->
 
 <script>
 

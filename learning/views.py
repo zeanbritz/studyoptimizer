@@ -991,7 +991,7 @@ def review_list(
 ):
 
     # ========================================================
-    # FIND LIST
+    # LIST
     # ========================================================
 
     bullet_list = get_object_or_404(
@@ -1042,8 +1042,6 @@ def review_list(
 
     # ========================================================
     # PROGRESS
-    #
-    # New list = 0 / 6
     # ========================================================
 
     progress, created = (
@@ -1053,10 +1051,6 @@ def review_list(
             knowledge_unit=knowledge_unit,
         )
     )
-
-    # --------------------------------------------------------
-    # PROTECT MASTERY RANGE
-    # --------------------------------------------------------
 
     progress.mastery_level = max(
         0,
@@ -1070,7 +1064,7 @@ def review_list(
     )
 
     # ========================================================
-    # LIST ITEMS
+    # ITEMS
     # ========================================================
 
     items = list(
@@ -1087,7 +1081,20 @@ def review_list(
     )
 
     # ========================================================
-    # NO ITEMS
+    # CURRENT MASTERY PERCENTAGE
+    # ========================================================
+
+    mastery_percentage = round(
+        (
+            progress.mastery_level
+            /
+            6
+        )
+        * 100
+    )
+
+    # ========================================================
+    # EMPTY LIST
     # ========================================================
 
     if total_items == 0:
@@ -1112,14 +1119,7 @@ def review_list(
                     progress.mastery_level,
 
                 "mastery_percentage":
-                    round(
-                        (
-                            progress.mastery_level
-                            /
-                            6
-                        )
-                        * 100
-                    ),
+                    mastery_percentage,
 
                 "total_items":
                     0,
@@ -1139,13 +1139,19 @@ def review_list(
                 "result":
                     None,
 
-                "completed_review":
+                "attempt_complete":
                     False,
+
+                "correct_answers":
+                    [],
+
+                "next_list":
+                    None,
             }
         )
 
     # ========================================================
-    # NUMBER TO HIDE
+    # NUMBER OF ITEMS TO HIDE
     # ========================================================
 
     hidden_count = (
@@ -1163,7 +1169,11 @@ def review_list(
 
     error = None
 
-    completed_review = False
+    attempt_complete = False
+
+    correct_answers = []
+
+    next_list = None
 
     hidden_item_ids = []
 
@@ -1175,12 +1185,9 @@ def review_list(
 
     if request.method == "POST":
 
-        # ----------------------------------------------------
-        # GET THE SAME HIDDEN ITEMS THAT WERE DISPLAYED
-        #
-        # Important:
-        # We do NOT select a new random set after submit.
-        # ----------------------------------------------------
+        # ====================================================
+        # GET HIDDEN IDS
+        # ====================================================
 
         hidden_item_id_values = (
             request.POST.getlist(
@@ -1214,27 +1221,30 @@ def review_list(
                     item_id
                 )
 
-        # ----------------------------------------------------
-        # VALID ITEM IDS FOR THIS LIST
-        # ----------------------------------------------------
+        # ====================================================
+        # VALID IDS
+        # ====================================================
 
         valid_item_ids = {
             item.id
+
             for item
             in items
         }
 
         hidden_item_ids = [
             item_id
+
             for item_id
             in hidden_item_ids
+
             if item_id
             in valid_item_ids
         ]
 
-        # ----------------------------------------------------
-        # MAKE SURE THE FORM WAS NOT ALTERED
-        # ----------------------------------------------------
+        # ====================================================
+        # VALIDATE FORM
+        # ====================================================
 
         if (
             len(
@@ -1245,16 +1255,18 @@ def review_list(
 
             error = (
                 "The review changed unexpectedly. "
-                "Please try again."
+                "Please reload the page and try again."
             )
 
         else:
 
             # =================================================
-            # CHECK ANSWERS
+            # COLLECT EXPECTED ANSWERS
             # =================================================
 
-            all_correct = True
+            expected_answers = []
+
+            student_answers = []
 
             for item in items:
 
@@ -1264,6 +1276,18 @@ def review_list(
                 ):
 
                     continue
+
+                # --------------------------------------------
+                # CORRECT ANSWER
+                # --------------------------------------------
+
+                expected_answers.append(
+                    item.text
+                )
+
+                # --------------------------------------------
+                # STUDENT ANSWER
+                # --------------------------------------------
 
                 answer_name = (
                     f"answer_{item.id}"
@@ -1280,28 +1304,65 @@ def review_list(
                     item.id
                 ] = submitted_answer
 
-                expected_answer = (
-                    normalize_list_answer(
-                        item.text
-                    )
+                student_answers.append(
+                    submitted_answer
                 )
 
-                student_answer = (
-                    normalize_list_answer(
-                        submitted_answer
-                    )
+            # =================================================
+            # NORMALIZE ALL ANSWERS
+            # =================================================
+            #
+            # IMPORTANT:
+            #
+            # We compare the complete answer collections,
+            # NOT the positions.
+            #
+            # Example:
+            #
+            # Correct:
+            #
+            # milk
+            # honey
+            # bread
+            #
+            # Student:
+            #
+            # bread
+            # milk
+            # honey
+            #
+            # = CORRECT
+            # =================================================
+
+            normalized_expected = sorted(
+                normalize_list_answer(
+                    answer
                 )
 
-                if (
-                    student_answer
-                    != expected_answer
-                ):
+                for answer
+                in expected_answers
+            )
 
-                    all_correct = False
+            normalized_student = sorted(
+                normalize_list_answer(
+                    answer
+                )
+
+                for answer
+                in student_answers
+            )
+
+            all_correct = (
+                normalized_student
+                ==
+                normalized_expected
+            )
 
             # =================================================
-            # UPDATE REVIEW COUNTERS
+            # REVIEW ATTEMPT COMPLETE
             # =================================================
+
+            attempt_complete = True
 
             now = timezone.now()
 
@@ -1321,6 +1382,8 @@ def review_list(
 
             if all_correct:
 
+                result = "correct"
+
                 progress.correct_count = (
                     progress.correct_count
                     +
@@ -1336,15 +1399,13 @@ def review_list(
                     )
                 )
 
-                result = "correct"
-
-                completed_review = True
-
             # =================================================
             # INCORRECT
             # =================================================
 
             else:
+
+                result = "incorrect"
 
                 progress.incorrect_count = (
                     progress.incorrect_count
@@ -1361,7 +1422,13 @@ def review_list(
                     )
                 )
 
-                result = "incorrect"
+                # --------------------------------------------
+                # SHOW CORRECT ANSWERS
+                # --------------------------------------------
+
+                correct_answers = (
+                    expected_answers
+                )
 
             # =================================================
             # NEXT REVIEW
@@ -1384,74 +1451,143 @@ def review_list(
             progress.save()
 
             # =================================================
-            # CORRECT REVIEW COMPLETE
-            #
-            # Do not immediately give another review.
-            # Show the successful result first.
+            # FIND NEXT DUE LIST
             # =================================================
 
-            if completed_review:
+            today = timezone.localdate()
 
-                return render(
-                    request,
-                    "practice/list_review.html",
-                    {
-                        "bullet_list":
-                            bullet_list,
+            possible_next_lists = (
+                BulletList.objects
+                .filter(
+                    knowledge_unit__subject=subject,
+                    knowledge_unit__active=True,
+                )
+                .select_related(
+                    "knowledge_unit"
+                )
+                .exclude(
+                    id=bullet_list.id
+                )
+                .order_by(
+                    "knowledge_unit__created",
+                    "id",
+                )
+            )
 
-                        "subject":
-                            subject,
+            for candidate in (
+                possible_next_lists
+            ):
 
-                        "subject_index":
-                            subject_index,
-
-                        "progress":
-                            progress,
-
-                        "mastery_level":
-                            progress.mastery_level,
-
-                        "mastery_percentage":
-                            round(
-                                (
-                                    progress.mastery_level
-                                    /
-                                    6
-                                )
-                                * 100
-                            ),
-
-                        "total_items":
-                            total_items,
-
-                        "hidden_count":
-                            hidden_count,
-
-                        "review_items":
-                            [],
-
-                        "error":
-                            None,
-
-                        "result":
-                            "correct",
-
-                        "completed_review":
-                            True,
-                    }
+                candidate_progress = (
+                    StudentKnowledge.objects
+                    .filter(
+                        student=request.user,
+                        knowledge_unit=(
+                            candidate.knowledge_unit
+                        ),
+                    )
+                    .first()
                 )
 
+                candidate_is_due = False
+
+                if candidate_progress is None:
+
+                    candidate_is_due = True
+
+                elif (
+                    candidate_progress.next_review
+                    is None
+                ):
+
+                    candidate_is_due = True
+
+                elif (
+                    candidate_progress
+                    .next_review
+                    .date()
+                    <= today
+                ):
+
+                    candidate_is_due = True
+
+                if candidate_is_due:
+
+                    next_list = (
+                        candidate
+                    )
+
+                    break
+
             # =================================================
-            # WRONG
-            #
-            # Keep the same missing items so they can see
-            # exactly what they got wrong.
+            # UPDATED MASTERY
             # =================================================
+
+            mastery_percentage = round(
+                (
+                    progress.mastery_level
+                    /
+                    6
+                )
+                * 100
+            )
+
+            # =================================================
+            # SHOW RESULT SCREEN
+            # =================================================
+
+            return render(
+                request,
+                "practice/list_review.html",
+                {
+                    "bullet_list":
+                        bullet_list,
+
+                    "subject":
+                        subject,
+
+                    "subject_index":
+                        subject_index,
+
+                    "progress":
+                        progress,
+
+                    "mastery_level":
+                        progress.mastery_level,
+
+                    "mastery_percentage":
+                        mastery_percentage,
+
+                    "total_items":
+                        total_items,
+
+                    "hidden_count":
+                        hidden_count,
+
+                    "review_items":
+                        [],
+
+                    "error":
+                        None,
+
+                    "result":
+                        result,
+
+                    "attempt_complete":
+                        True,
+
+                    "correct_answers":
+                        correct_answers,
+
+                    "next_list":
+                        next_list,
+                }
+            )
 
     # ========================================================
     # GET
     #
-    # RANDOMLY CHOOSE ITEMS TO REMOVE
+    # RANDOMLY HIDE ITEMS
     # ========================================================
 
     else:
@@ -1465,12 +1601,13 @@ def review_list(
 
         hidden_item_ids = [
             item.id
+
             for item
             in hidden_items
         ]
 
     # ========================================================
-    # BUILD TEMPLATE ITEMS
+    # BUILD REVIEW ITEMS
     # ========================================================
 
     hidden_item_id_set = set(
@@ -1504,19 +1641,6 @@ def review_list(
                     ),
             }
         )
-
-    # ========================================================
-    # MASTERY
-    # ========================================================
-
-    mastery_percentage = round(
-        (
-            progress.mastery_level
-            /
-            6
-        )
-        * 100
-    )
 
     # ========================================================
     # RENDER
@@ -1559,10 +1683,17 @@ def review_list(
             "result":
                 result,
 
-            "completed_review":
-                completed_review,
+            "attempt_complete":
+                attempt_complete,
+
+            "correct_answers":
+                correct_answers,
+
+            "next_list":
+                next_list,
         }
     )
+
 
 # ============================================================
 # REVIEW INTERVAL

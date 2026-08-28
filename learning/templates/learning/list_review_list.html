@@ -236,7 +236,7 @@
 
 
         /* =========================================
-           LIST CARDS
+           LISTS
         ========================================= */
 
         .review-list {
@@ -245,7 +245,7 @@
 
             flex-direction: column;
 
-            gap: 16px;
+            gap: 12px;
 
         }
 
@@ -263,13 +263,25 @@
 
         .list-card {
 
-            padding: 24px;
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            gap: 20px;
+
+            min-height: 78px;
+
+            padding:
+                20px
+                22px;
 
             border:
                 1px solid
                 #e2e3e5;
 
-            border-radius: 14px;
+            border-radius: 12px;
 
             background: white;
 
@@ -308,162 +320,13 @@
         }
 
 
-        .list-card-header {
-
-            display: flex;
-
-            align-items: flex-start;
-
-            justify-content: space-between;
-
-            gap: 20px;
-
-            margin-bottom: 18px;
-
-        }
-
-
-        .list-card-title {
-
-            margin:
-                0
-                0
-                5px;
-
-            font-size: 19px;
-
-        }
-
-
-        .list-card-subtitle {
-
-            color: #888;
-
-            font-size: 12px;
-
-        }
-
-
-        .list-icon {
-
-            flex-shrink: 0;
-
-            color: #777;
-
-            font-size: 20px;
-
-        }
-
-
-        /* =========================================
-           ADDITIONAL DETAILS
-        ========================================= */
-
-        .list-details {
-
-            display: flex;
-
-            gap: 10px;
-
-            flex-wrap: wrap;
-
-            margin-bottom: 18px;
-
-        }
-
-
-        .detail-pill {
-
-            padding:
-                6px
-                9px;
-
-            border-radius: 7px;
-
-            background: #f3f4f5;
-
-            color: #666;
-
-            font-size: 12px;
-
-            font-weight: 600;
-
-        }
-
-
-        /* =========================================
-           ITEMS
-        ========================================= */
-
-        .items {
-
-            display: flex;
-
-            flex-direction: column;
-
-            gap: 9px;
-
-        }
-
-
-        .item {
-
-            display: grid;
-
-            grid-template-columns:
-                30px
-                minmax(0, 1fr);
-
-            gap: 12px;
-
-            padding:
-                12px
-                14px;
-
-            border-radius: 9px;
-
-            background: #f7f8f9;
-
-        }
-
-
-        .item-number {
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-            width: 26px;
-
-            height: 26px;
-
-            border-radius: 50%;
-
-            background: #222;
-
-            color: white;
-
-            font-size: 11px;
-
-            font-weight: 800;
-
-        }
-
-
-        .item-main {
+        .list-name {
 
             min-width: 0;
 
-        }
-
-
-        .item-text {
-
             color: #222;
 
-            font-size: 14px;
+            font-size: 16px;
 
             font-weight: 700;
 
@@ -472,15 +335,15 @@
         }
 
 
-        .item-description {
+        .list-arrow {
 
-            margin-top: 4px;
+            flex-shrink: 0;
 
             color: #777;
 
-            font-size: 13px;
+            font-size: 18px;
 
-            line-height: 1.45;
+            font-weight: 700;
 
         }
 
@@ -633,136 +496,34 @@
                         >
 
 
-                            <article class="list-card">
+                            <div class="list-card">
 
 
-                                <div class="list-card-header">
+                                <!--
+                                    IMPORTANT:
 
+                                    We deliberately show ONLY
+                                    the name of the list here.
 
-                                    <div>
+                                    No:
+                                    - list items
+                                    - descriptions
+                                    - textbook
+                                    - chapter
+                                    - item count
+                                -->
 
+                                <span class="list-name">
+                                    {{ list.question }}
+                                </span>
 
-                                        <h2 class="list-card-title">
-                                            {{ list.question }}
-                                        </h2>
 
+                                <span class="list-arrow">
+                                    →
+                                </span>
 
-                                        <div class="list-card-subtitle">
 
-                                            {{ list.items.count }}
-
-                                            item{{ list.items.count|pluralize }}
-
-                                        </div>
-
-
-                                    </div>
-
-
-                                    <span class="list-icon">
-                                        →
-                                    </span>
-
-
-                                </div>
-
-
-                                <!-- =========================
-                                     OPTIONAL DETAILS
-                                ========================== -->
-
-                                {% if list.book_name or list.chapter %}
-
-
-                                    <div class="list-details">
-
-
-                                        {% if list.book_name %}
-
-                                            <span class="detail-pill">
-                                                📖 {{ list.book_name }}
-                                            </span>
-
-                                        {% endif %}
-
-
-                                        {% if list.chapter %}
-
-                                            <span class="detail-pill">
-                                                Chapter: {{ list.chapter }}
-                                            </span>
-
-                                        {% endif %}
-
-
-                                    </div>
-
-
-                                {% endif %}
-
-
-                                <!-- =========================
-                                     ITEMS
-                                ========================== -->
-
-                                <div class="items">
-
-
-                                    {% for item in list.items.all %}
-
-
-                                        <div class="item">
-
-
-                                            <span class="item-number">
-                                                {{ forloop.counter }}
-                                            </span>
-
-
-                                            <div class="item-main">
-
-
-                                                <div class="item-text">
-                                                    {{ item.text }}
-                                                </div>
-
-
-                                                {% if item.description %}
-
-                                                    <div class="item-description">
-                                                        {{ item.description }}
-                                                    </div>
-
-                                                {% endif %}
-
-
-                                            </div>
-
-
-                                        </div>
-
-
-                                    {% empty %}
-
-
-                                        <div class="item">
-
-
-                                            <div class="item-main">
-                                                No items saved in this list.
-                                            </div>
-
-
-                                        </div>
-
-
-                                    {% endfor %}
-
-
-                                </div>
-
-
-                            </article>
+                            </div>
 
 
                         </a>
