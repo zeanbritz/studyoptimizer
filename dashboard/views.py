@@ -74,12 +74,95 @@ def dashboard(request):
     due_formula_total = 0
 
     # --------------------------------------------------------
+    # LIST DATA
+    # --------------------------------------------------------
+
+    due_list_subjects = []
+
+    due_list_total = 0
+
+    # --------------------------------------------------------
     # BOOK SUMMARY DATA
     # --------------------------------------------------------
 
     book_summary_subjects = []
 
     book_summary_total = 0
+
+    # ========================================================
+    # HELPER:
+    # FIND SESSION SUBJECT INDEX
+    # ========================================================
+
+    def find_subject_index(
+        database_subject
+    ):
+
+        # ----------------------------------------------------
+        # FIRST TRY DATABASE ID
+        # ----------------------------------------------------
+
+        for (
+            index,
+            subject_data
+        ) in enumerate(
+            session_subjects
+        ):
+
+            database_id = (
+                subject_data.get(
+                    "database_id"
+                )
+            )
+
+            try:
+
+                database_id = int(
+                    database_id
+                )
+
+            except (
+                TypeError,
+                ValueError
+            ):
+
+                database_id = None
+
+            if (
+                database_id
+                == database_subject.id
+            ):
+
+                return index
+
+        # ----------------------------------------------------
+        # FALLBACK TO SUBJECT NAME
+        # ----------------------------------------------------
+
+        for (
+            index,
+            subject_data
+        ) in enumerate(
+            session_subjects
+        ):
+
+            session_name = (
+                subject_data.get(
+                    "name",
+                    ""
+                )
+                .strip()
+            )
+
+            if (
+                session_name
+                ==
+                database_subject.name.strip()
+            ):
+
+                return index
+
+        return None
 
     # ========================================================
     # ONLY BUILD PLAN AFTER ONBOARDING
@@ -183,77 +266,14 @@ def dashboard(request):
                 continue
 
             # ------------------------------------------------
-            # FIND SUBJECT INDEX
+            # SUBJECT INDEX
             # ------------------------------------------------
 
-            subject_index = None
-
-            # --------------------------------------------
-            # DATABASE ID
-            # --------------------------------------------
-
-            for index, subject_data in enumerate(
-                session_subjects
-            ):
-
-                database_id = (
-                    subject_data.get(
-                        "database_id"
-                    )
+            subject_index = (
+                find_subject_index(
+                    database_subject
                 )
-
-                try:
-
-                    database_id = int(
-                        database_id
-                    )
-
-                except (
-                    TypeError,
-                    ValueError
-                ):
-
-                    database_id = None
-
-                if (
-                    database_id
-                    == database_subject.id
-                ):
-
-                    subject_index = index
-
-                    break
-
-            # --------------------------------------------
-            # FALLBACK TO NAME
-            # --------------------------------------------
-
-            if subject_index is None:
-
-                for index, subject_data in enumerate(
-                    session_subjects
-                ):
-
-                    session_name = (
-                        subject_data.get(
-                            "name",
-                            ""
-                        )
-                        .strip()
-                    )
-
-                    if (
-                        session_name
-                        == database_subject.name.strip()
-                    ):
-
-                        subject_index = index
-
-                        break
-
-            # --------------------------------------------
-            # SKIP IF CANNOT FIND SESSION SUBJECT
-            # --------------------------------------------
+            )
 
             if subject_index is None:
 
@@ -399,77 +419,14 @@ def dashboard(request):
                 continue
 
             # ------------------------------------------------
-            # FIND SUBJECT INDEX
+            # SUBJECT INDEX
             # ------------------------------------------------
 
-            subject_index = None
-
-            # --------------------------------------------
-            # DATABASE ID
-            # --------------------------------------------
-
-            for index, subject_data in enumerate(
-                session_subjects
-            ):
-
-                database_id = (
-                    subject_data.get(
-                        "database_id"
-                    )
+            subject_index = (
+                find_subject_index(
+                    database_subject
                 )
-
-                try:
-
-                    database_id = int(
-                        database_id
-                    )
-
-                except (
-                    TypeError,
-                    ValueError
-                ):
-
-                    database_id = None
-
-                if (
-                    database_id
-                    == database_subject.id
-                ):
-
-                    subject_index = index
-
-                    break
-
-            # --------------------------------------------
-            # FALLBACK TO NAME
-            # --------------------------------------------
-
-            if subject_index is None:
-
-                for index, subject_data in enumerate(
-                    session_subjects
-                ):
-
-                    session_name = (
-                        subject_data.get(
-                            "name",
-                            ""
-                        )
-                        .strip()
-                    )
-
-                    if (
-                        session_name
-                        == database_subject.name.strip()
-                    ):
-
-                        subject_index = index
-
-                        break
-
-            # --------------------------------------------
-            # SKIP IF NOT FOUND
-            # --------------------------------------------
+            )
 
             if subject_index is None:
 
@@ -520,25 +477,150 @@ def dashboard(request):
         )
 
         # ====================================================
-        # BOOK SUMMARIES
+        # LISTS
         # ====================================================
-        #
-        # IMPORTANT:
-        #
-        # Only display a subject when:
-        #
-        # 1. It has at least one textbook.
-        # 2. Today is actually a learning day.
-        # 3. At least one textbook has pages due today.
-        # 4. That textbook has NOT already been completed
-        #    today.
-        #
-        # Clicking the green ✓ button or saving a custom
-        # amount sets last_summary_date to today.
-        #
-        # calculate_book_summary_targets() already converts
-        # this into item["completed_today"], so we reuse the
-        # exact same logic as book_summary.html.
+
+        bullet_lists = (
+            BulletList.objects
+            .filter(
+                knowledge_unit__subject__user=request.user,
+                knowledge_unit__active=True,
+            )
+            .select_related(
+                "knowledge_unit",
+                "knowledge_unit__subject",
+            )
+            .order_by(
+                "knowledge_unit__subject__name",
+                "knowledge_unit__created",
+                "id",
+            )
+        )
+
+        list_groups = {}
+
+        # ----------------------------------------------------
+        # CHECK EACH LIST
+        # ----------------------------------------------------
+
+        for bullet_list in (
+            bullet_lists
+        ):
+
+            knowledge_unit = (
+                bullet_list.knowledge_unit
+            )
+
+            # ------------------------------------------------
+            # PROGRESS
+            # ------------------------------------------------
+
+            progress = (
+                StudentKnowledge.objects
+                .filter(
+                    student=request.user,
+                    knowledge_unit=knowledge_unit,
+                )
+                .first()
+            )
+
+            # ------------------------------------------------
+            # IS DUE?
+            # ------------------------------------------------
+
+            is_due = False
+
+            if progress is None:
+
+                is_due = True
+
+            elif progress.next_review is None:
+
+                is_due = True
+
+            elif (
+                progress.next_review.date()
+                <= today
+            ):
+
+                is_due = True
+
+            if not is_due:
+
+                continue
+
+            # ------------------------------------------------
+            # SUBJECT
+            # ------------------------------------------------
+
+            database_subject = (
+                knowledge_unit.subject
+            )
+
+            if not database_subject:
+
+                continue
+
+            # ------------------------------------------------
+            # SUBJECT INDEX
+            # ------------------------------------------------
+
+            subject_index = (
+                find_subject_index(
+                    database_subject
+                )
+            )
+
+            if subject_index is None:
+
+                continue
+
+            # ------------------------------------------------
+            # GROUP BY SUBJECT
+            # ------------------------------------------------
+
+            subject_id = (
+                database_subject.id
+            )
+
+            if (
+                subject_id
+                not in list_groups
+            ):
+
+                list_groups[
+                    subject_id
+                ] = {
+
+                    "subject":
+                        database_subject,
+
+                    "subject_index":
+                        subject_index,
+
+                    "count":
+                        0,
+
+                }
+
+            list_groups[
+                subject_id
+            ][
+                "count"
+            ] += 1
+
+            due_list_total += 1
+
+        # ----------------------------------------------------
+        # FINAL LIST SUBJECTS
+        # ----------------------------------------------------
+
+        due_list_subjects = list(
+            list_groups.values()
+        )
+
+        # ====================================================
+        # BOOK SUMMARIES
         # ====================================================
 
         from learning.views import (
@@ -642,8 +724,6 @@ def dashboard(request):
 
             # ------------------------------------------------
             # NO TEXTBOOKS
-            #
-            # Do not show this subject.
             # ------------------------------------------------
 
             if not textbooks:
@@ -651,7 +731,7 @@ def dashboard(request):
                 continue
 
             # ------------------------------------------------
-            # CALCULATE EXACT SAME TARGETS AS BOOK SUMMARY
+            # CALCULATE TARGETS
             # ------------------------------------------------
 
             schedule_data = (
@@ -681,7 +761,7 @@ def dashboard(request):
             for item in book_items:
 
                 # --------------------------------------------
-                # ENTIRE TEXTBOOK ALREADY FINISHED
+                # FINISHED BOOK
                 # --------------------------------------------
 
                 if item.get(
@@ -692,11 +772,7 @@ def dashboard(request):
                     continue
 
                 # --------------------------------------------
-                # GREEN ✓ OR CUSTOM AMOUNT ALREADY SAVED
-                # TODAY
-                #
-                # This is what makes the book disappear
-                # from the dashboard after completion.
+                # ALREADY COMPLETED TODAY
                 # --------------------------------------------
 
                 if item.get(
@@ -707,7 +783,7 @@ def dashboard(request):
                     continue
 
                 # --------------------------------------------
-                # TODAY'S TARGET
+                # TARGET
                 # --------------------------------------------
 
                 target_pages = int(
@@ -718,18 +794,9 @@ def dashboard(request):
                     or 0
                 )
 
-                # --------------------------------------------
-                # NOTHING SCHEDULED TODAY
-                # --------------------------------------------
-
                 if target_pages <= 0:
 
                     continue
-
-                # --------------------------------------------
-                # THIS BOOK STILL NEEDS TO BE SUMMARIZED
-                # TODAY
-                # --------------------------------------------
 
                 unfinished_books_today.append(
                     item
@@ -740,9 +807,7 @@ def dashboard(request):
                 )
 
             # ------------------------------------------------
-            # ALL BOOKS COMPLETED FOR TODAY
-            #
-            # Hide the whole subject.
+            # NOTHING LEFT TODAY
             # ------------------------------------------------
 
             if not unfinished_books_today:
@@ -750,7 +815,7 @@ def dashboard(request):
                 continue
 
             # ------------------------------------------------
-            # ADD SUBJECT TO DASHBOARD
+            # ADD SUBJECT
             # ------------------------------------------------
 
             book_summary_subjects.append(
@@ -772,7 +837,7 @@ def dashboard(request):
             )
 
         # ----------------------------------------------------
-        # NUMBER OF SUBJECTS WITH BOOK WORK LEFT TODAY
+        # BOOK SUMMARY SUBJECT COUNT
         # ----------------------------------------------------
 
         book_summary_total = len(
@@ -811,6 +876,16 @@ def dashboard(request):
                 due_formula_total,
 
             # --------------------------------------------
+            # LISTS
+            # --------------------------------------------
+
+            "due_list_subjects":
+                due_list_subjects,
+
+            "due_list_total":
+                due_list_total,
+
+            # --------------------------------------------
             # BOOK SUMMARIES
             # --------------------------------------------
 
@@ -821,7 +896,6 @@ def dashboard(request):
                 book_summary_total,
         }
     )
-
 
 # ============================================================
 # REVIEW

@@ -38,33 +38,39 @@
 
 
     <!-- =========================================
-         TODAY PLAN COLUMN OVERRIDE
+         TODAY PLAN COLUMNS
 
          We now have:
+
          1. Definitions
          2. Formulas
-         3. Book Summaries
+         3. Lists
+         4. Book Summaries
     ========================================== -->
 
     <style>
 
         .today-plan-columns {
+
             grid-template-columns:
                 repeat(
-                    3,
+                    4,
                     minmax(0, 1fr)
                 );
+
         }
 
 
-        @media (max-width: 1100px) {
+        @media (max-width: 1250px) {
 
             .today-plan-columns {
+
                 grid-template-columns:
                     repeat(
                         2,
                         minmax(0, 1fr)
                     );
+
             }
 
         }
@@ -73,7 +79,10 @@
         @media (max-width: 750px) {
 
             .today-plan-columns {
-                grid-template-columns: 1fr;
+
+                grid-template-columns:
+                    1fr;
+
             }
 
         }
@@ -109,12 +118,14 @@
 
         <header class="page-header">
 
+
             <h1>
 
                 Welcome back,
                 {{ request.user.first_name|default:request.user.username }}
 
             </h1>
+
 
         </header>
 
@@ -133,15 +144,13 @@
             <div class="card today-plan">
 
 
-                <!-- =============================
-                     HEADER
-                ============================== -->
-
                 <div class="today-plan-header">
+
 
                     <h2>
                         Today's Plan
                     </h2>
+
 
                 </div>
 
@@ -155,12 +164,14 @@
 
                     <div class="empty-plan">
 
+
                         <a
                             href="{% url 'onboarding' %}"
                             class="get-started-button"
                         >
                             Get Started
                         </a>
+
 
                     </div>
 
@@ -169,14 +180,14 @@
                      HAS PLAN ITEMS
                 ============================== -->
 
-                {% elif due_definition_subjects or due_formula_subjects or book_summary_subjects %}
+                {% elif due_definition_subjects or due_formula_subjects or due_list_subjects or book_summary_subjects %}
 
 
                     <div class="today-plan-columns">
 
 
                         <!-- =================================
-                             DEFINITIONS COLUMN
+                             DEFINITIONS
                         ================================== -->
 
                         {% if due_definition_subjects %}
@@ -185,39 +196,32 @@
                             <div class="today-plan-column">
 
 
-                                <!-- =====================
-                                     COLUMN HEADER
-                                ====================== -->
-
                                 <div class="plan-column-header">
 
 
                                     <div>
 
+
                                         <h3>
                                             Definitions
                                         </h3>
+
 
                                         <p>
                                             Definitions scheduled for review.
                                         </p>
 
+
                                     </div>
 
 
                                     <span class="plan-total-count">
-
                                         {{ due_definition_total }}
-
                                     </span>
 
 
                                 </div>
 
-
-                                <!-- =====================
-                                     SUBJECT LIST
-                                ====================== -->
 
                                 <div class="plan-subject-list">
 
@@ -269,7 +273,7 @@
 
 
                         <!-- =================================
-                             FORMULAS COLUMN
+                             FORMULAS
                         ================================== -->
 
                         {% if due_formula_subjects %}
@@ -278,39 +282,32 @@
                             <div class="today-plan-column">
 
 
-                                <!-- =====================
-                                     COLUMN HEADER
-                                ====================== -->
-
                                 <div class="plan-column-header">
 
 
                                     <div>
 
+
                                         <h3>
                                             Formulas
                                         </h3>
+
 
                                         <p>
                                             Formulas scheduled for review.
                                         </p>
 
+
                                     </div>
 
 
                                     <span class="plan-total-count">
-
                                         {{ due_formula_total }}
-
                                     </span>
 
 
                                 </div>
 
-
-                                <!-- =====================
-                                     SUBJECT LIST
-                                ====================== -->
 
                                 <div class="plan-subject-list">
 
@@ -362,10 +359,10 @@
 
 
                         <!-- =================================
-                             BOOK SUMMARIES COLUMN
+                             LISTS
                         ================================== -->
 
-                        {% if book_summary_subjects %}
+                        {% if due_list_subjects %}
 
 
                             <div class="today-plan-column">
@@ -380,13 +377,108 @@
 
                                     <div>
 
+
+                                        <h3>
+                                            Lists
+                                        </h3>
+
+
+                                        <p>
+                                            Lists scheduled for review.
+                                        </p>
+
+
+                                    </div>
+
+
+                                    <span class="plan-total-count">
+
+                                        {{ due_list_total }}
+
+                                    </span>
+
+
+                                </div>
+
+
+                                <!-- =====================
+                                     SUBJECT LIST
+                                ====================== -->
+
+                                <div class="plan-subject-list">
+
+
+                                    {% for item in due_list_subjects %}
+
+
+                                        <a
+                                            href="{% url 'list_review_list' subject_index=item.subject_index %}"
+                                            class="plan-subject-card"
+                                        >
+
+
+                                            <div class="plan-card-content">
+
+
+                                                <span class="plan-card-title">
+
+                                                    {{ item.subject.name }}
+                                                    Lists
+
+                                                </span>
+
+
+                                                <span class="plan-card-count">
+
+                                                    {{ item.count }}
+                                                    list{{ item.count|pluralize }}
+
+                                                </span>
+
+
+                                            </div>
+
+
+                                        </a>
+
+
+                                    {% endfor %}
+
+
+                                </div>
+
+
+                            </div>
+
+
+                        {% endif %}
+
+
+                        <!-- =================================
+                             BOOK SUMMARIES
+                        ================================== -->
+
+                        {% if book_summary_subjects %}
+
+
+                            <div class="today-plan-column">
+
+
+                                <div class="plan-column-header">
+
+
+                                    <div>
+
+
                                         <h3>
                                             Book Summaries
                                         </h3>
 
+
                                         <p>
                                             Open your textbook summarization plan.
                                         </p>
+
 
                                     </div>
 
@@ -400,10 +492,6 @@
 
                                 </div>
 
-
-                                <!-- =====================
-                                     SUBJECT LIST
-                                ====================== -->
 
                                 <div class="plan-subject-list">
 
@@ -476,9 +564,11 @@
 
                     <div class="empty-plan">
 
+
                         <p>
                             Nothing to review today.
                         </p>
+
 
                     </div>
 
@@ -498,16 +588,21 @@
                 class="card clickable-card card-review"
             >
 
+
                 <h3>
                     Review
                 </h3>
 
+
                 <p>
+
                     Review definitions, formulas,
                     lists, steps, key ideas,
                     and comparisons across all
                     your subjects.
+
                 </p>
+
 
             </a>
 
@@ -521,14 +616,19 @@
                 class="card clickable-card card-progress"
             >
 
+
                 <h3>
                     Progress
                 </h3>
 
+
                 <p>
+
                     Track your mastery, study time,
                     and performance over time.
+
                 </p>
+
 
             </a>
 
@@ -539,14 +639,19 @@
 
             <div class="card card-exams">
 
+
                 <h3>
                     Upcoming Exams
                 </h3>
 
+
                 <p>
+
                     Your upcoming assessments
                     and deadlines will appear here.
+
                 </p>
+
 
             </div>
 
@@ -560,14 +665,19 @@
                 class="card clickable-card card-goals"
             >
 
+
                 <h3>
                     Goals
                 </h3>
 
+
                 <p>
+
                     Set and manage your academic goals,
                     subject targets, and study objectives.
+
                 </p>
+
 
             </a>
 
