@@ -48,6 +48,10 @@
         }
 
 
+        /* =========================================
+           APP
+        ========================================= */
+
         .app {
 
             display: flex;
@@ -143,6 +147,13 @@
             font-weight: 600;
 
             text-decoration: none;
+
+        }
+
+
+        .back-link:hover {
+
+            background: #f3f3f3;
 
         }
 
@@ -669,6 +680,10 @@
         }
 
 
+        /* =========================================
+           ERROR
+        ========================================= */
+
         .error-box {
 
             margin-bottom: 20px;
@@ -693,6 +708,10 @@
 
         }
 
+
+        /* =========================================
+           RESPONSIVE
+        ========================================= */
 
         @media (max-width: 700px) {
 
@@ -734,6 +753,10 @@
         <div class="page">
 
 
+            <!-- =====================================
+                 HEADER
+            ====================================== -->
+
             <header class="page-header">
 
 
@@ -753,7 +776,26 @@
                 </div>
 
 
-                {% if subject_index != None %}
+                <!-- =================================
+                     GLOBAL REVIEW BACK
+                ================================== -->
+
+                {% if review_scope == "all" %}
+
+
+                    <a
+                        href="{% url 'review_lists' %}"
+                        class="back-link"
+                    >
+                        ← All Lists
+                    </a>
+
+
+                <!-- =================================
+                     SUBJECT REVIEW BACK
+                ================================== -->
+
+                {% elif subject_index != None %}
 
 
                     <a
@@ -807,6 +849,7 @@
 
                 <div class="mastery-description">
 
+
                     {% if mastery_level == 0 %}
 
                         Beginning review — one random item is hidden.
@@ -821,11 +864,16 @@
 
                     {% endif %}
 
+
                 </div>
 
 
             </section>
 
+
+            <!-- =====================================
+                 REVIEW CARD
+            ====================================== -->
 
             <section class="review-card">
 
@@ -851,6 +899,10 @@
                     <div class="result-panel">
 
 
+                        <!-- =========================
+                             CORRECT
+                        ========================== -->
+
                         {% if result == "correct" %}
 
 
@@ -875,6 +927,10 @@
                             </p>
 
 
+                        <!-- =========================
+                             INCORRECT
+                        ========================== -->
+
                         {% else %}
 
 
@@ -889,7 +945,11 @@
 
 
                             <p>
-                                Review the correct answer{{ correct_answers|length|pluralize }} below.
+
+                                Review the correct
+                                answer{{ correct_answers|length|pluralize }}
+                                below.
+
                             </p>
 
 
@@ -897,7 +957,10 @@
 
 
                                 <div class="correct-answer-title">
-                                    Correct answer{{ correct_answers|length|pluralize }}
+
+                                    Correct
+                                    answer{{ correct_answers|length|pluralize }}
+
                                 </div>
 
 
@@ -924,30 +987,75 @@
                         {% endif %}
 
 
-                        <!-- =========================
+                        <!-- =================================
                              CONTINUE
-                        ========================== -->
+
+                             GLOBAL:
+                             Can move across all subjects.
+
+                             SUBJECT:
+                             Must stay inside the current
+                             subject.
+                        ================================== -->
 
                         {% if next_list %}
 
 
-                            <a
-                                href="{% url 'review_list' list_id=next_list.id %}?subject_index={{ subject_index }}"
-                                class="continue-button"
-                            >
-                                Continue →
-                            </a>
+                            {% if review_scope == "all" %}
 
 
-                        {% elif subject_index != None %}
+                                <a
+                                    href="{% url 'review_list' list_id=next_list.id %}?scope=all"
+                                    class="continue-button"
+                                >
+                                    Continue →
+                                </a>
 
 
-                            <a
-                                href="{% url 'list_review_list' subject_index=subject_index %}"
-                                class="continue-button"
-                            >
-                                Continue
-                            </a>
+                            {% else %}
+
+
+                                <a
+                                    href="{% url 'review_list' list_id=next_list.id %}?subject_index={{ subject_index }}"
+                                    class="continue-button"
+                                >
+                                    Continue →
+                                </a>
+
+
+                            {% endif %}
+
+
+                        <!-- =================================
+                             NO NEXT LIST
+                        ================================== -->
+
+                        {% else %}
+
+
+                            {% if review_scope == "all" %}
+
+
+                                <a
+                                    href="{% url 'review_lists' %}"
+                                    class="continue-button"
+                                >
+                                    Finish Reviews
+                                </a>
+
+
+                            {% elif subject_index != None %}
+
+
+                                <a
+                                    href="{% url 'list_review_list' subject_index=subject_index %}"
+                                    class="continue-button"
+                                >
+                                    Finish Reviews
+                                </a>
+
+
+                            {% endif %}
 
 
                         {% endif %}
@@ -956,12 +1064,16 @@
                     </div>
 
 
+                <!-- =================================
+                     ACTIVE REVIEW
+                ================================== -->
+
                 {% else %}
 
 
-                    <!-- =================================
+                    <!-- =============================
                          QUESTION
-                    ================================== -->
+                    ============================== -->
 
                     <div class="list-heading">
 
@@ -994,11 +1106,19 @@
                     </div>
 
 
+                    <!-- =============================
+                         FORM
+                    ============================== -->
+
                     <form method="POST">
 
 
                         {% csrf_token %}
 
+
+                        <!-- =========================
+                             PRESERVE SUBJECT
+                        ========================== -->
 
                         <input
                             type="hidden"
@@ -1006,6 +1126,26 @@
                             value="{{ subject_index|default_if_none:'' }}"
                         >
 
+
+                        <!-- =========================
+                             PRESERVE REVIEW SCOPE
+                        ========================== -->
+
+                        <input
+                            type="hidden"
+                            name="scope"
+                            value="{{ review_scope }}"
+                        >
+
+
+                        <!-- =========================
+                             PRESERVE HIDDEN ITEMS
+
+                             This is important because
+                             the same randomly selected
+                             items must be checked after
+                             POST.
+                        ========================== -->
 
                         {% for review_item in review_items %}
 
@@ -1026,6 +1166,10 @@
                         {% endfor %}
 
 
+                        <!-- =========================
+                             LIST ITEMS
+                        ========================== -->
+
                         <div class="review-items">
 
 
@@ -1045,6 +1189,10 @@
                                     <div class="item-content">
 
 
+                                        <!-- =================
+                                             HIDDEN ITEM
+                                        ================== -->
+
                                         {% if review_item.hidden %}
 
 
@@ -1058,6 +1206,10 @@
                                             >
 
 
+                                        <!-- =================
+                                             VISIBLE ITEM
+                                        ================== -->
+
                                         {% else %}
 
 
@@ -1068,6 +1220,10 @@
 
                                         {% endif %}
 
+
+                                        <!-- =================
+                                             DESCRIPTION
+                                        ================== -->
 
                                         {% if review_item.item.description %}
 
@@ -1091,6 +1247,10 @@
 
                         </div>
 
+
+                        <!-- =========================
+                             SUBMIT
+                        ========================== -->
 
                         <div class="review-actions">
 
@@ -1124,11 +1284,19 @@
 </div>
 
 
+<!-- =========================================
+     MASTERY BAR / AUTOFOCUS
+========================================= -->
+
 <script>
 
     document.addEventListener(
         "DOMContentLoaded",
         function () {
+
+            /* =====================================
+               MASTERY BAR
+            ====================================== */
 
             const masteryFill =
                 document.querySelector(
@@ -1169,6 +1337,10 @@
 
             }
 
+
+            /* =====================================
+               FIRST ANSWER AUTOFOCUS
+            ====================================== */
 
             const firstAnswer =
                 document.querySelector(

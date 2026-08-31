@@ -980,6 +980,7 @@ def get_list_hidden_count(
     )
 
 
+
 # ============================================================
 # REVIEW INDIVIDUAL LIST
 # ============================================================
@@ -1012,6 +1013,32 @@ def review_list(
     subject = (
         knowledge_unit.subject
     )
+
+    # ========================================================
+    # REVIEW SCOPE
+    #
+    # "all"
+    #     Global Review page.
+    #
+    # "subject"
+    #     Subject-specific due reviews.
+    # ========================================================
+
+    review_scope = (
+        request.GET.get(
+            "scope"
+        )
+        or
+        request.POST.get(
+            "scope"
+        )
+        or
+        "subject"
+    )
+
+    if review_scope != "all":
+
+        review_scope = "subject"
 
     # ========================================================
     # SUBJECT INDEX
@@ -1081,7 +1108,7 @@ def review_list(
     )
 
     # ========================================================
-    # CURRENT MASTERY PERCENTAGE
+    # MASTERY
     # ========================================================
 
     mastery_percentage = round(
@@ -1111,6 +1138,9 @@ def review_list(
 
                 "subject_index":
                     subject_index,
+
+                "review_scope":
+                    review_scope,
 
                 "progress":
                     progress,
@@ -1151,7 +1181,7 @@ def review_list(
         )
 
     # ========================================================
-    # NUMBER OF ITEMS TO HIDE
+    # HIDDEN ITEM COUNT
     # ========================================================
 
     hidden_count = (
@@ -1186,7 +1216,7 @@ def review_list(
     if request.method == "POST":
 
         # ====================================================
-        # GET HIDDEN IDS
+        # HIDDEN IDS
         # ====================================================
 
         hidden_item_id_values = (
@@ -1222,12 +1252,11 @@ def review_list(
                 )
 
         # ====================================================
-        # VALID IDS
+        # VALIDATE IDS
         # ====================================================
 
         valid_item_ids = {
             item.id
-
             for item
             in items
         }
@@ -1241,10 +1270,6 @@ def review_list(
             if item_id
             in valid_item_ids
         ]
-
-        # ====================================================
-        # VALIDATE FORM
-        # ====================================================
 
         if (
             len(
@@ -1261,7 +1286,7 @@ def review_list(
         else:
 
             # =================================================
-            # COLLECT EXPECTED ANSWERS
+            # ANSWERS
             # =================================================
 
             expected_answers = []
@@ -1309,29 +1334,7 @@ def review_list(
                 )
 
             # =================================================
-            # NORMALIZE ALL ANSWERS
-            # =================================================
-            #
-            # IMPORTANT:
-            #
-            # We compare the complete answer collections,
-            # NOT the positions.
-            #
-            # Example:
-            #
-            # Correct:
-            #
-            # milk
-            # honey
-            # bread
-            #
-            # Student:
-            #
-            # bread
-            # milk
-            # honey
-            #
-            # = CORRECT
+            # ORDER-INDEPENDENT COMPARISON
             # =================================================
 
             normalized_expected = sorted(
@@ -1359,7 +1362,7 @@ def review_list(
             )
 
             # =================================================
-            # REVIEW ATTEMPT COMPLETE
+            # COMPLETE ATTEMPT
             # =================================================
 
             attempt_complete = True
@@ -1422,16 +1425,12 @@ def review_list(
                     )
                 )
 
-                # --------------------------------------------
-                # SHOW CORRECT ANSWERS
-                # --------------------------------------------
-
                 correct_answers = (
                     expected_answers
                 )
 
             # =================================================
-            # NEXT REVIEW
+            # NEXT SCHEDULED REVIEW
             # =================================================
 
             interval_days = (
@@ -1451,73 +1450,159 @@ def review_list(
             progress.save()
 
             # =================================================
-            # FIND NEXT DUE LIST
+            # GLOBAL REVIEW MODE
+            #
+            # Review ALL lists across ALL subjects.
             # =================================================
 
-            today = timezone.localdate()
+            if review_scope == "all":
 
-            possible_next_lists = (
-                BulletList.objects
-                .filter(
-                    knowledge_unit__subject=subject,
-                    knowledge_unit__active=True,
-                )
-                .select_related(
-                    "knowledge_unit"
-                )
-                .exclude(
-                    id=bullet_list.id
-                )
-                .order_by(
-                    "knowledge_unit__created",
-                    "id",
-                )
-            )
-
-            for candidate in (
-                possible_next_lists
-            ):
-
-                candidate_progress = (
-                    StudentKnowledge.objects
+                all_lists = list(
+                    BulletList.objects
                     .filter(
-                        student=request.user,
-                        knowledge_unit=(
-                            candidate.knowledge_unit
+                        knowledge_unit__subject__user=(
+                            request.user
                         ),
+                        knowledge_unit__active=True,
                     )
-                    .first()
+                    .select_related(
+                        "knowledge_unit",
+                        "knowledge_unit__subject",
+                    )
+                    .order_by(
+                        "knowledge_unit__subject__name",
+                        "knowledge_unit__created",
+                        "id",
+                    )
                 )
 
-                candidate_is_due = False
+                # --------------------------------------------
+                # FIND CURRENT POSITION
+                # --------------------------------------------
 
-                if candidate_progress is None:
+                current_position = None
 
-                    candidate_is_due = True
-
-                elif (
-                    candidate_progress.next_review
-                    is None
+                for (
+                    index,
+                    candidate
+                ) in enumerate(
+                    all_lists
                 ):
 
-                    candidate_is_due = True
+                    if (
+                        candidate.id
+                        == bullet_list.id
+                    ):
 
-                elif (
-                    candidate_progress
-                    .next_review
-                    .date()
-                    <= today
+                        current_position = (
+                            index
+                        )
+
+                        break
+
+                # --------------------------------------------
+                # NEXT GLOBAL LIST
+                # --------------------------------------------
+
+                if (
+                    current_position
+                    is not None
+                    and
+                    (
+                        current_position + 1
+                    )
+                    < len(
+                        all_lists
+                    )
                 ):
-
-                    candidate_is_due = True
-
-                if candidate_is_due:
 
                     next_list = (
-                        candidate
+                        all_lists[
+                            current_position + 1
+                        ]
                     )
 
-                    break
+            # =================================================
+            # SUBJECT REVIEW MODE
+            #
+            # IMPORTANT:
+            #
+            # ONLY this subject's DUE lists.
+            # =================================================
+
+            else:
+
+                today = (
+                    timezone.localdate()
+                )
+
+                possible_next_lists = (
+                    BulletList.objects
+                    .filter(
+                        knowledge_unit__subject=subject,
+                        knowledge_unit__active=True,
+                    )
+                    .select_related(
+                        "knowledge_unit"
+                    )
+                    .exclude(
+                        id=bullet_list.id
+                    )
+                    .order_by(
+                        "knowledge_unit__created",
+                        "id",
+                    )
+                )
+
+                for candidate in (
+                    possible_next_lists
+                ):
+
+                    candidate_progress = (
+                        StudentKnowledge.objects
+                        .filter(
+                            student=request.user,
+                            knowledge_unit=(
+                                candidate
+                                .knowledge_unit
+                            ),
+                        )
+                        .first()
+                    )
+
+                    candidate_is_due = False
+
+                    if (
+                        candidate_progress
+                        is None
+                    ):
+
+                        candidate_is_due = True
+
+                    elif (
+                        candidate_progress
+                        .next_review
+                        is None
+                    ):
+
+                        candidate_is_due = True
+
+                    elif (
+                        candidate_progress
+                        .next_review
+                        .date()
+                        <= today
+                    ):
+
+                        candidate_is_due = True
+
+                    if candidate_is_due:
+
+                        next_list = (
+                            candidate
+                        )
+
+                        break
 
             # =================================================
             # UPDATED MASTERY
@@ -1533,7 +1618,7 @@ def review_list(
             )
 
             # =================================================
-            # SHOW RESULT SCREEN
+            # RESULT SCREEN
             # =================================================
 
             return render(
@@ -1548,6 +1633,9 @@ def review_list(
 
                     "subject_index":
                         subject_index,
+
+                    "review_scope":
+                        review_scope,
 
                     "progress":
                         progress,
@@ -1586,8 +1674,6 @@ def review_list(
 
     # ========================================================
     # GET
-    #
-    # RANDOMLY HIDE ITEMS
     # ========================================================
 
     else:
@@ -1659,6 +1745,9 @@ def review_list(
             "subject_index":
                 subject_index,
 
+            "review_scope":
+                review_scope,
+
             "progress":
                 progress,
 
@@ -1693,7 +1782,6 @@ def review_list(
                 next_list,
         }
     )
-
 
 # ============================================================
 # REVIEW INTERVAL

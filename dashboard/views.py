@@ -4099,6 +4099,79 @@ def review_formulas(request):
 
 
 # ============================================================
+# REVIEW LISTS
+# ============================================================
+
+@login_required
+def review_lists(request):
+
+    # ========================================================
+    # ALL ACTIVE LISTS FOR THIS USER
+    # ========================================================
+
+    bullet_lists = (
+        BulletList.objects
+        .filter(
+            knowledge_unit__subject__user=request.user,
+            knowledge_unit__active=True,
+        )
+        .select_related(
+            "knowledge_unit",
+            "knowledge_unit__subject",
+        )
+        .prefetch_related(
+            "items"
+        )
+        .order_by(
+            "knowledge_unit__subject__name",
+            "knowledge_unit__created",
+            "id",
+        )
+    )
+
+    # ========================================================
+    # BUILD TEMPLATE ITEMS
+    # ========================================================
+
+    list_items = []
+
+    for bullet_list in bullet_lists:
+
+        list_items.append(
+            {
+                "list":
+                    bullet_list,
+
+                "subject":
+                    bullet_list
+                    .knowledge_unit
+                    .subject,
+
+                "knowledge_unit":
+                    bullet_list
+                    .knowledge_unit,
+            }
+        )
+
+    # ========================================================
+    # RENDER
+    # ========================================================
+
+    return render(
+        request,
+        "dashboard/review_lists.html",
+        {
+            "lists":
+                list_items,
+
+            "list_count":
+                len(
+                    list_items
+                ),
+        }
+    )
+
+# ============================================================
 # PROGRESS
 # ============================================================
 

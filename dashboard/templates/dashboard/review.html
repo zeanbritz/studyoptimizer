@@ -17,8 +17,6 @@
     </title>
 
 
-    <!-- SHARED SIDEBAR CSS -->
-
     <link
         rel="stylesheet"
         href="{% static 'dashboard/css/sidebar.css' %}"
@@ -284,16 +282,8 @@
 <div class="app">
 
 
-    <!-- ================================
-         SHARED SIDEBAR
-    ================================= -->
-
     {% include 'partials/sidebar.html' with active_page='review' %}
 
-
-    <!-- ================================
-         MAIN
-    ================================= -->
 
     <main class="main">
 
@@ -374,7 +364,7 @@
                     ================================= -->
 
                     <a
-                        href="#"
+                        href="{% url 'review_lists' %}"
                         class="review-card"
                     >
 
@@ -383,7 +373,8 @@
                         </h2>
 
                         <p>
-                            Review important lists and collections of information.
+                            Review important lists and collections of information
+                            across all of your subjects.
                         </p>
 
                     </a>
@@ -464,10 +455,6 @@
 
 </div>
 
-
-<!-- ================================
-     SHARED SIDEBAR SCRIPT
-================================= -->
 
 <script
     src="{% static 'dashboard/js/sidebar.js' %}"
