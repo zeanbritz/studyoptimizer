@@ -16,6 +16,8 @@ from .models import (
     Definition,
     BulletList,
     BulletItem,
+    StepList,
+    StepItem,
     StudentKnowledge,
 )
 
@@ -3541,6 +3543,403 @@ def calculate_book_summary_targets(
             book_items,
     }
 
+
+# ============================================================
+# CREATE STEPS
+# ============================================================
+
+@login_required
+def create_steps(
+    request,
+    subject_id
+):
+
+    # ========================================================
+    # SUBJECT
+    # ========================================================
+
+    subject = get_object_or_404(
+        Subject,
+        id=subject_id,
+        user=request.user,
+    )
+
+    # ========================================================
+    # SUBJECT INDEX
+    # ========================================================
+
+    subject_index = (
+        request.GET.get(
+            "subject_index"
+        )
+        or
+        request.POST.get(
+            "subject_index"
+        )
+    )
+
+    try:
+
+        subject_index = int(
+            subject_index
+        )
+
+    except (
+        TypeError,
+        ValueError
+    ):
+
+        subject_index = None
+
+    # ========================================================
+    # TEXTBOOKS
+    # ========================================================
+
+    from dashboard.models import (
+        SubjectTextbook
+    )
+
+    textbooks = (
+        SubjectTextbook.objects
+        .filter(
+            subject=subject
+        )
+        .order_by(
+            "created",
+            "id",
+        )
+    )
+
+    # ========================================================
+    # DEFAULT VALUES
+    # ========================================================
+
+    error = None
+
+    question = ""
+
+    selected_book_id = ""
+
+    chapter = ""
+
+    submitted_steps = []
+
+    # ========================================================
+    # POST
+    # ========================================================
+
+    if request.method == "POST":
+
+        # ----------------------------------------------------
+        # QUESTION
+        # ----------------------------------------------------
+
+        question = (
+            request.POST.get(
+                "question",
+                ""
+            )
+            .strip()
+        )
+
+        # ----------------------------------------------------
+        # ADDITIONAL DETAILS
+        # ----------------------------------------------------
+
+        selected_book_id = (
+            request.POST.get(
+                "book_id",
+                ""
+            )
+            .strip()
+        )
+
+        chapter = (
+            request.POST.get(
+                "chapter",
+                ""
+            )
+            .strip()
+        )
+
+        # ----------------------------------------------------
+        # STEPS
+        # ----------------------------------------------------
+
+        step_texts = (
+            request.POST.getlist(
+                "step_text"
+            )
+        )
+
+        step_descriptions = (
+            request.POST.getlist(
+                "step_description"
+            )
+        )
+
+        # ----------------------------------------------------
+        # BUILD SUBMITTED STEP DATA
+        # ----------------------------------------------------
+
+        max_length = max(
+            len(step_texts),
+            len(step_descriptions),
+        )
+
+        for index in range(
+            max_length
+        ):
+
+            text = ""
+
+            description = ""
+
+            if index < len(
+                step_texts
+            ):
+
+                text = (
+                    step_texts[
+                        index
+                    ]
+                    .strip()
+                )
+
+            if index < len(
+                step_descriptions
+            ):
+
+                description = (
+                    step_descriptions[
+                        index
+                    ]
+                    .strip()
+                )
+
+            submitted_steps.append(
+                {
+                    "text":
+                        text,
+
+                    "description":
+                        description,
+                }
+            )
+
+        # ----------------------------------------------------
+        # REMOVE COMPLETELY BLANK STEPS
+        # ----------------------------------------------------
+
+        valid_steps = [
+            step
+
+            for step
+            in submitted_steps
+
+            if step[
+                "text"
+            ]
+        ]
+
+        # ----------------------------------------------------
+        # VALIDATE QUESTION
+        # ----------------------------------------------------
+
+        if not question:
+
+            error = (
+                "Please enter a name or question "
+                "for these steps."
+            )
+
+        # ----------------------------------------------------
+        # VALIDATE STEPS
+        # ----------------------------------------------------
+
+        elif not valid_steps:
+
+            error = (
+                "Please add at least one step."
+            )
+
+        # ----------------------------------------------------
+        # VALIDATE BOOK
+        # ----------------------------------------------------
+
+        selected_book = None
+
+        if (
+            error is None
+            and
+            selected_book_id
+        ):
+
+            try:
+
+                selected_book_id_int = int(
+                    selected_book_id
+                )
+
+            except (
+                TypeError,
+                ValueError
+            ):
+
+                selected_book_id_int = None
+
+            if selected_book_id_int:
+
+                selected_book = (
+                    SubjectTextbook.objects
+                    .filter(
+                        id=selected_book_id_int,
+                        subject=subject,
+                    )
+                    .first()
+                )
+
+            if not selected_book:
+
+                error = (
+                    "The selected textbook "
+                    "does not belong to this subject."
+                )
+
+        # ====================================================
+        # CREATE
+        # ====================================================
+
+        if error is None:
+
+            # ------------------------------------------------
+            # KNOWLEDGE UNIT
+            # ------------------------------------------------
+
+            knowledge_unit = (
+                KnowledgeUnit.objects.create(
+                    subject=subject,
+                    knowledge_type=(
+                        KnowledgeUnit
+                        .KnowledgeType
+                        .STEPS
+                    ),
+                    title=question,
+                    active=True,
+                )
+            )
+
+            # ------------------------------------------------
+            # STEP LIST
+            # ------------------------------------------------
+
+            step_list = (
+                StepList.objects.create(
+                    knowledge_unit=knowledge_unit,
+                    question=question,
+                    book_name=(
+                        selected_book.name
+                        if selected_book
+                        else ""
+                    ),
+                    chapter=chapter,
+                )
+            )
+
+            # ------------------------------------------------
+            # STEP ITEMS
+            # ------------------------------------------------
+
+            for (
+                index,
+                step
+            ) in enumerate(
+                valid_steps,
+                start=1,
+            ):
+
+                StepItem.objects.create(
+                    step_list=step_list,
+                    text=step["text"],
+                    description=(
+                        step[
+                            "description"
+                        ]
+                    ),
+                    order=index,
+                )
+
+            # ------------------------------------------------
+            # REDIRECT
+            # ------------------------------------------------
+
+            if subject_index is not None:
+
+                return redirect(
+                    "subject_detail",
+                    subject_index=(
+                        subject_index
+                    ),
+                )
+
+            return redirect(
+                "dashboard"
+            )
+
+    # ========================================================
+    # ENSURE INITIAL THREE ROWS
+    # ========================================================
+
+    if not submitted_steps:
+
+        submitted_steps = [
+            {
+                "text": "",
+                "description": "",
+            },
+            {
+                "text": "",
+                "description": "",
+            },
+            {
+                "text": "",
+                "description": "",
+            },
+        ]
+
+    # ========================================================
+    # RENDER
+    # ========================================================
+
+    return render(
+        request,
+        "learning/create_steps.html",
+        {
+            "subject":
+                subject,
+
+            "subject_index":
+                subject_index,
+
+            "textbooks":
+                textbooks,
+
+            "error":
+                error,
+
+            "question":
+                question,
+
+            "selected_book_id":
+                selected_book_id,
+
+            "chapter":
+                chapter,
+
+            "submitted_steps":
+                submitted_steps,
+        }
+    )
 
 # ============================================================
 # BOOK SUMMARY

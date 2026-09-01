@@ -122,4 +122,10 @@ urlpatterns = [
         name="review_list",
     ),
 
+    path(
+        "subjects/<int:subject_id>/steps/create/",
+        views.create_steps,
+        name="create_steps",
+    ),
+
 ]

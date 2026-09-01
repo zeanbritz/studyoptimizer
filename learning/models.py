@@ -1,5 +1,10 @@
-from django.db import models
 from django.conf import settings
+from django.db import models
+
+
+# ============================================================
+# SUBJECT
+# ============================================================
 
 class Subject(models.Model):
 
@@ -9,18 +14,27 @@ class Subject(models.Model):
         related_name="subjects",
     )
 
-    name = models.CharField(max_length=100)
+    name = models.CharField(
+        max_length=100
+    )
 
     colour = models.CharField(
         max_length=7,
-        default="#2563EB"
+        default="#2563EB",
     )
 
-    created = models.DateTimeField(auto_now_add=True)
+    created = models.DateTimeField(
+        auto_now_add=True
+    )
 
     def __str__(self):
+
         return self.name
 
+
+# ============================================================
+# TOPIC
+# ============================================================
 
 class Topic(models.Model):
 
@@ -30,14 +44,26 @@ class Topic(models.Model):
         related_name="topics",
     )
 
-    name = models.CharField(max_length=200)
+    name = models.CharField(
+        max_length=200
+    )
 
-    description = models.TextField(blank=True)
+    description = models.TextField(
+        blank=True
+    )
 
-    created = models.DateTimeField(auto_now_add=True)
+    created = models.DateTimeField(
+        auto_now_add=True
+    )
 
     def __str__(self):
+
         return self.name
+
+
+# ============================================================
+# KNOWLEDGE UNIT
+# ============================================================
 
 class KnowledgeUnit(models.Model):
 
@@ -49,14 +75,31 @@ class KnowledgeUnit(models.Model):
         blank=True,
     )
 
+    # ========================================================
+    # KNOWLEDGE TYPES
+    # ========================================================
+
     class KnowledgeType(models.TextChoices):
 
-        FORMULA = "FORMULA", "Formula"
+        FORMULA = (
+            "FORMULA",
+            "Formula",
+        )
 
-        DEFINITION = "DEFINITION", "Definition"
+        DEFINITION = (
+            "DEFINITION",
+            "Definition",
+        )
 
-        BULLET_LIST = "BULLET_LIST", "Bullet List"
+        BULLET_LIST = (
+            "BULLET_LIST",
+            "Bullet List",
+        )
 
+        STEPS = (
+            "STEPS",
+            "Steps",
+        )
 
     title = models.CharField(
         max_length=255
@@ -88,6 +131,10 @@ class KnowledgeUnit(models.Model):
         return self.title
 
 
+# ============================================================
+# FORMULA
+# ============================================================
+
 class Formula(models.Model):
 
     knowledge_unit = models.OneToOneField(
@@ -109,7 +156,13 @@ class Formula(models.Model):
     )
 
     def __str__(self):
+
         return self.knowledge_unit.title
+
+
+# ============================================================
+# FORMULA VARIABLE
+# ============================================================
 
 class FormulaVariable(models.Model):
 
@@ -119,14 +172,29 @@ class FormulaVariable(models.Model):
         related_name="variables",
     )
 
-    symbol = models.CharField(max_length=50)
+    symbol = models.CharField(
+        max_length=50
+    )
 
-    meaning = models.CharField(max_length=255)
+    meaning = models.CharField(
+        max_length=255
+    )
 
-    order = models.PositiveIntegerField(default=1)
+    order = models.PositiveIntegerField(
+        default=1
+    )
 
     def __str__(self):
-        return f"{self.symbol} - {self.meaning}"
+
+        return (
+            f"{self.symbol} - "
+            f"{self.meaning}"
+        )
+
+
+# ============================================================
+# FORMULA ELEMENT PERFORMANCE
+# ============================================================
 
 class FormulaElementPerformance(models.Model):
 
@@ -146,7 +214,7 @@ class FormulaElementPerformance(models.Model):
 
     value = models.CharField(
         max_length=255,
-        blank=True
+        blank=True,
     )
 
     correct_count = models.PositiveIntegerField(
@@ -159,28 +227,37 @@ class FormulaElementPerformance(models.Model):
 
     last_reviewed = models.DateTimeField(
         null=True,
-        blank=True
+        blank=True,
     )
 
     def __str__(self):
+
         return (
             f"{self.value} "
             f"({self.element_type})"
         )
 
 
+# ============================================================
+# DEFINITION
+# ============================================================
+
 class Definition(models.Model):
 
     knowledge_unit = models.OneToOneField(
         KnowledgeUnit,
         on_delete=models.CASCADE,
+        related_name="definition",
     )
 
-    term = models.CharField(max_length=255)
+    term = models.CharField(
+        max_length=255
+    )
 
     definition = models.TextField()
 
     def __str__(self):
+
         return self.term
 
 
@@ -193,6 +270,7 @@ class BulletList(models.Model):
     knowledge_unit = models.OneToOneField(
         KnowledgeUnit,
         on_delete=models.CASCADE,
+        related_name="bullet_list",
     )
 
     question = models.CharField(
@@ -242,10 +320,95 @@ class BulletItem(models.Model):
         default=1
     )
 
+    class Meta:
+
+        ordering = [
+            "order",
+            "id",
+        ]
+
     def __str__(self):
 
         return self.text
 
+
+# ============================================================
+# STEP LIST
+# ============================================================
+
+class StepList(models.Model):
+
+    knowledge_unit = models.OneToOneField(
+        KnowledgeUnit,
+        on_delete=models.CASCADE,
+        related_name="step_list",
+    )
+
+    question = models.CharField(
+        max_length=255
+    )
+
+    book_name = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+    )
+
+    chapter = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+    )
+
+    def __str__(self):
+
+        return self.question
+
+
+# ============================================================
+# STEP ITEM
+# ============================================================
+
+class StepItem(models.Model):
+
+    step_list = models.ForeignKey(
+        StepList,
+        on_delete=models.CASCADE,
+        related_name="steps",
+    )
+
+    text = models.CharField(
+        max_length=255
+    )
+
+    description = models.CharField(
+        max_length=500,
+        blank=True,
+        default="",
+    )
+
+    order = models.PositiveIntegerField(
+        default=1
+    )
+
+    class Meta:
+
+        ordering = [
+            "order",
+            "id",
+        ]
+
+    def __str__(self):
+
+        return (
+            f"{self.order}. "
+            f"{self.text}"
+        )
+
+
+# ============================================================
+# STUDENT KNOWLEDGE
+# ============================================================
 
 class StudentKnowledge(models.Model):
 
@@ -279,12 +442,12 @@ class StudentKnowledge(models.Model):
 
     last_reviewed = models.DateTimeField(
         null=True,
-        blank=True
+        blank=True,
     )
 
     next_review = models.DateTimeField(
         null=True,
-        blank=True
+        blank=True,
     )
 
     created = models.DateTimeField(
@@ -299,7 +462,9 @@ class StudentKnowledge(models.Model):
                     "student",
                     "knowledge_unit",
                 ],
-                name="unique_student_knowledge_unit",
+                name=(
+                    "unique_student_knowledge_unit"
+                ),
             )
         ]
 

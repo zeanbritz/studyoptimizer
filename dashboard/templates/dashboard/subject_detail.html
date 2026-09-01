@@ -2573,20 +2573,39 @@
 
                             <!-- STEPS -->
 
-                            <button
-                                type="button"
-                                class="summary-option"
-                            >
+                            {% if database_subject %}
 
-                                <h3>
-                                    Steps
-                                </h3>
+    <a
+        href="{% url 'create_steps' subject_id=database_subject.id %}?subject_index={{ subject_index }}"
+        class="summary-option"
+    >
 
-                                <p>
-                                    Record a process or procedure step by step.
-                                </p>
+        <h3>
+            Steps
+        </h3>
 
-                            </button>
+        <p>
+            Create numbered steps for a process,
+            method or procedure.
+        </p>
+
+    </a>
+
+{% else %}
+
+    <div class="summary-option">
+
+        <h3>
+            Steps
+        </h3>
+
+        <p>
+            Save the subject before adding steps.
+        </p>
+
+    </div>
+
+{% endif %}
 
 
                             <!-- KEY IDEA -->
