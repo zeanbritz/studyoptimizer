@@ -9,10 +9,15 @@
 
 let formulaElements = [];
 
+
 if (
-    typeof existingFormulaStructure !== "undefined"
+    typeof existingFormulaStructure
+    !==
+    "undefined"
     &&
-    Array.isArray(existingFormulaStructure)
+    Array.isArray(
+        existingFormulaStructure
+    )
 ) {
 
     formulaElements =
@@ -29,6 +34,7 @@ const formulaCanvas =
     document.getElementById(
         "formula-canvas"
     );
+
 
 const formulaStructureInput =
     document.getElementById(
@@ -50,9 +56,12 @@ function createElementId() {
         "function"
     ) {
 
-        return window.crypto.randomUUID();
+        return (
+            window.crypto.randomUUID()
+        );
 
     }
+
 
     return (
         "formula-"
@@ -70,7 +79,7 @@ function createElementId() {
 
 
 // ============================================================
-// GIVE OLD ELEMENTS IDS IF NECESSARY
+// ENSURE EXISTING ELEMENT IDS
 // ============================================================
 
 function ensureIds(
@@ -80,12 +89,27 @@ function ensureIds(
     elements.forEach(
         function (element) {
 
-            if (!element.id) {
+            if (
+                !element.id
+            ) {
 
                 element.id =
                     createElementId();
 
             }
+
+
+            if (
+                typeof element.meaning
+                !==
+                "string"
+            ) {
+
+                element.meaning =
+                    "";
+
+            }
+
 
             if (
                 element.type
@@ -99,9 +123,11 @@ function ensureIds(
                     )
                 ) {
 
-                    element.numerator = [];
+                    element.numerator =
+                        [];
 
                 }
+
 
                 if (
                     !Array.isArray(
@@ -109,13 +135,16 @@ function ensureIds(
                     )
                 ) {
 
-                    element.denominator = [];
+                    element.denominator =
+                        [];
 
                 }
+
 
                 ensureIds(
                     element.numerator
                 );
+
 
                 ensureIds(
                     element.denominator
@@ -141,15 +170,13 @@ ensureIds(
 let activeContainer =
     formulaElements;
 
+
 let insertionIndex =
     formulaElements.length;
 
 
 // ============================================================
 // KEYBOARD MODE
-//
-// It becomes true once the student clicks
-// inside the formula.
 // ============================================================
 
 let formulaKeyboardActive =
@@ -157,16 +184,19 @@ let formulaKeyboardActive =
 
 
 // ============================================================
-// UPDATE HIDDEN STRUCTURE INPUT
+// UPDATE HIDDEN STRUCTURE
 // ============================================================
 
 function updateFormulaStructure() {
 
-    if (!formulaStructureInput) {
+    if (
+        !formulaStructureInput
+    ) {
 
         return;
 
     }
+
 
     formulaStructureInput.value =
         JSON.stringify(
@@ -185,23 +215,30 @@ function focusFormula() {
     formulaKeyboardActive =
         true;
 
-    if (!formulaCanvas) {
+
+    if (
+        !formulaCanvas
+    ) {
 
         return;
 
     }
 
+
     try {
 
         formulaCanvas.focus(
             {
-                preventScroll: true
+                preventScroll:
+                    true
             }
         );
 
     }
 
-    catch (error) {
+    catch (
+        error
+    ) {
 
         formulaCanvas.focus();
 
@@ -249,42 +286,80 @@ function addElement(
     renderFormula();
 
 
-    // --------------------------------------------------------
+    // ========================================================
     // VARIABLE
-    // --------------------------------------------------------
+    // ========================================================
 
     if (
-        type === "variable"
+        type
+        ===
+        "variable"
     ) {
 
         formulaKeyboardActive =
             false;
 
+
         showEditor(
             element
         );
+
 
         return;
 
     }
 
 
-    // --------------------------------------------------------
-    // MANUAL NUMBER BUTTON
-    // --------------------------------------------------------
+    // ========================================================
+    // SYMBOL
+    //
+    // The symbol itself has already been selected.
+    // Open the editor so the student can optionally
+    // describe what that symbol represents.
+    // ========================================================
 
     if (
-        type === "number"
-        &&
-        value === ""
+        type
+        ===
+        "symbol"
     ) {
 
         formulaKeyboardActive =
             false;
 
+
         showEditor(
             element
         );
+
+
+        return;
+
+    }
+
+
+    // ========================================================
+    // NUMBER BUTTON
+    // ========================================================
+
+    if (
+        type
+        ===
+        "number"
+        &&
+        value
+        ===
+        ""
+    ) {
+
+        formulaKeyboardActive =
+            false;
+
+
+        showEditor(
+            element
+        );
+
 
         return;
 
@@ -299,27 +374,31 @@ function addElement(
 // ============================================================
 // KEYBOARD NUMBER
 //
-// Consecutive digits and one decimal point become
-// one number:
+// Consecutive digits and ONE decimal point
+// become one number:
 //
 // 2 . 4       -> 2.4
 // 6 . 7 7 7   -> 6.777
 // ============================================================
 
-function addKeyboardDigit(
+function addKeyboardNumberCharacter(
     character
 ) {
 
     const previousIndex =
-        insertionIndex - 1;
+        insertionIndex
+        -
+        1;
 
 
     // ========================================================
-    // CONTINUE EXISTING NUMBER
+    // CONTINUE PREVIOUS NUMBER
     // ========================================================
 
     if (
-        previousIndex >= 0
+        previousIndex
+        >=
+        0
     ) {
 
         const previous =
@@ -331,7 +410,9 @@ function addKeyboardDigit(
         if (
             previous
             &&
-            previous.type === "number"
+            previous.type
+            ===
+            "number"
         ) {
 
             const currentValue =
@@ -344,12 +425,12 @@ function addKeyboardDigit(
 
             // ------------------------------------------------
             // DECIMAL POINT
-            //
-            // ONLY ALLOW ONE DECIMAL POINT.
             // ------------------------------------------------
 
             if (
-                character === "."
+                character
+                ===
+                "."
             ) {
 
                 if (
@@ -386,7 +467,9 @@ function addKeyboardDigit(
 
             renderFormula();
 
+
             focusFormula();
+
 
             return;
 
@@ -400,10 +483,10 @@ function addKeyboardDigit(
     // ========================================================
 
     if (
-        character === "."
+        character
+        ===
+        "."
     ) {
-
-        // Typing "." first becomes 0.
 
         addElement(
             "number",
@@ -433,7 +516,9 @@ function renderFormula() {
     updateFormulaStructure();
 
 
-    if (!formulaCanvas) {
+    if (
+        !formulaCanvas
+    ) {
 
         return;
 
@@ -472,11 +557,13 @@ function renderContainer(
 
 
     // ========================================================
-    // EMPTY
+    // EMPTY CONTAINER
     // ========================================================
 
     if (
-        elements.length === 0
+        elements.length
+        ===
+        0
     ) {
 
         const emptyZone =
@@ -490,12 +577,18 @@ function renderContainer(
 
 
         emptyZone.title =
-            "Click here, then type or add an element";
+            (
+                "Click here, then type "
+                +
+                "or add an element"
+            );
 
 
         emptyZone.addEventListener(
             "click",
-            function (event) {
+            function (
+                event
+            ) {
 
                 event.preventDefault();
 
@@ -520,11 +613,13 @@ function renderContainer(
 
 
     // ========================================================
-    // BEFORE FIRST ELEMENT
+    // INSERTION ZONE BEFORE FIRST ELEMENT
     // ========================================================
 
     if (
-        elements.length > 0
+        elements.length
+        >
+        0
     ) {
 
         addInsertionZone(
@@ -596,12 +691,30 @@ function renderContainer(
 
 
             // =================================================
+            // DESCRIPTION TOOLTIP
+            //
+            // Variables and symbols can both have meanings.
+            // =================================================
+
+            if (
+                element.meaning
+            ) {
+
+                box.title =
+                    element.meaning;
+
+            }
+
+
+            // =================================================
             // DOUBLE CLICK EDIT
             // =================================================
 
             box.addEventListener(
                 "dblclick",
-                function (event) {
+                function (
+                    event
+                ) {
 
                     event.preventDefault();
 
@@ -634,7 +747,9 @@ function renderContainer(
 
             box.addEventListener(
                 "dragstart",
-                function (event) {
+                function (
+                    event
+                ) {
 
                     event.stopPropagation();
 
@@ -684,7 +799,9 @@ function renderContainer(
 
             box.addEventListener(
                 "dragover",
-                function (event) {
+                function (
+                    event
+                ) {
 
                     event.preventDefault();
 
@@ -695,13 +812,16 @@ function renderContainer(
 
 
                     const rect =
-                        box.getBoundingClientRect();
+                        box
+                        .getBoundingClientRect();
 
 
                     const middle =
                         rect.left
                         +
-                        rect.width / 2;
+                        rect.width
+                        /
+                        2;
 
 
                     if (
@@ -734,7 +854,9 @@ function renderContainer(
 
             box.addEventListener(
                 "drop",
-                function (event) {
+                function (
+                    event
+                ) {
 
                     event.preventDefault();
 
@@ -749,13 +871,16 @@ function renderContainer(
 
 
                     const rect =
-                        box.getBoundingClientRect();
+                        box
+                        .getBoundingClientRect();
 
 
                     const middle =
                         rect.left
                         +
-                        rect.width / 2;
+                        rect.width
+                        /
+                        2;
 
 
                     const insertAfter =
@@ -784,7 +909,7 @@ function renderContainer(
 
 
             // =================================================
-            // INSERTION ZONE AFTER
+            // INSERTION ZONE AFTER ELEMENT
             // =================================================
 
             addInsertionZone(
@@ -830,7 +955,9 @@ function addInsertionZone(
 
     zone.addEventListener(
         "click",
-        function (event) {
+        function (
+            event
+        ) {
 
             event.preventDefault();
 
@@ -874,10 +1001,16 @@ function selectInsertionPoint(
 
     document
         .querySelectorAll(
-            ".formula-insertion-zone.active, .formula-empty-zone.active"
+            (
+                ".formula-insertion-zone.active, "
+                +
+                ".formula-empty-zone.active"
+            )
         )
         .forEach(
-            function (element) {
+            function (
+                element
+            ) {
 
                 element.classList.remove(
                     "active"
@@ -887,7 +1020,9 @@ function selectInsertionPoint(
         );
 
 
-    if (zone) {
+    if (
+        zone
+    ) {
 
         zone.classList.add(
             "active"
@@ -895,12 +1030,6 @@ function selectInsertionPoint(
 
     }
 
-
-    // ========================================================
-    // CRITICAL:
-    //
-    // THIS ENABLES KEYBOARD INPUT.
-    // ========================================================
 
     focusFormula();
 
@@ -1038,6 +1167,10 @@ function addFraction() {
     );
 
 
+    // ========================================================
+    // MOVE INTO NUMERATOR
+    // ========================================================
+
     activeContainer =
         fraction.numerator;
 
@@ -1065,7 +1198,9 @@ function removeElement(
 
     const index =
         elements.findIndex(
-            function (element) {
+            function (
+                element
+            ) {
 
                 return (
                     element.id
@@ -1078,7 +1213,9 @@ function removeElement(
 
 
     if (
-        index !== -1
+        index
+        !==
+        -1
     ) {
 
         elements.splice(
@@ -1148,7 +1285,9 @@ function findAndRemoveElement(
 
     const index =
         elements.findIndex(
-            function (element) {
+            function (
+                element
+            ) {
 
                 return (
                     element.id
@@ -1161,7 +1300,9 @@ function findAndRemoveElement(
 
 
     if (
-        index !== -1
+        index
+        !==
+        -1
     ) {
 
         return elements.splice(
@@ -1191,7 +1332,9 @@ function findAndRemoveElement(
                 );
 
 
-            if (numeratorResult) {
+            if (
+                numeratorResult
+            ) {
 
                 return numeratorResult;
 
@@ -1205,7 +1348,9 @@ function findAndRemoveElement(
                 );
 
 
-            if (denominatorResult) {
+            if (
+                denominatorResult
+            ) {
 
                 return denominatorResult;
 
@@ -1239,7 +1384,9 @@ function moveElement(
         );
 
 
-    if (!dragged) {
+    if (
+        !dragged
+    ) {
 
         return;
 
@@ -1248,7 +1395,9 @@ function moveElement(
 
     let targetIndex =
         targetContainer.findIndex(
-            function (element) {
+            function (
+                element
+            ) {
 
                 return (
                     element.id
@@ -1261,7 +1410,9 @@ function moveElement(
 
 
     if (
-        targetIndex === -1
+        targetIndex
+        ===
+        -1
     ) {
 
         targetContainer.push(
@@ -1270,13 +1421,17 @@ function moveElement(
 
 
         targetIndex =
-            targetContainer.length - 1;
+            targetContainer.length
+            -
+            1;
 
     }
 
     else {
 
-        if (insertAfter) {
+        if (
+            insertAfter
+        ) {
 
             targetIndex++;
 
@@ -1297,7 +1452,9 @@ function moveElement(
 
 
     insertionIndex =
-        targetIndex + 1;
+        targetIndex
+        +
+        1;
 
 
     renderFormula();
@@ -1319,7 +1476,9 @@ function removeDropIndicators() {
             ".drop-left, .drop-right"
         )
         .forEach(
-            function (element) {
+            function (
+                element
+            ) {
 
                 element.classList.remove(
                     "drop-left",
@@ -1327,6 +1486,39 @@ function removeDropIndicators() {
                 );
 
             }
+        );
+
+}
+
+
+// ============================================================
+// SAFE VALUE FOR HTML ATTRIBUTE
+// ============================================================
+
+function escapeAttribute(
+    value
+) {
+
+    return String(
+        value
+        ||
+        ""
+    )
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
         );
 
 }
@@ -1346,7 +1538,9 @@ function showEditor(
         );
 
 
-    if (existing) {
+    if (
+        existing
+    ) {
 
         existing.remove();
 
@@ -1375,6 +1569,14 @@ function showEditor(
         "Enter value";
 
 
+    let valueReadOnly =
+        false;
+
+
+    // ========================================================
+    // VARIABLE
+    // ========================================================
+
     if (
         element.type
         ===
@@ -1395,6 +1597,10 @@ function showEditor(
     }
 
 
+    // ========================================================
+    // NUMBER
+    // ========================================================
+
     if (
         element.type
         ===
@@ -1410,7 +1616,38 @@ function showEditor(
 
 
         placeholder =
-            "e.g. 100";
+            "e.g. 2.4";
+
+    }
+
+
+    // ========================================================
+    // SYMBOL
+    //
+    // Value stays read-only because the symbol has to
+    // remain one of the approved dropdown symbols.
+    // ========================================================
+
+    if (
+        element.type
+        ===
+        "symbol"
+    ) {
+
+        title =
+            "Describe Symbol";
+
+
+        label =
+            "Symbol";
+
+
+        placeholder =
+            "";
+
+
+        valueReadOnly =
+            true;
 
     }
 
@@ -1421,38 +1658,89 @@ function showEditor(
             ${title}
         </h3>
 
+
         <label>
             ${label}
         </label>
 
+
         <input
             id="element-value"
             type="text"
-            value="${element.value || ""}"
+            value="${escapeAttribute(element.value)}"
             placeholder="${placeholder}"
+            ${valueReadOnly ? "readonly" : ""}
         >
 
+
         ${
-            element.type === "variable"
+            element.type
+            ===
+            "variable"
+
                 ? `
 
                     <label>
                         Meaning
                     </label>
 
+
                     <input
                         id="element-meaning"
                         type="text"
-                        value="${element.meaning || ""}"
+                        value="${escapeAttribute(element.meaning)}"
                         placeholder="e.g. Present Value"
                     >
 
                 `
+
                 :
                 ""
         }
 
-        <div style="margin-top: 15px;">
+
+        ${
+            element.type
+            ===
+            "symbol"
+
+                ? `
+
+                    <label>
+                        Description
+
+                        <span
+                            style="
+                                color: #999;
+                                font-size: 11px;
+                                font-weight: 400;
+                            "
+                        >
+                            Optional
+                        </span>
+
+                    </label>
+
+
+                    <input
+                        id="element-meaning"
+                        type="text"
+                        value="${escapeAttribute(element.meaning)}"
+                        placeholder="e.g. Sum of all values"
+                    >
+
+                `
+
+                :
+                ""
+        }
+
+
+        <div
+            style="
+                margin-top: 15px;
+            "
+        >
 
             <button
                 id="save-element"
@@ -1460,6 +1748,7 @@ function showEditor(
             >
                 Save
             </button>
+
 
             <button
                 id="delete-element"
@@ -1484,7 +1773,45 @@ function showEditor(
         );
 
 
-    valueInput.focus();
+    const meaningInput =
+        document.getElementById(
+            "element-meaning"
+        );
+
+
+    // ========================================================
+    // FOCUS
+    //
+    // Symbols go directly to Description because
+    // their symbol value is read-only.
+    // ========================================================
+
+    if (
+        element.type
+        ===
+        "symbol"
+        &&
+        meaningInput
+    ) {
+
+        meaningInput.focus();
+
+    }
+
+    else {
+
+        valueInput.focus();
+
+
+        if (
+            !valueReadOnly
+        ) {
+
+            valueInput.select();
+
+        }
+
+    }
 
 
     // ========================================================
@@ -1505,16 +1832,31 @@ function showEditor(
                     .trim();
 
 
-                if (!value) {
+                if (
+                    !value
+                ) {
 
                     return;
 
                 }
 
 
-                // ------------------------------------------------
-                // NUMBER MUST BE NUMERIC
-                // ------------------------------------------------
+                // =================================================
+                // NUMBER VALIDATION
+                //
+                // Allows:
+                //
+                // 5
+                // 2.4
+                // 6.777
+                // .5
+                //
+                // Rejects:
+                //
+                // 2..4
+                // 6.7.7
+                // abc
+                // =================================================
 
                 if (
                     element.type
@@ -1530,6 +1872,7 @@ function showEditor(
 
                         valueInput.focus();
 
+
                         return;
 
                     }
@@ -1537,9 +1880,17 @@ function showEditor(
                 }
 
 
+                // =================================================
+                // SAVE VALUE
+                // =================================================
+
                 element.value =
                     value;
 
+
+                // =================================================
+                // VARIABLE MEANING
+                // =================================================
 
                 if (
                     element.type
@@ -1547,16 +1898,34 @@ function showEditor(
                     "variable"
                 ) {
 
-                    const meaningInput =
-                        document.getElementById(
-                            "element-meaning"
-                        );
+                    element.meaning =
+                        meaningInput
+                        ?
+                        meaningInput
+                            .value
+                            .trim()
+                        :
+                        "";
 
+                }
+
+
+                // =================================================
+                // SYMBOL DESCRIPTION
+                // =================================================
+
+                if (
+                    element.type
+                    ===
+                    "symbol"
+                ) {
 
                     element.meaning =
                         meaningInput
                         ?
-                        meaningInput.value.trim()
+                        meaningInput
+                            .value
+                            .trim()
                         :
                         "";
 
@@ -1622,11 +1991,15 @@ function showEditor(
             "input"
         )
         .forEach(
-            function (input) {
+            function (
+                input
+            ) {
 
                 input.addEventListener(
                     "keydown",
-                    function (event) {
+                    function (
+                        event
+                    ) {
 
                         if (
                             event.key
@@ -1664,7 +2037,9 @@ const addVariableButton =
     );
 
 
-if (addVariableButton) {
+if (
+    addVariableButton
+) {
 
     addVariableButton.addEventListener(
         "click",
@@ -1686,7 +2061,9 @@ const addNumberButton =
     );
 
 
-if (addNumberButton) {
+if (
+    addNumberButton
+) {
 
     addNumberButton.addEventListener(
         "click",
@@ -1708,7 +2085,9 @@ const addFractionButton =
     );
 
 
-if (addFractionButton) {
+if (
+    addFractionButton
+) {
 
     addFractionButton.addEventListener(
         "click",
@@ -1733,7 +2112,9 @@ function closeAllPickers() {
             ".formula-picker.open"
         )
         .forEach(
-            function (picker) {
+            function (
+                picker
+            ) {
 
                 picker.classList.remove(
                     "open"
@@ -1746,7 +2127,7 @@ function closeAllPickers() {
 
 
 // ============================================================
-// PICKER TOGGLE
+// PICKER TOGGLES
 // ============================================================
 
 document
@@ -1754,11 +2135,15 @@ document
         ".picker-toggle"
     )
     .forEach(
-        function (button) {
+        function (
+            button
+        ) {
 
             button.addEventListener(
                 "click",
-                function (event) {
+                function (
+                    event
+                ) {
 
                     event.preventDefault();
 
@@ -1780,7 +2165,9 @@ document
                     closeAllPickers();
 
 
-                    if (!isOpen) {
+                    if (
+                        !isOpen
+                    ) {
 
                         picker.classList.add(
                             "open"
@@ -1796,7 +2183,7 @@ document
 
 
 // ============================================================
-// PICKER CHOICE
+// PICKER CHOICES
 // ============================================================
 
 document
@@ -1804,11 +2191,15 @@ document
         ".picker-choice"
     )
     .forEach(
-        function (button) {
+        function (
+            button
+        ) {
 
             button.addEventListener(
                 "click",
-                function (event) {
+                function (
+                    event
+                ) {
 
                     event.preventDefault();
 
@@ -1816,25 +2207,32 @@ document
 
 
                     const type =
-                        button.dataset
+                        button
+                        .dataset
                         .elementType;
 
 
                     const value =
-                        button.dataset
+                        button
+                        .dataset
                         .elementValue;
-
-
-                    addElement(
-                        type,
-                        value
-                    );
 
 
                     closeAllPickers();
 
 
-                    focusFormula();
+                    // ------------------------------------------------
+                    // addElement handles whether the element
+                    // needs an editor.
+                    //
+                    // For symbols it opens the Description box.
+                    // For operators it simply inserts them.
+                    // ------------------------------------------------
+
+                    addElement(
+                        type,
+                        value
+                    );
 
                 }
             );
@@ -1844,7 +2242,7 @@ document
 
 
 // ============================================================
-// DON'T CLOSE WHEN CLICKING INSIDE MENU
+// DON'T CLOSE PICKER WHILE CLICKING INSIDE
 // ============================================================
 
 document
@@ -1852,11 +2250,15 @@ document
         ".formula-picker"
     )
     .forEach(
-        function (picker) {
+        function (
+            picker
+        ) {
 
             picker.addEventListener(
                 "click",
-                function (event) {
+                function (
+                    event
+                ) {
 
                     event.stopPropagation();
 
@@ -1868,7 +2270,7 @@ document
 
 
 // ============================================================
-// CLICK OUTSIDE CLOSES MENUS
+// CLICK OUTSIDE CLOSES PICKERS
 // ============================================================
 
 document.addEventListener(
@@ -1922,16 +2324,13 @@ const keyboardOperators = {
 
 // ============================================================
 // GLOBAL KEYBOARD INPUT
-//
-// We listen on DOCUMENT, not just the canvas.
-//
-// The keyboard becomes active after the student
-// clicks a formula insertion point / canvas.
 // ============================================================
 
 document.addEventListener(
     "keydown",
-    function (event) {
+    function (
+        event
+    ) {
 
         if (
             !formulaKeyboardActive
@@ -1943,7 +2342,7 @@ document.addEventListener(
 
 
         // ----------------------------------------------------
-        // NORMAL SHORTCUTS
+        // ALLOW NORMAL SYSTEM SHORTCUTS
         // ----------------------------------------------------
 
         if (
@@ -1960,14 +2359,16 @@ document.addEventListener(
 
 
         // ----------------------------------------------------
-        // DON'T INTERFERE WITH FORM FIELDS
+        // DON'T INTERFERE WITH NORMAL FORM FIELDS
         // ----------------------------------------------------
 
         const activeElement =
             document.activeElement;
 
 
-        if (activeElement) {
+        if (
+            activeElement
+        ) {
 
             const tag =
                 activeElement
@@ -1976,13 +2377,20 @@ document.addEventListener(
 
 
             if (
-                tag === "input"
+                tag
+                ===
+                "input"
                 ||
-                tag === "textarea"
+                tag
+                ===
+                "textarea"
                 ||
-                tag === "select"
+                tag
+                ===
+                "select"
                 ||
-                activeElement.isContentEditable
+                activeElement
+                    .isContentEditable
             ) {
 
                 return;
@@ -1997,11 +2405,7 @@ document.addEventListener(
 
 
         // ====================================================
-        // NUMBER
-        //
-        // ALLOW:
-        // 0-9
-        // one decimal point
+        // NUMBER / DECIMAL POINT
         // ====================================================
 
         if (
@@ -2013,7 +2417,7 @@ document.addEventListener(
             event.preventDefault();
 
 
-            addKeyboardDigit(
+            addKeyboardNumberCharacter(
                 key
             );
 
@@ -2059,11 +2463,15 @@ document.addEventListener(
 // CLICKING CANVAS ACTIVATES KEYBOARD
 // ============================================================
 
-if (formulaCanvas) {
+if (
+    formulaCanvas
+) {
 
     formulaCanvas.addEventListener(
         "click",
-        function (event) {
+        function (
+            event
+        ) {
 
             if (
                 event.target
@@ -2090,12 +2498,14 @@ if (formulaCanvas) {
 
 
 // ============================================================
-// LEAVING THE FORMULA FOR AN INPUT DISABLES FORMULA KEYBOARD
+// FORM FIELDS DISABLE FORMULA KEYBOARD
 // ============================================================
 
 document.addEventListener(
     "focusin",
-    function (event) {
+    function (
+        event
+    ) {
 
         const target =
             event.target;
@@ -2111,7 +2521,8 @@ document.addEventListener(
 
 
         if (
-            target ===
+            target
+            ===
             formulaCanvas
         ) {
 
@@ -2131,11 +2542,17 @@ document.addEventListener(
 
 
         if (
-            tag === "input"
+            tag
+            ===
+            "input"
             ||
-            tag === "textarea"
+            tag
+            ===
+            "textarea"
             ||
-            tag === "select"
+            tag
+            ===
+            "select"
         ) {
 
             formulaKeyboardActive =

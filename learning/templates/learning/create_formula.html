@@ -27,9 +27,13 @@
             box-sizing: border-box;
         }
 
+
         body {
+
             margin: 0;
+
             background: #f5f6f8;
+
             color: #222;
 
             font-family:
@@ -38,181 +42,294 @@
                 "Segoe UI",
                 Arial,
                 sans-serif;
+
         }
+
 
         .page {
+
             min-height: 100vh;
-            padding: 40px 20px 60px;
+
+            padding:
+                40px
+                20px
+                60px;
+
         }
 
+
         .container {
+
             max-width: 900px;
+
             margin: 0 auto;
+
         }
+
 
         /* =========================================
            HEADER
         ========================================= */
 
         .header {
+
             display: flex;
+
             align-items: center;
+
             gap: 18px;
+
             margin-bottom: 30px;
+
         }
 
+
         .back-button {
+
             width: 40px;
+
             height: 40px;
 
             display: flex;
+
             align-items: center;
+
             justify-content: center;
 
             flex-shrink: 0;
 
-            border: 1px solid #dedede;
+            border:
+                1px solid
+                #dedede;
+
             border-radius: 9px;
 
             background: white;
+
             color: #333;
 
             text-decoration: none;
+
             font-size: 20px;
+
         }
+
 
         .back-button:hover {
+
             background: #f0f0f0;
+
         }
+
 
         .header-text h1 {
-            margin: 0 0 5px;
+
+            margin:
+                0
+                0
+                5px;
+
             font-size: 30px;
+
             letter-spacing: -0.6px;
+
         }
 
+
         .header-text p {
+
             margin: 0;
+
             color: #777;
+
             font-size: 14px;
+
         }
+
 
         /* =========================================
            CARD
         ========================================= */
 
         .card {
+
             padding: 30px;
 
-            border: 1px solid #e5e5e5;
+            border:
+                1px solid
+                #e5e5e5;
+
             border-radius: 14px;
 
             background: white;
+
         }
+
 
         /* =========================================
            ERROR
         ========================================= */
 
         .error-box {
-            margin-bottom: 24px;
-            padding: 13px 15px;
 
-            border: 1px solid #e6b7b7;
+            margin-bottom: 24px;
+
+            padding:
+                13px
+                15px;
+
+            border:
+                1px solid
+                #e6b7b7;
+
             border-radius: 9px;
 
             background: #fff4f4;
+
             color: #9b3a3a;
 
             font-size: 13px;
+
             font-weight: 600;
+
         }
+
 
         /* =========================================
            SECTIONS
         ========================================= */
 
         .section {
+
             margin-bottom: 30px;
+
         }
+
 
         .section-header {
+
             margin-bottom: 20px;
+
         }
+
 
         .section-header h2 {
-            margin: 0 0 5px;
+
+            margin:
+                0
+                0
+                5px;
+
             font-size: 21px;
+
         }
 
+
         .section-header p {
+
             margin: 0;
 
             color: #888;
 
             font-size: 13px;
+
             line-height: 1.5;
+
         }
 
+
         .section-divider {
+
             height: 1px;
-            margin: 30px 0;
+
+            margin:
+                30px
+                0;
+
             background: #eeeeee;
+
         }
+
 
         /* =========================================
            FIELDS
         ========================================= */
 
         .field {
+
             margin-bottom: 20px;
+
         }
 
+
         .field-label {
+
             display: block;
+
             margin-bottom: 7px;
 
             color: #333;
 
             font-size: 13px;
+
             font-weight: 700;
+
         }
+
 
         .required {
+
             color: #a74747;
+
         }
 
+
         .optional {
+
             margin-left: 5px;
 
             color: #999;
 
             font-size: 11px;
+
             font-weight: 500;
+
         }
+
 
         .field-input,
         .field-textarea,
         .field-select {
+
             width: 100%;
 
-            padding: 11px 13px;
+            padding:
+                11px
+                13px;
 
-            border: 1px solid #d7d9dc;
+            border:
+                1px solid
+                #d7d9dc;
+
             border-radius: 9px;
 
             background: white;
+
             color: #222;
 
             font-family: inherit;
+
             font-size: 14px;
 
             outline: none;
+
         }
+
 
         .field-input:focus,
         .field-textarea:focus,
         .field-select:focus {
+
             border-color: #999;
 
             box-shadow:
@@ -220,103 +337,171 @@
                 0
                 0
                 3px
-                rgba(0, 0, 0, 0.04);
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.04
+                );
+
         }
+
 
         .field-textarea {
+
             min-height: 95px;
+
             resize: vertical;
+
             line-height: 1.5;
+
         }
+
 
         .field-help {
+
             margin-top: 6px;
+
             color: #999;
+
             font-size: 11px;
+
         }
+
+
+        /* =========================================
+           FORMULA NAME
+        ========================================= */
 
         .formula-name-field {
+
             margin-bottom: 26px;
+
         }
+
 
         .formula-name-input {
+
             min-height: 46px;
+
             font-size: 16px;
+
             font-weight: 600;
+
         }
 
+
         .formula-label {
+
             display: block;
+
             margin-bottom: 10px;
 
             color: #333;
 
             font-size: 13px;
+
             font-weight: 700;
+
         }
+
 
         /* =========================================
            TOOLBAR
         ========================================= */
 
         .toolbar {
+
             display: flex;
+
             align-items: center;
+
             flex-wrap: wrap;
 
             gap: 8px;
 
             margin-bottom: 10px;
+
         }
+
 
         .toolbar-button,
         .picker-toggle {
+
             min-height: 40px;
 
-            padding: 9px 13px;
+            padding:
+                9px
+                13px;
 
-            border: 1px solid #d8d8d8;
+            border:
+                1px solid
+                #d8d8d8;
+
             border-radius: 8px;
 
             background: white;
+
             color: #333;
 
             font-family: inherit;
+
             font-size: 13px;
+
             font-weight: 600;
 
             cursor: pointer;
+
         }
+
 
         .toolbar-button:hover,
         .picker-toggle:hover {
+
             background: #f5f5f5;
+
             border-color: #c8c8c8;
+
         }
+
 
         /* =========================================
            PICKERS
         ========================================= */
 
         .formula-picker {
+
             position: relative;
+
         }
+
 
         .picker-toggle {
+
             display: inline-flex;
+
             align-items: center;
+
             gap: 9px;
+
         }
+
 
         .picker-arrow {
+
             color: #888;
+
             font-size: 10px;
+
         }
 
+
         .formula-picker-menu {
+
             position: absolute;
 
             top: calc(100% + 7px);
+
             left: 0;
 
             z-index: 1000;
@@ -325,13 +510,20 @@
 
             width: max-content;
 
-            max-width: min(700px, 85vw);
+            max-width:
+                min(
+                    700px,
+                    85vw
+                );
 
             padding: 12px;
 
             overflow-x: auto;
 
-            border: 1px solid #dedede;
+            border:
+                1px solid
+                #dedede;
+
             border-radius: 10px;
 
             background: white;
@@ -340,89 +532,140 @@
                 0
                 10px
                 30px
-                rgba(0, 0, 0, 0.14);
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.14
+                );
+
         }
+
 
         .formula-picker.open
         .formula-picker-menu {
+
             display: block;
+
         }
 
-        /* =========================================
-           EXACTLY 5 ROWS
 
-           After 5 entries it starts
-           another column.
+        /* =========================================
+           FIVE ROW PICKER GRID
         ========================================= */
 
         .picker-grid {
+
             display: grid;
 
             grid-template-rows:
-                repeat(5, 40px);
+                repeat(
+                    5,
+                    40px
+                );
 
             grid-auto-flow: column;
 
             grid-auto-columns: 44px;
 
             gap: 6px;
+
         }
 
+
         .picker-choice {
+
             width: 44px;
+
             height: 40px;
 
             display: flex;
+
             align-items: center;
+
             justify-content: center;
 
             padding: 0;
 
-            border: 1px solid #e0e0e0;
+            border:
+                1px solid
+                #e0e0e0;
+
             border-radius: 7px;
 
             background: #fafafa;
+
             color: #222;
 
             font-family: inherit;
+
             font-size: 17px;
+
             font-weight: 600;
 
             cursor: pointer;
+
         }
 
+
         .picker-choice:hover {
+
             background: #eeeeee;
+
             border-color: #aaa;
+
         }
+
 
         /* =========================================
            KEYBOARD HELP
         ========================================= */
 
         .keyboard-hint {
-            margin: 0 0 14px;
+
+            margin:
+                0
+                0
+                14px;
 
             color: #999;
 
             font-size: 11px;
+
             line-height: 1.5;
+
         }
+
 
         .keyboard-hint strong {
+
             color: #666;
+
         }
 
+
         /* =========================================
-           CANVAS
+           FORMULA CANVAS
         ========================================= */
 
         #formula-canvas {
+
             min-height: 180px;
+
+            width: 100%;
+
+            max-width: 100%;
 
             padding: 20px;
 
-            border: 1px solid #e1e1e1;
+            overflow-x: hidden;
+
+            overflow-y: visible;
+
+            border:
+                1px solid
+                #e1e1e1;
+
             border-radius: 10px;
 
             background: #fafafa;
@@ -430,9 +673,12 @@
             outline: none;
 
             cursor: text;
+
         }
 
+
         #formula-canvas:focus {
+
             border-color: #aaa;
 
             box-shadow:
@@ -440,14 +686,70 @@
                 0
                 0
                 3px
-                rgba(0, 0, 0, 0.04);
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.04
+                );
+
         }
+
+
+        /* =========================================
+           LONG FORMULA WRAPPING
+
+           The main formula now wraps onto a new
+           line instead of overflowing the editor.
+        ========================================= */
+
+        #formula-canvas > .formula-container {
+
+            display: flex !important;
+
+            align-items: center !important;
+
+            align-content: flex-start !important;
+
+            flex-wrap: wrap !important;
+
+            width: 100% !important;
+
+            max-width: 100% !important;
+
+            min-width: 0 !important;
+
+            white-space: normal !important;
+
+            row-gap: 12px;
+
+        }
+
+
+        #formula-canvas > .formula-container
+        > .formula-element {
+
+            flex-shrink: 0;
+
+            max-width: 100%;
+
+        }
+
+
+        #formula-canvas
+        .formula-element {
+
+            overflow-wrap: anywhere;
+
+        }
+
 
         /* =========================================
            DETAILS
         ========================================= */
 
         .detail-grid {
+
             display: grid;
 
             grid-template-columns:
@@ -459,61 +761,99 @@
             align-items: start;
 
             gap: 18px;
+
         }
 
+
         .detail-grid .field {
+
             margin-bottom: 0;
+
         }
+
 
         /* =========================================
            ADDITIONAL DETAILS
         ========================================= */
 
         .additional-details {
+
             overflow: hidden;
 
-            border: 1px solid #e2e3e5;
+            border:
+                1px solid
+                #e2e3e5;
+
             border-radius: 10px;
 
             background: #fafafa;
+
         }
 
+
         .additional-details summary {
+
             display: flex;
+
             align-items: center;
+
             justify-content: space-between;
 
-            padding: 15px 17px;
+            padding:
+                15px
+                17px;
 
             color: #333;
 
             font-size: 13px;
+
             font-weight: 700;
 
             cursor: pointer;
+
             list-style: none;
+
         }
+
 
         .additional-details summary::-webkit-details-marker {
+
             display: none;
+
         }
+
 
         .additional-details summary::after {
+
             content: "+";
+
             color: #777;
+
             font-size: 19px;
+
         }
+
 
         .additional-details[open] summary::after {
+
             content: "−";
+
         }
+
 
         .additional-details-content {
+
             padding: 17px;
-            border-top: 1px solid #ededed;
+
+            border-top:
+                1px solid
+                #ededed;
+
         }
 
+
         .additional-grid {
+
             display: grid;
 
             grid-template-columns:
@@ -525,68 +865,105 @@
             align-items: start;
 
             gap: 18px;
+
         }
 
+
         .additional-grid .field {
+
             margin: 0;
+
         }
+
 
         /* =========================================
            FOOTER
         ========================================= */
 
         .form-footer {
+
             display: flex;
+
             align-items: center;
+
             justify-content: flex-end;
+
             flex-wrap: wrap;
 
             gap: 10px;
 
             margin-top: 30px;
+
             padding-top: 22px;
 
-            border-top: 1px solid #eeeeee;
+            border-top:
+                1px solid
+                #eeeeee;
+
         }
 
+
         .footer-button {
+
             display: inline-flex;
+
             align-items: center;
+
             justify-content: center;
 
             min-height: 42px;
 
-            padding: 10px 18px;
+            padding:
+                10px
+                18px;
 
-            border: 1px solid #d8d8d8;
+            border:
+                1px solid
+                #d8d8d8;
+
             border-radius: 8px;
 
             background: white;
+
             color: #444;
 
             font-family: inherit;
+
             font-size: 14px;
+
             font-weight: 600;
 
             text-decoration: none;
 
             cursor: pointer;
+
         }
+
 
         .footer-button:hover {
+
             background: #f5f5f5;
+
         }
 
+
         .save-button {
+
             border: none;
 
             background: #222;
+
             color: white;
+
         }
 
+
         .save-button:hover {
+
             background: #333;
+
         }
+
 
         /* =========================================
            MOBILE
@@ -596,37 +973,65 @@
 
             .detail-grid,
             .additional-grid {
+
                 grid-template-columns: 1fr;
+
             }
 
         }
 
+
         @media (max-width: 600px) {
 
             .page {
-                padding: 25px 15px 40px;
+
+                padding:
+                    25px
+                    15px
+                    40px;
+
             }
+
 
             .card {
+
                 padding: 20px;
+
             }
+
 
             .toolbar {
+
                 align-items: stretch;
+
             }
+
 
             .formula-picker-menu {
+
                 max-width:
-                    calc(100vw - 70px);
+                    calc(
+                        100vw
+                        -
+                        70px
+                    );
+
             }
+
 
             .form-footer {
+
                 flex-direction: column;
+
                 align-items: stretch;
+
             }
 
+
             .footer-button {
+
                 width: 100%;
+
             }
 
         }
@@ -747,7 +1152,9 @@
                     </div>
 
 
-                    <!-- FORMULA NAME -->
+                    <!-- =================================
+                         FORMULA NAME
+                    ================================== -->
 
                     <div class="field formula-name-field">
 
@@ -924,7 +1331,7 @@
 
 
                         <!-- =================================
-                             SYMBOLS
+                             SYMBOL
                         ================================== -->
 
                         <div
@@ -967,7 +1374,7 @@
 
                                     <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="≠">≠</button>
 
-                                    <!-- GREEK LOWERCASE -->
+                                    <!-- LOWERCASE GREEK -->
 
                                     <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="α">α</button>
                                     <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="β">β</button>
@@ -998,7 +1405,8 @@
                                     <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="ψ">ψ</button>
                                     <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="ω">ω</button>
 
-                                    <!-- GREEK UPPERCASE -->
+
+                                    <!-- UPPERCASE GREEK -->
 
                                     <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="Α">Α</button>
                                     <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="Β">Β</button>
@@ -1061,6 +1469,8 @@
 
                         <strong>0–9</strong>,
 
+                        <strong>.</strong>,
+
                         <strong>+</strong>,
 
                         <strong>-</strong>,
@@ -1092,7 +1502,8 @@
                 </section>
 
 
-                <div class="section-divider"></div>
+                <div class="section-divider">
+                </div>
 
 
                 <!-- =================================
@@ -1356,13 +1767,8 @@
 </script>
 
 
-<!--
-    VERSION PARAMETER IS DELIBERATE.
-    IT FORCES THE BROWSER TO LOAD THE NEW JS.
--->
-
 <script
-    src="{% static 'js/formula-editor.js' %}?v=20260903-4"
+    src="{% static 'js/formula-editor.js' %}?v=20260903-5"
 ></script>
 
 
