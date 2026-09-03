@@ -153,6 +153,17 @@
         }
 
 
+        .formula-element {
+
+            display: inline-block;
+
+            margin:
+                0
+                3px;
+
+        }
+
+
         /* =========================================
            INPUT
         ========================================= */
@@ -165,6 +176,10 @@
                 8px
                 10px;
 
+            margin:
+                0
+                3px;
+
             border:
                 1px solid
                 #aaa;
@@ -173,7 +188,11 @@
 
             background: white;
 
+            font-family: inherit;
+
             font-size: 18px;
+
+            font-weight: 600;
 
             text-align: center;
 
@@ -186,11 +205,101 @@
 
             border-color: #222;
 
+            box-shadow:
+                0
+                0
+                0
+                2px
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.05
+                );
+
         }
 
 
         /* =========================================
-           BUTTON
+           FRACTION
+        ========================================= */
+
+        .formula-fraction {
+
+            display: inline-flex;
+
+            flex-direction: column;
+
+            align-items: stretch;
+
+            vertical-align: middle;
+
+            min-width: 60px;
+
+            margin:
+                0
+                8px;
+
+            line-height: 1.2;
+
+        }
+
+
+        .fraction-top {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            min-height: 38px;
+
+            padding:
+                0
+                6px
+                5px;
+
+            border-bottom:
+                2px solid
+                #222;
+
+        }
+
+
+        .fraction-bottom {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            min-height: 38px;
+
+            padding:
+                5px
+                6px
+                0;
+
+        }
+
+
+        .formula-fraction .answer-input {
+
+            width: 90px;
+
+            padding:
+                5px
+                8px;
+
+            font-size: 17px;
+
+        }
+
+
+        /* =========================================
+           BUTTONS
         ========================================= */
 
         button {
@@ -202,6 +311,8 @@
             border: none;
 
             border-radius: 9px;
+
+            font-family: inherit;
 
             font-size: 15px;
 
@@ -292,6 +403,56 @@
             border-radius: 8px;
 
             font-weight: 500;
+
+        }
+
+
+        /* =========================================
+           FORMULA DETAILS LINK
+        ========================================= */
+
+        .formula-details-link {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            width: 100%;
+
+            min-height: 45px;
+
+            margin-top: 12px;
+
+            padding:
+                11px
+                16px;
+
+            border:
+                1px solid
+                #d8d8d8;
+
+            border-radius: 9px;
+
+            background: white;
+
+            color: #333;
+
+            text-decoration: none;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            text-align: center;
+
+        }
+
+
+        .formula-details-link:hover {
+
+            background: #f5f5f5;
 
         }
 
@@ -423,6 +584,13 @@
             }
 
 
+            .answer-input {
+
+                width: 90px;
+
+            }
+
+
             .review-actions {
 
                 flex-direction: column;
@@ -452,24 +620,27 @@
 
     <!-- =========================================
          HEADER
-    ========================================= -->
+    ========================================== -->
 
     <div class="header">
+
 
         <h1>
             {{ formula.knowledge_unit.title }}
         </h1>
 
+
         <p>
             Complete the missing parts of the formula.
         </p>
+
 
     </div>
 
 
     <!-- =========================================
          PROGRESS
-    ========================================= -->
+    ========================================== -->
 
     <div class="progress">
 
@@ -481,7 +652,7 @@
 
     <!-- =========================================
          RESULT — CORRECT
-    ========================================= -->
+    ========================================== -->
 
     {% if result == "correct" %}
 
@@ -491,6 +662,18 @@
             ✓ Correct!
 
         </div>
+
+
+        <!-- =====================================
+             FORMULA DETAILS
+        ====================================== -->
+
+        <a
+            href="{% url 'formula_detail' formula.id %}"
+            class="formula-details-link"
+        >
+            View Formula Details
+        </a>
 
 
         <!-- =====================================
@@ -504,6 +687,7 @@
 
 
                 {% if next_formula %}
+
 
                     <form
                         method="post"
@@ -537,6 +721,7 @@
 
                     </form>
 
+
                 {% endif %}
 
 
@@ -558,7 +743,10 @@
                  SUBJECT FORMULA REVIEW
             ================================== -->
 
-            <form method="post">
+            <form
+                method="post"
+                style="margin-top: 20px;"
+            >
 
                 {% csrf_token %}
 
@@ -600,7 +788,7 @@
 
     <!-- =========================================
          RESULT — INCORRECT
-    ========================================= -->
+    ========================================== -->
 
     {% elif result == "incorrect" %}
 
@@ -614,16 +802,20 @@
 
         <div class="correct-answer">
 
+
             <strong>
                 Correct answer:
             </strong>
+
 
             <br><br>
 
 
             {% for element_id, answer in correct_answers.items %}
 
+
                 {{ answer }}
+
 
                 {% if not forloop.last %}
 
@@ -631,10 +823,23 @@
 
                 {% endif %}
 
+
             {% endfor %}
 
 
         </div>
+
+
+        <!-- =====================================
+             FORMULA DETAILS
+        ====================================== -->
+
+        <a
+            href="{% url 'formula_detail' formula.id %}"
+            class="formula-details-link"
+        >
+            View Formula Details
+        </a>
 
 
         <!-- =====================================
@@ -648,6 +853,7 @@
 
 
                 {% if next_formula %}
+
 
                     <form
                         method="post"
@@ -681,6 +887,7 @@
 
                     </form>
 
+
                 {% endif %}
 
 
@@ -698,14 +905,10 @@
         {% else %}
 
 
-            <!-- =================================
-                 SUBJECT FORMULA REVIEW
-            ================================== -->
-
-            <br>
-
-
-            <form method="post">
+            <form
+                method="post"
+                style="margin-top: 20px;"
+            >
 
                 {% csrf_token %}
 
@@ -754,6 +957,7 @@
 
         <form method="post">
 
+
             {% csrf_token %}
 
 
@@ -788,165 +992,51 @@
                     {% for element in formula_elements %}
 
 
-                        <!-- =========================
-                             TEXT
-                        ========================== -->
-
-                        {% if element.type == "text" %}
-
-
-                            {{ element.value }}
-
-
-                        <!-- =========================
-                             VARIABLE
-                        ========================== -->
-
-                        {% elif element.type == "variable" %}
-
-
-                            {% if element.id|stringformat:"s" in hidden_ids %}
-
-
-                                <input
-                                    type="text"
-                                    name="answer_{{ element.id }}"
-                                    class="answer-input"
-                                    autocomplete="off"
-                                    required
-                                >
-
-
-                                <input
-                                    type="hidden"
-                                    name="hidden_element_id"
-                                    value="{{ element.id }}"
-                                >
-
-
-                            {% else %}
-
-
-                                {{ element.value }}
-
-
-                            {% endif %}
-
-
-                        <!-- =========================
-                             OPERATOR
-                        ========================== -->
-
-                        {% elif element.type == "operator" %}
-
-
-                            {{ element.value }}
-
-
-                        <!-- =========================
-                             NUMBER
-                        ========================== -->
-
-                        {% elif element.type == "number" %}
-
-
-                            {% if element.id|stringformat:"s" in hidden_ids %}
-
-
-                                <input
-                                    type="text"
-                                    name="answer_{{ element.id }}"
-                                    class="answer-input"
-                                    autocomplete="off"
-                                    required
-                                >
-
-
-                                <input
-                                    type="hidden"
-                                    name="hidden_element_id"
-                                    value="{{ element.id }}"
-                                >
-
-
-                            {% else %}
-
-
-                                {{ element.value }}
-
-
-                            {% endif %}
-
-
-                        <!-- =========================
+                        <!-- =================================
                              FRACTION
-                        ========================== -->
+                        ================================== -->
 
-                        {% elif element.type == "fraction" %}
-
-
-                            <span
-                                style="
-                                    display: inline-flex;
-                                    flex-direction: column;
-                                    vertical-align: middle;
-                                    text-align: center;
-                                    line-height: 1.2;
-                                    margin: 0 6px;
-                                "
-                            >
+                        {% if element.type == "fraction" %}
 
 
-                                <!-- =====================
+                            <span class="formula-fraction">
+
+
+                                <!-- =========================
                                      NUMERATOR
-                                ====================== -->
+                                ========================== -->
 
-                                <span
-                                    style="
-                                        padding: 0 5px 4px;
-                                        border-bottom: 2px solid #222;
-                                    "
-                                >
+                                <span class="fraction-top">
 
 
                                     {% for numerator in element.numerator %}
 
 
-                                        {% if numerator.type == "variable" or numerator.type == "number" %}
+                                        {% if numerator.id|stringformat:"s" in hidden_ids %}
 
 
-                                            {% if numerator.id|stringformat:"s" in hidden_ids %}
+                                            <input
+                                                type="text"
+                                                name="answer_{{ numerator.id }}"
+                                                class="answer-input"
+                                                autocomplete="off"
+                                                required
+                                            >
 
 
-                                                <input
-                                                    type="text"
-                                                    name="answer_{{ numerator.id }}"
-                                                    class="answer-input"
-                                                    autocomplete="off"
-                                                    required
-                                                >
-
-
-                                                <input
-                                                    type="hidden"
-                                                    name="hidden_element_id"
-                                                    value="{{ numerator.id }}"
-                                                >
-
-
-                                            {% else %}
-
-
-                                                {{ numerator.value }}
-
-
-                                            {% endif %}
+                                            <input
+                                                type="hidden"
+                                                name="hidden_element_id"
+                                                value="{{ numerator.id }}"
+                                            >
 
 
                                         {% else %}
 
 
-                                            {{ numerator.value }}
+                                            <span class="formula-element">
+                                                {{ numerator.value }}
+                                            </span>
 
 
                                         {% endif %}
@@ -958,55 +1048,41 @@
                                 </span>
 
 
-                                <!-- =====================
+                                <!-- =========================
                                      DENOMINATOR
-                                ====================== -->
+                                ========================== -->
 
-                                <span
-                                    style="
-                                        padding: 4px 5px 0;
-                                    "
-                                >
+                                <span class="fraction-bottom">
 
 
                                     {% for denominator in element.denominator %}
 
 
-                                        {% if denominator.type == "variable" or denominator.type == "number" %}
+                                        {% if denominator.id|stringformat:"s" in hidden_ids %}
 
 
-                                            {% if denominator.id|stringformat:"s" in hidden_ids %}
+                                            <input
+                                                type="text"
+                                                name="answer_{{ denominator.id }}"
+                                                class="answer-input"
+                                                autocomplete="off"
+                                                required
+                                            >
 
 
-                                                <input
-                                                    type="text"
-                                                    name="answer_{{ denominator.id }}"
-                                                    class="answer-input"
-                                                    autocomplete="off"
-                                                    required
-                                                >
-
-
-                                                <input
-                                                    type="hidden"
-                                                    name="hidden_element_id"
-                                                    value="{{ denominator.id }}"
-                                                >
-
-
-                                            {% else %}
-
-
-                                                {{ denominator.value }}
-
-
-                                            {% endif %}
+                                            <input
+                                                type="hidden"
+                                                name="hidden_element_id"
+                                                value="{{ denominator.id }}"
+                                            >
 
 
                                         {% else %}
 
 
-                                            {{ denominator.value }}
+                                            <span class="formula-element">
+                                                {{ denominator.value }}
+                                            </span>
 
 
                                         {% endif %}
@@ -1019,6 +1095,43 @@
 
 
                             </span>
+
+
+                        <!-- =================================
+                             NORMAL ELEMENT
+                        ================================== -->
+
+                        {% else %}
+
+
+                            {% if element.id|stringformat:"s" in hidden_ids %}
+
+
+                                <input
+                                    type="text"
+                                    name="answer_{{ element.id }}"
+                                    class="answer-input"
+                                    autocomplete="off"
+                                    required
+                                >
+
+
+                                <input
+                                    type="hidden"
+                                    name="hidden_element_id"
+                                    value="{{ element.id }}"
+                                >
+
+
+                            {% else %}
+
+
+                                <span class="formula-element">
+                                    {{ element.value }}
+                                </span>
+
+
+                            {% endif %}
 
 
                         {% endif %}
@@ -1048,6 +1161,30 @@
 
 
 </div>
+
+
+<script>
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+
+            const firstAnswer =
+                document.querySelector(
+                    ".answer-input"
+                );
+
+
+            if (firstAnswer) {
+
+                firstAnswer.focus();
+
+            }
+
+        }
+    );
+
+</script>
 
 
 </body>
