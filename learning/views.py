@@ -2484,6 +2484,270 @@ def review_definition(
         definition_id=definition.id
     )
 
+
+# ============================================================
+# STEP REVIEW LIST
+# ============================================================
+
+@login_required
+def step_review_list(
+    request,
+    subject_index
+):
+
+    # ========================================================
+    # SESSION SUBJECTS
+    # ========================================================
+
+    subjects = request.session.get(
+        "onboarding_subjects",
+        []
+    )
+
+    # ========================================================
+    # VALIDATE SUBJECT INDEX
+    # ========================================================
+
+    try:
+
+        subject_index = int(
+            subject_index
+        )
+
+    except (
+        TypeError,
+        ValueError
+    ):
+
+        return redirect(
+            "goals"
+        )
+
+    if (
+        subject_index < 0
+        or
+        subject_index >= len(
+            subjects
+        )
+    ):
+
+        return redirect(
+            "goals"
+        )
+
+    # ========================================================
+    # SUBJECT DATA
+    # ========================================================
+
+    subject_data = (
+        subjects[
+            subject_index
+        ]
+    )
+
+    # ========================================================
+    # FIND DATABASE SUBJECT
+    # ========================================================
+
+    subject = None
+
+    database_id = (
+        subject_data.get(
+            "database_id"
+        )
+    )
+
+    # --------------------------------------------------------
+    # TRY DATABASE ID
+    # --------------------------------------------------------
+
+    if database_id:
+
+        try:
+
+            database_id = int(
+                database_id
+            )
+
+        except (
+            TypeError,
+            ValueError
+        ):
+
+            database_id = None
+
+        if database_id:
+
+            subject = (
+                Subject.objects
+                .filter(
+                    id=database_id,
+                    user=request.user,
+                )
+                .first()
+            )
+
+    # --------------------------------------------------------
+    # FALL BACK TO SUBJECT NAME
+    # --------------------------------------------------------
+
+    if not subject:
+
+        subject_name = (
+            subject_data.get(
+                "name",
+                ""
+            )
+            .strip()
+        )
+
+        if subject_name:
+
+            subject = (
+                Subject.objects
+                .filter(
+                    user=request.user,
+                    name=subject_name,
+                )
+                .first()
+            )
+
+    # --------------------------------------------------------
+    # SUBJECT NOT FOUND
+    # --------------------------------------------------------
+
+    if not subject:
+
+        return redirect(
+            "subject_detail",
+            subject_index=subject_index,
+        )
+
+    # ========================================================
+    # TODAY
+    # ========================================================
+
+    today = timezone.localdate()
+
+    # ========================================================
+    # ALL ACTIVE STEPS FOR THIS SUBJECT
+    # ========================================================
+
+    step_lists = (
+        StepList.objects
+        .filter(
+            knowledge_unit__subject=subject,
+            knowledge_unit__active=True,
+        )
+        .select_related(
+            "knowledge_unit",
+            "knowledge_unit__subject",
+        )
+        .prefetch_related(
+            "steps"
+        )
+        .order_by(
+            "knowledge_unit__created",
+            "id",
+        )
+    )
+
+    # ========================================================
+    # DUE STEPS
+    # ========================================================
+
+    due_steps = []
+
+    for step_list in step_lists:
+
+        knowledge_unit = (
+            step_list.knowledge_unit
+        )
+
+        progress = (
+            StudentKnowledge.objects
+            .filter(
+                student=request.user,
+                knowledge_unit=knowledge_unit,
+            )
+            .first()
+        )
+
+        is_due = False
+
+        # ----------------------------------------------------
+        # NEVER REVIEWED
+        # ----------------------------------------------------
+
+        if progress is None:
+
+            is_due = True
+
+        # ----------------------------------------------------
+        # NO DATE
+        # ----------------------------------------------------
+
+        elif progress.next_review is None:
+
+            is_due = True
+
+        # ----------------------------------------------------
+        # DUE TODAY OR OVERDUE
+        # ----------------------------------------------------
+
+        else:
+
+            next_review_date = (
+                timezone.localtime(
+                    progress.next_review
+                )
+                .date()
+            )
+
+            if (
+                next_review_date
+                <= today
+            ):
+
+                is_due = True
+
+        # ----------------------------------------------------
+        # ADD
+        # ----------------------------------------------------
+
+        if is_due:
+
+            due_steps.append(
+                step_list
+            )
+
+    # ========================================================
+    # RENDER
+    # ========================================================
+
+    return render(
+        request,
+        "learning/step_review_list.html",
+        {
+            "subject":
+                subject,
+
+            "subject_data":
+                subject_data,
+
+            "subject_index":
+                subject_index,
+
+            "due_steps":
+                due_steps,
+
+            "due_step_count":
+                len(
+                    due_steps
+                ),
+        }
+    )
+    
 # ============================================================
 # RESET TODAY'S REVIEWS
 # ============================================================

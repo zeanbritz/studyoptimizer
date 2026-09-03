@@ -128,4 +128,10 @@ urlpatterns = [
         name="create_steps",
     ),
 
+    path(
+        "subjects/<int:subject_index>/steps/review/",
+        views.step_review_list,
+        name="step_review_list",
+    ),
+
 ]

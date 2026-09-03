@@ -33,4 +33,10 @@ urlpatterns = [
         name="practice_definition_review",
     ),
 
+    path(
+        "steps/<int:step_list_id>/review/",
+        views.practice_step_review,
+        name="practice_step_review",
+    ),
+
 ]

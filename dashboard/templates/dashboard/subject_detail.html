@@ -2928,51 +2928,86 @@
                             {% endif %}
 
                             <!-- =================================
-     LISTS
-================================== -->
+        LISTS
+    ================================== -->
 
-{% if due_bullet_lists %}
-
-
-    <a
-        href="{% url 'list_review_list' subject_index=subject_index %}"
-        class="review-category"
-    >
+    {% if due_bullet_lists %}
 
 
-        <div class="review-category-header">
+        <a
+            href="{% url 'list_review_list' subject_index=subject_index %}"
+            class="review-category"
+        >
 
 
-            <div class="review-category-title">
+            <div class="review-category-header">
 
 
-                <h3>
-                    Lists to Review
-                </h3>
+                <div class="review-category-title">
 
 
-                <span class="review-count">
-                    {{ due_bullet_list_count }}
+                    <h3>
+                        Lists to Review
+                    </h3>
+
+
+                    <span class="review-count">
+                        {{ due_bullet_list_count }}
+                    </span>
+
+
+                </div>
+
+
+                <span>
+                    →
                 </span>
 
 
             </div>
 
 
-            <span>
-                →
-            </span>
+            <p class="review-description">
+                Lists you need to review today.
+            </p>
 
 
-        </div>
+        </a>
 
+    {% if due_step_lists %}
 
-        <p class="review-description">
-            Lists you need to review today.
-        </p>
+        <a
+            href="{% url 'step_review_list' subject_index=subject_index %}"
+            class="review-category"
+        >
 
+            <div class="review-category-header">
 
-    </a>
+                <div class="review-category-title">
+
+                    <h3>
+                        Steps to Review
+                    </h3>
+
+                    <span class="review-count">
+                        {{ due_step_list_count }}
+                    </span>
+
+                </div>
+
+                <span>
+                    →
+                </span>
+
+            </div>
+
+            <p class="review-description">
+                Steps you need to review today.
+            </p>
+
+        </a>
+
+    {% endif %}
 
 
 {% endif %}

@@ -12,6 +12,7 @@ from learning.models import (
     Formula,
     Definition,
     BulletList,
+    StepList,
     StudentKnowledge,
 )
 
@@ -304,7 +305,6 @@ def dashboard(request):
 
                     "count":
                         0,
-
                 }
 
             definition_groups[
@@ -457,7 +457,6 @@ def dashboard(request):
 
                     "count":
                         0,
-
                 }
 
             formula_groups[
@@ -600,7 +599,6 @@ def dashboard(request):
 
                     "count":
                         0,
-
                 }
 
             list_groups[
@@ -896,6 +894,7 @@ def dashboard(request):
                 book_summary_total,
         }
     )
+
 
 # ============================================================
 # REVIEW
@@ -3402,7 +3401,7 @@ def subject_detail(
                     )
 
     # ========================================================
-    # REVIEW LISTS
+    # REVIEW ITEMS
     # ========================================================
 
     due_formulas = []
@@ -3410,6 +3409,8 @@ def subject_detail(
     due_definitions = []
 
     due_bullet_lists = []
+
+    due_step_lists = []
 
     # ========================================================
     # FIND DUE ITEMS
@@ -3609,6 +3610,90 @@ def subject_detail(
                     bullet_list
                 )
 
+        # ====================================================
+        # STEPS
+        # ====================================================
+
+        step_lists = (
+            StepList.objects
+            .filter(
+                knowledge_unit__subject=database_subject,
+                knowledge_unit__active=True,
+            )
+            .select_related(
+                "knowledge_unit",
+                "knowledge_unit__subject",
+            )
+            .prefetch_related(
+                "steps"
+            )
+            .order_by(
+                "knowledge_unit__created",
+                "id",
+            )
+        )
+
+        for step_list in (
+            step_lists
+        ):
+
+            knowledge_unit = (
+                step_list.knowledge_unit
+            )
+
+            # ------------------------------------------------
+            # PROGRESS
+            # ------------------------------------------------
+
+            progress = (
+                StudentKnowledge.objects
+                .filter(
+                    student=request.user,
+                    knowledge_unit=knowledge_unit,
+                )
+                .first()
+            )
+
+            # ------------------------------------------------
+            # IS DUE?
+            # ------------------------------------------------
+
+            is_due = False
+
+            if progress is None:
+
+                is_due = True
+
+            elif progress.next_review is None:
+
+                is_due = True
+
+            else:
+
+                next_review_date = (
+                    timezone.localtime(
+                        progress.next_review
+                    )
+                    .date()
+                )
+
+                if (
+                    next_review_date
+                    <= today
+                ):
+
+                    is_due = True
+
+            # ------------------------------------------------
+            # ADD DUE STEP LIST
+            # ------------------------------------------------
+
+            if is_due:
+
+                due_step_lists.append(
+                    step_list
+                )
+
     # ========================================================
     # COUNTS
     # ========================================================
@@ -3625,12 +3710,18 @@ def subject_detail(
         due_bullet_lists
     )
 
+    due_step_list_count = len(
+        due_step_lists
+    )
+
     total_due_reviews = (
         due_formula_count
         +
         due_definition_count
         +
         due_bullet_list_count
+        +
+        due_step_list_count
     )
 
     # ========================================================
@@ -3757,6 +3848,12 @@ def subject_detail(
 
             "due_bullet_list_count":
                 due_bullet_list_count,
+
+            "due_step_lists":
+                due_step_lists,
+
+            "due_step_list_count":
+                due_step_list_count,
 
             "total_due_reviews":
                 total_due_reviews,
@@ -4171,6 +4268,7 @@ def review_lists(request):
         }
     )
 
+
 # ============================================================
 # PROGRESS
 # ============================================================
@@ -4436,10 +4534,6 @@ def progress(request):
 
         # ----------------------------------------------------
         # SKIP COMPLETELY EMPTY SUBJECTS
-        #
-        # A subject is shown if it has either:
-        # - knowledge units
-        # - textbooks
         # ----------------------------------------------------
 
         if (
