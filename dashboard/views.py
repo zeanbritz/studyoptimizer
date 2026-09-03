@@ -4439,6 +4439,79 @@ def review_lists(request):
 
 
 # ============================================================
+# REVIEW STEPS
+# ============================================================
+
+@login_required
+def review_steps(request):
+
+    # ========================================================
+    # ALL ACTIVE STEP SETS FOR THIS USER
+    # ========================================================
+
+    step_lists = (
+        StepList.objects
+        .filter(
+            knowledge_unit__subject__user=request.user,
+            knowledge_unit__active=True,
+        )
+        .select_related(
+            "knowledge_unit",
+            "knowledge_unit__subject",
+        )
+        .prefetch_related(
+            "steps"
+        )
+        .order_by(
+            "knowledge_unit__subject__name",
+            "knowledge_unit__created",
+            "id",
+        )
+    )
+
+    # ========================================================
+    # BUILD TEMPLATE ITEMS
+    # ========================================================
+
+    step_items = []
+
+    for step_list in step_lists:
+
+        step_items.append(
+            {
+                "step_list":
+                    step_list,
+
+                "subject":
+                    step_list
+                    .knowledge_unit
+                    .subject,
+
+                "knowledge_unit":
+                    step_list
+                    .knowledge_unit,
+            }
+        )
+
+    # ========================================================
+    # RENDER
+    # ========================================================
+
+    return render(
+        request,
+        "dashboard/review_steps.html",
+        {
+            "steps":
+                step_items,
+
+            "step_count":
+                len(
+                    step_items
+                ),
+        }
+    )
+
+# ============================================================
 # PROGRESS
 # ============================================================
 

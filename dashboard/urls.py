@@ -65,4 +65,10 @@ urlpatterns = [
         name="review_lists",
     ),
 
+    path(
+        "review/steps/",
+        views.review_steps,
+        name="review_steps",
+    ),
+
 ]

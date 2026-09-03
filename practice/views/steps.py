@@ -113,6 +113,8 @@ def get_step_hidden_count(
 
 # ============================================================
 # FIND NEXT DUE STEP LIST
+#
+# SUBJECT-SPECIFIC REVIEW
 # ============================================================
 
 def find_next_due_step_list(
@@ -174,7 +176,7 @@ def find_next_due_step_list(
             return candidate
 
         # ----------------------------------------------------
-        # NO NEXT DATE
+        # NO NEXT REVIEW DATE
         # ----------------------------------------------------
 
         if progress.next_review is None:
@@ -182,7 +184,7 @@ def find_next_due_step_list(
             return candidate
 
         # ----------------------------------------------------
-        # TODAY OR OVERDUE
+        # DUE TODAY OR OVERDUE
         # ----------------------------------------------------
 
         next_review_date = (
@@ -203,6 +205,79 @@ def find_next_due_step_list(
 
 
 # ============================================================
+# FIND NEXT GLOBAL STEP LIST
+#
+# GLOBAL REVIEW
+#
+# ALL ACTIVE STEPS ACROSS ALL SUBJECTS.
+# DUE DATE DOES NOT MATTER HERE.
+# ============================================================
+
+def find_next_global_step_list(
+    user,
+    current_step_list_id,
+):
+
+    step_lists = list(
+        StepList.objects
+        .filter(
+            knowledge_unit__subject__user=user,
+            knowledge_unit__active=True,
+        )
+        .select_related(
+            "knowledge_unit",
+            "knowledge_unit__subject",
+        )
+        .order_by(
+            "knowledge_unit__subject__name",
+            "knowledge_unit__created",
+            "id",
+        )
+    )
+
+    current_position = None
+
+    for (
+        index,
+        step_list
+    ) in enumerate(
+        step_lists
+    ):
+
+        if (
+            step_list.id
+            == current_step_list_id
+        ):
+
+            current_position = index
+
+            break
+
+    if current_position is None:
+
+        return None
+
+    next_position = (
+        current_position
+        +
+        1
+    )
+
+    if (
+        next_position
+        >= len(
+            step_lists
+        )
+    ):
+
+        return None
+
+    return step_lists[
+        next_position
+    ]
+
+
+# ============================================================
 # PRACTICE STEPS
 # ============================================================
 
@@ -213,10 +288,32 @@ def practice_step_review(
 ):
 
     # ========================================================
+    # REVIEW SCOPE
+    #
+    # subject = subject-specific due review
+    # all     = global review across all subjects
+    # ========================================================
+
+    review_scope = (
+        request.GET.get(
+            "scope"
+        )
+        or
+        request.POST.get(
+            "scope"
+        )
+        or
+        "subject"
+    )
+
+    if review_scope != "all":
+
+        review_scope = "subject"
+
+    # ========================================================
     # STEP LIST
     #
-    # IMPORTANT:
-    # ONLY ALLOW THE LOGGED-IN USER'S DATA
+    # ONLY ALLOW DATA BELONGING TO THIS USER
     # ========================================================
 
     step_list = get_object_or_404(
@@ -240,6 +337,9 @@ def practice_step_review(
 
     # ========================================================
     # SUBJECT INDEX
+    #
+    # USED BY SUBJECT-SPECIFIC REVIEW ONLY.
+    # GLOBAL REVIEW WILL USUALLY HAVE NONE.
     # ========================================================
 
     subject_index = (
@@ -337,6 +437,9 @@ def practice_step_review(
                 "subject_index":
                     subject_index,
 
+                "review_scope":
+                    review_scope,
+
                 "progress":
                     progress,
 
@@ -413,8 +516,8 @@ def practice_step_review(
         # ====================================================
         # GET HIDDEN STEP IDS
         #
-        # KEEP THE SAME RANDOM STEPS THAT WERE SHOWN
-        # ON GET.
+        # THIS PRESERVES THE RANDOM STEPS THAT WERE
+        # HIDDEN ON THE ORIGINAL GET REQUEST.
         # ====================================================
 
         hidden_step_id_values = (
@@ -486,12 +589,14 @@ def practice_step_review(
             # =================================================
             # CHECK ANSWERS
             #
-            # IMPORTANT DIFFERENCE FROM LISTS:
+            # IMPORTANT:
+            #
+            # UNLIKE LISTS, STEPS ARE POSITION-SENSITIVE.
             #
             # EACH ANSWER IS CHECKED AGAINST THE STEP
-            # IN THAT EXACT POSITION.
+            # BELONGING TO THAT EXACT NUMBER.
             #
-            # THERE IS NO SORTING.
+            # ANSWERS ARE NOT SORTED.
             # =================================================
 
             all_correct = True
@@ -506,6 +611,10 @@ def practice_step_review(
                 ):
 
                     continue
+
+                # --------------------------------------------
+                # FIELD BELONGING TO THIS EXACT STEP
+                # --------------------------------------------
 
                 answer_name = (
                     f"answer_{step.id}"
@@ -522,6 +631,10 @@ def practice_step_review(
                     step.id
                 ] = submitted_answer
 
+                # --------------------------------------------
+                # NORMALIZE ANSWERS
+                # --------------------------------------------
+
                 submitted_normalized = (
                     normalize_step_answer(
                         submitted_answer
@@ -535,7 +648,7 @@ def practice_step_review(
                 )
 
                 # --------------------------------------------
-                # ORDER / POSITION MATTERS
+                # POSITION MUST MATCH
                 # --------------------------------------------
 
                 if (
@@ -544,6 +657,10 @@ def practice_step_review(
                 ):
 
                     all_correct = False
+
+                # --------------------------------------------
+                # STORE CORRECT ANSWERS FOR WRONG RESULT
+                # --------------------------------------------
 
                 correct_answers.append(
                     {
@@ -633,8 +750,13 @@ def practice_step_review(
                 )
             )
 
-            # Even if mastery is 0/6 after an incorrect
-            # answer, wait until at least tomorrow.
+            # -------------------------------------------------
+            # AFTER ANY ATTEMPT, REMOVE THE STEP SET FROM
+            # TODAY'S DUE REVIEWS.
+            #
+            # EVEN 0/6 WAITS UNTIL AT LEAST TOMORROW.
+            # -------------------------------------------------
+
             interval_days = max(
                 1,
                 interval_days
@@ -651,23 +773,50 @@ def practice_step_review(
             progress.save()
 
             # =================================================
-            # NEXT DUE STEP SET
-            #
-            # KEEP SUBJECT REVIEW INSIDE THIS SUBJECT
+            # NEXT STEP SET
             # =================================================
 
-            next_step_list = (
-                find_next_due_step_list(
-                    user=request.user,
-                    subject=subject,
-                    exclude_step_list_id=(
-                        step_list.id
-                    ),
+            if review_scope == "all":
+
+                # =============================================
+                # GLOBAL REVIEW
+                #
+                # ALL ACTIVE STEP SETS ACROSS ALL SUBJECTS.
+                #
+                # THIS MATCHES GLOBAL LIST REVIEW:
+                # DUE DATE DOES NOT MATTER.
+                # =============================================
+
+                next_step_list = (
+                    find_next_global_step_list(
+                        user=request.user,
+                        current_step_list_id=(
+                            step_list.id
+                        ),
+                    )
                 )
-            )
+
+            else:
+
+                # =============================================
+                # SUBJECT REVIEW
+                #
+                # ONLY ANOTHER DUE STEP SET FROM
+                # THIS SAME SUBJECT.
+                # =============================================
+
+                next_step_list = (
+                    find_next_due_step_list(
+                        user=request.user,
+                        subject=subject,
+                        exclude_step_list_id=(
+                            step_list.id
+                        ),
+                    )
+                )
 
             # =================================================
-            # UPDATED MASTERY
+            # UPDATED MASTERY PERCENTAGE
             # =================================================
 
             mastery_percentage = round(
@@ -695,6 +844,9 @@ def practice_step_review(
 
                     "subject_index":
                         subject_index,
+
+                    "review_scope":
+                        review_scope,
 
                     "progress":
                         progress,
@@ -803,6 +955,9 @@ def practice_step_review(
 
             "subject_index":
                 subject_index,
+
+            "review_scope":
+                review_scope,
 
             "progress":
                 progress,
