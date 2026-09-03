@@ -40,17 +40,21 @@
     <!-- =========================================
          TODAY PLAN COLUMNS
 
-         We now have:
-
+         ROW 1:
          1. Definitions
          2. Formulas
          3. Lists
          4. Book Summaries
+
+         ROW 2:
+         5. Steps
     ========================================== -->
 
     <style>
 
         .today-plan-columns {
+
+            display: grid;
 
             grid-template-columns:
                 repeat(
@@ -58,8 +62,27 @@
                     minmax(0, 1fr)
                 );
 
+            gap: 18px;
+
         }
 
+
+        /* =========================================
+           STEPS
+
+           Start Steps on a new row on desktop.
+        ========================================== */
+
+        .steps-plan-column {
+
+            grid-column: 1;
+
+        }
+
+
+        /* =========================================
+           TABLET
+        ========================================== */
 
         @media (max-width: 1250px) {
 
@@ -73,8 +96,19 @@
 
             }
 
+
+            .steps-plan-column {
+
+                grid-column: auto;
+
+            }
+
         }
 
+
+        /* =========================================
+           MOBILE
+        ========================================== */
 
         @media (max-width: 750px) {
 
@@ -82,6 +116,13 @@
 
                 grid-template-columns:
                     1fr;
+
+            }
+
+
+            .steps-plan-column {
+
+                grid-column: auto;
 
             }
 
@@ -180,7 +221,7 @@
                      HAS PLAN ITEMS
                 ============================== -->
 
-                {% elif due_definition_subjects or due_formula_subjects or due_list_subjects or book_summary_subjects %}
+                {% elif due_definition_subjects or due_formula_subjects or due_list_subjects or book_summary_subjects or due_step_subjects %}
 
 
                     <div class="today-plan-columns">
@@ -216,7 +257,9 @@
 
 
                                     <span class="plan-total-count">
+
                                         {{ due_definition_total }}
+
                                     </span>
 
 
@@ -302,7 +345,9 @@
 
 
                                     <span class="plan-total-count">
+
                                         {{ due_formula_total }}
+
                                     </span>
 
 
@@ -368,10 +413,6 @@
                             <div class="today-plan-column">
 
 
-                                <!-- =====================
-                                     COLUMN HEADER
-                                ====================== -->
-
                                 <div class="plan-column-header">
 
 
@@ -400,10 +441,6 @@
 
                                 </div>
 
-
-                                <!-- =====================
-                                     SUBJECT LIST
-                                ====================== -->
 
                                 <div class="plan-subject-list">
 
@@ -530,6 +567,96 @@
 
                                                     {% endif %}
 
+
+                                                </span>
+
+
+                                            </div>
+
+
+                                        </a>
+
+
+                                    {% endfor %}
+
+
+                                </div>
+
+
+                            </div>
+
+
+                        {% endif %}
+
+
+                        <!-- =================================
+                             STEPS
+
+                             Starts on a new row on desktop.
+                        ================================== -->
+
+                        {% if due_step_subjects %}
+
+
+                            <div class="today-plan-column steps-plan-column">
+
+
+                                <div class="plan-column-header">
+
+
+                                    <div>
+
+
+                                        <h3>
+                                            Steps
+                                        </h3>
+
+
+                                        <p>
+                                            Steps scheduled for review.
+                                        </p>
+
+
+                                    </div>
+
+
+                                    <span class="plan-total-count">
+
+                                        {{ due_step_total }}
+
+                                    </span>
+
+
+                                </div>
+
+
+                                <div class="plan-subject-list">
+
+
+                                    {% for item in due_step_subjects %}
+
+
+                                        <a
+                                            href="{% url 'step_review_list' subject_index=item.subject_index %}"
+                                            class="plan-subject-card"
+                                        >
+
+
+                                            <div class="plan-card-content">
+
+
+                                                <span class="plan-card-title">
+
+                                                    {{ item.subject.name }}
+                                                    Steps
+
+                                                </span>
+
+
+                                                <span class="plan-card-count">
+
+                                                    {{ item.count }}
+                                                    step set{{ item.count|pluralize }}
 
                                                 </span>
 

@@ -90,6 +90,14 @@ def dashboard(request):
 
     book_summary_total = 0
 
+    # --------------------------------------------------------
+    # STEP DATA
+    # --------------------------------------------------------
+
+    due_step_subjects = []
+
+    due_step_total = 0
+
     # ========================================================
     # HELPER:
     # FIND SESSION SUBJECT INDEX
@@ -618,6 +626,157 @@ def dashboard(request):
         )
 
         # ====================================================
+        # STEPS
+        # ====================================================
+
+        step_lists = (
+            StepList.objects
+            .filter(
+                knowledge_unit__subject__user=request.user,
+                knowledge_unit__active=True,
+            )
+            .select_related(
+                "knowledge_unit",
+                "knowledge_unit__subject",
+            )
+            .order_by(
+                "knowledge_unit__subject__name",
+                "knowledge_unit__created",
+                "id",
+            )
+        )
+
+        step_groups = {}
+
+        # ----------------------------------------------------
+        # CHECK EACH STEP SET
+        # ----------------------------------------------------
+
+        for step_list in (
+            step_lists
+        ):
+
+            knowledge_unit = (
+                step_list.knowledge_unit
+            )
+
+            # ------------------------------------------------
+            # PROGRESS
+            # ------------------------------------------------
+
+            progress = (
+                StudentKnowledge.objects
+                .filter(
+                    student=request.user,
+                    knowledge_unit=knowledge_unit,
+                )
+                .first()
+            )
+
+            # ------------------------------------------------
+            # IS DUE?
+            # ------------------------------------------------
+
+            is_due = False
+
+            if progress is None:
+
+                is_due = True
+
+            elif progress.next_review is None:
+
+                is_due = True
+
+            else:
+
+                next_review_date = (
+                    timezone.localtime(
+                        progress.next_review
+                    )
+                    .date()
+                )
+
+                if (
+                    next_review_date
+                    <= today
+                ):
+
+                    is_due = True
+
+            if not is_due:
+
+                continue
+
+            # ------------------------------------------------
+            # SUBJECT
+            # ------------------------------------------------
+
+            database_subject = (
+                knowledge_unit.subject
+            )
+
+            if not database_subject:
+
+                continue
+
+            # ------------------------------------------------
+            # SUBJECT INDEX
+            # ------------------------------------------------
+
+            subject_index = (
+                find_subject_index(
+                    database_subject
+                )
+            )
+
+            if subject_index is None:
+
+                continue
+
+            # ------------------------------------------------
+            # GROUP BY SUBJECT
+            # ------------------------------------------------
+
+            subject_id = (
+                database_subject.id
+            )
+
+            if (
+                subject_id
+                not in step_groups
+            ):
+
+                step_groups[
+                    subject_id
+                ] = {
+
+                    "subject":
+                        database_subject,
+
+                    "subject_index":
+                        subject_index,
+
+                    "count":
+                        0,
+                }
+
+            step_groups[
+                subject_id
+            ][
+                "count"
+            ] += 1
+
+            due_step_total += 1
+
+        # ----------------------------------------------------
+        # FINAL STEP SUBJECTS
+        # ----------------------------------------------------
+
+        due_step_subjects = list(
+            step_groups.values()
+        )
+
+        # ====================================================
         # BOOK SUMMARIES
         # ====================================================
 
@@ -882,6 +1041,16 @@ def dashboard(request):
 
             "due_list_total":
                 due_list_total,
+
+            # --------------------------------------------
+            # STEPS
+            # --------------------------------------------
+
+            "due_step_subjects":
+                due_step_subjects,
+
+            "due_step_total":
+                due_step_total,
 
             # --------------------------------------------
             # BOOK SUMMARIES
