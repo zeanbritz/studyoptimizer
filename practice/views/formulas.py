@@ -1,4 +1,8 @@
 from datetime import timedelta
+from urllib.parse import urlencode
+
+import json
+import random
 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import (
@@ -9,12 +13,8 @@ from django.shortcuts import (
 from django.urls import reverse
 from django.utils import timezone
 
-import json
-import random
-
 from learning.models import (
     Formula,
-    KnowledgeUnit,
     StudentKnowledge,
     FormulaElementPerformance,
 )
@@ -24,21 +24,26 @@ from learning.models import (
 # GET ALL FORMULA ELEMENTS
 # ============================================================
 
-def get_all_elements(elements):
+def get_all_elements(
+    elements
+):
     """
-    Recursively collect every testable element in the formula.
+    Recursively collect every testable element in the formula,
+    including elements inside fractions.
 
-    Elements inside fractions are also collected.
-
-    The "=" operator is excluded because the student
-    should not be tested on it.
+    The "=" operator is excluded because we do not want
+    students tested on the equals sign.
     """
 
     result = []
 
     for element in elements:
 
-        element_type = element.get("type")
+        element_type = (
+            element.get(
+                "type"
+            )
+        )
 
         value = str(
             element.get(
@@ -48,12 +53,13 @@ def get_all_elements(elements):
         ).strip()
 
         # ----------------------------------------------------
-        # DO NOT TEST "="
+        # DO NOT TEST =
         # ----------------------------------------------------
 
         if (
             element_type == "operator"
-            and value == "="
+            and
+            value == "="
         ):
 
             continue
@@ -62,7 +68,11 @@ def get_all_elements(elements):
         # FRACTION
         # ----------------------------------------------------
 
-        if element_type == "fraction":
+        if (
+            element_type
+            ==
+            "fraction"
+        ):
 
             result.extend(
                 get_all_elements(
@@ -82,6 +92,10 @@ def get_all_elements(elements):
                 )
             )
 
+        # ----------------------------------------------------
+        # NORMAL ELEMENT
+        # ----------------------------------------------------
+
         else:
 
             result.append(
@@ -92,7 +106,7 @@ def get_all_elements(elements):
 
 
 # ============================================================
-# FIND ELEMENT BY ID
+# FIND FORMULA ELEMENT
 # ============================================================
 
 def find_element(
@@ -100,49 +114,65 @@ def find_element(
     element_id
 ):
     """
-    Recursively find a formula element by its ID.
+    Find one formula element by its ID.
 
-    This also searches inside fractions.
+    Works recursively inside fractions.
     """
 
     for element in elements:
 
-        if str(
-            element.get(
-                "id"
+        if (
+            str(
+                element.get(
+                    "id"
+                )
             )
-        ) == str(
-            element_id
+            ==
+            str(
+                element_id
+            )
         ):
 
             return element
 
-        # ----------------------------------------------------
-        # SEARCH INSIDE FRACTION
-        # ----------------------------------------------------
+        if (
+            element.get(
+                "type"
+            )
+            ==
+            "fraction"
+        ):
 
-        if element.get(
-            "type"
-        ) == "fraction":
+            # ------------------------------------------------
+            # NUMERATOR
+            # ------------------------------------------------
 
-            found = find_element(
-                element.get(
-                    "numerator",
-                    []
-                ),
-                element_id
+            found = (
+                find_element(
+                    element.get(
+                        "numerator",
+                        []
+                    ),
+                    element_id
+                )
             )
 
             if found:
 
                 return found
 
-            found = find_element(
-                element.get(
-                    "denominator",
-                    []
-                ),
-                element_id
+            # ------------------------------------------------
+            # DENOMINATOR
+            # ------------------------------------------------
+
+            found = (
+                find_element(
+                    element.get(
+                        "denominator",
+                        []
+                    ),
+                    element_id
+                )
             )
 
             if found:
@@ -153,31 +183,129 @@ def find_element(
 
 
 # ============================================================
-# MASTERY -> HIDDEN PERCENTAGE
+# GET DESCRIPTION MATCH ITEMS
 # ============================================================
 
-def get_hidden_percentage(
-    mastery_level
+def get_description_match_items(
+    elements
 ):
     """
-    Determines approximately how much of the formula
-    should be hidden at each mastery level.
+    Find every variable or symbol that has a saved
+    meaning / description.
+
+    These become the targets in the second-stage
+    mastered-formula test.
+
+    Works recursively inside fractions.
     """
 
-    percentages = {
-        0: 10,
-        1: 15,
-        2: 30,
-        3: 45,
-        4: 60,
-        5: 80,
-        6: 100,
-    }
+    result = []
 
-    return percentages.get(
-        mastery_level,
-        15
-    )
+    for element in elements:
+
+        element_type = (
+            element.get(
+                "type",
+                ""
+            )
+        )
+
+        # ----------------------------------------------------
+        # FRACTION
+        # ----------------------------------------------------
+
+        if (
+            element_type
+            ==
+            "fraction"
+        ):
+
+            result.extend(
+                get_description_match_items(
+                    element.get(
+                        "numerator",
+                        []
+                    )
+                )
+            )
+
+            result.extend(
+                get_description_match_items(
+                    element.get(
+                        "denominator",
+                        []
+                    )
+                )
+            )
+
+            continue
+
+        # ----------------------------------------------------
+        # ONLY VARIABLE + SYMBOL
+        # ----------------------------------------------------
+
+        if (
+            element_type
+            not in (
+                "variable",
+                "symbol",
+            )
+        ):
+
+            continue
+
+        element_id = str(
+            element.get(
+                "id",
+                ""
+            )
+        ).strip()
+
+        value = str(
+            element.get(
+                "value",
+                ""
+            )
+        ).strip()
+
+        meaning = str(
+            element.get(
+                "meaning",
+                ""
+            )
+        ).strip()
+
+        # ----------------------------------------------------
+        # MUST HAVE DESCRIPTION
+        # ----------------------------------------------------
+
+        if (
+            not element_id
+            or
+            not value
+            or
+            not meaning
+        ):
+
+            continue
+
+        result.append(
+            {
+                "id":
+                    element_id,
+
+                "type":
+                    element_type,
+
+                "value":
+                    value,
+
+                "meaning":
+                    meaning,
+            }
+        )
+
+    return result
 
 
 # ============================================================
@@ -188,22 +316,81 @@ def get_formula_review_interval(
     mastery_level
 ):
     """
-    Number of days before the formula becomes due again.
+    Number of days until the next formula review.
     """
 
     intervals = {
-        0: 0,
-        1: 1,
-        2: 2,
-        3: 4,
-        4: 7,
-        5: 14,
-        6: 30,
+
+        0:
+            0,
+
+        1:
+            1,
+
+        2:
+            2,
+
+        3:
+            4,
+
+        4:
+            7,
+
+        5:
+            14,
+
+        6:
+            30,
+
     }
 
     return intervals.get(
         mastery_level,
         0
+    )
+
+
+# ============================================================
+# MASTERY -> HIDDEN PERCENTAGE
+# ============================================================
+
+def get_hidden_percentage(
+    mastery_level
+):
+    """
+    Determine how much of the formula should be hidden.
+
+    At mastery 6 the complete testable formula is hidden.
+    """
+
+    percentages = {
+
+        0:
+            10,
+
+        1:
+            15,
+
+        2:
+            30,
+
+        3:
+            45,
+
+        4:
+            60,
+
+        5:
+            80,
+
+        6:
+            100,
+
+    }
+
+    return percentages.get(
+        mastery_level,
+        15
     )
 
 
@@ -217,8 +404,11 @@ def record_element_performance(
     is_correct
 ):
     """
-    Record whether the student answered one specific
-    formula element correctly or incorrectly.
+    Record performance for one individual formula element.
+
+    This is only for the normal formula test.
+
+    Description matching does NOT call this function.
     """
 
     element_id = str(
@@ -250,7 +440,9 @@ def record_element_performance(
         FormulaElementPerformance.objects
         .get_or_create(
             formula=formula,
+
             element_id=element_id,
+
             defaults={
                 "element_type":
                     element_type,
@@ -262,14 +454,16 @@ def record_element_performance(
     )
 
     # --------------------------------------------------------
-    # KEEP STORED DATA SYNCHRONIZED
+    # KEEP CURRENT ELEMENT DETAILS
     # --------------------------------------------------------
 
     performance.element_type = (
         element_type
     )
 
-    performance.value = value
+    performance.value = (
+        value
+    )
 
     performance.last_reviewed = (
         timezone.now()
@@ -281,11 +475,15 @@ def record_element_performance(
 
     if is_correct:
 
-        performance.correct_count += 1
+        performance.correct_count += (
+            1
+        )
 
     else:
 
-        performance.incorrect_count += 1
+        performance.incorrect_count += (
+            1
+        )
 
     performance.save()
 
@@ -303,14 +501,14 @@ def choose_hidden_elements(
     """
     Choose which formula elements should be hidden.
 
+    Weak elements receive priority.
+
     Approximately:
 
         70% weaker elements
         30% random elements
 
-    Previously tested elements are avoided where possible.
-
-    At mastery level 6, all testable elements are hidden.
+    At mastery level 6 every testable element is hidden.
     """
 
     if not all_elements:
@@ -324,24 +522,36 @@ def choose_hidden_elements(
     )
 
     # ========================================================
-    # MASTERY LEVEL 6
+    # MASTERY 6 = EVERYTHING
     # ========================================================
 
-    if percentage >= 100:
+    if (
+        percentage
+        >=
+        100
+    ):
 
-        return all_elements.copy()
+        return (
+            all_elements.copy()
+        )
 
     # ========================================================
-    # NUMBER OF ELEMENTS TO HIDE
+    # NUMBER TO HIDE
     # ========================================================
 
     number_to_hide = round(
-        len(all_elements)
-        * percentage
-        / 100
+        len(
+            all_elements
+        )
+        *
+        percentage
+        /
+        100
     )
 
-    # Always test at least one element.
+    # --------------------------------------------------------
+    # ALWAYS AT LEAST ONE
+    # --------------------------------------------------------
 
     number_to_hide = max(
         1,
@@ -350,16 +560,19 @@ def choose_hidden_elements(
 
     number_to_hide = min(
         number_to_hide,
-        len(all_elements)
+        len(
+            all_elements
+        )
     )
 
     previous_ids = (
         previous_ids
-        or []
+        or
+        []
     )
 
     # ========================================================
-    # GET PERFORMANCE DATA
+    # PERFORMANCE DATA
     # ========================================================
 
     performance_records = (
@@ -370,6 +583,7 @@ def choose_hidden_elements(
     )
 
     performance_map = {
+
         str(
             record.element_id
         ):
@@ -377,10 +591,11 @@ def choose_hidden_elements(
 
         for record
         in performance_records
+
     }
 
     # ========================================================
-    # CALCULATE WEAKNESS
+    # WEAKNESS
     # ========================================================
 
     weighted_elements = []
@@ -405,29 +620,36 @@ def choose_hidden_elements(
 
         if not record:
 
-            weakness = 1.0
+            weakness = (
+                1.0
+            )
 
         else:
 
             total = (
                 record.correct_count
-                + record.incorrect_count
+                +
+                record.incorrect_count
             )
 
             if total == 0:
 
-                weakness = 1.0
+                weakness = (
+                    1.0
+                )
 
             else:
 
                 accuracy = (
                     record.correct_count
-                    / total
+                    /
+                    total
                 )
 
                 weakness = (
                     1
-                    - accuracy
+                    -
+                    accuracy
                 )
 
         weighted_elements.append(
@@ -438,39 +660,45 @@ def choose_hidden_elements(
         )
 
     # ========================================================
-    # AVOID IMMEDIATELY REPEATING ELEMENTS
+    # AVOID SAME ELEMENTS IMMEDIATELY
     # ========================================================
 
     available = [
+
         item
+
         for item
         in weighted_elements
+
         if str(
             item[0].get(
                 "id"
             )
-        ) not in previous_ids
+        )
+        not in previous_ids
+
     ]
 
-    # --------------------------------------------------------
-    # NOT ENOUGH ALTERNATIVES
-    # --------------------------------------------------------
-
-    if len(
-        available
-    ) < number_to_hide:
+    if (
+        len(
+            available
+        )
+        <
+        number_to_hide
+    ):
 
         available = (
             weighted_elements
         )
 
     # ========================================================
-    # SPLIT SELECTION
+    # WEAK / RANDOM SPLIT
     # ========================================================
 
     weak_count = round(
         number_to_hide
-        * 0.7
+        *
+        0.7
     )
 
     weak_count = min(
@@ -480,50 +708,55 @@ def choose_hidden_elements(
 
     random_count = (
         number_to_hide
-        - weak_count
+        -
+        weak_count
     )
-
-    # ========================================================
-    # SORT BY WEAKNESS
-    # ========================================================
 
     sorted_elements = sorted(
         available,
-        key=lambda item: item[1],
+
+        key=lambda item:
+            item[1],
+
         reverse=True
     )
 
     weak_candidates = [
+
         element
 
-        for element, weakness
+        for (
+            element,
+            weakness
+        )
         in sorted_elements
 
         if weakness > 0
+
     ]
 
     selected = []
 
     # ========================================================
-    # SELECT WEAK ELEMENTS
+    # WEAK ELEMENTS
     # ========================================================
 
-    if (
-        weak_candidates
-        and weak_count > 0
-    ):
+    if weak_candidates:
 
         weak_pool_size = max(
+
             weak_count,
 
             min(
                 len(
                     weak_candidates
                 ),
-
-                weak_count
-                * 2
+                max(
+                    1,
+                    weak_count * 2
+                )
             )
+
         )
 
         weak_pool = (
@@ -546,21 +779,28 @@ def choose_hidden_elements(
         )
 
     # ========================================================
-    # SELECT RANDOM ELEMENTS
+    # RANDOM ELEMENTS
     # ========================================================
 
     remaining = [
+
         element
 
-        for element, weakness
+        for (
+            element,
+            weakness
+        )
         in available
 
-        if element not in selected
+        if element
+        not in selected
+
     ]
 
     if (
         remaining
-        and random_count > 0
+        and
+        random_count > 0
     ):
 
         selected.extend(
@@ -577,20 +817,30 @@ def choose_hidden_elements(
         )
 
     # ========================================================
-    # FILL REMAINING SPACES
+    # FILL ANY REMAINING SLOTS
     # ========================================================
 
-    if len(
-        selected
-    ) < number_to_hide:
+    if (
+        len(
+            selected
+        )
+        <
+        number_to_hide
+    ):
 
         remaining = [
+
             element
 
-            for element, weakness
+            for (
+                element,
+                weakness
+            )
             in available
 
-            if element not in selected
+            if element
+            not in selected
+
         ]
 
         if remaining:
@@ -601,7 +851,8 @@ def choose_hidden_elements(
 
                     min(
                         number_to_hide
-                        - len(
+                        -
+                        len(
                             selected
                         ),
 
@@ -612,29 +863,142 @@ def choose_hidden_elements(
                 )
             )
 
-    return selected[
-        :number_to_hide
-    ]
+    return (
+        selected[
+            :number_to_hide
+        ]
+    )
 
 
 # ============================================================
-# GET NEXT GLOBAL FORMULA
+# FIND SUBJECT INDEX
 # ============================================================
 
-def get_next_global_formula(
-    user,
-    current_formula,
+def get_formula_subject_index(
+    request,
+    subject
 ):
     """
-    Used when the student entered through:
+    Find the subject's onboarding-session index.
+    """
 
-        Review -> Formulas
+    supplied_index = (
+        request.POST.get(
+            "subject_index"
+        )
+        or
+        request.GET.get(
+            "subject_index"
+        )
+    )
 
-    Global review can move between subjects.
+    if (
+        supplied_index
+        is not None
+    ):
 
-    When the end is reached it wraps back to the first
-    available formula so the student can continue until
-    they press Finish Review.
+        try:
+
+            return int(
+                supplied_index
+            )
+
+        except (
+            TypeError,
+            ValueError
+        ):
+
+            pass
+
+    subjects = (
+        request.session.get(
+            "onboarding_subjects",
+            []
+        )
+    )
+
+    # --------------------------------------------------------
+    # DATABASE ID
+    # --------------------------------------------------------
+
+    for (
+        index,
+        subject_data
+    ) in enumerate(
+        subjects
+    ):
+
+        database_id = (
+            subject_data.get(
+                "database_id"
+            )
+        )
+
+        try:
+
+            database_id = int(
+                database_id
+            )
+
+        except (
+            TypeError,
+            ValueError
+        ):
+
+            database_id = (
+                None
+            )
+
+        if (
+            database_id
+            ==
+            subject.id
+        ):
+
+            return index
+
+    # --------------------------------------------------------
+    # NAME FALLBACK
+    # --------------------------------------------------------
+
+    for (
+        index,
+        subject_data
+    ) in enumerate(
+        subjects
+    ):
+
+        if (
+            subject_data.get(
+                "name",
+                ""
+            ).strip()
+            ==
+            subject.name.strip()
+        ):
+
+            return index
+
+    return 0
+
+
+# ============================================================
+# FIND NEXT DUE FORMULA
+# ============================================================
+
+def get_next_due_formula(
+    user,
+    current_formula,
+    subject=None
+):
+    """
+    Find the next due formula.
+
+    subject=None:
+        search all subjects.
+
+    subject=<subject>:
+        search only the current subject.
     """
 
     formulas = (
@@ -642,73 +1006,121 @@ def get_next_global_formula(
         .filter(
             knowledge_unit__subject__user=user,
 
-            knowledge_unit__knowledge_type=(
-                KnowledgeUnit
-                .KnowledgeType
-                .FORMULA
-            ),
-
             knowledge_unit__active=True,
+        )
+        .exclude(
+            id=current_formula.id
         )
         .select_related(
             "knowledge_unit",
             "knowledge_unit__subject",
         )
         .order_by(
-            "id"
+            "knowledge_unit__subject__name",
+            "knowledge_unit__title",
+            "id",
         )
     )
 
-    # --------------------------------------------------------
-    # FIND NEXT FORMULA
-    # --------------------------------------------------------
+    if (
+        subject
+        is not None
+    ):
 
-    next_formula = (
-        formulas
-        .filter(
-            id__gt=current_formula.id
+        formulas = (
+            formulas.filter(
+                knowledge_unit__subject=subject
+            )
         )
-        .first()
+
+    now = (
+        timezone.now()
     )
 
-    if next_formula is not None:
+    for formula in formulas:
 
-        return next_formula
+        progress = (
+            StudentKnowledge.objects
+            .filter(
+                student=user,
 
-    # --------------------------------------------------------
-    # END OF LIST
-    #
-    # GLOBAL REVIEW MAY WRAP.
-    # --------------------------------------------------------
-
-    return (
-        formulas
-        .exclude(
-            id=current_formula.id
+                knowledge_unit=(
+                    formula.knowledge_unit
+                ),
+            )
+            .first()
         )
-        .first()
-    )
+
+        # ----------------------------------------------------
+        # NEVER REVIEWED
+        # ----------------------------------------------------
+
+        if progress is None:
+
+            return formula
+
+        # ----------------------------------------------------
+        # NO DATE = DUE
+        # ----------------------------------------------------
+
+        if (
+            progress.next_review
+            is None
+        ):
+
+            return formula
+
+        # ----------------------------------------------------
+        # REVIEW DUE
+        # ----------------------------------------------------
+
+        if (
+            progress.next_review
+            <=
+            now
+        ):
+
+            return formula
+
+    return None
 
 
 # ============================================================
-# BUILD GLOBAL FORMULA REVIEW URL
+# BUILD PRACTICE URL
 # ============================================================
 
-def build_global_formula_review_url(
-    formula
+def build_formula_practice_url(
+    formula,
+    review_mode,
+    subject_index
 ):
+    """
+    Build the next formula URL while preserving review mode.
+    """
 
     url = reverse(
         "practice_formula",
-        kwargs={
-            "formula_id":
-                formula.id,
-        }
+        args=[
+            formula.id
+        ]
     )
 
+    parameters = {
+        "review_mode":
+            review_mode,
+
+        "subject_index":
+            subject_index,
+    }
+
     return (
-        f"{url}"
-        f"?review_mode=global"
+        url
+        +
+        "?"
+        +
+        urlencode(
+            parameters
+        )
     )
 
 
@@ -721,116 +1133,46 @@ def practice_formula(
     request,
     formula_id
 ):
-    """
-    Formula recall practice.
-
-    Supports two modes:
-
-        normal
-            Subject-specific scheduled review.
-
-        global
-            Review -> Formulas.
-            Allows the student to move through formulas
-            across all subjects.
-    """
 
     # ========================================================
-    # GET CURRENT FORMULA
+    # FORMULA
     # ========================================================
 
     formula = get_object_or_404(
-        Formula,
+        Formula.objects.select_related(
+            "knowledge_unit",
+            "knowledge_unit__subject",
+        ),
+
         id=formula_id,
-        knowledge_unit__subject__user=request.user
+
+        knowledge_unit__subject__user=(
+            request.user
+        ),
     )
 
     knowledge_unit = (
         formula.knowledge_unit
     )
 
-        # ========================================================
-    # FIND SUBJECT INDEX
-    # ========================================================
-
     subject = (
         knowledge_unit.subject
     )
 
-    subjects = request.session.get(
-        "onboarding_subjects",
-        []
-    )
+    # ========================================================
+    # PROGRESS
+    # ========================================================
 
-    subject_index = None
+    progress, created = (
+        StudentKnowledge.objects
+        .get_or_create(
+            student=request.user,
 
-
-    # --------------------------------------------------------
-    # FIND SUBJECT USING DATABASE ID
-    # --------------------------------------------------------
-
-    for index, subject_data in enumerate(
-        subjects
-    ):
-
-        database_id = (
-            subject_data.get(
-                "database_id"
-            )
+            knowledge_unit=(
+                knowledge_unit
+            ),
         )
-
-
-        try:
-
-            database_id = int(
-                database_id
-            )
-
-        except (
-            TypeError,
-            ValueError,
-        ):
-
-            database_id = None
-
-
-        if database_id == subject.id:
-
-            subject_index = index
-
-            break
-
-
-    # --------------------------------------------------------
-    # FALLBACK TO SUBJECT NAME
-    # --------------------------------------------------------
-
-    if subject_index is None:
-
-        for index, subject_data in enumerate(
-            subjects
-        ):
-
-            if (
-                subject_data.get(
-                    "name",
-                    ""
-                ).strip()
-                == subject.name.strip()
-            ):
-
-                subject_index = index
-
-                break
-
-
-    # --------------------------------------------------------
-    # FINAL FALLBACK
-    # --------------------------------------------------------
-
-    if subject_index is None:
-
-        subject_index = 0
+    )
 
     # ========================================================
     # REVIEW MODE
@@ -840,28 +1182,47 @@ def practice_formula(
         request.POST.get(
             "review_mode"
         )
-        or request.GET.get(
+        or
+        request.GET.get(
             "review_mode"
         )
-        or "normal"
+        or
+        "normal"
     )
 
-    if review_mode not in (
-        "normal",
-        "global",
+    # Support old/global links too.
+    if (
+        request.GET.get(
+            "all_subjects"
+        )
+        ==
+        "1"
     ):
 
-        review_mode = "normal"
+        review_mode = (
+            "global"
+        )
+
+    if (
+        review_mode
+        not in (
+            "normal",
+            "global",
+        )
+    ):
+
+        review_mode = (
+            "normal"
+        )
 
     # ========================================================
-    # GET OR CREATE STUDENT PROGRESS
+    # SUBJECT INDEX
     # ========================================================
 
-    progress, created = (
-        StudentKnowledge.objects
-        .get_or_create(
-            student=request.user,
-            knowledge_unit=knowledge_unit,
+    subject_index = (
+        get_formula_subject_index(
+            request,
+            subject
         )
     )
 
@@ -877,12 +1238,23 @@ def practice_formula(
             )
         )
 
+        if not isinstance(
+            formula_elements,
+            list
+        ):
+
+            formula_elements = []
+
     except (
         json.JSONDecodeError,
         TypeError
     ):
 
         formula_elements = []
+
+    # ========================================================
+    # TESTABLE ELEMENTS
+    # ========================================================
 
     all_elements = (
         get_all_elements(
@@ -891,196 +1263,156 @@ def practice_formula(
     )
 
     # ========================================================
-    # GLOBAL REVIEW -> NEXT FORMULA
+    # DESCRIPTION MATCHING DATA
     # ========================================================
 
-    if (
-        request.method == "POST"
-        and
-        request.POST.get(
-            "action"
-        ) == "next_formula"
-    ):
-
-        next_formula = (
-            get_next_global_formula(
-                request.user,
-                formula,
-            )
+    description_match_items = (
+        get_description_match_items(
+            formula_elements
         )
+    )
 
-        # ----------------------------------------------------
-        # NEXT GLOBAL FORMULA
-        # ----------------------------------------------------
+    description_match_cards = [
 
-        if next_formula is not None:
+        item.copy()
 
-            return redirect(
-                build_global_formula_review_url(
-                    next_formula
-                )
-            )
+        for item
+        in description_match_items
 
-        # ----------------------------------------------------
-        # NO OTHER FORMULA EXISTS
-        # ----------------------------------------------------
+    ]
 
-        return redirect(
-            "review_formulas"
-        )
-
-    # ========================================================
-    # SUBJECT REVIEW -> CONTINUE TO NEXT DUE FORMULA
-    # ========================================================
-
-    if (
-        request.method == "POST"
-        and
-        request.POST.get(
-            "action"
-        ) == "continue"
-    ):
-
-        today = (
-            timezone.localdate()
-        )
-
-        due_formulas = []
-
-        # ----------------------------------------------------
-        # GET ACTIVE FORMULAS FOR THIS SUBJECT ONLY
-        # ----------------------------------------------------
-
-        formulas = (
-            Formula.objects
-            .filter(
-                knowledge_unit__subject=(
-                    knowledge_unit.subject
-                ),
-
-                knowledge_unit__active=True,
-            )
-            .select_related(
-                "knowledge_unit"
-            )
-            .order_by(
-                "id"
-            )
-        )
-
-        # ----------------------------------------------------
-        # FIND ANOTHER DUE FORMULA
-        # ----------------------------------------------------
-
-        for next_formula in formulas:
-
-            # Do not immediately show the formula
-            # that was just reviewed.
-
-            if (
-                next_formula.id
-                == formula.id
-            ):
-
-                continue
-
-            next_knowledge_unit = (
-                next_formula
-                .knowledge_unit
-            )
-
-            # ------------------------------------------------
-            # GET STUDENT PROGRESS
-            # ------------------------------------------------
-
-            next_progress = (
-                StudentKnowledge.objects
-                .filter(
-                    student=request.user,
-
-                    knowledge_unit=(
-                        next_knowledge_unit
-                    ),
-                )
-                .first()
-            )
-
-            # ------------------------------------------------
-            # NEVER REVIEWED
-            # ------------------------------------------------
-
-            if next_progress is None:
-
-                due_formulas.append(
-                    next_formula
-                )
-
-                continue
-
-            # ------------------------------------------------
-            # CREATED BUT NEVER REVIEWED
-            # ------------------------------------------------
-
-            if (
-                next_progress.review_count
-                == 0
-            ):
-
-                due_formulas.append(
-                    next_formula
-                )
-
-                continue
-
-            # ------------------------------------------------
-            # PREVIOUSLY REVIEWED AND DUE
-            # ------------------------------------------------
-
-            if (
-                next_progress.next_review
-                is not None
-                and
-                next_progress.next_review.date()
-                <= today
-            ):
-
-                due_formulas.append(
-                    next_formula
-                )
-
-        # ====================================================
-        # ANOTHER FORMULA IS DUE
-        # ====================================================
-
-        if due_formulas:
-
-            next_formula = (
-                due_formulas[0]
-            )
-
-            return redirect(
-                "practice_formula",
-                formula_id=(
-                    next_formula.id
-                )
-            )
-
-        # ====================================================
-        # NO MORE FORMULAS ARE DUE
-        #
-        # Return to the subject page.
-        # ====================================================
-
-        return redirect(
-        "subject_detail",
-        subject_index=subject_index
+    random.shuffle(
+        description_match_cards
     )
 
     # ========================================================
-    # SUBMIT ANSWER
+    # ACTION BUTTONS AFTER RESULT
     # ========================================================
 
-    if request.method == "POST":
+    if (
+        request.method
+        ==
+        "POST"
+    ):
+
+        action = (
+            request.POST.get(
+                "action",
+                ""
+            )
+        )
+
+        # ----------------------------------------------------
+        # NEXT FORMULA — GLOBAL
+        # ----------------------------------------------------
+
+        if (
+            action
+            ==
+            "next_formula"
+        ):
+
+            next_formula = (
+                get_next_due_formula(
+                    request.user,
+                    formula,
+                    subject=None
+                )
+            )
+
+            if next_formula:
+
+                return redirect(
+                    build_formula_practice_url(
+                        next_formula,
+                        "global",
+                        subject_index
+                    )
+                )
+
+            return redirect(
+                "review_formulas"
+            )
+
+        # ----------------------------------------------------
+        # CONTINUE — CURRENT SUBJECT
+        # ----------------------------------------------------
+
+        if (
+            action
+            ==
+            "continue"
+        ):
+
+            next_formula = (
+                get_next_due_formula(
+                    request.user,
+                    formula,
+                    subject=subject
+                )
+            )
+
+            if next_formula:
+
+                return redirect(
+                    build_formula_practice_url(
+                        next_formula,
+                        "normal",
+                        subject_index
+                    )
+                )
+
+            return redirect(
+                "formula_review_list",
+                subject_index=subject_index
+            )
+
+    # ========================================================
+    # PAGE STATE
+    # ========================================================
+
+    hidden_elements = []
+
+    hidden_ids = []
+
+    result = None
+
+    correct_answers = {}
+
+    user_answers = {}
+
+    next_formula = None
+
+    show_description_match = (
+        False
+    )
+
+    # ========================================================
+    # SUBMIT NORMAL FORMULA ANSWER
+    # ========================================================
+
+    if (
+        request.method
+        ==
+        "POST"
+    ):
+
+        # ====================================================
+        # IMPORTANT:
+        #
+        # Remember mastery BEFORE marking the formula.
+        #
+        # If student was 5/6 and this answer makes them 6/6,
+        # the matching stage must NOT appear yet.
+        #
+        # It only appears on a future review that STARTED 6/6.
+        # ====================================================
+
+        was_already_mastered = (
+            progress.mastery_level
+            >=
+            6
+        )
 
         hidden_ids = (
             request.POST.getlist(
@@ -1088,21 +1420,17 @@ def practice_formula(
             )
         )
 
-        correct_answers = {}
-
-        user_answers = {}
-
-        all_correct = True
-
         # ====================================================
         # CHECK EVERY HIDDEN ELEMENT
         # ====================================================
 
         for hidden_id in hidden_ids:
 
-            element = find_element(
-                formula_elements,
-                hidden_id
+            element = (
+                find_element(
+                    formula_elements,
+                    hidden_id
+                )
             )
 
             if not element:
@@ -1115,22 +1443,15 @@ def practice_formula(
                 )
             )
 
-            # ------------------------------------------------
-            # STUDENT ANSWER
-            # ------------------------------------------------
-
             user_answer = (
                 request.POST.get(
                     "answer_"
-                    + element_id,
+                    +
+                    element_id,
                     ""
                 )
                 .strip()
             )
-
-            # ------------------------------------------------
-            # CORRECT ANSWER
-            # ------------------------------------------------
 
             correct_answer = str(
                 element.get(
@@ -1139,25 +1460,26 @@ def practice_formula(
                 )
             ).strip()
 
-            # ------------------------------------------------
-            # CHECK ANSWER
-            # ------------------------------------------------
-
             is_correct = (
                 user_answer
-                == correct_answer
+                ==
+                correct_answer
             )
 
             user_answers[
                 element_id
-            ] = user_answer
+            ] = (
+                user_answer
+            )
 
             correct_answers[
                 element_id
-            ] = correct_answer
+            ] = (
+                correct_answer
+            )
 
             # ------------------------------------------------
-            # RECORD ELEMENT PERFORMANCE
+            # NORMAL FORMULA ELEMENT PERFORMANCE
             # ------------------------------------------------
 
             record_element_performance(
@@ -1166,37 +1488,63 @@ def practice_formula(
                 is_correct
             )
 
-            if not is_correct:
-
-                all_correct = False
-
         # ====================================================
-        # CORRECT
+        # DID THEY GET EVERYTHING CORRECT?
         # ====================================================
 
-        if (
-            all_correct
-            and correct_answers
-        ):
+        all_correct = bool(
+            correct_answers
+        )
 
-            progress.correct_count += 1
+        if all_correct:
 
-            progress.review_count += 1
+            for (
+                element_id,
+                correct_answer
+            ) in correct_answers.items():
+
+                if (
+                    user_answers.get(
+                        element_id,
+                        ""
+                    )
+                    !=
+                    correct_answer
+                ):
+
+                    all_correct = (
+                        False
+                    )
+
+                    break
+
+        # ====================================================
+        # CORRECT FORMULA
+        # ====================================================
+
+        if all_correct:
+
+            progress.correct_count += (
+                1
+            )
 
             if (
                 progress.mastery_level
-                < 6
+                <
+                6
             ):
 
-                progress.mastery_level += 1
+                progress.mastery_level += (
+                    1
+                )
+
+            progress.review_count += (
+                1
+            )
 
             progress.last_reviewed = (
                 timezone.now()
             )
-
-            # ------------------------------------------------
-            # CALCULATE NEXT REVIEW
-            # ------------------------------------------------
 
             interval = (
                 get_formula_review_interval(
@@ -1206,62 +1554,110 @@ def practice_formula(
 
             progress.next_review = (
                 timezone.now()
-                + timedelta(
+                +
+                timedelta(
                     days=interval
                 )
             )
 
             progress.save()
 
-            result = "correct"
+            result = (
+                "correct"
+            )
+
+            # =================================================
+            # MASTERED SECOND STAGE
+            #
+            # Only if:
+            #
+            # 1. Formula STARTED this review at 6/6
+            # 2. Normal formula was correct
+            # 3. At least one variable/symbol has description
+            # =================================================
+
+            show_description_match = (
+
+                was_already_mastered
+
+                and
+
+                bool(
+                    description_match_items
+                )
+
+            )
 
         # ====================================================
-        # INCORRECT
+        # INCORRECT FORMULA
         # ====================================================
 
         else:
 
-            progress.incorrect_count += 1
-
-            progress.review_count += 1
+            progress.incorrect_count += (
+                1
+            )
 
             if (
                 progress.mastery_level
-                > 0
+                >
+                0
             ):
 
-                progress.mastery_level -= 1
+                progress.mastery_level -= (
+                    1
+                )
+
+            progress.review_count += (
+                1
+            )
 
             progress.last_reviewed = (
                 timezone.now()
             )
 
-            # ------------------------------------------------
-            # INCORRECT ANSWERS RETURN TOMORROW
-            # ------------------------------------------------
+            interval = (
+                get_formula_review_interval(
+                    progress.mastery_level
+                )
+            )
 
             progress.next_review = (
                 timezone.now()
-                + timedelta(
-                    days=1
+                +
+                timedelta(
+                    days=interval
                 )
             )
 
             progress.save()
 
-            result = "incorrect"
+            result = (
+                "incorrect"
+            )
+
+            # ------------------------------------------------
+            # DESCRIPTION TEST NEVER APPEARS IF NORMAL
+            # FORMULA WAS WRONG.
+            # ------------------------------------------------
+
+            show_description_match = (
+                False
+            )
 
         # ====================================================
-        # BUILD RESULT ELEMENTS
+        # KEEP CURRENT TESTED ELEMENTS
         # ====================================================
 
         hidden_elements = []
 
-        for element_id in correct_answers:
+        for element_id in hidden_ids:
 
-            element = find_element(
-                formula_elements,
-                element_id
+            element = (
+                find_element(
+                    formula_elements,
+                    element_id
+                )
             )
 
             if element:
@@ -1270,7 +1666,22 @@ def practice_formula(
                     element
                 )
 
+    # ========================================================
+    # FIRST DISPLAY OF QUESTION
+    # ========================================================
+
+    else:
+
+        hidden_elements = (
+            choose_hidden_elements(
+                all_elements,
+                progress.mastery_level,
+                formula
+            )
+        )
+
         hidden_ids = [
+
             str(
                 element.get(
                     "id"
@@ -1279,88 +1690,46 @@ def practice_formula(
 
             for element
             in hidden_elements
+
         ]
 
-        # ====================================================
-        # GLOBAL REVIEW -> FIND NEXT FORMULA
-        # ====================================================
+    # ========================================================
+    # NEXT DUE FORMULA
+    #
+    # Only needed for the result screen.
+    # ========================================================
 
-        next_formula = None
+    if (
+        result
+        is not None
+    ):
 
-        if review_mode == "global":
+        if (
+            review_mode
+            ==
+            "global"
+        ):
 
             next_formula = (
-                get_next_global_formula(
+                get_next_due_formula(
                     request.user,
                     formula,
+                    subject=None
                 )
             )
 
-        # ====================================================
-        # SHOW RESULT
-        # ====================================================
+        else:
 
-        return render(
-            request,
-            "practice/practice_formula.html",
-            {
-                "formula":
+            next_formula = (
+                get_next_due_formula(
+                    request.user,
                     formula,
-
-                "formula_elements":
-                    formula_elements,
-
-                "hidden_elements":
-                    hidden_elements,
-
-                "hidden_ids":
-                    hidden_ids,
-
-                "progress":
-                    progress,
-
-                "result":
-                    result,
-
-                "correct_answers":
-                    correct_answers,
-
-                "user_answers":
-                    user_answers,
-
-                "review_mode":
-                    review_mode,
-
-                "next_formula":
-                    next_formula,
-            }
-        )
-
-    # ========================================================
-    # FIRST QUESTION
-    # ========================================================
-
-    hidden_elements = (
-        choose_hidden_elements(
-            all_elements,
-            progress.mastery_level,
-            formula,
-        )
-    )
-
-    hidden_ids = [
-        str(
-            element.get(
-                "id"
+                    subject=subject
+                )
             )
-        )
-
-        for element
-        in hidden_elements
-    ]
 
     # ========================================================
-    # RENDER QUESTION
+    # RENDER
     # ========================================================
 
     return render(
@@ -1383,151 +1752,50 @@ def practice_formula(
                 progress,
 
             "result":
-                None,
+                result,
 
             "correct_answers":
-                {},
+                correct_answers,
 
             "user_answers":
-                {},
+                user_answers,
 
             "review_mode":
                 review_mode,
 
+            "subject_index":
+                subject_index,
+
             "next_formula":
-                None,
+                next_formula,
+
+            # ================================================
+            # MASTERED DESCRIPTION TEST
+            # ================================================
+
+            "description_match_items":
+                description_match_items,
+
+            "description_match_cards":
+                description_match_cards,
+
+            "show_description_match":
+                show_description_match,
         }
     )
 
-
-# ============================================================
-# RECONSTRUCTION ELEMENTS
-# ============================================================
-
-def get_reconstruction_elements(
-    elements
-):
-    """
-    Flatten the formula into reconstructable pieces.
-
-    Fraction containers are kept as structural elements,
-    while their numerator and denominator pieces are also
-    included individually.
-    """
-
-    result = []
-
-    for element in elements:
-
-        if (
-            element.get(
-                "type"
-            )
-            == "fraction"
-        ):
-
-            result.append(
-                element
-            )
-
-            result.extend(
-                element.get(
-                    "numerator",
-                    []
-                )
-            )
-
-            result.extend(
-                element.get(
-                    "denominator",
-                    []
-                )
-            )
-
-        else:
-
-            result.append(
-                element
-            )
-
-    return result
-
-
-# ============================================================
-# RECONSTRUCTION PERCENTAGE
-# ============================================================
-
-def get_reconstruction_percentage(
-    mastery_level
-):
-    """
-    Determines how much of the formula must be
-    reconstructed.
-    """
-
-    percentages = {
-        0: 15,
-        1: 15,
-        2: 30,
-        3: 45,
-        4: 60,
-        5: 80,
-        6: 100,
-    }
-
-    return percentages.get(
-        mastery_level,
-        15
-    )
-
-
-# ============================================================
-# CHOOSE RECONSTRUCTION ELEMENTS
-# ============================================================
-
-def choose_reconstruction_elements(
-    elements,
-    mastery_level
-):
-    """
-    Randomly selects the elements that the
-    student must reconstruct.
-    """
-
-    if not elements:
-
-        return []
-
-    percentage = (
-        get_reconstruction_percentage(
-            mastery_level
-        )
-    )
-
-    number_to_reconstruct = round(
-        len(elements)
-        * percentage
-        / 100
-    )
-
-    number_to_reconstruct = max(
-        1,
-        number_to_reconstruct
-    )
-
-    number_to_reconstruct = min(
-        number_to_reconstruct,
-        len(elements)
-    )
-
-    return random.sample(
-        elements,
-        number_to_reconstruct
-    )
-
-
 # ============================================================
 # FORMULA RECONSTRUCTION
+# ============================================================
+#
+# Compatibility view.
+#
+# Older URLs / imports still reference
+# "formula_reconstruction".
+#
+# The new practice_formula view now handles full formula
+# reconstruction automatically at mastery 6, so old
+# reconstruction links are redirected there.
 # ============================================================
 
 @login_required
@@ -1535,390 +1803,14 @@ def formula_reconstruction(
     request,
     formula_id
 ):
-    """
-    Formula reconstruction practice.
-
-    The student reconstructs selected parts of
-    the formula and then reports whether the
-    reconstruction was correct.
-    """
-
-    # ========================================================
-    # GET FORMULA
-    # ========================================================
 
     formula = get_object_or_404(
         Formula,
         id=formula_id,
-        knowledge_unit__subject__user=request.user
+        knowledge_unit__subject__user=request.user,
     )
 
-    knowledge_unit = (
-        formula.knowledge_unit
-    )
-
-    # ========================================================
-    # GET OR CREATE PROGRESS
-    # ========================================================
-
-    progress, created = (
-        StudentKnowledge.objects
-        .get_or_create(
-            student=request.user,
-            knowledge_unit=knowledge_unit,
-        )
-    )
-
-    # ========================================================
-    # LOAD FORMULA
-    # ========================================================
-
-    try:
-
-        formula_elements = (
-            json.loads(
-                formula.structure
-            )
-        )
-
-    except (
-        json.JSONDecodeError,
-        TypeError
-    ):
-
-        formula_elements = []
-
-    # ========================================================
-    # GET RECONSTRUCTION ELEMENTS
-    # ========================================================
-
-    reconstruction_elements = (
-        get_reconstruction_elements(
-            formula_elements
-        )
-    )
-
-    # ========================================================
-    # CHOOSE HIDDEN ELEMENTS
-    # ========================================================
-
-    hidden_reconstruction_elements = (
-        choose_reconstruction_elements(
-            reconstruction_elements,
-            progress.mastery_level
-        )
-    )
-
-    hidden_reconstruction_ids = [
-        str(
-            element.get(
-                "id"
-            )
-        )
-
-        for element
-        in hidden_reconstruction_elements
-    ]
-
-    result = None
-
-    # ========================================================
-    # SUBMIT REVIEW RESULT
-    # ========================================================
-
-    if request.method == "POST":
-
-        result = (
-            request.POST.get(
-                "result"
-            )
-        )
-
-        # ====================================================
-        # CORRECT
-        # ====================================================
-
-        if result == "correct":
-
-            progress.review_count += 1
-
-            progress.correct_count += 1
-
-            if (
-                progress.mastery_level
-                < 6
-            ):
-
-                progress.mastery_level += 1
-
-            progress.last_reviewed = (
-                timezone.now()
-            )
-
-            progress.next_review = (
-                timezone.now()
-            )
-
-            progress.save()
-
-            return redirect(
-                "formula_reconstruction",
-                formula_id=formula.id
-            )
-
-        # ====================================================
-        # INCORRECT
-        # ====================================================
-
-        elif result == "incorrect":
-
-            progress.review_count += 1
-
-            progress.incorrect_count += 1
-
-            if (
-                progress.mastery_level
-                > 0
-            ):
-
-                progress.mastery_level -= 1
-
-            progress.last_reviewed = (
-                timezone.now()
-            )
-
-            progress.next_review = (
-                timezone.now()
-            )
-
-            progress.save()
-
-            return render(
-                request,
-                "practice/formula_reconstructions.html",
-                {
-                    "formula":
-                        formula,
-
-                    "formula_elements":
-                        formula_elements,
-
-                    "reconstruction_elements":
-                        reconstruction_elements,
-
-                    "hidden_reconstruction_elements":
-                        hidden_reconstruction_elements,
-
-                    "hidden_reconstruction_ids":
-                        hidden_reconstruction_ids,
-
-                    "progress":
-                        progress,
-
-                    "result":
-                        "incorrect",
-                }
-            )
-
-    # ========================================================
-    # RENDER
-    # ========================================================
-
-    return render(
-        request,
-        "practice/formula_reconstructions.html",
-        {
-            "formula":
-                formula,
-
-            "formula_elements":
-                formula_elements,
-
-            "reconstruction_elements":
-                reconstruction_elements,
-
-            "hidden_reconstruction_elements":
-                hidden_reconstruction_elements,
-
-            "hidden_reconstruction_ids":
-                hidden_reconstruction_ids,
-
-            "progress":
-                progress,
-
-            "result":
-                result,
-        }
-    )
-
-
-# ============================================================
-# ADD FORMULA — LEGACY / ONBOARDING
-# ============================================================
-
-@login_required
-def add_formula(
-    request,
-    subject_index
-):
-    """
-    Legacy formula creation used by the onboarding/practice
-    flow.
-
-    The newer database-backed formula creation lives in
-    learning.views.create_formula.
-    """
-
-    profile = (
-        request.session.get(
-            "onboarding_profile"
-        )
-    )
-
-    if not profile:
-
-        return redirect(
-            "onboarding"
-        )
-
-    subjects = (
-        request.session.get(
-            "onboarding_subjects",
-            []
-        )
-    )
-
-    # ========================================================
-    # VALIDATE SUBJECT INDEX
-    # ========================================================
-
-    try:
-
-        subject_index = int(
-            subject_index
-        )
-
-    except (
-        ValueError,
-        TypeError
-    ):
-
-        return redirect(
-            "goals"
-        )
-
-    if (
-        subject_index < 0
-        or
-        subject_index >= len(
-            subjects
-        )
-    ):
-
-        return redirect(
-            "goals"
-        )
-
-    subject = (
-        subjects[
-            subject_index
-        ]
-    )
-
-    # --------------------------------------------------------
-    # MAKE SURE FORMULAS LIST EXISTS
-    # --------------------------------------------------------
-
-    if "formulas" not in subject:
-
-        subject[
-            "formulas"
-        ] = []
-
-    # ========================================================
-    # CREATE FORMULA
-    # ========================================================
-
-    if request.method == "POST":
-
-        name = (
-            request.POST.get(
-                "name",
-                ""
-            )
-            .strip()
-        )
-
-        formula = (
-            request.POST.get(
-                "formula",
-                ""
-            )
-            .strip()
-        )
-
-        description = (
-            request.POST.get(
-                "description",
-                ""
-            )
-            .strip()
-        )
-
-        if (
-            name
-            and formula
-        ):
-
-            subject[
-                "formulas"
-            ].append(
-                {
-                    "name":
-                        name,
-
-                    "formula":
-                        formula,
-
-                    "description":
-                        description,
-                }
-            )
-
-            subjects[
-                subject_index
-            ] = subject
-
-            request.session[
-                "onboarding_subjects"
-            ] = subjects
-
-            request.session.modified = (
-                True
-            )
-
-            return redirect(
-                "add_formula",
-                subject_index=subject_index
-            )
-
-    # ========================================================
-    # RENDER
-    # ========================================================
-
-    return render(
-        request,
-        "practice/formulas.html",
-        {
-            "subject":
-                subject,
-
-            "subject_index":
-                subject_index,
-
-            "formulas":
-                subject[
-                    "formulas"
-                ],
-        }
+    return redirect(
+        "practice_formula",
+        formula_id=formula.id,
     )

@@ -55,7 +55,7 @@
 
             width: 100%;
 
-            max-width: 900px;
+            max-width: 1000px;
 
             padding: 35px;
 
@@ -88,7 +88,7 @@
                 0
                 6px;
 
-            font-size: 26px;
+            font-size: 27px;
 
         }
 
@@ -142,10 +142,6 @@
         }
 
 
-        /* =========================================
-           SYMBOL HEADER
-        ========================================= */
-
         .review-symbol-header {
 
             display: flex;
@@ -194,10 +190,6 @@
         }
 
 
-        /* =========================================
-           MINIMIZE BUTTON
-        ========================================= */
-
         .symbol-minimize-button {
 
             width: auto;
@@ -236,10 +228,6 @@
         }
 
 
-        /* =========================================
-           SYMBOL GRID WRAPPER
-        ========================================= */
-
         .review-symbol-grid-wrapper {
 
             width: 100%;
@@ -254,10 +242,7 @@
 
 
         /* =========================================
-           EXACTLY FIVE ROWS
-
-           Additional symbols continue into
-           new columns.
+           EXACTLY FIVE SYMBOL ROWS
         ========================================= */
 
         .review-symbol-grid {
@@ -326,7 +311,7 @@
 
 
         /* =========================================
-           COLLAPSED SYMBOL PANEL
+           SYMBOLS START COLLAPSED
         ========================================= */
 
         .review-symbol-panel.collapsed {
@@ -364,15 +349,13 @@
 
         /* =========================================
            FORMULA
-
-           Larger and more prominent.
         ========================================= */
 
         .formula-box {
 
             padding:
-                45px
-                35px;
+                50px
+                40px;
 
             margin-bottom: 25px;
 
@@ -380,9 +363,9 @@
 
             border:
                 1px solid
-                #dedede;
+                #d9d9d9;
 
-            border-radius: 14px;
+            border-radius: 15px;
 
             background: #fafafa;
 
@@ -391,7 +374,7 @@
 
         .formula {
 
-            min-height: 120px;
+            min-height: 130px;
 
             display: flex;
 
@@ -399,15 +382,17 @@
 
             justify-content: center;
 
+            align-content: center;
+
             flex-wrap: wrap;
 
             gap:
-                8px
-                3px;
+                10px
+                4px;
 
             color: #111;
 
-            font-size: 34px;
+            font-size: 36px;
 
             font-weight: 650;
 
@@ -437,7 +422,7 @@
 
         .answer-input {
 
-            width: 125px;
+            width: 130px;
 
             padding:
                 10px
@@ -776,10 +761,538 @@
 
 
         /* =========================================
+           MASTERED SECOND STAGE
+        ========================================= */
+
+        .mastered-stage-intro {
+
+            display: flex;
+
+            align-items: baseline;
+
+            flex-wrap: wrap;
+
+            gap: 8px;
+
+            margin:
+                5px
+                0
+                16px;
+
+            color: #666;
+
+            font-size: 13px;
+
+        }
+
+
+        .mastered-stage-intro strong {
+
+            color: #222;
+
+            font-size: 14px;
+
+        }
+
+
+        .mastered-formula-box {
+
+            margin-bottom: 25px;
+
+        }
+
+
+        /* =========================================
+           DESCRIPTION MATCH BOX
+        ========================================= */
+
+        .description-match-box {
+
+            margin-top: 24px;
+
+            padding: 26px;
+
+            border:
+                1px solid
+                #dedede;
+
+            border-radius: 14px;
+
+            background: #fafafa;
+
+        }
+
+
+        .description-match-header {
+
+            display: flex;
+
+            align-items: flex-start;
+
+            justify-content: space-between;
+
+            gap: 20px;
+
+            margin-bottom: 24px;
+
+        }
+
+
+        .description-match-header h2 {
+
+            margin:
+                0
+                0
+                6px;
+
+            font-size: 20px;
+
+        }
+
+
+        .description-match-header p {
+
+            margin: 0;
+
+            max-width: 600px;
+
+            color: #888;
+
+            font-size: 12px;
+
+            line-height: 1.5;
+
+        }
+
+
+        .no-mastery-penalty {
+
+            flex-shrink: 0;
+
+            padding:
+                5px
+                9px;
+
+            border:
+                1px solid
+                #ddd;
+
+            border-radius: 20px;
+
+            background: white;
+
+            color: #777;
+
+            font-size: 10px;
+
+            font-weight: 600;
+
+        }
+
+
+        /* =========================================
+           DESCRIPTION TARGETS
+        ========================================= */
+
+        .description-target-grid {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(
+                    auto-fit,
+                    minmax(
+                        170px,
+                        1fr
+                    )
+                );
+
+            gap: 13px;
+
+        }
+
+
+        .description-target {
+
+            min-height: 145px;
+
+            padding: 14px;
+
+            border:
+                2px solid
+                #d9d9d9;
+
+            border-radius: 11px;
+
+            background: white;
+
+            transition:
+                border-color
+                0.15s ease,
+                background
+                0.15s ease,
+                box-shadow
+                0.15s ease;
+
+        }
+
+
+        .description-target.drag-over {
+
+            border-color: #777;
+
+            background: #f3f3f3;
+
+            box-shadow:
+                0
+                0
+                0
+                3px
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.04
+                );
+
+        }
+
+
+        /* =========================================
+           GREEN CORRECT TARGET
+        ========================================= */
+
+        .description-target.correct-match {
+
+            border-color: #65a66f;
+
+            background: #f1f8f2;
+
+        }
+
+
+        /* =========================================
+           RED WRONG TARGET
+        ========================================= */
+
+        .description-target.wrong-match {
+
+            border-color: #c86767;
+
+            background: #fff1f1;
+
+        }
+
+
+        .description-target-symbol {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            min-height: 52px;
+
+            margin-bottom: 10px;
+
+            padding:
+                7px
+                10px;
+
+            border:
+                1px solid
+                #e1e1e1;
+
+            border-radius: 8px;
+
+            background: #fafafa;
+
+            color: #111;
+
+            font-size: 27px;
+
+            font-weight: 700;
+
+            word-break: break-word;
+
+        }
+
+
+        .description-target.correct-match
+        .description-target-symbol {
+
+            border-color: #8dbb95;
+
+            background: #e8f4ea;
+
+        }
+
+
+        .description-target.wrong-match
+        .description-target-symbol {
+
+            border-color: #da9999;
+
+            background: #fde3e3;
+
+        }
+
+
+        .description-drop-zone {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            min-height: 48px;
+
+            padding: 8px;
+
+            border:
+                1px dashed
+                #ccc;
+
+            border-radius: 7px;
+
+            color: #aaa;
+
+            font-size: 11px;
+
+            line-height: 1.4;
+
+            text-align: center;
+
+        }
+
+
+        .description-target.correct-match
+        .description-drop-zone,
+        .description-target.wrong-match
+        .description-drop-zone {
+
+            border-style: solid;
+
+            color: #333;
+
+            font-weight: 600;
+
+        }
+
+
+        /* =========================================
+           CORRECTION
+        ========================================= */
+
+        .description-correction {
+
+            display: none;
+
+            margin-top: 10px;
+
+            padding:
+                9px
+                8px
+                0;
+
+            border-top:
+                1px solid
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.08
+                );
+
+            color: #8a3434;
+
+            font-size: 11px;
+
+            font-weight: 600;
+
+            line-height: 1.4;
+
+        }
+
+
+        .description-correction.show {
+
+            display: block;
+
+        }
+
+
+        /* =========================================
+           DESCRIPTION CARDS
+        ========================================= */
+
+        .description-card-area {
+
+            margin-top: 25px;
+
+            padding-top: 21px;
+
+            border-top:
+                1px solid
+                #e5e5e5;
+
+        }
+
+
+        .description-card-label {
+
+            margin-bottom: 11px;
+
+            color: #555;
+
+            font-size: 12px;
+
+            font-weight: 700;
+
+        }
+
+
+        .description-card-pool {
+
+            display: flex;
+
+            align-items: stretch;
+
+            flex-wrap: wrap;
+
+            gap: 10px;
+
+            min-height: 52px;
+
+        }
+
+
+        .description-card {
+
+            max-width: 280px;
+
+            padding:
+                11px
+                13px;
+
+            border:
+                1px solid
+                #d3d3d3;
+
+            border-radius: 9px;
+
+            background: white;
+
+            color: #333;
+
+            font-size: 12px;
+
+            line-height: 1.45;
+
+            cursor: grab;
+
+            user-select: none;
+
+            transition:
+                border-color
+                0.15s ease,
+                box-shadow
+                0.15s ease;
+
+        }
+
+
+        .description-card:hover {
+
+            border-color: #999;
+
+            box-shadow:
+                0
+                3px
+                10px
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.05
+                );
+
+        }
+
+
+        .description-card:active {
+
+            cursor: grabbing;
+
+        }
+
+
+        .description-card.dragging {
+
+            opacity: 0.4;
+
+        }
+
+
+        /* =========================================
+           DESCRIPTION RESULT
+        ========================================= */
+
+        .description-match-result {
+
+            display: none;
+
+            margin-top: 20px;
+
+            padding: 14px;
+
+            border-radius: 9px;
+
+            font-size: 13px;
+
+            font-weight: 600;
+
+            text-align: center;
+
+        }
+
+
+        .description-match-result.show {
+
+            display: block;
+
+        }
+
+
+        .description-match-result.all-correct {
+
+            border:
+                1px solid
+                #b8d9be;
+
+            background: #edf7ef;
+
+        }
+
+
+        .description-match-result.has-errors {
+
+            border:
+                1px solid
+                #e1b4b4;
+
+            background: #fff1f1;
+
+        }
+
+
+        /* =========================================
            RESPONSIVE
         ========================================= */
 
-        @media (max-width: 600px) {
+        @media (max-width: 700px) {
 
             body {
 
@@ -798,7 +1311,7 @@
             .formula-box {
 
                 padding:
-                    30px
+                    32px
                     18px;
 
             }
@@ -806,9 +1319,9 @@
 
             .formula {
 
-                min-height: 100px;
+                min-height: 105px;
 
-                font-size: 26px;
+                font-size: 27px;
 
             }
 
@@ -853,6 +1366,29 @@
             .finish-review-button {
 
                 width: 100%;
+
+            }
+
+
+            .description-match-header {
+
+                flex-direction: column;
+
+            }
+
+
+            .description-target-grid {
+
+                grid-template-columns: 1fr;
+
+            }
+
+
+            .description-card {
+
+                width: 100%;
+
+                max-width: 100%;
 
             }
 
@@ -915,6 +1451,263 @@
         </div>
 
 
+        <!-- =====================================
+             MASTERED SECOND-STAGE TEST
+        ====================================== -->
+
+        {% if show_description_match %}
+
+
+            <div class="mastered-stage-intro">
+
+
+                <strong>
+                    Formula mastered.
+                </strong>
+
+
+                <span>
+                    Now match each description to the
+                    correct variable or symbol.
+                </span>
+
+
+            </div>
+
+
+            <!-- =================================
+                 FULL FORMULA
+            ================================== -->
+
+            <div class="formula-box mastered-formula-box">
+
+
+                <div class="formula">
+
+
+                    {% for element in formula_elements %}
+
+
+                        {% if element.type == "fraction" %}
+
+
+                            <span class="formula-fraction">
+
+
+                                <!-- =====================
+                                     NUMERATOR
+                                ====================== -->
+
+                                <span class="fraction-top">
+
+
+                                    {% for numerator in element.numerator %}
+
+
+                                        <span class="formula-element">
+                                            {{ numerator.value }}
+                                        </span>
+
+
+                                    {% endfor %}
+
+
+                                </span>
+
+
+                                <!-- =====================
+                                     DENOMINATOR
+                                ====================== -->
+
+                                <span class="fraction-bottom">
+
+
+                                    {% for denominator in element.denominator %}
+
+
+                                        <span class="formula-element">
+                                            {{ denominator.value }}
+                                        </span>
+
+
+                                    {% endfor %}
+
+
+                                </span>
+
+
+                            </span>
+
+
+                        {% else %}
+
+
+                            <span class="formula-element">
+                                {{ element.value }}
+                            </span>
+
+
+                        {% endif %}
+
+
+                    {% endfor %}
+
+
+                </div>
+
+
+            </div>
+
+
+            <!-- =================================
+                 DESCRIPTION MATCH
+            ================================== -->
+
+            <section
+                class="description-match-box"
+                id="description-match-box"
+            >
+
+
+                <div class="description-match-header">
+
+
+                    <div>
+
+
+                        <h2>
+                            Match the descriptions
+                        </h2>
+
+
+                        <p>
+                            Drag each description onto the
+                            variable or symbol it belongs to.
+                            Once you drop a description it is
+                            used, whether the answer is right
+                            or wrong.
+                        </p>
+
+
+                    </div>
+
+
+                    <span class="no-mastery-penalty">
+                        No mastery penalty
+                    </span>
+
+
+                </div>
+
+
+                <!-- =============================
+                     TARGETS
+                ============================== -->
+
+                <div class="description-target-grid">
+
+
+                    {% for item in description_match_items %}
+
+
+                        <div
+                            class="description-target"
+                            data-target-id="{{ item.id }}"
+                            data-correct-description="{{ item.meaning }}"
+                        >
+
+
+                            <div class="description-target-symbol">
+
+                                {{ item.value }}
+
+                            </div>
+
+
+                            <div class="description-drop-zone">
+
+                                Drop description here
+
+                            </div>
+
+
+                            <div class="description-correction">
+                            </div>
+
+
+                        </div>
+
+
+                    {% endfor %}
+
+
+                </div>
+
+
+                <!-- =============================
+                     DESCRIPTION CARDS
+                ============================== -->
+
+                <div class="description-card-area">
+
+
+                    <div class="description-card-label">
+
+                        Descriptions
+
+                    </div>
+
+
+                    <div
+                        class="description-card-pool"
+                        id="description-card-pool"
+                    >
+
+
+                        {% for item in description_match_cards %}
+
+
+                            <div
+                                class="description-card"
+                                draggable="true"
+                                data-description="{{ item.meaning }}"
+                            >
+
+                                {{ item.meaning }}
+
+                            </div>
+
+
+                        {% endfor %}
+
+
+                    </div>
+
+
+                </div>
+
+
+                <!-- =============================
+                     FINAL MATCH RESULT
+                ============================== -->
+
+                <div
+                    class="description-match-result"
+                    id="description-match-result"
+                >
+                </div>
+
+
+            </section>
+
+
+        {% endif %}
+
+
+        <!-- =====================================
+             FORMULA DETAILS
+        ====================================== -->
+
         <a
             href="{% url 'formula_detail' formula.id %}"
             class="formula-details-link"
@@ -923,106 +1716,133 @@
         </a>
 
 
-        {% if review_mode == "global" %}
+        <!-- =====================================
+             CONTINUE ACTIONS
+
+             Hidden until mastered description
+             matching has been completed.
+        ====================================== -->
+
+        <div
+            id="after-correct-actions"
+            {% if show_description_match %}
+                style="display: none;"
+            {% endif %}
+        >
 
 
-            <div class="review-actions">
+            {% if review_mode == "global" %}
 
 
-                {% if next_formula %}
+                <div class="review-actions">
 
 
-                    <form
-                        method="post"
-                        class="next-form"
+                    {% if next_formula %}
+
+
+                        <form
+                            method="post"
+                            class="next-form"
+                        >
+
+
+                            {% csrf_token %}
+
+
+                            <input
+                                type="hidden"
+                                name="action"
+                                value="next_formula"
+                            >
+
+
+                            <input
+                                type="hidden"
+                                name="review_mode"
+                                value="global"
+                            >
+
+
+                            <input
+                                type="hidden"
+                                name="subject_index"
+                                value="{{ subject_index }}"
+                            >
+
+
+                            <button
+                                type="submit"
+                                class="next-button"
+                            >
+                                Next
+                            </button>
+
+
+                        </form>
+
+
+                    {% endif %}
+
+
+                    <a
+                        href="{% url 'review_formulas' %}"
+                        class="finish-review-button"
+                    >
+                        Finish Review
+                    </a>
+
+
+                </div>
+
+
+            {% else %}
+
+
+                <form
+                    method="post"
+                    style="margin-top: 20px;"
+                >
+
+
+                    {% csrf_token %}
+
+
+                    <input
+                        type="hidden"
+                        name="action"
+                        value="continue"
                     >
 
-                        {% csrf_token %}
+
+                    <input
+                        type="hidden"
+                        name="review_mode"
+                        value="normal"
+                    >
 
 
-                        <input
-                            type="hidden"
-                            name="action"
-                            value="next_formula"
-                        >
+                    <input
+                        type="hidden"
+                        name="subject_index"
+                        value="{{ subject_index }}"
+                    >
 
 
-                        <input
-                            type="hidden"
-                            name="review_mode"
-                            value="global"
-                        >
+                    <button
+                        type="submit"
+                        class="continue-button"
+                    >
+                        Continue →
+                    </button>
 
 
-                        <button
-                            type="submit"
-                            class="next-button"
-                        >
-                            Next
-                        </button>
+                </form>
 
 
-                    </form>
+            {% endif %}
 
 
-                {% endif %}
-
-
-                <a
-                    href="{% url 'review_formulas' %}"
-                    class="finish-review-button"
-                >
-                    Finish Review
-                </a>
-
-
-            </div>
-
-
-        {% else %}
-
-
-            <form
-                method="post"
-                style="margin-top: 20px;"
-            >
-
-                {% csrf_token %}
-
-
-                <input
-                    type="hidden"
-                    name="action"
-                    value="continue"
-                >
-
-
-                <input
-                    type="hidden"
-                    name="review_mode"
-                    value="normal"
-                >
-
-
-                <input
-                    type="hidden"
-                    name="subject_index"
-                    value="{{ subject_index }}"
-                >
-
-
-                <button
-                    type="submit"
-                    class="continue-button"
-                >
-                    Continue →
-                </button>
-
-
-            </form>
-
-
-        {% endif %}
+        </div>
 
 
     <!-- =========================================
@@ -1091,6 +1911,7 @@
                         class="next-form"
                     >
 
+
                         {% csrf_token %}
 
 
@@ -1105,6 +1926,13 @@
                             type="hidden"
                             name="review_mode"
                             value="global"
+                        >
+
+
+                        <input
+                            type="hidden"
+                            name="subject_index"
+                            value="{{ subject_index }}"
                         >
 
 
@@ -1140,6 +1968,7 @@
                 method="post"
                 style="margin-top: 20px;"
             >
+
 
                 {% csrf_token %}
 
@@ -1206,9 +2035,11 @@
             >
 
 
-            <!-- =====================================
+            <!-- =================================
                  SYMBOL PANEL
-            ====================================== -->
+
+                 Starts minimized.
+            ================================== -->
 
             <div
                 class="review-symbol-panel collapsed"
@@ -1346,9 +2177,9 @@
             </div>
 
 
-            <!-- =====================================
-                 FORMULA
-            ====================================== -->
+            <!-- =================================
+                 FORMULA QUESTION
+            ================================== -->
 
             <div class="formula-box">
 
@@ -1359,9 +2190,9 @@
                     {% for element in formula_elements %}
 
 
-                        <!-- =================================
+                        <!-- =============================
                              FRACTION
-                        ================================== -->
+                        ============================== -->
 
                         {% if element.type == "fraction" %}
 
@@ -1369,9 +2200,9 @@
                             <span class="formula-fraction">
 
 
-                                <!-- =========================
+                                <!-- =====================
                                      NUMERATOR
-                                ========================== -->
+                                ====================== -->
 
                                 <span class="fraction-top">
 
@@ -1415,9 +2246,9 @@
                                 </span>
 
 
-                                <!-- =========================
+                                <!-- =====================
                                      DENOMINATOR
-                                ========================== -->
+                                ====================== -->
 
                                 <span class="fraction-bottom">
 
@@ -1464,9 +2295,9 @@
                             </span>
 
 
-                        <!-- =================================
+                        <!-- =============================
                              NORMAL ELEMENT
-                        ================================== -->
+                        ============================== -->
 
                         {% else %}
 
@@ -1513,9 +2344,9 @@
             </div>
 
 
-            <!-- =====================================
+            <!-- =================================
                  CHECK ANSWER
-            ====================================== -->
+            ================================== -->
 
             <button
                 type="submit"
@@ -1541,7 +2372,7 @@
         function () {
 
             // =================================================
-            // ACTIVE ANSWER INPUT
+            // ACTIVE FORMULA ANSWER INPUT
             // =================================================
 
             let activeAnswerInput =
@@ -1568,10 +2399,6 @@
 
             }
 
-
-            // =================================================
-            // REMEMBER ACTIVE ANSWER FIELD
-            // =================================================
 
             answerInputs.forEach(
                 function (
@@ -1703,7 +2530,7 @@
 
 
             // =================================================
-            // MINIMIZE / SHOW SYMBOLS
+            // SHOW / MINIMIZE SYMBOLS
             // =================================================
 
             const symbolPanel =
@@ -1747,6 +2574,505 @@
 
                         }
                     );
+
+            }
+
+
+            // =================================================
+            // MASTERED DESCRIPTION MATCHING
+            // =================================================
+
+            const descriptionMatchBox =
+                document.getElementById(
+                    "description-match-box"
+                );
+
+
+            if (
+                descriptionMatchBox
+            ) {
+
+                const descriptionCards =
+                    document.querySelectorAll(
+                        ".description-card"
+                    );
+
+
+                const descriptionTargets =
+                    document.querySelectorAll(
+                        ".description-target"
+                    );
+
+
+                const descriptionMatchResult =
+                    document.getElementById(
+                        "description-match-result"
+                    );
+
+
+                const afterCorrectActions =
+                    document.getElementById(
+                        "after-correct-actions"
+                    );
+
+
+                let draggedDescriptionCard =
+                    null;
+
+
+                let completedTargets =
+                    0;
+
+
+                let wrongTargets =
+                    0;
+
+
+                // =============================================
+                // DRAG DESCRIPTION CARDS
+                // =============================================
+
+                descriptionCards.forEach(
+                    function (
+                        card
+                    ) {
+
+                        card.addEventListener(
+                            "dragstart",
+                            function (
+                                event
+                            ) {
+
+                                draggedDescriptionCard =
+                                    card;
+
+
+                                card.classList.add(
+                                    "dragging"
+                                );
+
+
+                                event.dataTransfer
+                                    .effectAllowed =
+                                    "move";
+
+
+                                event.dataTransfer
+                                    .setData(
+                                        "text/plain",
+                                        card.dataset
+                                            .description
+                                    );
+
+                            }
+                        );
+
+
+                        card.addEventListener(
+                            "dragend",
+                            function () {
+
+                                card.classList.remove(
+                                    "dragging"
+                                );
+
+
+                                descriptionTargets
+                                    .forEach(
+                                        function (
+                                            target
+                                        ) {
+
+                                            target
+                                                .classList
+                                                .remove(
+                                                    "drag-over"
+                                                );
+
+                                        }
+                                    );
+
+
+                                draggedDescriptionCard =
+                                    null;
+
+                            }
+                        );
+
+                    }
+                );
+
+
+                // =============================================
+                // DROP TARGETS
+                // =============================================
+
+                descriptionTargets.forEach(
+                    function (
+                        target
+                    ) {
+
+                        // -------------------------------------
+                        // DRAG OVER
+                        // -------------------------------------
+
+                        target.addEventListener(
+                            "dragover",
+                            function (
+                                event
+                            ) {
+
+                                if (
+                                    target.dataset
+                                        .filled
+                                    ===
+                                    "true"
+                                ) {
+
+                                    return;
+
+                                }
+
+
+                                event.preventDefault();
+
+
+                                target.classList.add(
+                                    "drag-over"
+                                );
+
+
+                                event.dataTransfer
+                                    .dropEffect =
+                                    "move";
+
+                            }
+                        );
+
+
+                        // -------------------------------------
+                        // DRAG LEAVE
+                        // -------------------------------------
+
+                        target.addEventListener(
+                            "dragleave",
+                            function () {
+
+                                target.classList.remove(
+                                    "drag-over"
+                                );
+
+                            }
+                        );
+
+
+                        // -------------------------------------
+                        // DROP
+                        // -------------------------------------
+
+                        target.addEventListener(
+                            "drop",
+                            function (
+                                event
+                            ) {
+
+                                event.preventDefault();
+
+
+                                target.classList.remove(
+                                    "drag-over"
+                                );
+
+
+                                // =================================
+                                // TARGET ALREADY USED
+                                // =================================
+
+                                if (
+                                    target.dataset
+                                        .filled
+                                    ===
+                                    "true"
+                                ) {
+
+                                    return;
+
+                                }
+
+
+                                // =================================
+                                // NO ACTIVE CARD
+                                // =================================
+
+                                if (
+                                    !draggedDescriptionCard
+                                ) {
+
+                                    return;
+
+                                }
+
+
+                                const droppedDescription =
+                                    draggedDescriptionCard
+                                        .dataset
+                                        .description;
+
+
+                                const correctDescription =
+                                    target
+                                        .dataset
+                                        .correctDescription;
+
+
+                                const dropZone =
+                                    target.querySelector(
+                                        ".description-drop-zone"
+                                    );
+
+
+                                const correction =
+                                    target.querySelector(
+                                        ".description-correction"
+                                    );
+
+
+                                target.dataset.filled =
+                                    "true";
+
+
+                                completedTargets++;
+
+
+                                // =================================
+                                // CORRECT
+                                // =================================
+
+                                if (
+                                    droppedDescription
+                                    ===
+                                    correctDescription
+                                ) {
+
+                                    target.classList.add(
+                                        "correct-match"
+                                    );
+
+
+                                    if (
+                                        dropZone
+                                    ) {
+
+                                        dropZone.textContent =
+                                            droppedDescription;
+
+                                    }
+
+                                }
+
+                                // =================================
+                                // WRONG
+                                // =================================
+
+                                else {
+
+                                    wrongTargets++;
+
+
+                                    target.classList.add(
+                                        "wrong-match"
+                                    );
+
+
+                                    if (
+                                        dropZone
+                                    ) {
+
+                                        dropZone.textContent =
+                                            droppedDescription;
+
+                                    }
+
+
+                                    if (
+                                        correction
+                                    ) {
+
+                                        correction.textContent =
+                                            (
+                                                "Correct: "
+                                                +
+                                                correctDescription
+                                            );
+
+                                    }
+
+                                }
+
+
+                                // =================================
+                                // DESCRIPTION DISAPPEARS
+                                //
+                                // Correct or incorrect.
+                                // =================================
+
+                                draggedDescriptionCard
+                                    .remove();
+
+
+                                draggedDescriptionCard =
+                                    null;
+
+
+                                // =================================
+                                // EVERYTHING HAS BEEN PLACED
+                                // =================================
+
+                                if (
+                                    completedTargets
+                                    ===
+                                    descriptionTargets
+                                        .length
+                                ) {
+
+                                    finishDescriptionMatch();
+
+                                }
+
+                            }
+                        );
+
+                    }
+                );
+
+
+                // =============================================
+                // FINISH DESCRIPTION TEST
+                // =============================================
+
+                function finishDescriptionMatch() {
+
+                    // =========================================
+                    // PERFECT RESULT
+                    // =========================================
+
+                    if (
+                        wrongTargets
+                        ===
+                        0
+                    ) {
+
+                        if (
+                            descriptionMatchResult
+                        ) {
+
+                            descriptionMatchResult
+                                .textContent =
+                                (
+                                    "✓ All descriptions "
+                                    +
+                                    "matched correctly."
+                                );
+
+
+                            descriptionMatchResult
+                                .classList
+                                .add(
+                                    "show",
+                                    "all-correct"
+                                );
+
+                        }
+
+                    }
+
+                    // =========================================
+                    // SOME WRONG
+                    // =========================================
+
+                    else {
+
+                        if (
+                            descriptionMatchResult
+                        ) {
+
+                            descriptionMatchResult
+                                .textContent =
+                                (
+                                    "Some descriptions were "
+                                    +
+                                    "misplaced. The correct "
+                                    +
+                                    "matches are shown below."
+                                );
+
+
+                            descriptionMatchResult
+                                .classList
+                                .add(
+                                    "show",
+                                    "has-errors"
+                                );
+
+                        }
+
+
+                        // -------------------------------------
+                        // SHOW CORRECTION UNDER WRONG TARGETS
+                        // -------------------------------------
+
+                        document
+                            .querySelectorAll(
+                                ".description-target.wrong-match .description-correction"
+                            )
+                            .forEach(
+                                function (
+                                    correction
+                                ) {
+
+                                    correction
+                                        .classList
+                                        .add(
+                                            "show"
+                                        );
+
+                                }
+                            );
+
+                    }
+
+
+                    // =========================================
+                    // IMPORTANT
+                    //
+                    // There is deliberately NO POST request
+                    // here.
+                    //
+                    // Therefore:
+                    //
+                    // - mastery cannot decrease
+                    // - incorrect_count does not increase
+                    // - review_count does not increase
+                    // - next_review does not change
+                    // =========================================
+
+
+                    // =========================================
+                    // ALLOW NEXT / CONTINUE
+                    // =========================================
+
+                    if (
+                        afterCorrectActions
+                    ) {
+
+                        afterCorrectActions
+                            .style
+                            .display =
+                            "";
+
+                    }
+
+                }
 
             }
 
