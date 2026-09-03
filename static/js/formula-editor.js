@@ -4,7 +4,7 @@
 
 
 // ============================================================
-// INITIAL FORMULA
+// EXISTING FORMULA
 // ============================================================
 
 let formulaElements = [];
@@ -43,7 +43,94 @@ const formulaStructureInput =
 
 
 // ============================================================
-// ID GENERATOR
+// PREVIOUS VARIABLE MEANINGS
+// ============================================================
+
+let formulaVariableSuggestions =
+    {};
+
+
+const variableSuggestionDataElement =
+    document.getElementById(
+        "formula-variable-suggestions-data"
+    );
+
+
+if (
+    variableSuggestionDataElement
+) {
+
+    try {
+
+        formulaVariableSuggestions =
+            JSON.parse(
+                variableSuggestionDataElement
+                    .textContent
+            );
+
+    }
+
+    catch (
+        error
+    ) {
+
+        formulaVariableSuggestions =
+            {};
+
+    }
+
+}
+
+
+// ============================================================
+// FIND PREVIOUS MEANINGS
+// ============================================================
+
+function getPreviousMeanings(
+    symbol
+) {
+
+    const key =
+        String(
+            symbol
+            ||
+            ""
+        )
+        .trim()
+        .toLowerCase();
+
+
+    if (!key) {
+
+        return [];
+
+    }
+
+
+    const suggestions =
+        formulaVariableSuggestions[
+            key
+        ];
+
+
+    if (
+        !Array.isArray(
+            suggestions
+        )
+    ) {
+
+        return [];
+
+    }
+
+
+    return suggestions;
+
+}
+
+
+// ============================================================
+// ID
 // ============================================================
 
 function createElementId() {
@@ -79,7 +166,7 @@ function createElementId() {
 
 
 // ============================================================
-// ENSURE EXISTING ELEMENT IDS
+// ENSURE IDS
 // ============================================================
 
 function ensureIds(
@@ -87,7 +174,9 @@ function ensureIds(
 ) {
 
     elements.forEach(
-        function (element) {
+        function (
+            element
+        ) {
 
             if (
                 !element.id
@@ -164,7 +253,7 @@ ensureIds(
 
 
 // ============================================================
-// ACTIVE INSERTION LOCATION
+// INSERTION LOCATION
 // ============================================================
 
 let activeContainer =
@@ -175,16 +264,12 @@ let insertionIndex =
     formulaElements.length;
 
 
-// ============================================================
-// KEYBOARD MODE
-// ============================================================
-
 let formulaKeyboardActive =
     false;
 
 
 // ============================================================
-// UPDATE HIDDEN STRUCTURE
+// UPDATE STRUCTURE
 // ============================================================
 
 function updateFormulaStructure() {
@@ -207,7 +292,7 @@ function updateFormulaStructure() {
 
 
 // ============================================================
-// FOCUS FORMULA
+// FOCUS
 // ============================================================
 
 function focusFormula() {
@@ -286,10 +371,6 @@ function addElement(
     renderFormula();
 
 
-    // ========================================================
-    // VARIABLE
-    // ========================================================
-
     if (
         type
         ===
@@ -310,14 +391,6 @@ function addElement(
     }
 
 
-    // ========================================================
-    // SYMBOL
-    //
-    // The symbol itself has already been selected.
-    // Open the editor so the student can optionally
-    // describe what that symbol represents.
-    // ========================================================
-
     if (
         type
         ===
@@ -337,10 +410,6 @@ function addElement(
 
     }
 
-
-    // ========================================================
-    // NUMBER BUTTON
-    // ========================================================
 
     if (
         type
@@ -373,12 +442,6 @@ function addElement(
 
 // ============================================================
 // KEYBOARD NUMBER
-//
-// Consecutive digits and ONE decimal point
-// become one number:
-//
-// 2 . 4       -> 2.4
-// 6 . 7 7 7   -> 6.777
 // ============================================================
 
 function addKeyboardNumberCharacter(
@@ -390,10 +453,6 @@ function addKeyboardNumberCharacter(
         -
         1;
 
-
-    // ========================================================
-    // CONTINUE PREVIOUS NUMBER
-    // ========================================================
 
     if (
         previousIndex
@@ -423,10 +482,6 @@ function addKeyboardNumberCharacter(
                 );
 
 
-            // ------------------------------------------------
-            // DECIMAL POINT
-            // ------------------------------------------------
-
             if (
                 character
                 ===
@@ -451,10 +506,6 @@ function addKeyboardNumberCharacter(
 
             }
 
-            // ------------------------------------------------
-            // DIGIT
-            // ------------------------------------------------
-
             else {
 
                 previous.value =
@@ -477,10 +528,6 @@ function addKeyboardNumberCharacter(
 
     }
 
-
-    // ========================================================
-    // START NEW NUMBER
-    // ========================================================
 
     if (
         character
@@ -508,7 +555,7 @@ function addKeyboardNumberCharacter(
 
 
 // ============================================================
-// RENDER FORMULA
+// RENDER
 // ============================================================
 
 function renderFormula() {
@@ -556,10 +603,6 @@ function renderContainer(
         "formula-container";
 
 
-    // ========================================================
-    // EMPTY CONTAINER
-    // ========================================================
-
     if (
         elements.length
         ===
@@ -574,14 +617,6 @@ function renderContainer(
 
         emptyZone.className =
             "formula-empty-zone";
-
-
-        emptyZone.title =
-            (
-                "Click here, then type "
-                +
-                "or add an element"
-            );
 
 
         emptyZone.addEventListener(
@@ -612,10 +647,6 @@ function renderContainer(
     }
 
 
-    // ========================================================
-    // INSERTION ZONE BEFORE FIRST ELEMENT
-    // ========================================================
-
     if (
         elements.length
         >
@@ -630,10 +661,6 @@ function renderContainer(
 
     }
 
-
-    // ========================================================
-    // ELEMENTS
-    // ========================================================
 
     elements.forEach(
         function (
@@ -659,10 +686,6 @@ function renderContainer(
                 true;
 
 
-            // =================================================
-            // FRACTION
-            // =================================================
-
             if (
                 element.type
                 ===
@@ -676,10 +699,6 @@ function renderContainer(
 
             }
 
-            // =================================================
-            // NORMAL ELEMENT
-            // =================================================
-
             else {
 
                 box.textContent =
@@ -690,12 +709,6 @@ function renderContainer(
             }
 
 
-            // =================================================
-            // DESCRIPTION TOOLTIP
-            //
-            // Variables and symbols can both have meanings.
-            // =================================================
-
             if (
                 element.meaning
             ) {
@@ -705,10 +718,6 @@ function renderContainer(
 
             }
 
-
-            // =================================================
-            // DOUBLE CLICK EDIT
-            // =================================================
 
             box.addEventListener(
                 "dblclick",
@@ -741,23 +750,11 @@ function renderContainer(
             );
 
 
-            // =================================================
-            // DRAG START
-            // =================================================
-
             box.addEventListener(
                 "dragstart",
                 function (
                     event
                 ) {
-
-                    event.stopPropagation();
-
-
-                    event.dataTransfer
-                        .effectAllowed =
-                        "move";
-
 
                     event.dataTransfer
                         .setData(
@@ -774,10 +771,6 @@ function renderContainer(
             );
 
 
-            // =================================================
-            // DRAG END
-            // =================================================
-
             box.addEventListener(
                 "dragend",
                 function () {
@@ -793,10 +786,6 @@ function renderContainer(
             );
 
 
-            // =================================================
-            // DRAG OVER
-            // =================================================
-
             box.addEventListener(
                 "dragover",
                 function (
@@ -804,8 +793,6 @@ function renderContainer(
                 ) {
 
                     event.preventDefault();
-
-                    event.stopPropagation();
 
 
                     removeDropIndicators();
@@ -848,10 +835,6 @@ function renderContainer(
             );
 
 
-            // =================================================
-            // DROP
-            // =================================================
-
             box.addEventListener(
                 "drop",
                 function (
@@ -859,8 +842,6 @@ function renderContainer(
                 ) {
 
                     event.preventDefault();
-
-                    event.stopPropagation();
 
 
                     const draggedId =
@@ -875,18 +856,16 @@ function renderContainer(
                         .getBoundingClientRect();
 
 
-                    const middle =
-                        rect.left
-                        +
-                        rect.width
-                        /
-                        2;
-
-
                     const insertAfter =
-                        event.clientX
-                        >=
-                        middle;
+                        (
+                            event.clientX
+                            >=
+                            (
+                                rect.left
+                                +
+                                rect.width / 2
+                            )
+                        );
 
 
                     moveElement(
@@ -896,9 +875,6 @@ function renderContainer(
                         insertAfter
                     );
 
-
-                    removeDropIndicators();
-
                 }
             );
 
@@ -907,10 +883,6 @@ function renderContainer(
                 box
             );
 
-
-            // =================================================
-            // INSERTION ZONE AFTER ELEMENT
-            // =================================================
 
             addInsertionZone(
                 container,
@@ -930,7 +902,7 @@ function renderContainer(
 
 
 // ============================================================
-// ADD INSERTION ZONE
+// INSERTION ZONE
 // ============================================================
 
 function addInsertionZone(
@@ -947,10 +919,6 @@ function addInsertionZone(
 
     zone.className =
         "formula-insertion-zone";
-
-
-    zone.title =
-        "Insert here";
 
 
     zone.addEventListener(
@@ -982,7 +950,7 @@ function addInsertionZone(
 
 
 // ============================================================
-// SELECT INSERTION POINT
+// SELECT INSERTION
 // ============================================================
 
 function selectInsertionPoint(
@@ -1001,11 +969,7 @@ function selectInsertionPoint(
 
     document
         .querySelectorAll(
-            (
-                ".formula-insertion-zone.active, "
-                +
-                ".formula-empty-zone.active"
-            )
+            ".formula-insertion-zone.active, .formula-empty-zone.active"
         )
         .forEach(
             function (
@@ -1055,10 +1019,6 @@ function renderFraction(
         "fraction";
 
 
-    // ========================================================
-    // NUMERATOR
-    // ========================================================
-
     const numerator =
         document.createElement(
             "div"
@@ -1075,10 +1035,6 @@ function renderFraction(
     );
 
 
-    // ========================================================
-    // LINE
-    // ========================================================
-
     const line =
         document.createElement(
             "div"
@@ -1088,10 +1044,6 @@ function renderFraction(
     line.className =
         "fraction-line";
 
-
-    // ========================================================
-    // DENOMINATOR
-    // ========================================================
 
     const denominator =
         document.createElement(
@@ -1167,10 +1119,6 @@ function addFraction() {
     );
 
 
-    // ========================================================
-    // MOVE INTO NUMERATOR
-    // ========================================================
-
     activeContainer =
         fraction.numerator;
 
@@ -1188,7 +1136,7 @@ function addFraction() {
 
 
 // ============================================================
-// REMOVE ELEMENT
+// REMOVE
 // ============================================================
 
 function removeElement(
@@ -1198,17 +1146,10 @@ function removeElement(
 
     const index =
         elements.findIndex(
-            function (
-                element
-            ) {
-
-                return (
-                    element.id
-                    ===
-                    id
-                );
-
-            }
+            element =>
+                element.id
+                ===
+                id
         );
 
 
@@ -1285,17 +1226,10 @@ function findAndRemoveElement(
 
     const index =
         elements.findIndex(
-            function (
-                element
-            ) {
-
-                return (
-                    element.id
-                    ===
-                    id
-                );
-
-            }
+            element =>
+                element.id
+                ===
+                id
         );
 
 
@@ -1325,7 +1259,7 @@ function findAndRemoveElement(
             "fraction"
         ) {
 
-            const numeratorResult =
+            const numerator =
                 findAndRemoveElement(
                     element.numerator,
                     id
@@ -1333,15 +1267,15 @@ function findAndRemoveElement(
 
 
             if (
-                numeratorResult
+                numerator
             ) {
 
-                return numeratorResult;
+                return numerator;
 
             }
 
 
-            const denominatorResult =
+            const denominator =
                 findAndRemoveElement(
                     element.denominator,
                     id
@@ -1349,10 +1283,10 @@ function findAndRemoveElement(
 
 
             if (
-                denominatorResult
+                denominator
             ) {
 
-                return denominatorResult;
+                return denominator;
 
             }
 
@@ -1367,7 +1301,7 @@ function findAndRemoveElement(
 
 
 // ============================================================
-// MOVE ELEMENT
+// MOVE
 // ============================================================
 
 function moveElement(
@@ -1395,17 +1329,10 @@ function moveElement(
 
     let targetIndex =
         targetContainer.findIndex(
-            function (
-                element
-            ) {
-
-                return (
-                    element.id
-                    ===
-                    targetId
-                );
-
-            }
+            element =>
+                element.id
+                ===
+                targetId
         );
 
 
@@ -1466,7 +1393,7 @@ function moveElement(
 
 
 // ============================================================
-// REMOVE DRAG INDICATORS
+// DRAG INDICATORS
 // ============================================================
 
 function removeDropIndicators() {
@@ -1492,7 +1419,7 @@ function removeDropIndicators() {
 
 
 // ============================================================
-// SAFE VALUE FOR HTML ATTRIBUTE
+// HTML ATTRIBUTE ESCAPE
 // ============================================================
 
 function escapeAttribute(
@@ -1525,7 +1452,7 @@ function escapeAttribute(
 
 
 // ============================================================
-// ELEMENT EDITOR
+// EDITOR
 // ============================================================
 
 function showEditor(
@@ -1573,10 +1500,6 @@ function showEditor(
         false;
 
 
-    // ========================================================
-    // VARIABLE
-    // ========================================================
-
     if (
         element.type
         ===
@@ -1592,14 +1515,10 @@ function showEditor(
 
 
         placeholder =
-            "e.g. PV";
+            "e.g. rf";
 
     }
 
-
-    // ========================================================
-    // NUMBER
-    // ========================================================
 
     if (
         element.type
@@ -1621,13 +1540,6 @@ function showEditor(
     }
 
 
-    // ========================================================
-    // SYMBOL
-    //
-    // Value stays read-only because the symbol has to
-    // remain one of the approved dropdown symbols.
-    // ========================================================
-
     if (
         element.type
         ===
@@ -1640,10 +1552,6 @@ function showEditor(
 
         label =
             "Symbol";
-
-
-        placeholder =
-            "";
 
 
         valueReadOnly =
@@ -1689,8 +1597,42 @@ function showEditor(
                         id="element-meaning"
                         type="text"
                         value="${escapeAttribute(element.meaning)}"
-                        placeholder="e.g. Present Value"
+                        placeholder="e.g. Risk free rate"
+                        autocomplete="off"
                     >
+
+
+                    <div
+                        id="previous-meaning-wrapper"
+                        style="
+                            display: none;
+                            margin-top: 10px;
+                        "
+                    >
+
+                        <label>
+                            Previous meanings
+                        </label>
+
+
+                        <select
+                            id="previous-meaning-select"
+                            style="
+                                width: 100%;
+                                padding: 9px;
+                                border: 1px solid #ccc;
+                                border-radius: 7px;
+                                background: white;
+                            "
+                        >
+
+                            <option value="">
+                                Choose a previous meaning...
+                            </option>
+
+                        </select>
+
+                    </div>
 
                 `
 
@@ -1708,17 +1650,14 @@ function showEditor(
 
                     <label>
                         Description
-
                         <span
                             style="
                                 color: #999;
                                 font-size: 11px;
-                                font-weight: 400;
                             "
                         >
                             Optional
                         </span>
-
                     </label>
 
 
@@ -1736,11 +1675,7 @@ function showEditor(
         }
 
 
-        <div
-            style="
-                margin-top: 15px;
-            "
-        >
+        <div style="margin-top: 15px;">
 
             <button
                 id="save-element"
@@ -1779,11 +1714,156 @@ function showEditor(
         );
 
 
+    const previousMeaningWrapper =
+        document.getElementById(
+            "previous-meaning-wrapper"
+        );
+
+
+    const previousMeaningSelect =
+        document.getElementById(
+            "previous-meaning-select"
+        );
+
+
+    // ========================================================
+    // PREVIOUS MEANING DROPDOWN
+    // ========================================================
+
+    function refreshPreviousMeanings() {
+
+        if (
+            element.type
+            !==
+            "variable"
+            ||
+            !previousMeaningWrapper
+            ||
+            !previousMeaningSelect
+        ) {
+
+            return;
+
+        }
+
+
+        const meanings =
+            getPreviousMeanings(
+                valueInput.value
+            );
+
+
+        previousMeaningSelect.innerHTML =
+            `
+
+                <option value="">
+                    Choose a previous meaning...
+                </option>
+
+            `;
+
+
+        if (
+            meanings.length
+            ===
+            0
+        ) {
+
+            previousMeaningWrapper.style.display =
+                "none";
+
+
+            return;
+
+        }
+
+
+        meanings.forEach(
+            function (
+                meaning
+            ) {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+
+                option.value =
+                    meaning;
+
+
+                option.textContent =
+                    meaning;
+
+
+                previousMeaningSelect.appendChild(
+                    option
+                );
+
+            }
+        );
+
+
+        previousMeaningWrapper.style.display =
+            "block";
+
+    }
+
+
+    if (
+        element.type
+        ===
+        "variable"
+    ) {
+
+        valueInput.addEventListener(
+            "input",
+            refreshPreviousMeanings
+        );
+
+
+        valueInput.addEventListener(
+            "change",
+            refreshPreviousMeanings
+        );
+
+
+        if (
+            previousMeaningSelect
+        ) {
+
+            previousMeaningSelect.addEventListener(
+                "change",
+                function () {
+
+                    if (
+                        previousMeaningSelect.value
+                        &&
+                        meaningInput
+                    ) {
+
+                        meaningInput.value =
+                            previousMeaningSelect.value;
+
+
+                        meaningInput.focus();
+
+                    }
+
+                }
+            );
+
+        }
+
+
+        refreshPreviousMeanings();
+
+    }
+
+
     // ========================================================
     // FOCUS
-    //
-    // Symbols go directly to Description because
-    // their symbol value is read-only.
     // ========================================================
 
     if (
@@ -1841,23 +1921,6 @@ function showEditor(
                 }
 
 
-                // =================================================
-                // NUMBER VALIDATION
-                //
-                // Allows:
-                //
-                // 5
-                // 2.4
-                // 6.777
-                // .5
-                //
-                // Rejects:
-                //
-                // 2..4
-                // 6.7.7
-                // abc
-                // =================================================
-
                 if (
                     element.type
                     ===
@@ -1880,41 +1943,15 @@ function showEditor(
                 }
 
 
-                // =================================================
-                // SAVE VALUE
-                // =================================================
-
                 element.value =
                     value;
 
-
-                // =================================================
-                // VARIABLE MEANING
-                // =================================================
 
                 if (
                     element.type
                     ===
                     "variable"
-                ) {
-
-                    element.meaning =
-                        meaningInput
-                        ?
-                        meaningInput
-                            .value
-                            .trim()
-                        :
-                        "";
-
-                }
-
-
-                // =================================================
-                // SYMBOL DESCRIPTION
-                // =================================================
-
-                if (
+                    ||
                     element.type
                     ===
                     "symbol"
@@ -2028,7 +2065,7 @@ function showEditor(
 
 
 // ============================================================
-// TOOLBAR BUTTONS
+// TOOLBAR
 // ============================================================
 
 const addVariableButton =
@@ -2091,11 +2128,7 @@ if (
 
     addFractionButton.addEventListener(
         "click",
-        function () {
-
-            addFraction();
-
-        }
+        addFraction
     );
 
 }
@@ -2126,10 +2159,6 @@ function closeAllPickers() {
 }
 
 
-// ============================================================
-// PICKER TOGGLES
-// ============================================================
-
 document
     .querySelectorAll(
         ".picker-toggle"
@@ -2156,7 +2185,7 @@ document
                         );
 
 
-                    const isOpen =
+                    const open =
                         picker.classList.contains(
                             "open"
                         );
@@ -2166,7 +2195,7 @@ document
 
 
                     if (
-                        !isOpen
+                        !open
                     ) {
 
                         picker.classList.add(
@@ -2181,10 +2210,6 @@ document
         }
     );
 
-
-// ============================================================
-// PICKER CHOICES
-// ============================================================
 
 document
     .querySelectorAll(
@@ -2207,27 +2232,17 @@ document
 
 
                     const type =
-                        button
-                        .dataset
+                        button.dataset
                         .elementType;
 
 
                     const value =
-                        button
-                        .dataset
+                        button.dataset
                         .elementValue;
 
 
                     closeAllPickers();
 
-
-                    // ------------------------------------------------
-                    // addElement handles whether the element
-                    // needs an editor.
-                    //
-                    // For symbols it opens the Description box.
-                    // For operators it simply inserts them.
-                    // ------------------------------------------------
 
                     addElement(
                         type,
@@ -2241,50 +2256,14 @@ document
     );
 
 
-// ============================================================
-// DON'T CLOSE PICKER WHILE CLICKING INSIDE
-// ============================================================
-
-document
-    .querySelectorAll(
-        ".formula-picker"
-    )
-    .forEach(
-        function (
-            picker
-        ) {
-
-            picker.addEventListener(
-                "click",
-                function (
-                    event
-                ) {
-
-                    event.stopPropagation();
-
-                }
-            );
-
-        }
-    );
-
-
-// ============================================================
-// CLICK OUTSIDE CLOSES PICKERS
-// ============================================================
-
 document.addEventListener(
     "click",
-    function () {
-
-        closeAllPickers();
-
-    }
+    closeAllPickers
 );
 
 
 // ============================================================
-// KEYBOARD OPERATORS
+// KEYBOARD
 // ============================================================
 
 const keyboardOperators = {
@@ -2295,19 +2274,10 @@ const keyboardOperators = {
     "-":
         "-",
 
-    "−":
-        "-",
-
     "*":
         "×",
 
-    "×":
-        "×",
-
     "/":
-        "÷",
-
-    "÷":
         "÷",
 
     "=":
@@ -2321,10 +2291,6 @@ const keyboardOperators = {
 
 };
 
-
-// ============================================================
-// GLOBAL KEYBOARD INPUT
-// ============================================================
 
 document.addEventListener(
     "keydown",
@@ -2341,10 +2307,6 @@ document.addEventListener(
         }
 
 
-        // ----------------------------------------------------
-        // ALLOW NORMAL SYSTEM SHORTCUTS
-        // ----------------------------------------------------
-
         if (
             event.ctrlKey
             ||
@@ -2358,21 +2320,16 @@ document.addEventListener(
         }
 
 
-        // ----------------------------------------------------
-        // DON'T INTERFERE WITH NORMAL FORM FIELDS
-        // ----------------------------------------------------
-
-        const activeElement =
+        const active =
             document.activeElement;
 
 
         if (
-            activeElement
+            active
         ) {
 
             const tag =
-                activeElement
-                .tagName
+                active.tagName
                 .toLowerCase();
 
 
@@ -2388,9 +2345,6 @@ document.addEventListener(
                 tag
                 ===
                 "select"
-                ||
-                activeElement
-                    .isContentEditable
             ) {
 
                 return;
@@ -2403,10 +2357,6 @@ document.addEventListener(
         const key =
             event.key;
 
-
-        // ====================================================
-        // NUMBER / DECIMAL POINT
-        // ====================================================
 
         if (
             /^[0-9.]$/.test(
@@ -2427,10 +2377,6 @@ document.addEventListener(
         }
 
 
-        // ====================================================
-        // OPERATOR
-        // ====================================================
-
         if (
             Object.prototype
             .hasOwnProperty
@@ -2450,9 +2396,6 @@ document.addEventListener(
                 ]
             );
 
-
-            return;
-
         }
 
     }
@@ -2460,7 +2403,7 @@ document.addEventListener(
 
 
 // ============================================================
-// CLICKING CANVAS ACTIVATES KEYBOARD
+// CANVAS
 // ============================================================
 
 if (
@@ -2498,74 +2441,7 @@ if (
 
 
 // ============================================================
-// FORM FIELDS DISABLE FORMULA KEYBOARD
-// ============================================================
-
-document.addEventListener(
-    "focusin",
-    function (
-        event
-    ) {
-
-        const target =
-            event.target;
-
-
-        if (
-            !target
-        ) {
-
-            return;
-
-        }
-
-
-        if (
-            target
-            ===
-            formulaCanvas
-        ) {
-
-            formulaKeyboardActive =
-                true;
-
-
-            return;
-
-        }
-
-
-        const tag =
-            target
-            .tagName
-            .toLowerCase();
-
-
-        if (
-            tag
-            ===
-            "input"
-            ||
-            tag
-            ===
-            "textarea"
-            ||
-            tag
-            ===
-            "select"
-        ) {
-
-            formulaKeyboardActive =
-                false;
-
-        }
-
-    }
-);
-
-
-// ============================================================
-// INITIAL RENDER
+// INITIAL
 // ============================================================
 
 renderFormula();

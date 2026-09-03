@@ -358,21 +358,6 @@
         }
 
 
-        .field-help {
-
-            margin-top: 6px;
-
-            color: #999;
-
-            font-size: 11px;
-
-        }
-
-
-        /* =========================================
-           FORMULA NAME
-        ========================================= */
-
         .formula-name-field {
 
             margin-bottom: 26px;
@@ -459,8 +444,6 @@
         .picker-toggle:hover {
 
             background: #f5f5f5;
-
-            border-color: #c8c8c8;
 
         }
 
@@ -550,10 +533,6 @@
         }
 
 
-        /* =========================================
-           FIVE ROW PICKER GRID
-        ========================================= */
-
         .picker-grid {
 
             display: grid;
@@ -612,8 +591,6 @@
 
             background: #eeeeee;
 
-            border-color: #aaa;
-
         }
 
 
@@ -637,13 +614,6 @@
         }
 
 
-        .keyboard-hint strong {
-
-            color: #666;
-
-        }
-
-
         /* =========================================
            FORMULA CANVAS
         ========================================= */
@@ -660,8 +630,6 @@
 
             overflow-x: hidden;
 
-            overflow-y: visible;
-
             border:
                 1px solid
                 #e1e1e1;
@@ -676,32 +644,6 @@
 
         }
 
-
-        #formula-canvas:focus {
-
-            border-color: #aaa;
-
-            box-shadow:
-                0
-                0
-                0
-                3px
-                rgba(
-                    0,
-                    0,
-                    0,
-                    0.04
-                );
-
-        }
-
-
-        /* =========================================
-           LONG FORMULA WRAPPING
-
-           The main formula now wraps onto a new
-           line instead of overflowing the editor.
-        ========================================= */
 
         #formula-canvas > .formula-container {
 
@@ -731,21 +673,11 @@
 
             flex-shrink: 0;
 
-            max-width: 100%;
-
-        }
-
-
-        #formula-canvas
-        .formula-element {
-
-            overflow-wrap: anywhere;
-
         }
 
 
         /* =========================================
-           DETAILS
+           FORMULA DETAILS
         ========================================= */
 
         .detail-grid {
@@ -758,16 +690,7 @@
                     minmax(0, 1fr)
                 );
 
-            align-items: start;
-
             gap: 18px;
-
-        }
-
-
-        .detail-grid .field {
-
-            margin-bottom: 0;
 
         }
 
@@ -793,50 +716,13 @@
 
         .additional-details summary {
 
-            display: flex;
-
-            align-items: center;
-
-            justify-content: space-between;
-
-            padding:
-                15px
-                17px;
-
-            color: #333;
+            padding: 15px 17px;
 
             font-size: 13px;
 
             font-weight: 700;
 
             cursor: pointer;
-
-            list-style: none;
-
-        }
-
-
-        .additional-details summary::-webkit-details-marker {
-
-            display: none;
-
-        }
-
-
-        .additional-details summary::after {
-
-            content: "+";
-
-            color: #777;
-
-            font-size: 19px;
-
-        }
-
-
-        .additional-details[open] summary::after {
-
-            content: "−";
 
         }
 
@@ -862,16 +748,7 @@
                     minmax(0, 1fr)
                 );
 
-            align-items: start;
-
             gap: 18px;
-
-        }
-
-
-        .additional-grid .field {
-
-            margin: 0;
 
         }
 
@@ -883,8 +760,6 @@
         .form-footer {
 
             display: flex;
-
-            align-items: center;
 
             justify-content: flex-end;
 
@@ -927,22 +802,13 @@
 
             color: #444;
 
-            font-family: inherit;
+            text-decoration: none;
 
             font-size: 14px;
 
             font-weight: 600;
 
-            text-decoration: none;
-
             cursor: pointer;
-
-        }
-
-
-        .footer-button:hover {
-
-            background: #f5f5f5;
 
         }
 
@@ -954,13 +820,6 @@
             background: #222;
 
             color: white;
-
-        }
-
-
-        .save-button:hover {
-
-            background: #333;
 
         }
 
@@ -980,62 +839,6 @@
 
         }
 
-
-        @media (max-width: 600px) {
-
-            .page {
-
-                padding:
-                    25px
-                    15px
-                    40px;
-
-            }
-
-
-            .card {
-
-                padding: 20px;
-
-            }
-
-
-            .toolbar {
-
-                align-items: stretch;
-
-            }
-
-
-            .formula-picker-menu {
-
-                max-width:
-                    calc(
-                        100vw
-                        -
-                        70px
-                    );
-
-            }
-
-
-            .form-footer {
-
-                flex-direction: column;
-
-                align-items: stretch;
-
-            }
-
-
-            .footer-button {
-
-                width: 100%;
-
-            }
-
-        }
-
     </style>
 
 </head>
@@ -1049,10 +852,6 @@
 
     <div class="container">
 
-
-        <!-- =========================================
-             HEADER
-        ========================================== -->
 
         <header class="header">
 
@@ -1084,10 +883,6 @@
         </header>
 
 
-        <!-- =========================================
-             CARD
-        ========================================== -->
-
         <div class="card">
 
 
@@ -1115,10 +910,6 @@
                 {% endif %}
 
 
-                <!-- =================================
-                     STRUCTURE
-                ================================== -->
-
                 <input
                     type="hidden"
                     name="formula_structure"
@@ -1126,10 +917,6 @@
                     value="{{ formula_structure|default:'[]'|escape }}"
                 >
 
-
-                <!-- =================================
-                     BUILD FORMULA
-                ================================== -->
 
                 <section class="section">
 
@@ -1152,16 +939,12 @@
                     </div>
 
 
-                    <!-- =================================
-                         FORMULA NAME
-                    ================================== -->
-
                     <div class="field formula-name-field">
 
 
                         <label
-                            for="formula-name"
                             class="field-label"
+                            for="formula-name"
                         >
                             Formula name
                             <span class="required">*</span>
@@ -1169,8 +952,8 @@
 
 
                         <input
-                            type="text"
                             id="formula-name"
+                            type="text"
                             name="title"
                             class="field-input formula-name-input"
                             value="{{ title }}"
@@ -1194,14 +977,8 @@
                     </span>
 
 
-                    <!-- =================================
-                         TOOLBAR
-                    ================================== -->
-
                     <div class="toolbar">
 
-
-                        <!-- VARIABLE -->
 
                         <button
                             type="button"
@@ -1212,8 +989,6 @@
                         </button>
 
 
-                        <!-- NUMBER -->
-
                         <button
                             type="button"
                             class="toolbar-button"
@@ -1223,14 +998,9 @@
                         </button>
 
 
-                        <!-- =================================
-                             OPERATOR
-                        ================================== -->
+                        <!-- OPERATOR -->
 
-                        <div
-                            class="formula-picker"
-                            id="operator-picker"
-                        >
+                        <div class="formula-picker">
 
 
                             <button
@@ -1238,10 +1008,7 @@
                                 class="picker-toggle"
                             >
                                 + Operator
-
-                                <span class="picker-arrow">
-                                    ▼
-                                </span>
+                                <span class="picker-arrow">▼</span>
                             </button>
 
 
@@ -1250,76 +1017,13 @@
 
                                 <div class="picker-grid">
 
-
-                                    <button
-                                        type="button"
-                                        class="picker-choice"
-                                        data-element-type="operator"
-                                        data-element-value="+"
-                                    >
-                                        +
-                                    </button>
-
-
-                                    <button
-                                        type="button"
-                                        class="picker-choice"
-                                        data-element-type="operator"
-                                        data-element-value="-"
-                                    >
-                                        −
-                                    </button>
-
-
-                                    <button
-                                        type="button"
-                                        class="picker-choice"
-                                        data-element-type="operator"
-                                        data-element-value="×"
-                                    >
-                                        ×
-                                    </button>
-
-
-                                    <button
-                                        type="button"
-                                        class="picker-choice"
-                                        data-element-type="operator"
-                                        data-element-value="÷"
-                                    >
-                                        ÷
-                                    </button>
-
-
-                                    <button
-                                        type="button"
-                                        class="picker-choice"
-                                        data-element-type="operator"
-                                        data-element-value="="
-                                    >
-                                        =
-                                    </button>
-
-
-                                    <button
-                                        type="button"
-                                        class="picker-choice"
-                                        data-element-type="operator"
-                                        data-element-value="<"
-                                    >
-                                        &lt;
-                                    </button>
-
-
-                                    <button
-                                        type="button"
-                                        class="picker-choice"
-                                        data-element-type="operator"
-                                        data-element-value=">"
-                                    >
-                                        &gt;
-                                    </button>
-
+                                    <button type="button" class="picker-choice" data-element-type="operator" data-element-value="+">+</button>
+                                    <button type="button" class="picker-choice" data-element-type="operator" data-element-value="-">−</button>
+                                    <button type="button" class="picker-choice" data-element-type="operator" data-element-value="×">×</button>
+                                    <button type="button" class="picker-choice" data-element-type="operator" data-element-value="÷">÷</button>
+                                    <button type="button" class="picker-choice" data-element-type="operator" data-element-value="=">=</button>
+                                    <button type="button" class="picker-choice" data-element-type="operator" data-element-value="<">&lt;</button>
+                                    <button type="button" class="picker-choice" data-element-type="operator" data-element-value=">">&gt;</button>
 
                                 </div>
 
@@ -1330,14 +1034,9 @@
                         </div>
 
 
-                        <!-- =================================
-                             SYMBOL
-                        ================================== -->
+                        <!-- SYMBOL -->
 
-                        <div
-                            class="formula-picker"
-                            id="symbol-picker"
-                        >
+                        <div class="formula-picker">
 
 
                             <button
@@ -1345,10 +1044,7 @@
                                 class="picker-toggle"
                             >
                                 + Symbol
-
-                                <span class="picker-arrow">
-                                    ▼
-                                </span>
+                                <span class="picker-arrow">▼</span>
                             </button>
 
 
@@ -1356,9 +1052,6 @@
 
 
                                 <div class="picker-grid">
-
-
-                                    <!-- COMMON -->
 
                                     <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="(">(</button>
                                     <button type="button" class="picker-choice" data-element-type="symbol" data-element-value=")">)</button>
@@ -1373,8 +1066,6 @@
                                     <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="~">~</button>
 
                                     <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="≠">≠</button>
-
-                                    <!-- LOWERCASE GREEK -->
 
                                     <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="α">α</button>
                                     <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="β">β</button>
@@ -1405,9 +1096,6 @@
                                     <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="ψ">ψ</button>
                                     <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="ω">ω</button>
 
-
-                                    <!-- UPPERCASE GREEK -->
-
                                     <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="Α">Α</button>
                                     <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="Β">Β</button>
                                     <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="Γ">Γ</button>
@@ -1437,7 +1125,6 @@
                                     <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="Ψ">Ψ</button>
                                     <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="Ω">Ω</button>
 
-
                                 </div>
 
 
@@ -1446,8 +1133,6 @@
 
                         </div>
 
-
-                        <!-- FRACTION -->
 
                         <button
                             type="button"
@@ -1462,33 +1147,9 @@
 
 
                     <p class="keyboard-hint">
-
                         Click inside the formula first.
-
-                        You can then type
-
-                        <strong>0–9</strong>,
-
-                        <strong>.</strong>,
-
-                        <strong>+</strong>,
-
-                        <strong>-</strong>,
-
-                        <strong>*</strong>,
-
-                        <strong>/</strong>,
-
-                        <strong>=</strong>,
-
-                        <strong>&lt;</strong>
-
-                        or
-
-                        <strong>&gt;</strong>.
-
-                        * becomes × and / becomes ÷.
-
+                        You can type 0–9, a decimal point,
+                        +, -, *, /, =, &lt; or &gt;.
                     </p>
 
 
@@ -1502,29 +1163,21 @@
                 </section>
 
 
-                <div class="section-divider">
-                </div>
+                <div class="section-divider"></div>
 
-
-                <!-- =================================
-                     FORMULA DETAILS
-                ================================== -->
 
                 <section class="section">
 
 
                     <div class="section-header">
 
-
                         <h2>
                             Formula details
                         </h2>
 
-
                         <p>
                             These fields are optional.
                         </p>
-
 
                     </div>
 
@@ -1534,56 +1187,30 @@
 
                         <div class="field">
 
-
-                            <label
-                                for="formula-purpose"
-                                class="field-label"
-                            >
-
+                            <label class="field-label">
                                 What does this formula do?
-
-                                <span class="optional">
-                                    Optional
-                                </span>
-
+                                <span class="optional">Optional</span>
                             </label>
 
-
                             <textarea
-                                id="formula-purpose"
                                 name="purpose"
                                 class="field-textarea"
-                                placeholder="Briefly explain what the formula calculates or measures."
                             >{{ purpose }}</textarea>
-
 
                         </div>
 
 
                         <div class="field">
 
-
-                            <label
-                                for="formula-when"
-                                class="field-label"
-                            >
-
+                            <label class="field-label">
                                 When should I use it?
-
-                                <span class="optional">
-                                    Optional
-                                </span>
-
+                                <span class="optional">Optional</span>
                             </label>
 
-
                             <textarea
-                                id="formula-when"
                                 name="when_to_use"
                                 class="field-textarea"
-                                placeholder="Describe when this formula should be applied."
                             >{{ when_to_use }}</textarea>
-
 
                         </div>
 
@@ -1593,10 +1220,6 @@
 
                 </section>
 
-
-                <!-- =================================
-                     ADDITIONAL DETAILS
-                ================================== -->
 
                 <section class="section">
 
@@ -1617,35 +1240,21 @@
 
                                 <div class="field">
 
-
-                                    <label
-                                        for="formula-book"
-                                        class="field-label"
-                                    >
-
+                                    <label class="field-label">
                                         Book
-
-                                        <span class="optional">
-                                            Optional
-                                        </span>
-
+                                        <span class="optional">Optional</span>
                                     </label>
 
-
                                     <select
-                                        id="formula-book"
                                         name="book_name"
                                         class="field-select"
                                     >
-
 
                                         <option value="">
                                             No book selected
                                         </option>
 
-
                                         {% for textbook in textbooks %}
-
 
                                             <option
                                                 value="{{ textbook.name }}"
@@ -1654,43 +1263,27 @@
                                                 {{ textbook.name }}
                                             </option>
 
-
                                         {% endfor %}
 
-
                                     </select>
-
 
                                 </div>
 
 
                                 <div class="field">
 
-
-                                    <label
-                                        for="formula-chapter"
-                                        class="field-label"
-                                    >
-
+                                    <label class="field-label">
                                         Chapter
-
-                                        <span class="optional">
-                                            Optional
-                                        </span>
-
+                                        <span class="optional">Optional</span>
                                     </label>
-
 
                                     <input
                                         type="text"
-                                        id="formula-chapter"
                                         name="chapter"
                                         class="field-input"
                                         value="{{ chapter }}"
                                         placeholder="e.g. Chapter 4"
-                                        maxlength="255"
                                     >
-
 
                                 </div>
 
@@ -1706,10 +1299,6 @@
 
                 </section>
 
-
-                <!-- =================================
-                     FOOTER
-                ================================== -->
 
                 <div class="form-footer">
 
@@ -1754,7 +1343,14 @@
 
 
 <!-- =========================================
-     EXISTING STRUCTURE
+     SAVED VARIABLE HISTORY
+========================================== -->
+
+{{ variable_suggestions|json_script:"formula-variable-suggestions-data" }}
+
+
+<!-- =========================================
+     EXISTING FORMULA
 ========================================== -->
 
 <script>
@@ -1768,7 +1364,7 @@
 
 
 <script
-    src="{% static 'js/formula-editor.js' %}?v=20260903-5"
+    src="{% static 'js/formula-editor.js' %}?v=20260903-7"
 ></script>
 
 

@@ -70,6 +70,218 @@ def extract_variables(elements):
 
 
 # ============================================================
+# VARIABLE MEANING SUGGESTIONS
+# ============================================================
+
+def get_variable_meaning_suggestions(
+    user
+):
+    """
+    Build a history of variable meanings from all formulas
+    previously created by this student.
+
+    Example:
+
+    {
+        "rf": [
+            "Risk free rate",
+            "Risk-free return",
+        ],
+        "pv": [
+            "Present value",
+        ],
+    }
+
+    Variable symbols are matched case-insensitively.
+    Duplicate meanings are removed.
+    """
+
+    previous_variables = (
+        FormulaVariable.objects
+        .filter(
+            formula__knowledge_unit__subject__user=user
+        )
+        .exclude(
+            symbol=""
+        )
+        .exclude(
+            meaning=""
+        )
+        .values_list(
+            "symbol",
+            "meaning",
+        )
+        .order_by(
+            "symbol",
+            "meaning",
+        )
+    )
+
+    suggestions = {}
+
+    for (
+        symbol,
+        meaning
+    ) in previous_variables:
+
+        symbol = (
+            str(
+                symbol
+                or ""
+            )
+            .strip()
+        )
+
+        meaning = (
+            str(
+                meaning
+                or ""
+            )
+            .strip()
+        )
+
+        if (
+            not symbol
+            or
+            not meaning
+        ):
+
+            continue
+
+        key = (
+            symbol.casefold()
+        )
+
+        if (
+            key
+            not in suggestions
+        ):
+
+            suggestions[
+                key
+            ] = []
+
+        if (
+            meaning
+            not in suggestions[
+                key
+            ]
+        ):
+
+            suggestions[
+                key
+            ].append(
+                meaning
+            )
+
+    return suggestions
+
+# ============================================================
+# VARIABLE MEANING SUGGESTIONS
+# ============================================================
+
+def get_variable_meaning_suggestions(
+    user
+):
+    """
+    Build a history of variable meanings from the
+    student's existing formulas.
+
+    Example:
+
+    {
+        "rf": [
+            "Risk free rate",
+            "Risk-free return",
+        ],
+        "pv": [
+            "Present value",
+        ],
+    }
+
+    Symbols are matched case-insensitively.
+    Duplicate meanings are removed.
+    """
+
+    variable_rows = (
+        FormulaVariable.objects
+        .filter(
+            formula__knowledge_unit__subject__user=user
+        )
+        .exclude(
+            meaning=""
+        )
+        .values(
+            "symbol",
+            "meaning",
+        )
+        .order_by(
+            "symbol",
+            "meaning",
+        )
+    )
+
+    suggestions = {}
+
+    for row in variable_rows:
+
+        symbol = (
+            str(
+                row.get(
+                    "symbol",
+                    ""
+                )
+            )
+            .strip()
+        )
+
+        meaning = (
+            str(
+                row.get(
+                    "meaning",
+                    ""
+                )
+            )
+            .strip()
+        )
+
+        if (
+            not symbol
+            or
+            not meaning
+        ):
+
+            continue
+
+        key = (
+            symbol.casefold()
+        )
+
+        if (
+            key
+            not in suggestions
+        ):
+
+            suggestions[
+                key
+            ] = []
+
+        if (
+            meaning
+            not in suggestions[
+                key
+            ]
+        ):
+
+            suggestions[
+                key
+            ].append(
+                meaning
+            )
+
+    return suggestions
+
+# ============================================================
 # CREATE FORMULA
 # ============================================================
 
@@ -104,7 +316,7 @@ def create_formula(
     )
 
     # --------------------------------------------------------
-    # FALLBACK TO SESSION MATCH
+    # FALLBACK TO SESSION
     # --------------------------------------------------------
 
     if subject_index is None:
@@ -115,7 +327,7 @@ def create_formula(
         )
 
         # ----------------------------------------------------
-        # FIRST TRY DATABASE ID
+        # DATABASE ID
         # ----------------------------------------------------
 
         for (
@@ -149,12 +361,14 @@ def create_formula(
                 == subject.id
             ):
 
-                subject_index = index
+                subject_index = (
+                    index
+                )
 
                 break
 
         # ----------------------------------------------------
-        # FALLBACK TO SUBJECT NAME
+        # SUBJECT NAME
         # ----------------------------------------------------
 
         if subject_index is None:
@@ -179,12 +393,14 @@ def create_formula(
                     == subject.name.strip()
                 ):
 
-                    subject_index = index
+                    subject_index = (
+                        index
+                    )
 
                     break
 
     # --------------------------------------------------------
-    # NORMALIZE SUBJECT INDEX
+    # NORMALIZE INDEX
     # --------------------------------------------------------
 
     try:
@@ -216,7 +432,7 @@ def create_formula(
     )
 
     # ========================================================
-    # FORM VALUES
+    # VALUES
     # ========================================================
 
     title = ""
@@ -240,7 +456,7 @@ def create_formula(
     if request.method == "POST":
 
         # ----------------------------------------------------
-        # FORMULA NAME
+        # NAME
         # ----------------------------------------------------
 
         title = (
@@ -288,7 +504,7 @@ def create_formula(
         )
 
         # ----------------------------------------------------
-        # FORMULA STRUCTURE
+        # STRUCTURE
         # ----------------------------------------------------
 
         formula_structure = (
@@ -301,7 +517,7 @@ def create_formula(
         )
 
         # ====================================================
-        # VALIDATE FORMULA NAME
+        # VALIDATE NAME
         # ====================================================
 
         if not title:
@@ -311,7 +527,7 @@ def create_formula(
             )
 
         # ====================================================
-        # VALIDATE OPTIONAL TEXTBOOK
+        # VALIDATE TEXTBOOK
         # ====================================================
 
         if (
@@ -336,13 +552,15 @@ def create_formula(
                 )
 
         # ====================================================
-        # READ FORMULA STRUCTURE
+        # PARSE STRUCTURE
         # ====================================================
 
         try:
 
-            structure_data = json.loads(
-                formula_structure
+            structure_data = (
+                json.loads(
+                    formula_structure
+                )
             )
 
             if not isinstance(
@@ -371,13 +589,11 @@ def create_formula(
 
             # ------------------------------------------------
             # KNOWLEDGE UNIT
-            #
-            # Difficulty and estimated minutes are no longer
-            # entered by the student.
             # ------------------------------------------------
 
             knowledge_unit = (
-                KnowledgeUnit.objects.create(
+                KnowledgeUnit.objects
+                .create(
                     subject=subject,
 
                     title=title,
@@ -401,8 +617,11 @@ def create_formula(
             # ------------------------------------------------
 
             formula = (
-                Formula.objects.create(
-                    knowledge_unit=knowledge_unit,
+                Formula.objects
+                .create(
+                    knowledge_unit=(
+                        knowledge_unit
+                    ),
 
                     structure=(
                         formula_structure
@@ -410,16 +629,20 @@ def create_formula(
 
                     purpose=purpose,
 
-                    when_to_use=when_to_use,
+                    when_to_use=(
+                        when_to_use
+                    ),
 
-                    book_name=selected_book,
+                    book_name=(
+                        selected_book
+                    ),
 
                     chapter=chapter,
                 )
             )
 
             # =================================================
-            # CREATE FORMULA VARIABLES
+            # VARIABLES
             # =================================================
 
             seen_symbols = set()
@@ -430,30 +653,43 @@ def create_formula(
                 structure_data
             ):
 
-                symbol = str(
-                    element.get(
-                        "value",
-                        ""
+                symbol = (
+                    str(
+                        element.get(
+                            "value",
+                            ""
+                        )
                     )
-                ).strip()
+                    .strip()
+                )
 
-                meaning = str(
-                    element.get(
-                        "meaning",
-                        ""
+                meaning = (
+                    str(
+                        element.get(
+                            "meaning",
+                            ""
+                        )
                     )
-                ).strip()
+                    .strip()
+                )
 
                 if not symbol:
 
                     continue
 
-                if symbol in seen_symbols:
+                symbol_key = (
+                    symbol.casefold()
+                )
+
+                if (
+                    symbol_key
+                    in seen_symbols
+                ):
 
                     continue
 
                 seen_symbols.add(
-                    symbol
+                    symbol_key
                 )
 
                 FormulaVariable.objects.create(
@@ -469,13 +705,23 @@ def create_formula(
                 variable_order += 1
 
             # =================================================
-            # CREATED
+            # DONE
             # =================================================
 
             return redirect(
                 "formula_detail",
                 formula_id=formula.id
             )
+
+    # ========================================================
+    # VARIABLE HISTORY
+    # ========================================================
+
+    variable_suggestions = (
+        get_variable_meaning_suggestions(
+            request.user
+        )
+    )
 
     # ========================================================
     # RENDER
@@ -512,10 +758,14 @@ def create_formula(
             "formula_structure":
                 formula_structure,
 
+            "variable_suggestions":
+                variable_suggestions,
+
             "error":
                 error,
         }
     )
+
 # ============================================================
 # VIEW ALL FORMULAS
 # ============================================================
@@ -5604,6 +5854,16 @@ def create_list(
         ]
 
     # ========================================================
+    # PREVIOUS VARIABLE MEANINGS
+    # ========================================================
+
+    variable_suggestions = (
+        get_variable_meaning_suggestions(
+            request.user
+        )
+    )
+
+    # ========================================================
     # RENDER
     # ========================================================
 
@@ -5634,5 +5894,8 @@ def create_list(
 
             "error":
                 error,
+
+            "variable_suggestions":
+                variable_suggestions,
         }
     )

@@ -29,7 +29,17 @@
 
             min-height: 100vh;
 
+            padding: 30px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
             background: #f5f6f8;
+
+            color: #222;
 
             font-family:
                 -apple-system,
@@ -38,16 +48,6 @@
                 Arial,
                 sans-serif;
 
-            color: #222;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-            padding: 30px;
-
         }
 
 
@@ -55,9 +55,9 @@
 
             width: 100%;
 
-            max-width: 800px;
+            max-width: 900px;
 
-            background: white;
+            padding: 35px;
 
             border:
                 1px solid
@@ -65,7 +65,7 @@
 
             border-radius: 14px;
 
-            padding: 35px;
+            background: white;
 
         }
 
@@ -88,7 +88,7 @@
                 0
                 6px;
 
-            font-size: 24px;
+            font-size: 26px;
 
         }
 
@@ -110,7 +110,7 @@
 
         .progress {
 
-            margin-bottom: 30px;
+            margin-bottom: 25px;
 
             color: #777;
 
@@ -120,35 +120,300 @@
 
 
         /* =========================================
+           SYMBOL PANEL
+        ========================================= */
+
+        .review-symbol-panel {
+
+            margin-bottom: 22px;
+
+            padding: 14px;
+
+            overflow: hidden;
+
+            border:
+                1px solid
+                #e1e1e1;
+
+            border-radius: 10px;
+
+            background: #fafafa;
+
+        }
+
+
+        /* =========================================
+           SYMBOL HEADER
+        ========================================= */
+
+        .review-symbol-header {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            gap: 15px;
+
+            margin-bottom: 12px;
+
+        }
+
+
+        .review-symbol-header-text {
+
+            display: flex;
+
+            align-items: baseline;
+
+            flex-wrap: wrap;
+
+            gap: 8px;
+
+        }
+
+
+        .review-symbol-title {
+
+            color: #333;
+
+            font-size: 13px;
+
+            font-weight: 700;
+
+        }
+
+
+        .review-symbol-help {
+
+            color: #999;
+
+            font-size: 11px;
+
+        }
+
+
+        /* =========================================
+           MINIMIZE BUTTON
+        ========================================= */
+
+        .symbol-minimize-button {
+
+            width: auto;
+
+            flex-shrink: 0;
+
+            padding:
+                6px
+                10px;
+
+            border:
+                1px solid
+                #d8d8d8;
+
+            border-radius: 7px;
+
+            background: white;
+
+            color: #555;
+
+            font-family: inherit;
+
+            font-size: 11px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+
+        }
+
+
+        .symbol-minimize-button:hover {
+
+            background: #eeeeee;
+
+        }
+
+
+        /* =========================================
+           SYMBOL GRID WRAPPER
+        ========================================= */
+
+        .review-symbol-grid-wrapper {
+
+            width: 100%;
+
+            overflow-x: auto;
+
+            overflow-y: hidden;
+
+            padding-bottom: 2px;
+
+        }
+
+
+        /* =========================================
+           EXACTLY FIVE ROWS
+
+           Additional symbols continue into
+           new columns.
+        ========================================= */
+
+        .review-symbol-grid {
+
+            display: grid;
+
+            width: max-content;
+
+            grid-template-rows:
+                repeat(
+                    5,
+                    38px
+                );
+
+            grid-auto-flow: column;
+
+            grid-auto-columns: 42px;
+
+            gap: 6px;
+
+        }
+
+
+        .review-symbol-choice {
+
+            width: 42px;
+
+            height: 38px;
+
+            padding: 0;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            border:
+                1px solid
+                #e0e0e0;
+
+            border-radius: 7px;
+
+            background: white;
+
+            color: #222;
+
+            font-family: inherit;
+
+            font-size: 17px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+
+        }
+
+
+        .review-symbol-choice:hover {
+
+            border-color: #aaa;
+
+            background: #eeeeee;
+
+        }
+
+
+        /* =========================================
+           COLLAPSED SYMBOL PANEL
+        ========================================= */
+
+        .review-symbol-panel.collapsed {
+
+            padding:
+                10px
+                14px;
+
+        }
+
+
+        .review-symbol-panel.collapsed
+        .review-symbol-header {
+
+            margin-bottom: 0;
+
+        }
+
+
+        .review-symbol-panel.collapsed
+        .review-symbol-grid-wrapper {
+
+            display: none;
+
+        }
+
+
+        .review-symbol-panel.collapsed
+        .review-symbol-help {
+
+            display: none;
+
+        }
+
+
+        /* =========================================
            FORMULA
+
+           Larger and more prominent.
         ========================================= */
 
         .formula-box {
 
-            padding: 30px;
-
-            background: #f7f7f7;
-
-            border-radius: 12px;
+            padding:
+                45px
+                35px;
 
             margin-bottom: 25px;
 
             overflow-x: auto;
+
+            border:
+                1px solid
+                #dedede;
+
+            border-radius: 14px;
+
+            background: #fafafa;
 
         }
 
 
         .formula {
 
-            font-size: 25px;
+            min-height: 120px;
 
-            font-weight: 600;
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            flex-wrap: wrap;
+
+            gap:
+                8px
+                3px;
+
+            color: #111;
+
+            font-size: 34px;
+
+            font-weight: 650;
+
+            line-height: 1.8;
 
             text-align: center;
-
-            line-height: 2;
-
-            white-space: nowrap;
 
         }
 
@@ -156,6 +421,8 @@
         .formula-element {
 
             display: inline-block;
+
+            flex-shrink: 0;
 
             margin:
                 0
@@ -165,32 +432,34 @@
 
 
         /* =========================================
-           INPUT
+           ANSWER INPUT
         ========================================= */
 
         .answer-input {
 
-            width: 110px;
+            width: 125px;
 
             padding:
-                8px
-                10px;
+                10px
+                12px;
 
             margin:
                 0
-                3px;
+                4px;
 
             border:
-                1px solid
+                2px solid
                 #aaa;
 
-            border-radius: 7px;
+            border-radius: 8px;
 
             background: white;
 
+            color: #111;
+
             font-family: inherit;
 
-            font-size: 18px;
+            font-size: 22px;
 
             font-weight: 600;
 
@@ -209,7 +478,7 @@
                 0
                 0
                 0
-                2px
+                3px
                 rgba(
                     0,
                     0,
@@ -234,7 +503,9 @@
 
             vertical-align: middle;
 
-            min-width: 60px;
+            min-width: 70px;
+
+            flex-shrink: 0;
 
             margin:
                 0
@@ -253,12 +524,12 @@
 
             justify-content: center;
 
-            min-height: 38px;
+            min-height: 45px;
 
             padding:
                 0
-                6px
-                5px;
+                7px
+                6px;
 
             border-bottom:
                 2px solid
@@ -275,25 +546,26 @@
 
             justify-content: center;
 
-            min-height: 38px;
+            min-height: 45px;
 
             padding:
-                5px
                 6px
+                7px
                 0;
 
         }
 
 
-        .formula-fraction .answer-input {
+        .formula-fraction
+        .answer-input {
 
-            width: 90px;
+            width: 105px;
 
             padding:
-                5px
-                8px;
+                7px
+                9px;
 
-            font-size: 17px;
+            font-size: 19px;
 
         }
 
@@ -304,6 +576,15 @@
 
         button {
 
+            font-family: inherit;
+
+        }
+
+
+        .submit-button,
+        .continue-button,
+        .next-button {
+
             width: 100%;
 
             padding: 14px;
@@ -312,7 +593,9 @@
 
             border-radius: 9px;
 
-            font-family: inherit;
+            background: #222;
+
+            color: white;
 
             font-size: 15px;
 
@@ -323,32 +606,9 @@
         }
 
 
-        .submit-button {
-
-            background: #222;
-
-            color: white;
-
-        }
-
-
-        .submit-button:hover {
-
-            background: #333;
-
-        }
-
-
-        .continue-button {
-
-            background: #222;
-
-            color: white;
-
-        }
-
-
-        .continue-button:hover {
+        .submit-button:hover,
+        .continue-button:hover,
+        .next-button:hover {
 
             background: #333;
 
@@ -363,27 +623,15 @@
 
             padding: 18px;
 
+            margin-bottom: 20px;
+
             border-radius: 10px;
 
-            margin-bottom: 20px;
+            background: #f0f0f0;
 
             text-align: center;
 
             font-weight: 600;
-
-        }
-
-
-        .correct {
-
-            background: #f0f0f0;
-
-        }
-
-
-        .incorrect {
-
-            background: #f0f0f0;
 
         }
 
@@ -394,13 +642,13 @@
 
             padding: 15px;
 
-            background: white;
-
             border:
                 1px solid
                 #ddd;
 
             border-radius: 8px;
+
+            background: white;
 
             font-weight: 500;
 
@@ -458,7 +706,7 @@
 
 
         /* =========================================
-           GLOBAL REVIEW ACTIONS
+           REVIEW ACTIONS
         ========================================= */
 
         .review-actions {
@@ -479,36 +727,6 @@
             flex: 1;
 
             margin: 0;
-
-        }
-
-
-        .next-button {
-
-            width: 100%;
-
-            padding: 14px;
-
-            border: none;
-
-            border-radius: 9px;
-
-            background: #222;
-
-            color: white;
-
-            font-size: 15px;
-
-            font-weight: 600;
-
-            cursor: pointer;
-
-        }
-
-
-        .next-button:hover {
-
-            background: #333;
 
         }
 
@@ -577,16 +795,49 @@
             }
 
 
+            .formula-box {
+
+                padding:
+                    30px
+                    18px;
+
+            }
+
+
             .formula {
 
-                font-size: 20px;
+                min-height: 100px;
+
+                font-size: 26px;
 
             }
 
 
             .answer-input {
 
-                width: 90px;
+                width: 100px;
+
+                padding:
+                    8px
+                    9px;
+
+                font-size: 18px;
+
+            }
+
+
+            .review-symbol-header {
+
+                align-items: flex-start;
+
+            }
+
+
+            .review-symbol-header-text {
+
+                flex-direction: column;
+
+                gap: 3px;
 
             }
 
@@ -651,22 +902,18 @@
 
 
     <!-- =========================================
-         RESULT — CORRECT
+         CORRECT
     ========================================== -->
 
     {% if result == "correct" %}
 
 
-        <div class="result correct">
+        <div class="result">
 
             ✓ Correct!
 
         </div>
 
-
-        <!-- =====================================
-             FORMULA DETAILS
-        ====================================== -->
 
         <a
             href="{% url 'formula_detail' formula.id %}"
@@ -675,10 +922,6 @@
             View Formula Details
         </a>
 
-
-        <!-- =====================================
-             GLOBAL FORMULA REVIEW
-        ====================================== -->
 
         {% if review_mode == "global" %}
 
@@ -738,10 +981,6 @@
 
         {% else %}
 
-
-            <!-- =================================
-                 SUBJECT FORMULA REVIEW
-            ================================== -->
 
             <form
                 method="post"
@@ -787,13 +1026,13 @@
 
 
     <!-- =========================================
-         RESULT — INCORRECT
+         INCORRECT
     ========================================== -->
 
     {% elif result == "incorrect" %}
 
 
-        <div class="result incorrect">
+        <div class="result">
 
             ✗ Not quite.
 
@@ -830,10 +1069,6 @@
         </div>
 
 
-        <!-- =====================================
-             FORMULA DETAILS
-        ====================================== -->
-
         <a
             href="{% url 'formula_detail' formula.id %}"
             class="formula-details-link"
@@ -841,10 +1076,6 @@
             View Formula Details
         </a>
 
-
-        <!-- =====================================
-             GLOBAL FORMULA REVIEW
-        ====================================== -->
 
         {% if review_mode == "global" %}
 
@@ -948,22 +1179,18 @@
         {% endif %}
 
 
+    <!-- =========================================
+         QUESTION
+    ========================================== -->
+
     {% else %}
 
-
-        <!-- =====================================
-             QUESTION
-        ====================================== -->
 
         <form method="post">
 
 
             {% csrf_token %}
 
-
-            <!-- =================================
-                 PRESERVE REVIEW MODE
-            ================================== -->
 
             <input
                 type="hidden"
@@ -972,16 +1199,156 @@
             >
 
 
-            <!-- =================================
-                 PRESERVE SUBJECT INDEX
-            ================================== -->
-
             <input
                 type="hidden"
                 name="subject_index"
                 value="{{ subject_index }}"
             >
 
+
+            <!-- =====================================
+                 SYMBOL PANEL
+            ====================================== -->
+
+            <div
+                class="review-symbol-panel collapsed"
+                id="review-symbol-panel"
+            >
+
+
+                <div class="review-symbol-header">
+
+
+                    <div class="review-symbol-header-text">
+
+
+                        <span class="review-symbol-title">
+                            Symbols
+                        </span>
+
+
+                        <span class="review-symbol-help">
+                            Click an answer box, then choose a symbol.
+                        </span>
+
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        class="symbol-minimize-button"
+                        id="symbol-minimize-button"
+                    >
+                        Show Symbols
+                    </button>
+
+
+                </div>
+
+
+                <div
+                    class="review-symbol-grid-wrapper"
+                    id="review-symbol-grid-wrapper"
+                >
+
+
+                    <div class="review-symbol-grid">
+
+
+                        <!-- COMMON -->
+
+                        <button type="button" class="review-symbol-choice" data-symbol="(">(</button>
+                        <button type="button" class="review-symbol-choice" data-symbol=")">)</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="{">{</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="}">}</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="[">[</button>
+
+                        <button type="button" class="review-symbol-choice" data-symbol="]">]</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="^">^</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="$">$</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="%">%</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="~">~</button>
+
+                        <button type="button" class="review-symbol-choice" data-symbol="≠">≠</button>
+
+
+                        <!-- LOWERCASE GREEK -->
+
+                        <button type="button" class="review-symbol-choice" data-symbol="α">α</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="β">β</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="γ">γ</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="δ">δ</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="ε">ε</button>
+
+                        <button type="button" class="review-symbol-choice" data-symbol="ζ">ζ</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="η">η</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="θ">θ</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="ι">ι</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="κ">κ</button>
+
+                        <button type="button" class="review-symbol-choice" data-symbol="λ">λ</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="μ">μ</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="ν">ν</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="ξ">ξ</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="ο">ο</button>
+
+                        <button type="button" class="review-symbol-choice" data-symbol="π">π</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="ρ">ρ</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="σ">σ</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="τ">τ</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="υ">υ</button>
+
+                        <button type="button" class="review-symbol-choice" data-symbol="φ">φ</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="χ">χ</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="ψ">ψ</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="ω">ω</button>
+
+
+                        <!-- UPPERCASE GREEK -->
+
+                        <button type="button" class="review-symbol-choice" data-symbol="Α">Α</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="Β">Β</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="Γ">Γ</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="Δ">Δ</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="Ε">Ε</button>
+
+                        <button type="button" class="review-symbol-choice" data-symbol="Ζ">Ζ</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="Η">Η</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="Θ">Θ</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="Ι">Ι</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="Κ">Κ</button>
+
+                        <button type="button" class="review-symbol-choice" data-symbol="Λ">Λ</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="Μ">Μ</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="Ν">Ν</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="Ξ">Ξ</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="Ο">Ο</button>
+
+                        <button type="button" class="review-symbol-choice" data-symbol="Π">Π</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="Ρ">Ρ</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="Σ">Σ</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="Τ">Τ</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="Υ">Υ</button>
+
+                        <button type="button" class="review-symbol-choice" data-symbol="Φ">Φ</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="Χ">Χ</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="Ψ">Ψ</button>
+                        <button type="button" class="review-symbol-choice" data-symbol="Ω">Ω</button>
+
+
+                    </div>
+
+
+                </div>
+
+
+            </div>
+
+
+            <!-- =====================================
+                 FORMULA
+            ====================================== -->
 
             <div class="formula-box">
 
@@ -1146,6 +1513,10 @@
             </div>
 
 
+            <!-- =====================================
+                 CHECK ANSWER
+            ====================================== -->
+
             <button
                 type="submit"
                 class="submit-button"
@@ -1169,15 +1540,213 @@
         "DOMContentLoaded",
         function () {
 
-            const firstAnswer =
-                document.querySelector(
+            // =================================================
+            // ACTIVE ANSWER INPUT
+            // =================================================
+
+            let activeAnswerInput =
+                null;
+
+
+            const answerInputs =
+                document.querySelectorAll(
                     ".answer-input"
                 );
 
 
-            if (firstAnswer) {
+            if (
+                answerInputs.length
+                >
+                0
+            ) {
 
-                firstAnswer.focus();
+                activeAnswerInput =
+                    answerInputs[0];
+
+
+                activeAnswerInput.focus();
+
+            }
+
+
+            // =================================================
+            // REMEMBER ACTIVE ANSWER FIELD
+            // =================================================
+
+            answerInputs.forEach(
+                function (
+                    input
+                ) {
+
+                    input.addEventListener(
+                        "focus",
+                        function () {
+
+                            activeAnswerInput =
+                                input;
+
+                        }
+                    );
+
+                }
+            );
+
+
+            // =================================================
+            // SYMBOL INSERTION
+            // =================================================
+
+            document
+                .querySelectorAll(
+                    ".review-symbol-choice"
+                )
+                .forEach(
+                    function (
+                        button
+                    ) {
+
+                        button.addEventListener(
+                            "click",
+                            function () {
+
+                                const symbol =
+                                    button.dataset
+                                    .symbol;
+
+
+                                if (
+                                    !symbol
+                                ) {
+
+                                    return;
+
+                                }
+
+
+                                if (
+                                    !activeAnswerInput
+                                ) {
+
+                                    activeAnswerInput =
+                                        document.querySelector(
+                                            ".answer-input"
+                                        );
+
+                                }
+
+
+                                if (
+                                    !activeAnswerInput
+                                ) {
+
+                                    return;
+
+                                }
+
+
+                                const start =
+                                    activeAnswerInput
+                                    .selectionStart
+                                    ??
+                                    activeAnswerInput
+                                        .value
+                                        .length;
+
+
+                                const end =
+                                    activeAnswerInput
+                                    .selectionEnd
+                                    ??
+                                    start;
+
+
+                                const currentValue =
+                                    activeAnswerInput
+                                    .value;
+
+
+                                activeAnswerInput.value =
+                                    (
+                                        currentValue.slice(
+                                            0,
+                                            start
+                                        )
+                                        +
+                                        symbol
+                                        +
+                                        currentValue.slice(
+                                            end
+                                        )
+                                    );
+
+
+                                const newPosition =
+                                    start
+                                    +
+                                    symbol.length;
+
+
+                                activeAnswerInput.focus();
+
+
+                                activeAnswerInput
+                                    .setSelectionRange(
+                                        newPosition,
+                                        newPosition
+                                    );
+
+                            }
+                        );
+
+                    }
+                );
+
+
+            // =================================================
+            // MINIMIZE / SHOW SYMBOLS
+            // =================================================
+
+            const symbolPanel =
+                document.getElementById(
+                    "review-symbol-panel"
+                );
+
+
+            const symbolMinimizeButton =
+                document.getElementById(
+                    "symbol-minimize-button"
+                );
+
+
+            if (
+                symbolPanel
+                &&
+                symbolMinimizeButton
+            ) {
+
+                symbolMinimizeButton
+                    .addEventListener(
+                        "click",
+                        function () {
+
+                            const collapsed =
+                                symbolPanel
+                                .classList
+                                .toggle(
+                                    "collapsed"
+                                );
+
+
+                            symbolMinimizeButton
+                                .textContent =
+                                collapsed
+                                    ?
+                                    "Show Symbols"
+                                    :
+                                    "Minimize";
+
+                        }
+                    );
 
             }
 
