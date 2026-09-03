@@ -1,45 +1,240 @@
-let formulaElements =
+// ============================================================
+// FORMULA EDITOR
+// ============================================================
+
+
+// ============================================================
+// INITIAL FORMULA
+// ============================================================
+
+let formulaElements = [];
+
+if (
     typeof existingFormulaStructure !== "undefined"
-        ? existingFormulaStructure
-        : [];
+    &&
+    Array.isArray(existingFormulaStructure)
+) {
 
-const formulaCanvas =
-    document.getElementById("formula-canvas");
+    formulaElements =
+        existingFormulaStructure;
 
-const formulaStructureInput =
-    document.getElementById("formula-structure");
-
-    function updateFormulaStructure() {
-
-    if (!formulaStructureInput) {
-        return;
-    }
-
-    formulaStructureInput.value =
-        JSON.stringify(formulaElements);
 }
 
 
-// =====================================================
+// ============================================================
+// DOM
+// ============================================================
+
+const formulaCanvas =
+    document.getElementById(
+        "formula-canvas"
+    );
+
+const formulaStructureInput =
+    document.getElementById(
+        "formula-structure"
+    );
+
+
+// ============================================================
+// ID GENERATOR
+// ============================================================
+
+function createElementId() {
+
+    if (
+        window.crypto
+        &&
+        typeof window.crypto.randomUUID
+        ===
+        "function"
+    ) {
+
+        return window.crypto.randomUUID();
+
+    }
+
+    return (
+        "formula-"
+        +
+        Date.now()
+        +
+        "-"
+        +
+        Math.random()
+            .toString(16)
+            .slice(2)
+    );
+
+}
+
+
+// ============================================================
+// GIVE OLD ELEMENTS IDS IF NECESSARY
+// ============================================================
+
+function ensureIds(
+    elements
+) {
+
+    elements.forEach(
+        function (element) {
+
+            if (!element.id) {
+
+                element.id =
+                    createElementId();
+
+            }
+
+            if (
+                element.type
+                ===
+                "fraction"
+            ) {
+
+                if (
+                    !Array.isArray(
+                        element.numerator
+                    )
+                ) {
+
+                    element.numerator = [];
+
+                }
+
+                if (
+                    !Array.isArray(
+                        element.denominator
+                    )
+                ) {
+
+                    element.denominator = [];
+
+                }
+
+                ensureIds(
+                    element.numerator
+                );
+
+                ensureIds(
+                    element.denominator
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+ensureIds(
+    formulaElements
+);
+
+
+// ============================================================
 // ACTIVE INSERTION LOCATION
-// =====================================================
+// ============================================================
 
-let activeContainer = formulaElements;
-let insertionIndex = 0;
+let activeContainer =
+    formulaElements;
+
+let insertionIndex =
+    formulaElements.length;
 
 
-// =====================================================
+// ============================================================
+// KEYBOARD MODE
+//
+// It becomes true once the student clicks
+// inside the formula.
+// ============================================================
+
+let formulaKeyboardActive =
+    false;
+
+
+// ============================================================
+// UPDATE HIDDEN STRUCTURE INPUT
+// ============================================================
+
+function updateFormulaStructure() {
+
+    if (!formulaStructureInput) {
+
+        return;
+
+    }
+
+    formulaStructureInput.value =
+        JSON.stringify(
+            formulaElements
+        );
+
+}
+
+
+// ============================================================
+// FOCUS FORMULA
+// ============================================================
+
+function focusFormula() {
+
+    formulaKeyboardActive =
+        true;
+
+    if (!formulaCanvas) {
+
+        return;
+
+    }
+
+    try {
+
+        formulaCanvas.focus(
+            {
+                preventScroll: true
+            }
+        );
+
+    }
+
+    catch (error) {
+
+        formulaCanvas.focus();
+
+    }
+
+}
+
+
+// ============================================================
 // ADD ELEMENT
-// =====================================================
+// ============================================================
 
-function addElement(type, value = "") {
+function addElement(
+    type,
+    value = ""
+) {
 
     const element = {
-        id: crypto.randomUUID(),
-        type: type,
-        value: value,
-        meaning: ""
+
+        id:
+            createElementId(),
+
+        type:
+            type,
+
+        value:
+            value,
+
+        meaning:
+            ""
+
     };
+
 
     activeContainer.splice(
         insertionIndex,
@@ -47,35 +242,219 @@ function addElement(type, value = "") {
         element
     );
 
+
     insertionIndex++;
+
 
     renderFormula();
 
-    if (type === "variable") {
-        showEditor(element);
+
+    // --------------------------------------------------------
+    // VARIABLE
+    // --------------------------------------------------------
+
+    if (
+        type === "variable"
+    ) {
+
+        formulaKeyboardActive =
+            false;
+
+        showEditor(
+            element
+        );
+
+        return;
+
     }
+
+
+    // --------------------------------------------------------
+    // MANUAL NUMBER BUTTON
+    // --------------------------------------------------------
+
+    if (
+        type === "number"
+        &&
+        value === ""
+    ) {
+
+        formulaKeyboardActive =
+            false;
+
+        showEditor(
+            element
+        );
+
+        return;
+
+    }
+
+
+    focusFormula();
+
 }
 
-// =====================================================
+
+// ============================================================
+// KEYBOARD NUMBER
+//
+// Consecutive digits and one decimal point become
+// one number:
+//
+// 2 . 4       -> 2.4
+// 6 . 7 7 7   -> 6.777
+// ============================================================
+
+function addKeyboardDigit(
+    character
+) {
+
+    const previousIndex =
+        insertionIndex - 1;
+
+
+    // ========================================================
+    // CONTINUE EXISTING NUMBER
+    // ========================================================
+
+    if (
+        previousIndex >= 0
+    ) {
+
+        const previous =
+            activeContainer[
+                previousIndex
+            ];
+
+
+        if (
+            previous
+            &&
+            previous.type === "number"
+        ) {
+
+            const currentValue =
+                String(
+                    previous.value
+                    ||
+                    ""
+                );
+
+
+            // ------------------------------------------------
+            // DECIMAL POINT
+            //
+            // ONLY ALLOW ONE DECIMAL POINT.
+            // ------------------------------------------------
+
+            if (
+                character === "."
+            ) {
+
+                if (
+                    currentValue.includes(
+                        "."
+                    )
+                ) {
+
+                    return;
+
+                }
+
+
+                previous.value =
+                    currentValue
+                    +
+                    ".";
+
+            }
+
+            // ------------------------------------------------
+            // DIGIT
+            // ------------------------------------------------
+
+            else {
+
+                previous.value =
+                    currentValue
+                    +
+                    character;
+
+            }
+
+
+            renderFormula();
+
+            focusFormula();
+
+            return;
+
+        }
+
+    }
+
+
+    // ========================================================
+    // START NEW NUMBER
+    // ========================================================
+
+    if (
+        character === "."
+    ) {
+
+        // Typing "." first becomes 0.
+
+        addElement(
+            "number",
+            "0."
+        );
+
+    }
+
+    else {
+
+        addElement(
+            "number",
+            character
+        );
+
+    }
+
+}
+
+
+// ============================================================
 // RENDER FORMULA
-// =====================================================
+// ============================================================
 
 function renderFormula() {
 
     updateFormulaStructure();
 
-    formulaCanvas.innerHTML = "";
+
+    if (!formulaCanvas) {
+
+        return;
+
+    }
+
+
+    formulaCanvas.innerHTML =
+        "";
+
 
     renderContainer(
         formulaCanvas,
         formulaElements
     );
+
 }
 
 
-// =====================================================
+// ============================================================
 // RENDER CONTAINER
-// =====================================================
+// ============================================================
 
 function renderContainer(
     parent,
@@ -83,33 +462,43 @@ function renderContainer(
 ) {
 
     const container =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
+
 
     container.className =
         "formula-container";
 
 
-    // =================================================
-    // EMPTY CONTAINER
-    // =================================================
+    // ========================================================
+    // EMPTY
+    // ========================================================
 
-    if (elements.length === 0) {
+    if (
+        elements.length === 0
+    ) {
 
         const emptyZone =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
+
 
         emptyZone.className =
             "formula-empty-zone";
 
+
         emptyZone.title =
-            "Click to insert here";
+            "Click here, then type or add an element";
 
 
         emptyZone.addEventListener(
             "click",
-            function(event) {
+            function (event) {
 
                 event.preventDefault();
+
                 event.stopPropagation();
 
 
@@ -130,11 +519,13 @@ function renderContainer(
     }
 
 
-    // =================================================
-    // INSERTION ZONE BEFORE FIRST ELEMENT
-    // =================================================
+    // ========================================================
+    // BEFORE FIRST ELEMENT
+    // ========================================================
 
-    if (elements.length > 0) {
+    if (
+        elements.length > 0
+    ) {
 
         addInsertionZone(
             container,
@@ -145,25 +536,32 @@ function renderContainer(
     }
 
 
-    // =================================================
+    // ========================================================
     // ELEMENTS
-    // =================================================
+    // ========================================================
 
     elements.forEach(
-        function(element, index) {
+        function (
+            element,
+            index
+        ) {
 
             const box =
                 document.createElement(
                     "div"
                 );
 
+
             box.className =
                 "formula-element";
+
 
             box.dataset.id =
                 element.id;
 
-            box.draggable = true;
+
+            box.draggable =
+                true;
 
 
             // =================================================
@@ -171,7 +569,8 @@ function renderContainer(
             // =================================================
 
             if (
-                element.type ===
+                element.type
+                ===
                 "fraction"
             ) {
 
@@ -189,7 +588,8 @@ function renderContainer(
             else {
 
                 box.textContent =
-                    element.value ||
+                    element.value
+                    ||
                     "?";
 
             }
@@ -201,14 +601,28 @@ function renderContainer(
 
             box.addEventListener(
                 "dblclick",
-                function(event) {
+                function (event) {
 
                     event.preventDefault();
+
                     event.stopPropagation();
 
-                    showEditor(
-                        element
-                    );
+
+                    if (
+                        element.type
+                        !==
+                        "fraction"
+                    ) {
+
+                        formulaKeyboardActive =
+                            false;
+
+
+                        showEditor(
+                            element
+                        );
+
+                    }
 
                 }
             );
@@ -220,19 +634,22 @@ function renderContainer(
 
             box.addEventListener(
                 "dragstart",
-                function(event) {
+                function (event) {
 
                     event.stopPropagation();
+
 
                     event.dataTransfer
                         .effectAllowed =
                         "move";
+
 
                     event.dataTransfer
                         .setData(
                             "text/plain",
                             element.id
                         );
+
 
                     box.classList.add(
                         "dragging"
@@ -248,11 +665,12 @@ function renderContainer(
 
             box.addEventListener(
                 "dragend",
-                function() {
+                function () {
 
                     box.classList.remove(
                         "dragging"
                     );
+
 
                     removeDropIndicators();
 
@@ -266,11 +684,12 @@ function renderContainer(
 
             box.addEventListener(
                 "dragover",
-                function(event) {
+                function (event) {
 
                     event.preventDefault();
 
                     event.stopPropagation();
+
 
                     removeDropIndicators();
 
@@ -278,13 +697,16 @@ function renderContainer(
                     const rect =
                         box.getBoundingClientRect();
 
+
                     const middle =
-                        rect.left +
+                        rect.left
+                        +
                         rect.width / 2;
 
 
                     if (
-                        event.clientX <
+                        event.clientX
+                        <
                         middle
                     ) {
 
@@ -312,7 +734,7 @@ function renderContainer(
 
             box.addEventListener(
                 "drop",
-                function(event) {
+                function (event) {
 
                     event.preventDefault();
 
@@ -321,21 +743,24 @@ function renderContainer(
 
                     const draggedId =
                         event.dataTransfer
-                            .getData(
-                                "text/plain"
-                            );
+                        .getData(
+                            "text/plain"
+                        );
 
 
                     const rect =
                         box.getBoundingClientRect();
 
+
                     const middle =
-                        rect.left +
+                        rect.left
+                        +
                         rect.width / 2;
 
 
                     const insertAfter =
-                        event.clientX >=
+                        event.clientX
+                        >=
                         middle;
 
 
@@ -359,7 +784,7 @@ function renderContainer(
 
 
             // =================================================
-            // INSERTION ZONE AFTER ELEMENT
+            // INSERTION ZONE AFTER
             // =================================================
 
             addInsertionZone(
@@ -375,11 +800,13 @@ function renderContainer(
     parent.appendChild(
         container
     );
+
 }
 
-// =====================================================
-// INSERTION ZONE
-// =====================================================
+
+// ============================================================
+// ADD INSERTION ZONE
+// ============================================================
 
 function addInsertionZone(
     container,
@@ -388,10 +815,14 @@ function addInsertionZone(
 ) {
 
     const zone =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
+
 
     zone.className =
         "formula-insertion-zone";
+
 
     zone.title =
         "Insert here";
@@ -399,46 +830,17 @@ function addInsertionZone(
 
     zone.addEventListener(
         "click",
-        function(event) {
+        function (event) {
 
             event.preventDefault();
+
             event.stopPropagation();
 
 
-            // Set the active container
-
-            activeContainer =
-                elements;
-
-
-            // Set exact insertion position
-
-            insertionIndex =
-                index;
-
-
-            // Remove all previous
-            // insertion highlights
-
-            document
-                .querySelectorAll(
-                    ".formula-insertion-zone.active"
-                )
-                .forEach(
-                    function(element) {
-
-                        element.classList.remove(
-                            "active"
-                        );
-
-                    }
-                );
-
-
-            // Highlight this position
-
-            zone.classList.add(
-                "active"
+            selectInsertionPoint(
+                elements,
+                index,
+                zone
             );
 
         }
@@ -448,12 +850,13 @@ function addInsertionZone(
     container.appendChild(
         zone
     );
+
 }
 
 
-// =====================================================
+// ============================================================
 // SELECT INSERTION POINT
-// =====================================================
+// ============================================================
 
 function selectInsertionPoint(
     elements,
@@ -464,20 +867,17 @@ function selectInsertionPoint(
     activeContainer =
         elements;
 
+
     insertionIndex =
         index;
 
 
-    /*
-     * Remove previous blue line.
-     */
-
     document
         .querySelectorAll(
-            ".formula-insertion-zone.active"
+            ".formula-insertion-zone.active, .formula-empty-zone.active"
         )
         .forEach(
-            function(element) {
+            function (element) {
 
                 element.classList.remove(
                     "active"
@@ -487,35 +887,54 @@ function selectInsertionPoint(
         );
 
 
-    /*
-     * Show blue insertion line.
-     */
+    if (zone) {
 
-    zone.classList.add(
-        "active"
-    );
+        zone.classList.add(
+            "active"
+        );
+
+    }
+
+
+    // ========================================================
+    // CRITICAL:
+    //
+    // THIS ENABLES KEYBOARD INPUT.
+    // ========================================================
+
+    focusFormula();
 
 }
 
 
-// =====================================================
+// ============================================================
 // FRACTION
-// =====================================================
+// ============================================================
 
-function renderFraction(box, fraction) {
+function renderFraction(
+    box,
+    fraction
+) {
 
     const wrapper =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
-    wrapper.className = "fraction";
+
+    wrapper.className =
+        "fraction";
 
 
-    // =================================================
+    // ========================================================
     // NUMERATOR
-    // =================================================
+    // ========================================================
 
     const numerator =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
+
 
     numerator.className =
         "fraction-numerator";
@@ -527,23 +946,29 @@ function renderFraction(box, fraction) {
     );
 
 
-    // =================================================
-    // FRACTION LINE
-    // =================================================
+    // ========================================================
+    // LINE
+    // ========================================================
 
     const line =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
+
 
     line.className =
         "fraction-line";
 
 
-    // =================================================
+    // ========================================================
     // DENOMINATOR
-    // =================================================
+    // ========================================================
 
     const denominator =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
+
 
     denominator.className =
         "fraction-denominator";
@@ -555,43 +980,38 @@ function renderFraction(box, fraction) {
     );
 
 
-    // =================================================
-    // ADD EVERYTHING
-    // =================================================
-
     wrapper.appendChild(
         numerator
     );
 
+
     wrapper.appendChild(
         line
     );
+
 
     wrapper.appendChild(
         denominator
     );
 
 
-    // =================================================
-    // STOP EVENTS ESCAPING FRACTION
-    // =================================================
-
     box.appendChild(
         wrapper
     );
+
 }
 
 
-// =====================================================
+// ============================================================
 // ADD FRACTION
-// =====================================================
+// ============================================================
 
 function addFraction() {
 
     const fraction = {
 
         id:
-            crypto.randomUUID(),
+            createElementId(),
 
         type:
             "fraction",
@@ -611,8 +1031,6 @@ function addFraction() {
     };
 
 
-    // Add fraction at current position
-
     activeContainer.splice(
         insertionIndex,
         0,
@@ -620,145 +1038,108 @@ function addFraction() {
     );
 
 
-    /*
-     * Remember where the fraction
-     * was inserted.
-     */
-
-    const fractionContainer =
-        activeContainer;
-
-
-    /*
-     * Move the insertion point
-     * inside the numerator.
-     */
-
     activeContainer =
         fraction.numerator;
 
-    insertionIndex = 0;
+
+    insertionIndex =
+        0;
 
 
     renderFormula();
 
 
-    /*
-     * Find the first insertion zone
-     * inside the newly created fraction.
-     */
-
-    const numeratorZone =
-        document.querySelector(
-            ".fraction-numerator .formula-insertion-zone"
-        );
-
-
-    if (numeratorZone) {
-
-        numeratorZone.classList.add(
-            "active"
-        );
-
-    }
+    focusFormula();
 
 }
 
-// =====================================================
-// OPERATOR
-// =====================================================
 
-function addSelectedOperator() {
+// ============================================================
+// REMOVE ELEMENT
+// ============================================================
 
-    const select =
-        document.getElementById(
-            "operator-select"
-        );
-
-    const operator =
-        select.value;
-
-
-    if (!operator) {
-        return;
-    }
-
-
-    addElement(
-        "operator",
-        operator
-    );
-
-
-    select.value = "";
-}
-
-
-// =====================================================
-// MOVE ELEMENT
-// =====================================================
-
-function moveElement(
-    draggedId,
-    targetContainer,
-    targetId,
-    insertAfter
+function removeElement(
+    elements,
+    id
 ) {
 
-    const dragged =
-        findAndRemoveElement(
-            formulaElements,
-            draggedId
-        );
+    const index =
+        elements.findIndex(
+            function (element) {
 
-
-    if (!dragged) {
-        return;
-    }
-
-
-    let targetIndex =
-        targetContainer.findIndex(
-            function(element) {
-
-                return element.id ===
-                    targetId;
+                return (
+                    element.id
+                    ===
+                    id
+                );
 
             }
         );
 
 
-    if (targetIndex === -1) {
+    if (
+        index !== -1
+    ) {
 
-        targetContainer.push(
-            dragged
+        elements.splice(
+            index,
+            1
         );
 
+
+        return true;
+
     }
-    else {
 
-        if (insertAfter) {
 
-            targetIndex++;
+    for (
+        const element
+        of
+        elements
+    ) {
+
+        if (
+            element.type
+            ===
+            "fraction"
+        ) {
+
+            if (
+                removeElement(
+                    element.numerator,
+                    id
+                )
+            ) {
+
+                return true;
+
+            }
+
+
+            if (
+                removeElement(
+                    element.denominator,
+                    id
+                )
+            ) {
+
+                return true;
+
+            }
 
         }
 
-        targetContainer.splice(
-            targetIndex,
-            0,
-            dragged
-        );
-
     }
 
 
-    renderFormula();
+    return false;
+
 }
 
 
-// =====================================================
-// FIND AND REMOVE ELEMENT
-// =====================================================
+// ============================================================
+// FIND AND REMOVE
+// ============================================================
 
 function findAndRemoveElement(
     elements,
@@ -767,15 +1148,21 @@ function findAndRemoveElement(
 
     const index =
         elements.findIndex(
-            function(element) {
+            function (element) {
 
-                return element.id === id;
+                return (
+                    element.id
+                    ===
+                    id
+                );
 
             }
         );
 
 
-    if (index !== -1) {
+    if (
+        index !== -1
+    ) {
 
         return elements.splice(
             index,
@@ -786,11 +1173,15 @@ function findAndRemoveElement(
 
 
     for (
-        const element of elements
+        const element
+        of
+        elements
     ) {
 
         if (
-            element.type === "fraction"
+            element.type
+            ===
+            "fraction"
         ) {
 
             const numeratorResult =
@@ -826,124 +1217,220 @@ function findAndRemoveElement(
 
 
     return null;
+
 }
 
 
-// =====================================================
-// EDITOR
-// =====================================================
+// ============================================================
+// MOVE ELEMENT
+// ============================================================
 
-function showEditor(element) {
+function moveElement(
+    draggedId,
+    targetContainer,
+    targetId,
+    insertAfter
+) {
+
+    const dragged =
+        findAndRemoveElement(
+            formulaElements,
+            draggedId
+        );
+
+
+    if (!dragged) {
+
+        return;
+
+    }
+
+
+    let targetIndex =
+        targetContainer.findIndex(
+            function (element) {
+
+                return (
+                    element.id
+                    ===
+                    targetId
+                );
+
+            }
+        );
+
+
+    if (
+        targetIndex === -1
+    ) {
+
+        targetContainer.push(
+            dragged
+        );
+
+
+        targetIndex =
+            targetContainer.length - 1;
+
+    }
+
+    else {
+
+        if (insertAfter) {
+
+            targetIndex++;
+
+        }
+
+
+        targetContainer.splice(
+            targetIndex,
+            0,
+            dragged
+        );
+
+    }
+
+
+    activeContainer =
+        targetContainer;
+
+
+    insertionIndex =
+        targetIndex + 1;
+
+
+    renderFormula();
+
+
+    focusFormula();
+
+}
+
+
+// ============================================================
+// REMOVE DRAG INDICATORS
+// ============================================================
+
+function removeDropIndicators() {
+
+    document
+        .querySelectorAll(
+            ".drop-left, .drop-right"
+        )
+        .forEach(
+            function (element) {
+
+                element.classList.remove(
+                    "drop-left",
+                    "drop-right"
+                );
+
+            }
+        );
+
+}
+
+
+// ============================================================
+// ELEMENT EDITOR
+// ============================================================
+
+function showEditor(
+    element
+) {
 
     const existing =
-        document.getElementById("element-editor");
+        document.getElementById(
+            "element-editor"
+        );
+
 
     if (existing) {
+
         existing.remove();
-    }
-
-
-    /*
-     * Remember the ORIGINAL values.
-     *
-     * This lets us know whether the student
-     * actually changed anything.
-     */
-
-    const originalValue =
-        element.value || "";
-
-    const originalMeaning =
-        element.meaning || "";
-
-
-    /*
-     * Is this a brand-new element?
-     */
-
-    const isNewVariable =
-        element.type === "variable" &&
-        !element.value;
-
-
-    /*
-     * If this is a new variable, see if the
-     * currently supplied symbol already exists.
-     */
-
-    let existingVariable = null;
-
-    if (
-        element.type === "variable" &&
-        element.value
-    ) {
-
-        existingVariable =
-            formulaElements.find(
-                item =>
-                    item.type === "variable" &&
-                    item.id !== element.id &&
-                    item.value === element.value
-            );
-
-    }
-
-
-    /*
-     * Automatically inherit the meaning
-     * from an existing symbol.
-     */
-
-    if (
-        existingVariable &&
-        !element.meaning
-    ) {
-
-        element.meaning =
-            existingVariable.meaning;
 
     }
 
 
     const editor =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
+
 
     editor.id =
         "element-editor";
 
 
+    let title =
+        "Edit Element";
+
+
+    let label =
+        "Value";
+
+
+    let placeholder =
+        "Enter value";
+
+
+    if (
+        element.type
+        ===
+        "variable"
+    ) {
+
+        title =
+            "Define Variable";
+
+
+        label =
+            "Symbol";
+
+
+        placeholder =
+            "e.g. PV";
+
+    }
+
+
+    if (
+        element.type
+        ===
+        "number"
+    ) {
+
+        title =
+            "Enter Number";
+
+
+        label =
+            "Number";
+
+
+        placeholder =
+            "e.g. 100";
+
+    }
+
+
     editor.innerHTML = `
 
         <h3>
-            ${
-                element.type === "variable"
-                    ? "Define Variable"
-                    : "Edit Element"
-            }
+            ${title}
         </h3>
 
-
         <label>
-            ${
-                element.type === "variable"
-                    ? "Symbol"
-                    : "Value"
-            }
+            ${label}
         </label>
-
 
         <input
             id="element-value"
             type="text"
             value="${element.value || ""}"
-            placeholder="${
-                element.type === "variable"
-                    ? "e.g. PV"
-                    : "Enter value"
-            }"
-            autofocus
+            placeholder="${placeholder}"
         >
-
 
         ${
             element.type === "variable"
@@ -961,9 +1448,9 @@ function showEditor(element) {
                     >
 
                 `
-                : ""
+                :
+                ""
         }
-
 
         <div style="margin-top: 15px;">
 
@@ -986,39 +1473,78 @@ function showEditor(element) {
     `;
 
 
-    document.body.appendChild(editor);
+    document.body.appendChild(
+        editor
+    );
 
 
-    /*
-     * SAVE
-     */
+    const valueInput =
+        document.getElementById(
+            "element-value"
+        );
+
+
+    valueInput.focus();
+
+
+    // ========================================================
+    // SAVE
+    // ========================================================
 
     document
-        .getElementById("save-element")
+        .getElementById(
+            "save-element"
+        )
         .addEventListener(
             "click",
-            function() {
+            function () {
 
-                const newValue =
-                    document
-                        .getElementById(
-                            "element-value"
-                        )
-                        .value
-                        .trim();
+                const value =
+                    valueInput
+                    .value
+                    .trim();
 
 
-                if (!newValue) {
+                if (!value) {
+
                     return;
+
                 }
 
 
-                // =====================================================
-                // VARIABLE
-                // =====================================================
+                // ------------------------------------------------
+                // NUMBER MUST BE NUMERIC
+                // ------------------------------------------------
 
                 if (
-                    element.type === "variable"
+                    element.type
+                    ===
+                    "number"
+                ) {
+
+                    if (
+                        !/^(?:\d+\.?\d*|\.\d+)$/.test(
+                            value
+                        )
+                    ) {
+
+                        valueInput.focus();
+
+                        return;
+
+                    }
+
+                }
+
+
+                element.value =
+                    value;
+
+
+                if (
+                    element.type
+                    ===
+                    "variable"
                 ) {
 
                     const meaningInput =
@@ -1027,315 +1553,89 @@ function showEditor(element) {
                         );
 
 
-                    let newMeaning =
-                        meaningInput.value.trim();
-
-
-                    /*
-                     * Check whether the NEW symbol
-                     * already exists elsewhere.
-                     */
-
-                    const variableWithNewSymbol =
-                        formulaElements.find(
-                            item =>
-                                item.type === "variable" &&
-                                item.id !== element.id &&
-                                item.value === newValue
-                        );
-
-
-                    // =================================================
-                    // NEW VARIABLE
-                    // =================================================
-
-                    if (isNewVariable) {
-
-                        /*
-                         * If this symbol already exists,
-                         * automatically adopt its meaning.
-                         */
-
-                        if (
-                            variableWithNewSymbol
-                        ) {
-
-                            element.value =
-                                variableWithNewSymbol.value;
-
-                            element.meaning =
-                                variableWithNewSymbol.meaning;
-
-                        }
-
-                        else {
-
-                            element.value =
-                                newValue;
-
-                            element.meaning =
-                                newMeaning;
-
-                        }
-
-
-                        editor.remove();
-
-                        renderFormula();
-
-                        return;
-                    }
-
-
-                    // =================================================
-                    // EXISTING VARIABLE
-                    // =================================================
-
-                    const symbolChanged =
-                        originalValue !== newValue;
-
-                    const meaningChanged =
-                        originalMeaning !== newMeaning;
-
-
-                    /*
-                     * Nothing changed.
-                     *
-                     * No popup.
-                     */
-
-                    if (
-                        !symbolChanged &&
-                        !meaningChanged
-                    ) {
-
-                        editor.remove();
-
-                        renderFormula();
-
-                        return;
-                    }
-
-
-                    // =================================================
-                    // SYMBOL CHANGED TO EXISTING SYMBOL
-                    // =================================================
-
-                    if (
-                        symbolChanged &&
-                        variableWithNewSymbol
-                    ) {
-
-                        const confirmed =
-                            window.confirm(
-
-                                `The symbol "${newValue}" is already used ` +
-                                `elsewhere in this formula.\n\n` +
-
-                                `Its meaning is:\n\n` +
-
-                                `"${variableWithNewSymbol.meaning}"\n\n` +
-
-                                `Changing this occurrence to "${newValue}" ` +
-                                `will make it use that meaning instead.\n\n` +
-
-                                `Do you want to continue?`
-
-                            );
-
-
-                        if (!confirmed) {
-                            return;
-                        }
-
-
-                        /*
-                         * Adopt the existing symbol's meaning.
-                         */
-
-                        element.value =
-                            variableWithNewSymbol.value;
-
-                        element.meaning =
-                            variableWithNewSymbol.meaning;
-
-
-                        editor.remove();
-
-                        renderFormula();
-
-                        return;
-                    }
-
-
-                    // =================================================
-                    // MEANING CHANGED
-                    // =================================================
-
-                    if (
-                        meaningChanged
-                    ) {
-
-                        const otherOccurrences =
-                            formulaElements.filter(
-                                item =>
-                                    item.type === "variable" &&
-                                    item.id !== element.id &&
-                                    item.value === originalValue
-                            );
-
-
-                        if (
-                            otherOccurrences.length > 0
-                        ) {
-
-                            const confirmed =
-                                window.confirm(
-
-                                    `The variable "${originalValue}" ` +
-                                    `is used elsewhere in this formula.\n\n` +
-
-                                    `Changing its meaning from:\n\n` +
-
-                                    `"${originalMeaning || "(not defined)"}"\n\n` +
-
-                                    `to:\n\n` +
-
-                                    `"${newMeaning || "(not defined)"}"\n\n` +
-
-                                    `will also change the meaning of the ` +
-                                    `other "${originalValue}" occurrences.\n\n` +
-
-                                    `Do you want to continue?`
-
-                                );
-
-
-                            if (!confirmed) {
-                                return;
-                            }
-
-
-                            /*
-                             * Update the meaning of every
-                             * occurrence with the same symbol.
-                             */
-
-                            otherOccurrences.forEach(
-                                item => {
-
-                                    item.meaning =
-                                        newMeaning;
-
-                                }
-                            );
-
-                        }
-
-                    }
-
-
-                    // =================================================
-                    // SYMBOL CHANGED TO A NEW SYMBOL
-                    // =================================================
-
-                    if (
-                        symbolChanged &&
-                        !variableWithNewSymbol
-                    ) {
-
-                        const confirmed =
-                            window.confirm(
-
-                                `You are changing this occurrence from ` +
-                                `"${originalValue}" to "${newValue}".\n\n` +
-
-                                `Only this occurrence will change.\n\n` +
-
-                                `Do you want to continue?`
-
-                            );
-
-
-                        if (!confirmed) {
-                            return;
-                        }
-
-                    }
-
-
-                    // =================================================
-                    // SAVE THIS VARIABLE
-                    // =================================================
-
-                    element.value =
-                        newValue;
-
                     element.meaning =
-                        newMeaning;
-
-                }
-
-
-                // =====================================================
-                // NON-VARIABLE ELEMENT
-                // =====================================================
-
-                else {
-
-                    element.value =
-                        newValue;
+                        meaningInput
+                        ?
+                        meaningInput.value.trim()
+                        :
+                        "";
 
                 }
 
 
                 editor.remove();
 
+
                 renderFormula();
+
+
+                focusFormula();
 
             }
         );
 
 
-    /*
-     * DELETE
-     */
+    // ========================================================
+    // DELETE
+    // ========================================================
 
     document
-        .getElementById("delete-element")
+        .getElementById(
+            "delete-element"
+        )
         .addEventListener(
             "click",
-            function() {
+            function () {
 
                 removeElement(
                     formulaElements,
                     element.id
                 );
 
+
                 editor.remove();
 
+
+                activeContainer =
+                    formulaElements;
+
+
+                insertionIndex =
+                    formulaElements.length;
+
+
                 renderFormula();
+
+
+                focusFormula();
 
             }
         );
 
 
-    /*
-     * ENTER TO SAVE
-     */
+    // ========================================================
+    // ENTER SAVES
+    // ========================================================
 
     editor
-        .querySelectorAll("input")
+        .querySelectorAll(
+            "input"
+        )
         .forEach(
-            function(input) {
+            function (input) {
 
                 input.addEventListener(
                     "keydown",
-                    function(event) {
+                    function (event) {
 
                         if (
-                            event.key === "Enter"
+                            event.key
+                            ===
+                            "Enter"
                         ) {
+
+                            event.preventDefault();
+
 
                             document
                                 .getElementById(
@@ -1352,115 +1652,503 @@ function showEditor(element) {
         );
 
 }
-// =====================================================
-// REMOVE ELEMENT
-// =====================================================
 
-function removeElement(
-    elements,
-    id
-) {
 
-    const index =
-        elements.findIndex(
-            function(element) {
+// ============================================================
+// TOOLBAR BUTTONS
+// ============================================================
 
-                return element.id === id;
+const addVariableButton =
+    document.getElementById(
+        "add-variable-button"
+    );
+
+
+if (addVariableButton) {
+
+    addVariableButton.addEventListener(
+        "click",
+        function () {
+
+            addElement(
+                "variable"
+            );
+
+        }
+    );
+
+}
+
+
+const addNumberButton =
+    document.getElementById(
+        "add-number-button"
+    );
+
+
+if (addNumberButton) {
+
+    addNumberButton.addEventListener(
+        "click",
+        function () {
+
+            addElement(
+                "number"
+            );
+
+        }
+    );
+
+}
+
+
+const addFractionButton =
+    document.getElementById(
+        "add-fraction-button"
+    );
+
+
+if (addFractionButton) {
+
+    addFractionButton.addEventListener(
+        "click",
+        function () {
+
+            addFraction();
+
+        }
+    );
+
+}
+
+
+// ============================================================
+// PICKERS
+// ============================================================
+
+function closeAllPickers() {
+
+    document
+        .querySelectorAll(
+            ".formula-picker.open"
+        )
+        .forEach(
+            function (picker) {
+
+                picker.classList.remove(
+                    "open"
+                );
 
             }
         );
 
+}
 
-    if (index !== -1) {
 
-        elements.splice(
-            index,
-            1
-        );
+// ============================================================
+// PICKER TOGGLE
+// ============================================================
 
-        return true;
+document
+    .querySelectorAll(
+        ".picker-toggle"
+    )
+    .forEach(
+        function (button) {
+
+            button.addEventListener(
+                "click",
+                function (event) {
+
+                    event.preventDefault();
+
+                    event.stopPropagation();
+
+
+                    const picker =
+                        button.closest(
+                            ".formula-picker"
+                        );
+
+
+                    const isOpen =
+                        picker.classList.contains(
+                            "open"
+                        );
+
+
+                    closeAllPickers();
+
+
+                    if (!isOpen) {
+
+                        picker.classList.add(
+                            "open"
+                        );
+
+                    }
+
+                }
+            );
+
+        }
+    );
+
+
+// ============================================================
+// PICKER CHOICE
+// ============================================================
+
+document
+    .querySelectorAll(
+        ".picker-choice"
+    )
+    .forEach(
+        function (button) {
+
+            button.addEventListener(
+                "click",
+                function (event) {
+
+                    event.preventDefault();
+
+                    event.stopPropagation();
+
+
+                    const type =
+                        button.dataset
+                        .elementType;
+
+
+                    const value =
+                        button.dataset
+                        .elementValue;
+
+
+                    addElement(
+                        type,
+                        value
+                    );
+
+
+                    closeAllPickers();
+
+
+                    focusFormula();
+
+                }
+            );
+
+        }
+    );
+
+
+// ============================================================
+// DON'T CLOSE WHEN CLICKING INSIDE MENU
+// ============================================================
+
+document
+    .querySelectorAll(
+        ".formula-picker"
+    )
+    .forEach(
+        function (picker) {
+
+            picker.addEventListener(
+                "click",
+                function (event) {
+
+                    event.stopPropagation();
+
+                }
+            );
+
+        }
+    );
+
+
+// ============================================================
+// CLICK OUTSIDE CLOSES MENUS
+// ============================================================
+
+document.addEventListener(
+    "click",
+    function () {
+
+        closeAllPickers();
 
     }
+);
 
 
-    for (
-        const element of elements
-    ) {
+// ============================================================
+// KEYBOARD OPERATORS
+// ============================================================
+
+const keyboardOperators = {
+
+    "+":
+        "+",
+
+    "-":
+        "-",
+
+    "−":
+        "-",
+
+    "*":
+        "×",
+
+    "×":
+        "×",
+
+    "/":
+        "÷",
+
+    "÷":
+        "÷",
+
+    "=":
+        "=",
+
+    "<":
+        "<",
+
+    ">":
+        ">"
+
+};
+
+
+// ============================================================
+// GLOBAL KEYBOARD INPUT
+//
+// We listen on DOCUMENT, not just the canvas.
+//
+// The keyboard becomes active after the student
+// clicks a formula insertion point / canvas.
+// ============================================================
+
+document.addEventListener(
+    "keydown",
+    function (event) {
 
         if (
-            element.type === "fraction"
+            !formulaKeyboardActive
         ) {
 
+            return;
+
+        }
+
+
+        // ----------------------------------------------------
+        // NORMAL SHORTCUTS
+        // ----------------------------------------------------
+
+        if (
+            event.ctrlKey
+            ||
+            event.metaKey
+            ||
+            event.altKey
+        ) {
+
+            return;
+
+        }
+
+
+        // ----------------------------------------------------
+        // DON'T INTERFERE WITH FORM FIELDS
+        // ----------------------------------------------------
+
+        const activeElement =
+            document.activeElement;
+
+
+        if (activeElement) {
+
+            const tag =
+                activeElement
+                .tagName
+                .toLowerCase();
+
+
             if (
-                removeElement(
-                    element.numerator,
-                    id
-                )
+                tag === "input"
+                ||
+                tag === "textarea"
+                ||
+                tag === "select"
+                ||
+                activeElement.isContentEditable
             ) {
 
-                return true;
-
-            }
-
-
-            if (
-                removeElement(
-                    element.denominator,
-                    id
-                )
-            ) {
-
-                return true;
+                return;
 
             }
 
         }
 
+
+        const key =
+            event.key;
+
+
+        // ====================================================
+        // NUMBER
+        //
+        // ALLOW:
+        // 0-9
+        // one decimal point
+        // ====================================================
+
+        if (
+            /^[0-9.]$/.test(
+                key
+            )
+        ) {
+
+            event.preventDefault();
+
+
+            addKeyboardDigit(
+                key
+            );
+
+
+            return;
+
+        }
+
+
+        // ====================================================
+        // OPERATOR
+        // ====================================================
+
+        if (
+            Object.prototype
+            .hasOwnProperty
+            .call(
+                keyboardOperators,
+                key
+            )
+        ) {
+
+            event.preventDefault();
+
+
+            addElement(
+                "operator",
+                keyboardOperators[
+                    key
+                ]
+            );
+
+
+            return;
+
+        }
+
     }
+);
 
 
-    return false;
-}
+// ============================================================
+// CLICKING CANVAS ACTIVATES KEYBOARD
+// ============================================================
+
+if (formulaCanvas) {
+
+    formulaCanvas.addEventListener(
+        "click",
+        function (event) {
+
+            if (
+                event.target
+                ===
+                formulaCanvas
+            ) {
+
+                activeContainer =
+                    formulaElements;
 
 
-// =====================================================
-// REMOVE DROP INDICATORS
-// =====================================================
+                insertionIndex =
+                    formulaElements.length;
 
-function removeDropIndicators() {
 
-    document
-        .querySelectorAll(
-            ".drop-left, .drop-right"
-        )
-        .forEach(
-            function(element) {
-
-                element.classList.remove(
-                    "drop-left",
-                    "drop-right"
-                );
+                focusFormula();
 
             }
-        );
-}
 
-function getVariableBySymbol(symbol) {
-
-    if (!symbol) {
-        return null;
-    }
-
-    return formulaElements.find(
-        element =>
-            element.type === "variable" &&
-            element.value === symbol
+        }
     );
+
 }
 
 
-// =====================================================
+// ============================================================
+// LEAVING THE FORMULA FOR AN INPUT DISABLES FORMULA KEYBOARD
+// ============================================================
+
+document.addEventListener(
+    "focusin",
+    function (event) {
+
+        const target =
+            event.target;
+
+
+        if (
+            !target
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            target ===
+            formulaCanvas
+        ) {
+
+            formulaKeyboardActive =
+                true;
+
+
+            return;
+
+        }
+
+
+        const tag =
+            target
+            .tagName
+            .toLowerCase();
+
+
+        if (
+            tag === "input"
+            ||
+            tag === "textarea"
+            ||
+            tag === "select"
+        ) {
+
+            formulaKeyboardActive =
+                false;
+
+        }
+
+    }
+);
+
+
+// ============================================================
 // INITIAL RENDER
-// =====================================================
+// ============================================================
 
 renderFormula();

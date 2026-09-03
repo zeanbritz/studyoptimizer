@@ -1,7 +1,6 @@
 {% load static %}
 
 <!DOCTYPE html>
-
 <html lang="en">
 
 <head>
@@ -17,12 +16,10 @@
         Create Formula - StudyOptimizer
     </title>
 
-
     <link
         rel="stylesheet"
         href="{% static 'css/formula-editor.css' %}"
     >
-
 
     <style>
 
@@ -30,13 +27,9 @@
             box-sizing: border-box;
         }
 
-
         body {
-
             margin: 0;
-
             background: #f5f6f8;
-
             color: #222;
 
             font-family:
@@ -45,299 +38,181 @@
                 "Segoe UI",
                 Arial,
                 sans-serif;
-
         }
-
 
         .page {
-
             min-height: 100vh;
-
-            padding:
-                40px
-                20px
-                60px;
-
+            padding: 40px 20px 60px;
         }
-
 
         .container {
-
             max-width: 900px;
-
             margin: 0 auto;
-
         }
-
 
         /* =========================================
            HEADER
         ========================================= */
 
         .header {
-
             display: flex;
-
             align-items: center;
-
             gap: 18px;
-
             margin-bottom: 30px;
-
         }
 
-
         .back-button {
-
             width: 40px;
-
             height: 40px;
 
             display: flex;
-
             align-items: center;
-
             justify-content: center;
-
-            border:
-                1px solid
-                #dedede;
-
-            border-radius: 9px;
-
-            background: white;
-
-            color: #333;
-
-            text-decoration: none;
-
-            font-size: 20px;
 
             flex-shrink: 0;
 
-        }
+            border: 1px solid #dedede;
+            border-radius: 9px;
 
+            background: white;
+            color: #333;
+
+            text-decoration: none;
+            font-size: 20px;
+        }
 
         .back-button:hover {
-
             background: #f0f0f0;
-
         }
-
 
         .header-text h1 {
-
-            margin:
-                0
-                0
-                5px;
-
+            margin: 0 0 5px;
             font-size: 30px;
-
             letter-spacing: -0.6px;
-
         }
-
 
         .header-text p {
-
             margin: 0;
-
             color: #777;
-
             font-size: 14px;
-
         }
 
-
         /* =========================================
-           MAIN CARD
+           CARD
         ========================================= */
 
         .card {
-
-            background: white;
-
-            border:
-                1px solid
-                #e5e5e5;
-
-            border-radius: 14px;
-
             padding: 30px;
 
-        }
+            border: 1px solid #e5e5e5;
+            border-radius: 14px;
 
+            background: white;
+        }
 
         /* =========================================
            ERROR
         ========================================= */
 
         .error-box {
-
             margin-bottom: 24px;
+            padding: 13px 15px;
 
-            padding:
-                13px
-                15px;
-
-            border:
-                1px solid
-                #e6b7b7;
-
+            border: 1px solid #e6b7b7;
             border-radius: 9px;
 
             background: #fff4f4;
-
             color: #9b3a3a;
 
             font-size: 13px;
-
             font-weight: 600;
-
         }
 
-
         /* =========================================
-           SECTION
+           SECTIONS
         ========================================= */
 
         .section {
-
             margin-bottom: 30px;
-
         }
-
-
-        .section:last-child {
-
-            margin-bottom: 0;
-
-        }
-
 
         .section-header {
-
             margin-bottom: 20px;
-
         }
-
 
         .section-header h2 {
-
-            margin:
-                0
-                0
-                5px;
-
+            margin: 0 0 5px;
             font-size: 21px;
-
         }
 
-
         .section-header p {
-
             margin: 0;
 
             color: #888;
 
             font-size: 13px;
-
             line-height: 1.5;
-
         }
 
+        .section-divider {
+            height: 1px;
+            margin: 30px 0;
+            background: #eeeeee;
+        }
 
         /* =========================================
-           FORM FIELDS
+           FIELDS
         ========================================= */
 
         .field {
-
             margin-bottom: 20px;
-
         }
-
-
-        .field:last-child {
-
-            margin-bottom: 0;
-
-        }
-
 
         .field-label {
-
             display: block;
-
             margin-bottom: 7px;
 
             color: #333;
 
             font-size: 13px;
-
             font-weight: 700;
-
         }
-
 
         .required {
-
             color: #a74747;
-
         }
 
-
         .optional {
-
             margin-left: 5px;
 
             color: #999;
 
             font-size: 11px;
-
             font-weight: 500;
-
         }
-
 
         .field-input,
         .field-textarea,
         .field-select {
-
             width: 100%;
 
-            padding:
-                11px
-                13px;
+            padding: 11px 13px;
 
-            border:
-                1px solid
-                #d7d9dc;
-
+            border: 1px solid #d7d9dc;
             border-radius: 9px;
 
             background: white;
-
             color: #222;
 
             font-family: inherit;
-
             font-size: 14px;
 
             outline: none;
-
-            transition:
-                border-color 0.15s ease,
-                box-shadow 0.15s ease;
-
         }
-
 
         .field-input:focus,
         .field-textarea:focus,
         .field-select:focus {
-
             border-color: #999;
 
             box-shadow:
@@ -345,310 +220,234 @@
                 0
                 0
                 3px
-                rgba(
-                    0,
-                    0,
-                    0,
-                    0.04
-                );
-
+                rgba(0, 0, 0, 0.04);
         }
-
-
-        .field-input::placeholder,
-        .field-textarea::placeholder {
-
-            color: #aaa;
-
-        }
-
 
         .field-textarea {
-
             min-height: 95px;
-
             resize: vertical;
-
             line-height: 1.5;
-
         }
-
 
         .field-help {
-
             margin-top: 6px;
-
             color: #999;
-
             font-size: 11px;
-
-            line-height: 1.4;
-
         }
-
-
-        /* =========================================
-           FORMULA NAME
-        ========================================= */
 
         .formula-name-field {
-
             margin-bottom: 26px;
-
         }
-
 
         .formula-name-input {
-
             min-height: 46px;
-
             font-size: 16px;
-
             font-weight: 600;
-
         }
 
-
-        /* =========================================
-           FORMULA LABEL
-        ========================================= */
-
         .formula-label {
-
             display: block;
-
             margin-bottom: 10px;
 
             color: #333;
 
             font-size: 13px;
-
             font-weight: 700;
-
         }
-
-
-        .formula-label .optional {
-
-            font-weight: 500;
-
-        }
-
 
         /* =========================================
-           FORMULA BUILDER
+           TOOLBAR
         ========================================= */
 
         .toolbar {
-
             display: flex;
-
             align-items: center;
-
             flex-wrap: wrap;
 
             gap: 8px;
 
-            margin-bottom: 14px;
-
+            margin-bottom: 10px;
         }
 
-
-        .toolbar button,
-        .toolbar select {
-
+        .toolbar-button,
+        .picker-toggle {
             min-height: 40px;
 
-            padding:
-                9px
-                13px;
+            padding: 9px 13px;
 
-            border:
-                1px solid
-                #d8d8d8;
-
+            border: 1px solid #d8d8d8;
             border-radius: 8px;
 
             background: white;
-
             color: #333;
 
             font-family: inherit;
-
             font-size: 13px;
-
             font-weight: 600;
 
             cursor: pointer;
-
         }
 
-
-        .toolbar button:hover,
-        .toolbar select:hover {
-
+        .toolbar-button:hover,
+        .picker-toggle:hover {
             background: #f5f5f5;
-
             border-color: #c8c8c8;
-
         }
-
 
         /* =========================================
-           FORMULA CANVAS
+           PICKERS
         ========================================= */
 
-        #formula-canvas {
-
-            min-height: 180px;
-
-            margin-bottom: 0;
-
-            padding: 20px;
-
-            border:
-                1px solid
-                #e1e1e1;
-
-            border-radius: 10px;
-
-            background: #fafafa;
-
+        .formula-picker {
+            position: relative;
         }
 
-
-        /* =========================================
-           DIVIDER
-        ========================================= */
-
-        .section-divider {
-
-            height: 1px;
-
-            margin:
-                30px
-                0;
-
-            background: #eeeeee;
-
-        }
-
-
-        /* =========================================
-           FORMULA DETAILS
-        ========================================= */
-
-        .detail-grid {
-
-            display: grid;
-
-            grid-template-columns:
-                repeat(
-                    2,
-                    minmax(0, 1fr)
-                );
-
-            gap: 18px;
-
-        }
-
-
-        /* =========================================
-           ADDITIONAL DETAILS
-        ========================================= */
-
-        .additional-details {
-
-            border:
-                1px solid
-                #e2e3e5;
-
-            border-radius: 10px;
-
-            background: #fafafa;
-
-            overflow: hidden;
-
-        }
-
-
-        .additional-details summary {
-
-            display: flex;
-
+        .picker-toggle {
+            display: inline-flex;
             align-items: center;
-
-            justify-content: space-between;
-
-            padding:
-                15px
-                17px;
-
-            color: #333;
-
-            font-size: 13px;
-
-            font-weight: 700;
-
-            cursor: pointer;
-
-            list-style: none;
-
-            user-select: none;
-
+            gap: 9px;
         }
 
+        .picker-arrow {
+            color: #888;
+            font-size: 10px;
+        }
 
-        .additional-details summary::-webkit-details-marker {
+        .formula-picker-menu {
+            position: absolute;
+
+            top: calc(100% + 7px);
+            left: 0;
+
+            z-index: 1000;
 
             display: none;
 
-        }
+            width: max-content;
 
+            max-width: min(700px, 85vw);
 
-        .additional-details summary::after {
+            padding: 12px;
 
-            content: "+";
+            overflow-x: auto;
 
-            color: #777;
+            border: 1px solid #dedede;
+            border-radius: 10px;
 
-            font-size: 19px;
+            background: white;
 
-            font-weight: 400;
-
-        }
-
-
-        .additional-details[open] summary::after {
-
-            content: "−";
-
-        }
-
-
-        .additional-details-content {
-
-            padding:
+            box-shadow:
                 0
-                17px
-                17px;
-
-            border-top:
-                1px solid
-                #ededed;
-
+                10px
+                30px
+                rgba(0, 0, 0, 0.14);
         }
 
-
-        .additional-details-content .field:first-child {
-
-            margin-top: 17px;
-
+        .formula-picker.open
+        .formula-picker-menu {
+            display: block;
         }
 
+        /* =========================================
+           EXACTLY 5 ROWS
 
-        .additional-grid {
+           After 5 entries it starts
+           another column.
+        ========================================= */
 
+        .picker-grid {
+            display: grid;
+
+            grid-template-rows:
+                repeat(5, 40px);
+
+            grid-auto-flow: column;
+
+            grid-auto-columns: 44px;
+
+            gap: 6px;
+        }
+
+        .picker-choice {
+            width: 44px;
+            height: 40px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            padding: 0;
+
+            border: 1px solid #e0e0e0;
+            border-radius: 7px;
+
+            background: #fafafa;
+            color: #222;
+
+            font-family: inherit;
+            font-size: 17px;
+            font-weight: 600;
+
+            cursor: pointer;
+        }
+
+        .picker-choice:hover {
+            background: #eeeeee;
+            border-color: #aaa;
+        }
+
+        /* =========================================
+           KEYBOARD HELP
+        ========================================= */
+
+        .keyboard-hint {
+            margin: 0 0 14px;
+
+            color: #999;
+
+            font-size: 11px;
+            line-height: 1.5;
+        }
+
+        .keyboard-hint strong {
+            color: #666;
+        }
+
+        /* =========================================
+           CANVAS
+        ========================================= */
+
+        #formula-canvas {
+            min-height: 180px;
+
+            padding: 20px;
+
+            border: 1px solid #e1e1e1;
+            border-radius: 10px;
+
+            background: #fafafa;
+
+            outline: none;
+
+            cursor: text;
+        }
+
+        #formula-canvas:focus {
+            border-color: #aaa;
+
+            box-shadow:
+                0
+                0
+                0
+                3px
+                rgba(0, 0, 0, 0.04);
+        }
+
+        /* =========================================
+           DETAILS
+        ========================================= */
+
+        .detail-grid {
             display: grid;
 
             grid-template-columns:
@@ -660,117 +459,134 @@
             align-items: start;
 
             gap: 18px;
-
         }
 
+        .detail-grid .field {
+            margin-bottom: 0;
+        }
+
+        /* =========================================
+           ADDITIONAL DETAILS
+        ========================================= */
+
+        .additional-details {
+            overflow: hidden;
+
+            border: 1px solid #e2e3e5;
+            border-radius: 10px;
+
+            background: #fafafa;
+        }
+
+        .additional-details summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            padding: 15px 17px;
+
+            color: #333;
+
+            font-size: 13px;
+            font-weight: 700;
+
+            cursor: pointer;
+            list-style: none;
+        }
+
+        .additional-details summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .additional-details summary::after {
+            content: "+";
+            color: #777;
+            font-size: 19px;
+        }
+
+        .additional-details[open] summary::after {
+            content: "−";
+        }
+
+        .additional-details-content {
+            padding: 17px;
+            border-top: 1px solid #ededed;
+        }
+
+        .additional-grid {
+            display: grid;
+
+            grid-template-columns:
+                repeat(
+                    2,
+                    minmax(0, 1fr)
+                );
+
+            align-items: start;
+
+            gap: 18px;
+        }
 
         .additional-grid .field {
-
-            margin-bottom: 0;
-
+            margin: 0;
         }
-
 
         /* =========================================
            FOOTER
         ========================================= */
 
         .form-footer {
-
             display: flex;
-
             align-items: center;
-
             justify-content: flex-end;
-
             flex-wrap: wrap;
 
             gap: 10px;
 
             margin-top: 30px;
-
             padding-top: 22px;
 
-            border-top:
-                1px solid
-                #eeeeee;
-
+            border-top: 1px solid #eeeeee;
         }
 
-
         .footer-button {
-
             display: inline-flex;
-
             align-items: center;
-
             justify-content: center;
 
             min-height: 42px;
 
-            padding:
-                10px
-                18px;
+            padding: 10px 18px;
 
-            border:
-                1px solid
-                #d8d8d8;
-
+            border: 1px solid #d8d8d8;
             border-radius: 8px;
 
             background: white;
-
             color: #444;
+
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
 
             text-decoration: none;
 
-            font-family: inherit;
-
-            font-size: 14px;
-
-            font-weight: 600;
-
             cursor: pointer;
-
-            transition:
-                background 0.15s ease,
-                border-color 0.15s ease,
-                transform 0.15s ease;
-
         }
-
 
         .footer-button:hover {
-
             background: #f5f5f5;
-
-            border-color: #c5c5c5;
-
-            transform:
-                translateY(-1px);
-
         }
 
-
         .save-button {
-
             border: none;
 
             background: #222;
-
             color: white;
-
         }
-
 
         .save-button:hover {
-
             background: #333;
-
-            border-color: #333;
-
         }
-
 
         /* =========================================
            MOBILE
@@ -780,70 +596,37 @@
 
             .detail-grid,
             .additional-grid {
-
                 grid-template-columns: 1fr;
-
             }
 
         }
 
-
         @media (max-width: 600px) {
 
             .page {
-
-                padding:
-                    25px
-                    15px
-                    40px;
-
+                padding: 25px 15px 40px;
             }
-
 
             .card {
-
                 padding: 20px;
-
             }
-
-
-            .header-text h1 {
-
-                font-size: 24px;
-
-            }
-
 
             .toolbar {
-
-                flex-direction: column;
-
                 align-items: stretch;
-
             }
 
-
-            .toolbar button,
-            .toolbar select {
-
-                width: 100%;
-
+            .formula-picker-menu {
+                max-width:
+                    calc(100vw - 70px);
             }
-
 
             .form-footer {
-
                 flex-direction: column;
-
                 align-items: stretch;
-
             }
 
-
             .footer-button {
-
                 width: 100%;
-
             }
 
         }
@@ -897,7 +680,7 @@
 
 
         <!-- =========================================
-             MAIN CARD
+             CARD
         ========================================== -->
 
         <div class="card">
@@ -916,10 +699,6 @@
                 >
 
 
-                <!-- =====================================
-                     ERROR
-                ====================================== -->
-
                 {% if error %}
 
 
@@ -931,9 +710,9 @@
                 {% endif %}
 
 
-                <!-- =====================================
-                     FORMULA STRUCTURE
-                ====================================== -->
+                <!-- =================================
+                     STRUCTURE
+                ================================== -->
 
                 <input
                     type="hidden"
@@ -943,9 +722,9 @@
                 >
 
 
-                <!-- =====================================
-                     BUILD YOUR FORMULA
-                ====================================== -->
+                <!-- =================================
+                     BUILD FORMULA
+                ================================== -->
 
                 <section class="section">
 
@@ -959,18 +738,16 @@
 
 
                         <p>
-                            Give the formula a name, then build
-                            the formula using variables, numbers,
-                            operators, symbols and fractions.
+                            Give your formula a name, then use
+                            variables, numbers, operators,
+                            symbols and fractions to build it.
                         </p>
 
 
                     </div>
 
 
-                    <!-- =============================
-                         FORMULA NAME
-                    ============================== -->
+                    <!-- FORMULA NAME -->
 
                     <div class="field formula-name-field">
 
@@ -979,10 +756,8 @@
                             for="formula-name"
                             class="field-label"
                         >
-
                             Formula name
                             <span class="required">*</span>
-
                         </label>
 
 
@@ -1001,10 +776,6 @@
                     </div>
 
 
-                    <!-- =============================
-                         FORMULA
-                    ============================== -->
-
                     <span class="formula-label">
 
                         Formula
@@ -1016,94 +787,264 @@
                     </span>
 
 
-                    <!-- =============================
+                    <!-- =================================
                          TOOLBAR
-                    ============================== -->
+                    ================================== -->
 
                     <div class="toolbar">
 
 
+                        <!-- VARIABLE -->
+
                         <button
                             type="button"
-                            onclick="addElement('variable')"
+                            class="toolbar-button"
+                            id="add-variable-button"
                         >
                             + Variable
                         </button>
 
 
+                        <!-- NUMBER -->
+
                         <button
                             type="button"
-                            onclick="addElement('number')"
+                            class="toolbar-button"
+                            id="add-number-button"
                         >
                             + Number
                         </button>
 
 
-                        <select id="operator-select">
+                        <!-- =================================
+                             OPERATOR
+                        ================================== -->
+
+                        <div
+                            class="formula-picker"
+                            id="operator-picker"
+                        >
 
 
-                            <option value="">
+                            <button
+                                type="button"
+                                class="picker-toggle"
+                            >
                                 + Operator
-                            </option>
+
+                                <span class="picker-arrow">
+                                    ▼
+                                </span>
+                            </button>
 
 
-                            <option value="+">
-                                +
-                            </option>
+                            <div class="formula-picker-menu">
 
 
-                            <option value="-">
-                                −
-                            </option>
+                                <div class="picker-grid">
 
 
-                            <option value="×">
-                                ×
-                            </option>
+                                    <button
+                                        type="button"
+                                        class="picker-choice"
+                                        data-element-type="operator"
+                                        data-element-value="+"
+                                    >
+                                        +
+                                    </button>
 
 
-                            <option value="÷">
-                                ÷
-                            </option>
+                                    <button
+                                        type="button"
+                                        class="picker-choice"
+                                        data-element-type="operator"
+                                        data-element-value="-"
+                                    >
+                                        −
+                                    </button>
 
 
-                            <option value="=">
-                                =
-                            </option>
+                                    <button
+                                        type="button"
+                                        class="picker-choice"
+                                        data-element-type="operator"
+                                        data-element-value="×"
+                                    >
+                                        ×
+                                    </button>
 
 
-                            <option value="<">
-                                &lt;
-                            </option>
+                                    <button
+                                        type="button"
+                                        class="picker-choice"
+                                        data-element-type="operator"
+                                        data-element-value="÷"
+                                    >
+                                        ÷
+                                    </button>
 
 
-                            <option value=">">
-                                &gt;
-                            </option>
+                                    <button
+                                        type="button"
+                                        class="picker-choice"
+                                        data-element-type="operator"
+                                        data-element-value="="
+                                    >
+                                        =
+                                    </button>
 
 
-                        </select>
+                                    <button
+                                        type="button"
+                                        class="picker-choice"
+                                        data-element-type="operator"
+                                        data-element-value="<"
+                                    >
+                                        &lt;
+                                    </button>
 
 
-                        <button
-                            type="button"
-                            onclick="addSelectedOperator()"
+                                    <button
+                                        type="button"
+                                        class="picker-choice"
+                                        data-element-type="operator"
+                                        data-element-value=">"
+                                    >
+                                        &gt;
+                                    </button>
+
+
+                                </div>
+
+
+                            </div>
+
+
+                        </div>
+
+
+                        <!-- =================================
+                             SYMBOLS
+                        ================================== -->
+
+                        <div
+                            class="formula-picker"
+                            id="symbol-picker"
                         >
-                            Add
-                        </button>
 
+
+                            <button
+                                type="button"
+                                class="picker-toggle"
+                            >
+                                + Symbol
+
+                                <span class="picker-arrow">
+                                    ▼
+                                </span>
+                            </button>
+
+
+                            <div class="formula-picker-menu">
+
+
+                                <div class="picker-grid">
+
+
+                                    <!-- COMMON -->
+
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="(">(</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value=")">)</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="{">{</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="}">}</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="[">[</button>
+
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="]">]</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="^">^</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="$">$</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="%">%</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="~">~</button>
+
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="≠">≠</button>
+
+                                    <!-- GREEK LOWERCASE -->
+
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="α">α</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="β">β</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="γ">γ</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="δ">δ</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="ε">ε</button>
+
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="ζ">ζ</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="η">η</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="θ">θ</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="ι">ι</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="κ">κ</button>
+
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="λ">λ</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="μ">μ</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="ν">ν</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="ξ">ξ</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="ο">ο</button>
+
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="π">π</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="ρ">ρ</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="σ">σ</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="τ">τ</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="υ">υ</button>
+
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="φ">φ</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="χ">χ</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="ψ">ψ</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="ω">ω</button>
+
+                                    <!-- GREEK UPPERCASE -->
+
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="Α">Α</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="Β">Β</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="Γ">Γ</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="Δ">Δ</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="Ε">Ε</button>
+
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="Ζ">Ζ</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="Η">Η</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="Θ">Θ</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="Ι">Ι</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="Κ">Κ</button>
+
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="Λ">Λ</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="Μ">Μ</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="Ν">Ν</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="Ξ">Ξ</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="Ο">Ο</button>
+
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="Π">Π</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="Ρ">Ρ</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="Σ">Σ</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="Τ">Τ</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="Υ">Υ</button>
+
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="Φ">Φ</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="Χ">Χ</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="Ψ">Ψ</button>
+                                    <button type="button" class="picker-choice" data-element-type="symbol" data-element-value="Ω">Ω</button>
+
+
+                                </div>
+
+
+                            </div>
+
+
+                        </div>
+
+
+                        <!-- FRACTION -->
 
                         <button
                             type="button"
-                            onclick="addElement('symbol', '(')"
-                        >
-                            + Symbol
-                        </button>
-
-
-                        <button
-                            type="button"
-                            onclick="addFraction()"
+                            class="toolbar-button"
+                            id="add-fraction-button"
                         >
                             + Fraction
                         </button>
@@ -1112,24 +1053,51 @@
                     </div>
 
 
-                    <!-- =============================
-                         FORMULA CANVAS
-                    ============================== -->
+                    <p class="keyboard-hint">
 
-                    <div id="formula-canvas">
+                        Click inside the formula first.
+
+                        You can then type
+
+                        <strong>0–9</strong>,
+
+                        <strong>+</strong>,
+
+                        <strong>-</strong>,
+
+                        <strong>*</strong>,
+
+                        <strong>/</strong>,
+
+                        <strong>=</strong>,
+
+                        <strong>&lt;</strong>
+
+                        or
+
+                        <strong>&gt;</strong>.
+
+                        * becomes × and / becomes ÷.
+
+                    </p>
+
+
+                    <div
+                        id="formula-canvas"
+                        tabindex="0"
+                    >
                     </div>
 
 
                 </section>
 
 
-                <div class="section-divider">
-                </div>
+                <div class="section-divider"></div>
 
 
-                <!-- =====================================
+                <!-- =================================
                      FORMULA DETAILS
-                ====================================== -->
+                ================================== -->
 
                 <section class="section">
 
@@ -1143,9 +1111,7 @@
 
 
                         <p>
-                            Add extra information to help you
-                            remember when and why the formula
-                            is useful. These fields are optional.
+                            These fields are optional.
                         </p>
 
 
@@ -1154,10 +1120,6 @@
 
                     <div class="detail-grid">
 
-
-                        <!-- =============================
-                             PURPOSE
-                        ============================== -->
 
                         <div class="field">
 
@@ -1186,10 +1148,6 @@
 
                         </div>
 
-
-                        <!-- =============================
-                             WHEN TO USE
-                        ============================== -->
 
                         <div class="field">
 
@@ -1225,9 +1183,9 @@
                 </section>
 
 
-                <!-- =====================================
+                <!-- =================================
                      ADDITIONAL DETAILS
-                ====================================== -->
+                ================================== -->
 
                 <section class="section">
 
@@ -1245,10 +1203,6 @@
 
                             <div class="additional-grid">
 
-
-                                <!-- =========================
-                                     BOOK
-                                ========================== -->
 
                                 <div class="field">
 
@@ -1296,24 +1250,8 @@
                                     </select>
 
 
-                                    {% if not textbooks %}
-
-
-                                        <div class="field-help">
-                                            No textbooks have been added
-                                            to this subject yet.
-                                        </div>
-
-
-                                    {% endif %}
-
-
                                 </div>
 
-
-                                <!-- =========================
-                                     CHAPTER
-                                ========================== -->
 
                                 <div class="field">
 
@@ -1358,9 +1296,9 @@
                 </section>
 
 
-                <!-- =====================================
+                <!-- =================================
                      FOOTER
-                ====================================== -->
+                ================================== -->
 
                 <div class="form-footer">
 
@@ -1404,8 +1342,28 @@
 </div>
 
 
-<script src="{% static 'js/formula-editor.js' %}">
+<!-- =========================================
+     EXISTING STRUCTURE
+========================================== -->
+
+<script>
+
+    const existingFormulaStructure =
+        JSON.parse(
+            '{{ formula_structure|default:"[]"|escapejs }}'
+        );
+
 </script>
+
+
+<!--
+    VERSION PARAMETER IS DELIBERATE.
+    IT FORCES THE BROWSER TO LOAD THE NEW JS.
+-->
+
+<script
+    src="{% static 'js/formula-editor.js' %}?v=20260903-4"
+></script>
 
 
 </body>
