@@ -17,10 +17,12 @@
         Create Formula - StudyOptimizer
     </title>
 
+
     <link
         rel="stylesheet"
         href="{% static 'css/formula-editor.css' %}"
     >
+
 
     <style>
 
@@ -149,7 +151,7 @@
 
 
         /* =========================================
-           CARD
+           MAIN CARD
         ========================================= */
 
         .card {
@@ -168,30 +170,60 @@
 
 
         /* =========================================
-           FORM
+           ERROR
         ========================================= */
 
-        .form-fields {
+        .error-box {
+
+            margin-bottom: 24px;
+
+            padding:
+                13px
+                15px;
+
+            border:
+                1px solid
+                #e6b7b7;
+
+            border-radius: 9px;
+
+            background: #fff4f4;
+
+            color: #9b3a3a;
+
+            font-size: 13px;
+
+            font-weight: 600;
+
+        }
+
+
+        /* =========================================
+           SECTION
+        ========================================= */
+
+        .section {
 
             margin-bottom: 30px;
 
         }
 
 
-        /* =========================================
-           FORMULA BUILDER
-        ========================================= */
+        .section:last-child {
 
-        .builder-header {
-
-            margin-bottom: 20px;
-
-            padding-top: 5px;
+            margin-bottom: 0;
 
         }
 
 
-        .builder-header h2 {
+        .section-header {
+
+            margin-bottom: 20px;
+
+        }
+
+
+        .section-header h2 {
 
             margin:
                 0
@@ -203,7 +235,7 @@
         }
 
 
-        .builder-header p {
+        .section-header p {
 
             margin: 0;
 
@@ -211,8 +243,201 @@
 
             font-size: 13px;
 
+            line-height: 1.5;
+
         }
 
+
+        /* =========================================
+           FORM FIELDS
+        ========================================= */
+
+        .field {
+
+            margin-bottom: 20px;
+
+        }
+
+
+        .field:last-child {
+
+            margin-bottom: 0;
+
+        }
+
+
+        .field-label {
+
+            display: block;
+
+            margin-bottom: 7px;
+
+            color: #333;
+
+            font-size: 13px;
+
+            font-weight: 700;
+
+        }
+
+
+        .required {
+
+            color: #a74747;
+
+        }
+
+
+        .optional {
+
+            margin-left: 5px;
+
+            color: #999;
+
+            font-size: 11px;
+
+            font-weight: 500;
+
+        }
+
+
+        .field-input,
+        .field-textarea,
+        .field-select {
+
+            width: 100%;
+
+            padding:
+                11px
+                13px;
+
+            border:
+                1px solid
+                #d7d9dc;
+
+            border-radius: 9px;
+
+            background: white;
+
+            color: #222;
+
+            font-family: inherit;
+
+            font-size: 14px;
+
+            outline: none;
+
+            transition:
+                border-color 0.15s ease,
+                box-shadow 0.15s ease;
+
+        }
+
+
+        .field-input:focus,
+        .field-textarea:focus,
+        .field-select:focus {
+
+            border-color: #999;
+
+            box-shadow:
+                0
+                0
+                0
+                3px
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.04
+                );
+
+        }
+
+
+        .field-input::placeholder,
+        .field-textarea::placeholder {
+
+            color: #aaa;
+
+        }
+
+
+        .field-textarea {
+
+            min-height: 95px;
+
+            resize: vertical;
+
+            line-height: 1.5;
+
+        }
+
+
+        .field-help {
+
+            margin-top: 6px;
+
+            color: #999;
+
+            font-size: 11px;
+
+            line-height: 1.4;
+
+        }
+
+
+        /* =========================================
+           FORMULA NAME
+        ========================================= */
+
+        .formula-name-field {
+
+            margin-bottom: 26px;
+
+        }
+
+
+        .formula-name-input {
+
+            min-height: 46px;
+
+            font-size: 16px;
+
+            font-weight: 600;
+
+        }
+
+
+        /* =========================================
+           FORMULA LABEL
+        ========================================= */
+
+        .formula-label {
+
+            display: block;
+
+            margin-bottom: 10px;
+
+            color: #333;
+
+            font-size: 13px;
+
+            font-weight: 700;
+
+        }
+
+
+        .formula-label .optional {
+
+            font-weight: 500;
+
+        }
+
+
+        /* =========================================
+           FORMULA BUILDER
+        ========================================= */
 
         .toolbar {
 
@@ -224,7 +449,7 @@
 
             gap: 8px;
 
-            margin-bottom: 20px;
+            margin-bottom: 14px;
 
         }
 
@@ -277,6 +502,8 @@
 
             min-height: 180px;
 
+            margin-bottom: 0;
+
             padding: 20px;
 
             border:
@@ -287,7 +514,159 @@
 
             background: #fafafa;
 
-            margin-bottom: 25px;
+        }
+
+
+        /* =========================================
+           DIVIDER
+        ========================================= */
+
+        .section-divider {
+
+            height: 1px;
+
+            margin:
+                30px
+                0;
+
+            background: #eeeeee;
+
+        }
+
+
+        /* =========================================
+           FORMULA DETAILS
+        ========================================= */
+
+        .detail-grid {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(
+                    2,
+                    minmax(0, 1fr)
+                );
+
+            gap: 18px;
+
+        }
+
+
+        /* =========================================
+           ADDITIONAL DETAILS
+        ========================================= */
+
+        .additional-details {
+
+            border:
+                1px solid
+                #e2e3e5;
+
+            border-radius: 10px;
+
+            background: #fafafa;
+
+            overflow: hidden;
+
+        }
+
+
+        .additional-details summary {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            padding:
+                15px
+                17px;
+
+            color: #333;
+
+            font-size: 13px;
+
+            font-weight: 700;
+
+            cursor: pointer;
+
+            list-style: none;
+
+            user-select: none;
+
+        }
+
+
+        .additional-details summary::-webkit-details-marker {
+
+            display: none;
+
+        }
+
+
+        .additional-details summary::after {
+
+            content: "+";
+
+            color: #777;
+
+            font-size: 19px;
+
+            font-weight: 400;
+
+        }
+
+
+        .additional-details[open] summary::after {
+
+            content: "−";
+
+        }
+
+
+        .additional-details-content {
+
+            padding:
+                0
+                17px
+                17px;
+
+            border-top:
+                1px solid
+                #ededed;
+
+        }
+
+
+        .additional-details-content .field:first-child {
+
+            margin-top: 17px;
+
+        }
+
+
+        .additional-grid {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(
+                    2,
+                    minmax(0, 1fr)
+                );
+
+            align-items: start;
+
+            gap: 18px;
+
+        }
+
+
+        .additional-grid .field {
+
+            margin-bottom: 0;
 
         }
 
@@ -308,7 +687,7 @@
 
             gap: 10px;
 
-            margin-top: 25px;
+            margin-top: 30px;
 
             padding-top: 22px;
 
@@ -344,6 +723,8 @@
             color: #444;
 
             text-decoration: none;
+
+            font-family: inherit;
 
             font-size: 14px;
 
@@ -394,6 +775,18 @@
         /* =========================================
            MOBILE
         ========================================= */
+
+        @media (max-width: 700px) {
+
+            .detail-grid,
+            .additional-grid {
+
+                grid-template-columns: 1fr;
+
+            }
+
+        }
+
 
         @media (max-width: 600px) {
 
@@ -471,7 +864,7 @@
 
         <!-- =========================================
              HEADER
-        ========================================= -->
+        ========================================== -->
 
         <header class="header">
 
@@ -486,13 +879,16 @@
 
             <div class="header-text">
 
+
                 <h1>
                     Create Formula
                 </h1>
 
+
                 <p>
                     Add an important formula to {{ subject.name }}.
                 </p>
+
 
             </div>
 
@@ -502,25 +898,37 @@
 
         <!-- =========================================
              MAIN CARD
-        ========================================= -->
+        ========================================== -->
 
         <div class="card">
 
 
             <form method="post">
 
+
                 {% csrf_token %}
 
 
+                <input
+                    type="hidden"
+                    name="subject_index"
+                    value="{{ subject_index }}"
+                >
+
+
                 <!-- =====================================
-                     FORM FIELDS
+                     ERROR
                 ====================================== -->
 
-                <div class="form-fields">
+                {% if error %}
 
-                    {{ form.as_p }}
 
-                </div>
+                    <div class="error-box">
+                        {{ error }}
+                    </div>
+
+
+                {% endif %}
 
 
                 <!-- =====================================
@@ -531,117 +939,423 @@
                     type="hidden"
                     name="formula_structure"
                     id="formula-structure"
-                    value="[]"
+                    value="{{ formula_structure|default:'[]'|escape }}"
                 >
 
 
                 <!-- =====================================
-                     FORMULA BUILDER
+                     BUILD YOUR FORMULA
                 ====================================== -->
 
-                <div class="builder-header">
-
-                    <h2>
-                        Build your formula
-                    </h2>
-
-                    <p>
-                        Add variables, numbers, operators, symbols, and fractions.
-                    </p>
-
-                </div>
+                <section class="section">
 
 
-                <div class="toolbar">
+                    <div class="section-header">
 
 
-                    <button
-                        type="button"
-                        onclick="addElement('variable')"
-                    >
-                        + Variable
-                    </button>
+                        <h2>
+                            Build your formula
+                        </h2>
 
 
-                    <button
-                        type="button"
-                        onclick="addElement('number')"
-                    >
-                        + Number
-                    </button>
+                        <p>
+                            Give the formula a name, then build
+                            the formula using variables, numbers,
+                            operators, symbols and fractions.
+                        </p>
 
 
-                    <select id="operator-select">
-
-                        <option value="">
-                            + Operator
-                        </option>
-
-                        <option value="+">
-                            +
-                        </option>
-
-                        <option value="-">
-                            −
-                        </option>
-
-                        <option value="×">
-                            ×
-                        </option>
-
-                        <option value="÷">
-                            ÷
-                        </option>
-
-                        <option value="=">
-                            =
-                        </option>
-
-                        <option value="<">
-                            &lt;
-                        </option>
-
-                        <option value=">">
-                            &gt;
-                        </option>
-
-                    </select>
+                    </div>
 
 
-                    <button
-                        type="button"
-                        onclick="addSelectedOperator()"
-                    >
-                        Add
-                    </button>
+                    <!-- =============================
+                         FORMULA NAME
+                    ============================== -->
+
+                    <div class="field formula-name-field">
 
 
-                    <button
-                        type="button"
-                        onclick="addElement('symbol', '(')"
-                    >
-                        + Symbol
-                    </button>
+                        <label
+                            for="formula-name"
+                            class="field-label"
+                        >
+
+                            Formula name
+                            <span class="required">*</span>
+
+                        </label>
 
 
-                    <button
-                        type="button"
-                        onclick="addFraction()"
-                    >
-                        + Fraction
-                    </button>
+                        <input
+                            type="text"
+                            id="formula-name"
+                            name="title"
+                            class="field-input formula-name-input"
+                            value="{{ title }}"
+                            placeholder="e.g. Present Value"
+                            maxlength="255"
+                            required
+                        >
 
 
+                    </div>
+
+
+                    <!-- =============================
+                         FORMULA
+                    ============================== -->
+
+                    <span class="formula-label">
+
+                        Formula
+
+                        <span class="optional">
+                            Optional
+                        </span>
+
+                    </span>
+
+
+                    <!-- =============================
+                         TOOLBAR
+                    ============================== -->
+
+                    <div class="toolbar">
+
+
+                        <button
+                            type="button"
+                            onclick="addElement('variable')"
+                        >
+                            + Variable
+                        </button>
+
+
+                        <button
+                            type="button"
+                            onclick="addElement('number')"
+                        >
+                            + Number
+                        </button>
+
+
+                        <select id="operator-select">
+
+
+                            <option value="">
+                                + Operator
+                            </option>
+
+
+                            <option value="+">
+                                +
+                            </option>
+
+
+                            <option value="-">
+                                −
+                            </option>
+
+
+                            <option value="×">
+                                ×
+                            </option>
+
+
+                            <option value="÷">
+                                ÷
+                            </option>
+
+
+                            <option value="=">
+                                =
+                            </option>
+
+
+                            <option value="<">
+                                &lt;
+                            </option>
+
+
+                            <option value=">">
+                                &gt;
+                            </option>
+
+
+                        </select>
+
+
+                        <button
+                            type="button"
+                            onclick="addSelectedOperator()"
+                        >
+                            Add
+                        </button>
+
+
+                        <button
+                            type="button"
+                            onclick="addElement('symbol', '(')"
+                        >
+                            + Symbol
+                        </button>
+
+
+                        <button
+                            type="button"
+                            onclick="addFraction()"
+                        >
+                            + Fraction
+                        </button>
+
+
+                    </div>
+
+
+                    <!-- =============================
+                         FORMULA CANVAS
+                    ============================== -->
+
+                    <div id="formula-canvas">
+                    </div>
+
+
+                </section>
+
+
+                <div class="section-divider">
                 </div>
 
 
                 <!-- =====================================
-                     CANVAS
+                     FORMULA DETAILS
                 ====================================== -->
 
-                <div id="formula-canvas">
+                <section class="section">
 
-                </div>
+
+                    <div class="section-header">
+
+
+                        <h2>
+                            Formula details
+                        </h2>
+
+
+                        <p>
+                            Add extra information to help you
+                            remember when and why the formula
+                            is useful. These fields are optional.
+                        </p>
+
+
+                    </div>
+
+
+                    <div class="detail-grid">
+
+
+                        <!-- =============================
+                             PURPOSE
+                        ============================== -->
+
+                        <div class="field">
+
+
+                            <label
+                                for="formula-purpose"
+                                class="field-label"
+                            >
+
+                                What does this formula do?
+
+                                <span class="optional">
+                                    Optional
+                                </span>
+
+                            </label>
+
+
+                            <textarea
+                                id="formula-purpose"
+                                name="purpose"
+                                class="field-textarea"
+                                placeholder="Briefly explain what the formula calculates or measures."
+                            >{{ purpose }}</textarea>
+
+
+                        </div>
+
+
+                        <!-- =============================
+                             WHEN TO USE
+                        ============================== -->
+
+                        <div class="field">
+
+
+                            <label
+                                for="formula-when"
+                                class="field-label"
+                            >
+
+                                When should I use it?
+
+                                <span class="optional">
+                                    Optional
+                                </span>
+
+                            </label>
+
+
+                            <textarea
+                                id="formula-when"
+                                name="when_to_use"
+                                class="field-textarea"
+                                placeholder="Describe when this formula should be applied."
+                            >{{ when_to_use }}</textarea>
+
+
+                        </div>
+
+
+                    </div>
+
+
+                </section>
+
+
+                <!-- =====================================
+                     ADDITIONAL DETAILS
+                ====================================== -->
+
+                <section class="section">
+
+
+                    <details class="additional-details">
+
+
+                        <summary>
+                            Additional Details
+                        </summary>
+
+
+                        <div class="additional-details-content">
+
+
+                            <div class="additional-grid">
+
+
+                                <!-- =========================
+                                     BOOK
+                                ========================== -->
+
+                                <div class="field">
+
+
+                                    <label
+                                        for="formula-book"
+                                        class="field-label"
+                                    >
+
+                                        Book
+
+                                        <span class="optional">
+                                            Optional
+                                        </span>
+
+                                    </label>
+
+
+                                    <select
+                                        id="formula-book"
+                                        name="book_name"
+                                        class="field-select"
+                                    >
+
+
+                                        <option value="">
+                                            No book selected
+                                        </option>
+
+
+                                        {% for textbook in textbooks %}
+
+
+                                            <option
+                                                value="{{ textbook.name }}"
+                                                {% if selected_book == textbook.name %}selected{% endif %}
+                                            >
+                                                {{ textbook.name }}
+                                            </option>
+
+
+                                        {% endfor %}
+
+
+                                    </select>
+
+
+                                    {% if not textbooks %}
+
+
+                                        <div class="field-help">
+                                            No textbooks have been added
+                                            to this subject yet.
+                                        </div>
+
+
+                                    {% endif %}
+
+
+                                </div>
+
+
+                                <!-- =========================
+                                     CHAPTER
+                                ========================== -->
+
+                                <div class="field">
+
+
+                                    <label
+                                        for="formula-chapter"
+                                        class="field-label"
+                                    >
+
+                                        Chapter
+
+                                        <span class="optional">
+                                            Optional
+                                        </span>
+
+                                    </label>
+
+
+                                    <input
+                                        type="text"
+                                        id="formula-chapter"
+                                        name="chapter"
+                                        class="field-input"
+                                        value="{{ chapter }}"
+                                        placeholder="e.g. Chapter 4"
+                                        maxlength="255"
+                                    >
+
+
+                                </div>
+
+
+                            </div>
+
+
+                        </div>
+
+
+                    </details>
+
+
+                </section>
 
 
                 <!-- =====================================
@@ -690,7 +1404,8 @@
 </div>
 
 
-<script src="{% static 'js/formula-editor.js' %}"></script>
+<script src="{% static 'js/formula-editor.js' %}">
+</script>
 
 
 </body>

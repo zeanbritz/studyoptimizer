@@ -155,6 +155,18 @@ class Formula(models.Model):
         blank=True
     )
 
+    book_name = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+    )
+
+    chapter = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+    )
+
     def __str__(self):
 
         return self.knowledge_unit.title

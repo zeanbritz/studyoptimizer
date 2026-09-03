@@ -5,80 +5,584 @@
 
     <meta charset="UTF-8">
 
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
     <title>
-        {{ formula.knowledge_unit.title }}
+        {{ formula.knowledge_unit.title }} - StudyOptimizer
     </title>
+
 
     <style>
 
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 900px;
-            margin: 40px auto;
-            padding: 20px;
+        * {
+            box-sizing: border-box;
         }
+
+
+        body {
+
+            margin: 0;
+
+            background: #f5f6f8;
+
+            color: #222;
+
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Arial,
+                sans-serif;
+
+        }
+
+
+        .page {
+
+            min-height: 100vh;
+
+            padding:
+                40px
+                20px
+                60px;
+
+        }
+
+
+        .container {
+
+            max-width: 900px;
+
+            margin: 0 auto;
+
+        }
+
+
+        /* =========================================
+           HEADER
+        ========================================= */
+
+        .header {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 18px;
+
+            margin-bottom: 30px;
+
+        }
+
+
+        .back-button {
+
+            width: 40px;
+
+            height: 40px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            flex-shrink: 0;
+
+            border:
+                1px solid
+                #dedede;
+
+            border-radius: 9px;
+
+            background: white;
+
+            color: #333;
+
+            text-decoration: none;
+
+            font-size: 20px;
+
+        }
+
+
+        .back-button:hover {
+
+            background: #f0f0f0;
+
+        }
+
+
+        .header-text h1 {
+
+            margin:
+                0
+                0
+                5px;
+
+            font-size: 30px;
+
+            letter-spacing: -0.6px;
+
+        }
+
+
+        .header-text p {
+
+            margin: 0;
+
+            color: #777;
+
+            font-size: 14px;
+
+        }
+
+
+        /* =========================================
+           CARD
+        ========================================= */
+
+        .card {
+
+            padding: 30px;
+
+            border:
+                1px solid
+                #e5e5e5;
+
+            border-radius: 14px;
+
+            background: white;
+
+        }
+
+
+        /* =========================================
+           SECTION
+        ========================================= */
+
+        .section {
+
+            margin-bottom: 30px;
+
+        }
+
+
+        .section:last-child {
+
+            margin-bottom: 0;
+
+        }
+
+
+        .section-title {
+
+            margin:
+                0
+                0
+                14px;
+
+            font-size: 18px;
+
+        }
+
+
+        .section-divider {
+
+            height: 1px;
+
+            margin:
+                30px
+                0;
+
+            background: #eeeeee;
+
+        }
+
+
+        /* =========================================
+           FORMULA
+        ========================================= */
 
         .formula-preview {
-            padding: 30px;
-            margin: 20px 0;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            background: #f8fafc;
-            font-size: 24px;
-            overflow-x: auto;
-        }
 
-        .variable-card {
+            min-height: 130px;
+
             display: flex;
-            gap: 20px;
-            padding: 12px;
-            margin: 8px 0;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+
+            align-items: center;
+
+            flex-wrap: wrap;
+
+            padding:
+                28px
+                24px;
+
+            border:
+                1px solid
+                #e1e1e1;
+
+            border-radius: 10px;
+
+            background: #fafafa;
+
+            font-size: 24px;
+
+            overflow-x: auto;
+
         }
 
-        .variable-symbol {
-            font-weight: bold;
-            min-width: 60px;
-        }
-
-        .formula-preview span {
-            margin: 0 6px;
-        }
 
         .formula-item {
-            margin: 0 6px;
+
+            margin:
+                0
+                6px;
+
         }
 
 
         .formula-fraction {
+
             display: inline-flex;
+
             flex-direction: column;
+
             align-items: center;
+
             vertical-align: middle;
-            margin: 0 8px;
+
+            margin:
+                0
+                8px;
+
         }
 
 
         .fraction-top,
         .fraction-bottom {
+
             display: flex;
+
             justify-content: center;
+
             min-height: 28px;
-            padding: 3px 10px;
+
+            padding:
+                3px
+                10px;
+
         }
 
 
         .fraction-line {
+
             width: 100%;
+
             min-width: 50px;
+
             height: 2px;
+
             background: #222;
+
         }
 
 
         .fraction-item {
-            margin: 0 4px;
+
+            margin:
+                0
+                4px;
+
+        }
+
+
+        .empty-value {
+
+            color: #999;
+
+            font-size: 14px;
+
+        }
+
+
+        /* =========================================
+           INFORMATION
+        ========================================= */
+
+        .details-grid {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(
+                    2,
+                    minmax(0, 1fr)
+                );
+
+            gap: 16px;
+
+        }
+
+
+        .detail-card {
+
+            min-width: 0;
+
+            padding: 18px;
+
+            border:
+                1px solid
+                #e5e5e5;
+
+            border-radius: 10px;
+
+            background: #fafafa;
+
+        }
+
+
+        .detail-label {
+
+            display: block;
+
+            margin-bottom: 7px;
+
+            color: #777;
+
+            font-size: 11px;
+
+            font-weight: 700;
+
+            text-transform: uppercase;
+
+            letter-spacing: 0.04em;
+
+        }
+
+
+        .detail-value {
+
+            color: #222;
+
+            font-size: 14px;
+
+            line-height: 1.55;
+
+            white-space: pre-wrap;
+
+        }
+
+
+        /* =========================================
+           VARIABLES
+        ========================================= */
+
+        .variables-list {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 9px;
+
+        }
+
+
+        .variable-card {
+
+            display: grid;
+
+            grid-template-columns:
+                80px
+                minmax(0, 1fr);
+
+            gap: 15px;
+
+            align-items: center;
+
+            padding:
+                13px
+                15px;
+
+            border:
+                1px solid
+                #e5e5e5;
+
+            border-radius: 9px;
+
+            background: #fafafa;
+
+        }
+
+
+        .variable-symbol {
+
+            font-size: 16px;
+
+            font-weight: 800;
+
+        }
+
+
+        .variable-meaning {
+
+            color: #555;
+
+            font-size: 14px;
+
+        }
+
+
+        /* =========================================
+           ACTIONS
+        ========================================= */
+
+        .actions {
+
+            display: flex;
+
+            align-items: center;
+
+            flex-wrap: wrap;
+
+            gap: 10px;
+
+            margin-top: 28px;
+
+            padding-top: 22px;
+
+            border-top:
+                1px solid
+                #eeeeee;
+
+        }
+
+
+        .action-button {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            min-height: 42px;
+
+            padding:
+                10px
+                17px;
+
+            border:
+                1px solid
+                #d8d8d8;
+
+            border-radius: 8px;
+
+            background: white;
+
+            color: #444;
+
+            font-size: 13px;
+
+            font-weight: 700;
+
+            text-decoration: none;
+
+        }
+
+
+        .action-button:hover {
+
+            background: #f5f5f5;
+
+        }
+
+
+        .primary-button {
+
+            border-color: #222;
+
+            background: #222;
+
+            color: white;
+
+        }
+
+
+        .primary-button:hover {
+
+            background: #333;
+
+        }
+
+
+        /* =========================================
+           MOBILE
+        ========================================= */
+
+        @media (max-width: 700px) {
+
+            .details-grid {
+
+                grid-template-columns: 1fr;
+
+            }
+
+        }
+
+
+        @media (max-width: 600px) {
+
+            .page {
+
+                padding:
+                    25px
+                    15px
+                    40px;
+
+            }
+
+
+            .card {
+
+                padding: 20px;
+
+            }
+
+
+            .header-text h1 {
+
+                font-size: 24px;
+
+            }
+
+
+            .variable-card {
+
+                grid-template-columns: 55px 1fr;
+
+            }
+
+
+            .actions {
+
+                flex-direction: column;
+
+                align-items: stretch;
+
+            }
+
+
+            .action-button {
+
+                width: 100%;
+
+            }
+
         }
 
     </style>
@@ -88,132 +592,431 @@
 
 <body>
 
-    <h1>
-        {{ formula.knowledge_unit.title }}
-    </h1>
+
+<div class="page">
 
 
-    <h2>
-        Formula
-    </h2>
+    <div class="container">
 
 
-    <div class="formula-preview">
+        <!-- =========================================
+             HEADER
+        ========================================== -->
 
-        {% for element in formula_elements %}
-
-            {% if element.type == "variable" %}
-
-                <span class="formula-item">
-                    {{ element.value }}
-                </span>
+        <header class="header">
 
 
-            {% elif element.type == "operator" %}
-
-                <span class="formula-item">
-                    {{ element.value }}
-                </span>
-
-
-            {% elif element.type == "number" %}
-
-                <span class="formula-item">
-                    {{ element.value }}
-                </span>
+            <a
+                href="{% url 'formula_list' subject_id=subject.id %}?subject_index={{ subject_index }}"
+                class="back-button"
+            >
+                ←
+            </a>
 
 
-            {% elif element.type == "symbol" %}
-
-                <span class="formula-item">
-                    {{ element.value }}
-                </span>
+            <div class="header-text">
 
 
-            {% elif element.type == "fraction" %}
+                <h1>
+                    {{ formula.knowledge_unit.title }}
+                </h1>
 
-                <span class="formula-fraction">
 
-                    <span class="fraction-top">
+                <p>
+                    {{ subject.name }}
+                </p>
 
-                        {% for item in element.numerator %}
 
-                            <span class="fraction-item">
+            </div>
 
-                                {{ item.value }}
 
-                            </span>
+        </header>
+
+
+        <!-- =========================================
+             CARD
+        ========================================== -->
+
+        <div class="card">
+
+
+            <!-- =====================================
+                 FORMULA
+            ====================================== -->
+
+            <section class="section">
+
+
+                <h2 class="section-title">
+                    Formula
+                </h2>
+
+
+                <div class="formula-preview">
+
+
+                    {% if formula_elements %}
+
+
+                        {% for element in formula_elements %}
+
+
+                            {% if element.type == "variable" %}
+
+
+                                <span class="formula-item">
+                                    {{ element.value }}
+                                </span>
+
+
+                            {% elif element.type == "operator" %}
+
+
+                                <span class="formula-item">
+                                    {{ element.value }}
+                                </span>
+
+
+                            {% elif element.type == "number" %}
+
+
+                                <span class="formula-item">
+                                    {{ element.value }}
+                                </span>
+
+
+                            {% elif element.type == "symbol" %}
+
+
+                                <span class="formula-item">
+                                    {{ element.value }}
+                                </span>
+
+
+                            {% elif element.type == "fraction" %}
+
+
+                                <span class="formula-fraction">
+
+
+                                    <span class="fraction-top">
+
+
+                                        {% for item in element.numerator %}
+
+
+                                            <span class="fraction-item">
+                                                {{ item.value }}
+                                            </span>
+
+
+                                        {% endfor %}
+
+
+                                    </span>
+
+
+                                    <span class="fraction-line">
+                                    </span>
+
+
+                                    <span class="fraction-bottom">
+
+
+                                        {% for item in element.denominator %}
+
+
+                                            <span class="fraction-item">
+                                                {{ item.value }}
+                                            </span>
+
+
+                                        {% endfor %}
+
+
+                                    </span>
+
+
+                                </span>
+
+
+                            {% endif %}
+
 
                         {% endfor %}
 
-                    </span>
+
+                    {% else %}
 
 
-                    <span class="fraction-line"></span>
+                        <span class="empty-value">
+                            No formula structure added.
+                        </span>
 
 
-                    <span class="fraction-bottom">
+                    {% endif %}
 
-                        {% for item in element.denominator %}
-
-                            <span class="fraction-item">
-
-                                {{ item.value }}
-
-                            </span>
-
-                        {% endfor %}
-
-                    </span>
-
-                </span>
-
-            {% endif %}
-
-        {% endfor %}
-
-    </div>
-
-    <a href="{% url 'edit_formula' formula.id %}">
-        Edit Formula
-    </a>
-
-    <a href="{% url 'review_formula' formula.id %}">
-        Review Formula
-    </a>
-
-    <a href="{% url 'practice_formula' formula.id %}">
-        Practice Formula
-    </a>
-
-    {% if variables %}
-
-        <h2>
-            Variables
-        </h2>
-
-
-        <div>
-
-            {% for variable in variables %}
-
-                <div class="variable-card">
-
-                    <div class="variable-symbol">
-                        {{ variable.symbol }}
-                    </div>
-
-                    <div>
-                        {{ variable.meaning }}
-                    </div>
 
                 </div>
 
-            {% endfor %}
+
+            </section>
+
+
+            <!-- =====================================
+                 FORMULA DETAILS
+            ====================================== -->
+
+            {% if formula.purpose or formula.when_to_use %}
+
+
+                <div class="section-divider">
+                </div>
+
+
+                <section class="section">
+
+
+                    <h2 class="section-title">
+                        Formula Details
+                    </h2>
+
+
+                    <div class="details-grid">
+
+
+                        {% if formula.purpose %}
+
+
+                            <div class="detail-card">
+
+
+                                <span class="detail-label">
+                                    What does this formula do?
+                                </span>
+
+
+                                <div class="detail-value">
+                                    {{ formula.purpose }}
+                                </div>
+
+
+                            </div>
+
+
+                        {% endif %}
+
+
+                        {% if formula.when_to_use %}
+
+
+                            <div class="detail-card">
+
+
+                                <span class="detail-label">
+                                    When should I use it?
+                                </span>
+
+
+                                <div class="detail-value">
+                                    {{ formula.when_to_use }}
+                                </div>
+
+
+                            </div>
+
+
+                        {% endif %}
+
+
+                    </div>
+
+
+                </section>
+
+
+            {% endif %}
+
+
+            <!-- =====================================
+                 VARIABLES
+            ====================================== -->
+
+            {% if variables %}
+
+
+                <div class="section-divider">
+                </div>
+
+
+                <section class="section">
+
+
+                    <h2 class="section-title">
+                        Variables
+                    </h2>
+
+
+                    <div class="variables-list">
+
+
+                        {% for variable in variables %}
+
+
+                            <div class="variable-card">
+
+
+                                <div class="variable-symbol">
+                                    {{ variable.symbol }}
+                                </div>
+
+
+                                <div class="variable-meaning">
+
+                                    {% if variable.meaning %}
+
+                                        {{ variable.meaning }}
+
+                                    {% else %}
+
+                                        No description
+
+                                    {% endif %}
+
+                                </div>
+
+
+                            </div>
+
+
+                        {% endfor %}
+
+
+                    </div>
+
+
+                </section>
+
+
+            {% endif %}
+
+
+            <!-- =====================================
+                 ADDITIONAL DETAILS
+            ====================================== -->
+
+            {% if formula.book_name or formula.chapter %}
+
+
+                <div class="section-divider">
+                </div>
+
+
+                <section class="section">
+
+
+                    <h2 class="section-title">
+                        Additional Details
+                    </h2>
+
+
+                    <div class="details-grid">
+
+
+                        {% if formula.book_name %}
+
+
+                            <div class="detail-card">
+
+
+                                <span class="detail-label">
+                                    Book
+                                </span>
+
+
+                                <div class="detail-value">
+                                    {{ formula.book_name }}
+                                </div>
+
+
+                            </div>
+
+
+                        {% endif %}
+
+
+                        {% if formula.chapter %}
+
+
+                            <div class="detail-card">
+
+
+                                <span class="detail-label">
+                                    Chapter
+                                </span>
+
+
+                                <div class="detail-value">
+                                    {{ formula.chapter }}
+                                </div>
+
+
+                            </div>
+
+
+                        {% endif %}
+
+
+                    </div>
+
+
+                </section>
+
+
+            {% endif %}
+
+
+            <!-- =====================================
+                 ACTIONS
+            ====================================== -->
+
+            <div class="actions">
+
+
+                <a
+                    href="{% url 'edit_formula' formula.id %}?subject_index={{ subject_index }}"
+                    class="action-button"
+                >
+                    Edit Formula
+                </a>
+
+
+                <a
+                    href="{% url 'review_formula' formula.id %}"
+                    class="action-button"
+                >
+                    Review Formula
+                </a>
+
+
+                <a
+                    href="{% url 'practice_formula' formula.id %}"
+                    class="action-button primary-button"
+                >
+                    Practice Formula
+                </a>
+
+
+            </div>
+
 
         </div>
 
-    {% endif %}
+
+    </div>
+
+
+</div>
 
 
 </body>

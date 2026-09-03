@@ -80,74 +80,158 @@ def create_formula(
 ):
 
     # ========================================================
-    # GET SUBJECT
+    # SUBJECT
     # ========================================================
 
     subject = get_object_or_404(
         Subject,
         id=subject_id,
-        user=request.user
+        user=request.user,
     )
 
     # ========================================================
-    # FIND SUBJECT INDEX
+    # SUBJECT INDEX
     # ========================================================
 
-    subjects = request.session.get(
-        "onboarding_subjects",
-        []
+    subject_index = (
+        request.GET.get(
+            "subject_index"
+        )
+        or
+        request.POST.get(
+            "subject_index"
+        )
     )
 
-    subject_index = None
-
     # --------------------------------------------------------
-    # FIRST: MATCH DATABASE ID
-    # --------------------------------------------------------
-
-    for index, subject_data in enumerate(
-        subjects
-    ):
-
-        if (
-            subject_data.get(
-                "database_id"
-            )
-            == subject.id
-        ):
-
-            subject_index = index
-
-            break
-
-    # --------------------------------------------------------
-    # FALLBACK: MATCH SUBJECT NAME
+    # FALLBACK TO SESSION MATCH
     # --------------------------------------------------------
 
     if subject_index is None:
 
-        for index, subject_data in enumerate(
+        subjects = request.session.get(
+            "onboarding_subjects",
+            []
+        )
+
+        # ----------------------------------------------------
+        # FIRST TRY DATABASE ID
+        # ----------------------------------------------------
+
+        for (
+            index,
+            subject_data
+        ) in enumerate(
             subjects
         ):
 
-            if (
+            database_id = (
                 subject_data.get(
-                    "name",
-                    ""
-                ).strip()
-                == subject.name
+                    "database_id"
+                )
+            )
+
+            try:
+
+                database_id = int(
+                    database_id
+                )
+
+            except (
+                TypeError,
+                ValueError
+            ):
+
+                database_id = None
+
+            if (
+                database_id
+                == subject.id
             ):
 
                 subject_index = index
 
                 break
 
+        # ----------------------------------------------------
+        # FALLBACK TO SUBJECT NAME
+        # ----------------------------------------------------
+
+        if subject_index is None:
+
+            for (
+                index,
+                subject_data
+            ) in enumerate(
+                subjects
+            ):
+
+                subject_name = (
+                    subject_data.get(
+                        "name",
+                        ""
+                    )
+                    .strip()
+                )
+
+                if (
+                    subject_name
+                    == subject.name.strip()
+                ):
+
+                    subject_index = index
+
+                    break
+
     # --------------------------------------------------------
-    # FINAL FALLBACK
+    # NORMALIZE SUBJECT INDEX
     # --------------------------------------------------------
 
-    if subject_index is None:
+    try:
+
+        subject_index = int(
+            subject_index
+        )
+
+    except (
+        TypeError,
+        ValueError
+    ):
 
         subject_index = 0
+
+    # ========================================================
+    # TEXTBOOKS
+    # ========================================================
+
+    textbooks = (
+        SubjectTextbook.objects
+        .filter(
+            subject=subject
+        )
+        .order_by(
+            "created",
+            "id",
+        )
+    )
+
+    # ========================================================
+    # FORM VALUES
+    # ========================================================
+
+    title = ""
+
+    purpose = ""
+
+    when_to_use = ""
+
+    selected_book = ""
+
+    chapter = ""
+
+    formula_structure = "[]"
+
+    error = None
 
     # ========================================================
     # POST
@@ -155,90 +239,183 @@ def create_formula(
 
     if request.method == "POST":
 
-        form = FormulaForm(
-            request.POST
+        # ----------------------------------------------------
+        # FORMULA NAME
+        # ----------------------------------------------------
+
+        title = (
+            request.POST.get(
+                "title",
+                ""
+            )
+            .strip()
         )
 
-        if form.is_valid():
+        # ----------------------------------------------------
+        # OPTIONAL DETAILS
+        # ----------------------------------------------------
 
-            # =================================================
-            # CREATE KNOWLEDGE UNIT
-            # =================================================
-
-            knowledge_unit = KnowledgeUnit.objects.create(
-
-                subject=subject,
-
-                title=form.cleaned_data[
-                    "title"
-                ],
-
-                knowledge_type=(
-                    KnowledgeUnit
-                    .KnowledgeType
-                    .FORMULA
-                ),
-
-                difficulty=(
-                    form.cleaned_data[
-                        "difficulty"
-                    ]
-                ),
-
-                estimated_minutes=(
-                    form.cleaned_data[
-                        "estimated_minutes"
-                    ]
-                ),
-
-                active=True,
-
+        purpose = (
+            request.POST.get(
+                "purpose",
+                ""
             )
+            .strip()
+        )
 
-            # =================================================
-            # GET FORMULA STRUCTURE
-            # =================================================
+        when_to_use = (
+            request.POST.get(
+                "when_to_use",
+                ""
+            )
+            .strip()
+        )
 
-            structure = request.POST.get(
+        selected_book = (
+            request.POST.get(
+                "book_name",
+                ""
+            )
+            .strip()
+        )
+
+        chapter = (
+            request.POST.get(
+                "chapter",
+                ""
+            )
+            .strip()
+        )
+
+        # ----------------------------------------------------
+        # FORMULA STRUCTURE
+        # ----------------------------------------------------
+
+        formula_structure = (
+            request.POST.get(
                 "formula_structure",
                 "[]"
             )
+            or
+            "[]"
+        )
 
-            try:
+        # ====================================================
+        # VALIDATE FORMULA NAME
+        # ====================================================
 
-                structure_data = json.loads(
-                    structure
+        if not title:
+
+            error = (
+                "Please enter a formula name."
+            )
+
+        # ====================================================
+        # VALIDATE OPTIONAL TEXTBOOK
+        # ====================================================
+
+        if (
+            error is None
+            and
+            selected_book
+        ):
+
+            valid_book = (
+                textbooks
+                .filter(
+                    name=selected_book
+                )
+                .exists()
+            )
+
+            if not valid_book:
+
+                error = (
+                    "The selected textbook "
+                    "does not belong to this subject."
                 )
 
-            except (
-                json.JSONDecodeError,
-                TypeError
+        # ====================================================
+        # READ FORMULA STRUCTURE
+        # ====================================================
+
+        try:
+
+            structure_data = json.loads(
+                formula_structure
+            )
+
+            if not isinstance(
+                structure_data,
+                list
             ):
 
                 structure_data = []
 
-            # =================================================
-            # CREATE FORMULA
-            # =================================================
+                formula_structure = "[]"
 
-            formula = Formula.objects.create(
+        except (
+            json.JSONDecodeError,
+            TypeError
+        ):
 
-                knowledge_unit=knowledge_unit,
+            structure_data = []
 
-                structure=structure,
+            formula_structure = "[]"
 
-                purpose=(
-                    form.cleaned_data[
-                        "purpose"
-                    ]
-                ),
+        # ====================================================
+        # CREATE
+        # ====================================================
 
-                when_to_use=(
-                    form.cleaned_data[
-                        "when_to_use"
-                    ]
-                ),
+        if error is None:
 
+            # ------------------------------------------------
+            # KNOWLEDGE UNIT
+            #
+            # Difficulty and estimated minutes are no longer
+            # entered by the student.
+            # ------------------------------------------------
+
+            knowledge_unit = (
+                KnowledgeUnit.objects.create(
+                    subject=subject,
+
+                    title=title,
+
+                    knowledge_type=(
+                        KnowledgeUnit
+                        .KnowledgeType
+                        .FORMULA
+                    ),
+
+                    difficulty=1,
+
+                    estimated_minutes=2,
+
+                    active=True,
+                )
+            )
+
+            # ------------------------------------------------
+            # FORMULA
+            # ------------------------------------------------
+
+            formula = (
+                Formula.objects.create(
+                    knowledge_unit=knowledge_unit,
+
+                    structure=(
+                        formula_structure
+                    ),
+
+                    purpose=purpose,
+
+                    when_to_use=when_to_use,
+
+                    book_name=selected_book,
+
+                    chapter=chapter,
+                )
             )
 
             # =================================================
@@ -280,7 +457,6 @@ def create_formula(
                 )
 
                 FormulaVariable.objects.create(
-
                     formula=formula,
 
                     symbol=symbol,
@@ -288,13 +464,12 @@ def create_formula(
                     meaning=meaning,
 
                     order=variable_order,
-
                 )
 
                 variable_order += 1
 
             # =================================================
-            # FORMULA CREATED
+            # CREATED
             # =================================================
 
             return redirect(
@@ -302,30 +477,45 @@ def create_formula(
                 formula_id=formula.id
             )
 
-    else:
-
-        form = FormulaForm()
-
     # ========================================================
-    # DISPLAY CREATE PAGE
+    # RENDER
     # ========================================================
 
     return render(
         request,
         "learning/create_formula.html",
         {
-            "form":
-                form,
-
             "subject":
                 subject,
 
             "subject_index":
                 subject_index,
+
+            "textbooks":
+                textbooks,
+
+            "title":
+                title,
+
+            "purpose":
+                purpose,
+
+            "when_to_use":
+                when_to_use,
+
+            "selected_book":
+                selected_book,
+
+            "chapter":
+                chapter,
+
+            "formula_structure":
+                formula_structure,
+
+            "error":
+                error,
         }
     )
-
-
 # ============================================================
 # VIEW ALL FORMULAS
 # ============================================================
@@ -633,7 +823,6 @@ def create_definition(
         }
     )
 
-
 # ============================================================
 # FORMULA DETAIL
 # ============================================================
@@ -644,21 +833,41 @@ def formula_detail(
     formula_id
 ):
 
+    # ========================================================
+    # FORMULA
+    # ========================================================
+
     formula = get_object_or_404(
-
-        Formula,
-
+        Formula.objects
+        .select_related(
+            "knowledge_unit",
+            "knowledge_unit__subject",
+        ),
         id=formula_id,
-
-        knowledge_unit__subject__user=request.user
-
+        knowledge_unit__subject__user=request.user,
     )
+
+    subject = (
+        formula
+        .knowledge_unit
+        .subject
+    )
+
+    # ========================================================
+    # VARIABLES
+    # ========================================================
 
     variables = (
         formula.variables
         .all()
-        .order_by("order")
+        .order_by(
+            "order"
+        )
     )
+
+    # ========================================================
+    # FORMULA STRUCTURE
+    # ========================================================
 
     try:
 
@@ -673,19 +882,114 @@ def formula_detail(
 
         formula_elements = []
 
+    # ========================================================
+    # SUBJECT INDEX
+    # ========================================================
+
+    subjects = request.session.get(
+        "onboarding_subjects",
+        []
+    )
+
+    subject_index = None
+
+    # --------------------------------------------------------
+    # DATABASE ID
+    # --------------------------------------------------------
+
+    for (
+        index,
+        subject_data
+    ) in enumerate(
+        subjects
+    ):
+
+        database_id = (
+            subject_data.get(
+                "database_id"
+            )
+        )
+
+        try:
+
+            database_id = int(
+                database_id
+            )
+
+        except (
+            TypeError,
+            ValueError
+        ):
+
+            database_id = None
+
+        if (
+            database_id
+            == subject.id
+        ):
+
+            subject_index = index
+
+            break
+
+    # --------------------------------------------------------
+    # FALLBACK TO NAME
+    # --------------------------------------------------------
+
+    if subject_index is None:
+
+        for (
+            index,
+            subject_data
+        ) in enumerate(
+            subjects
+        ):
+
+            subject_name = (
+                subject_data.get(
+                    "name",
+                    ""
+                )
+                .strip()
+            )
+
+            if (
+                subject_name
+                == subject.name.strip()
+            ):
+
+                subject_index = index
+
+                break
+
+    if subject_index is None:
+
+        subject_index = 0
+
+    # ========================================================
+    # RENDER
+    # ========================================================
+
     return render(
         request,
         "learning/formula_detail.html",
         {
-            "formula": formula,
+            "formula":
+                formula,
 
-            "variables": variables,
+            "subject":
+                subject,
+
+            "subject_index":
+                subject_index,
+
+            "variables":
+                variables,
 
             "formula_elements":
                 formula_elements,
         }
     )
-
 
 # ============================================================
 # EDIT FORMULA
@@ -697,19 +1001,188 @@ def edit_formula(
     formula_id
 ):
 
+    # ========================================================
+    # FORMULA
+    # ========================================================
+
     formula = get_object_or_404(
-
-        Formula,
-
+        Formula.objects
+        .select_related(
+            "knowledge_unit",
+            "knowledge_unit__subject",
+        ),
         id=formula_id,
-
-        knowledge_unit__subject__user=request.user
-
+        knowledge_unit__subject__user=request.user,
     )
 
     knowledge_unit = (
         formula.knowledge_unit
     )
+
+    subject = (
+        knowledge_unit.subject
+    )
+
+    # ========================================================
+    # SUBJECT INDEX
+    # ========================================================
+
+    subject_index = (
+        request.GET.get(
+            "subject_index"
+        )
+        or
+        request.POST.get(
+            "subject_index"
+        )
+    )
+
+    # --------------------------------------------------------
+    # FIND FROM SESSION IF NOT PROVIDED
+    # --------------------------------------------------------
+
+    if subject_index is None:
+
+        subjects = request.session.get(
+            "onboarding_subjects",
+            []
+        )
+
+        # ----------------------------------------------------
+        # MATCH DATABASE ID
+        # ----------------------------------------------------
+
+        for (
+            index,
+            subject_data
+        ) in enumerate(
+            subjects
+        ):
+
+            database_id = (
+                subject_data.get(
+                    "database_id"
+                )
+            )
+
+            try:
+
+                database_id = int(
+                    database_id
+                )
+
+            except (
+                TypeError,
+                ValueError
+            ):
+
+                database_id = None
+
+            if (
+                database_id
+                == subject.id
+            ):
+
+                subject_index = index
+
+                break
+
+        # ----------------------------------------------------
+        # FALLBACK TO NAME
+        # ----------------------------------------------------
+
+        if subject_index is None:
+
+            for (
+                index,
+                subject_data
+            ) in enumerate(
+                subjects
+            ):
+
+                subject_name = (
+                    subject_data.get(
+                        "name",
+                        ""
+                    )
+                    .strip()
+                )
+
+                if (
+                    subject_name
+                    == subject.name.strip()
+                ):
+
+                    subject_index = index
+
+                    break
+
+    # --------------------------------------------------------
+    # NORMALIZE
+    # --------------------------------------------------------
+
+    try:
+
+        subject_index = int(
+            subject_index
+        )
+
+    except (
+        TypeError,
+        ValueError
+    ):
+
+        subject_index = 0
+
+    # ========================================================
+    # TEXTBOOKS
+    # ========================================================
+
+    textbooks = (
+        SubjectTextbook.objects
+        .filter(
+            subject=subject
+        )
+        .order_by(
+            "created",
+            "id",
+        )
+    )
+
+    # ========================================================
+    # INITIAL VALUES
+    # ========================================================
+
+    title = (
+        knowledge_unit.title
+    )
+
+    purpose = (
+        formula.purpose
+        or ""
+    )
+
+    when_to_use = (
+        formula.when_to_use
+        or ""
+    )
+
+    selected_book = (
+        formula.book_name
+        or ""
+    )
+
+    chapter = (
+        formula.chapter
+        or ""
+    )
+
+    formula_structure = (
+        formula.structure
+        or "[]"
+    )
+
+    error = None
 
     # ========================================================
     # POST
@@ -717,85 +1190,197 @@ def edit_formula(
 
     if request.method == "POST":
 
-        form = FormulaForm(
-            request.POST
+        # ----------------------------------------------------
+        # FORMULA NAME
+        # ----------------------------------------------------
+
+        title = (
+            request.POST.get(
+                "title",
+                ""
+            )
+            .strip()
         )
 
-        if form.is_valid():
+        # ----------------------------------------------------
+        # OPTIONAL FORMULA DETAILS
+        # ----------------------------------------------------
 
-            # ================================================
-            # UPDATE KNOWLEDGE UNIT
-            # ================================================
-
-            knowledge_unit.title = (
-                form.cleaned_data[
-                    "title"
-                ]
+        purpose = (
+            request.POST.get(
+                "purpose",
+                ""
             )
+            .strip()
+        )
 
-            knowledge_unit.difficulty = (
-                form.cleaned_data[
-                    "difficulty"
-                ]
+        when_to_use = (
+            request.POST.get(
+                "when_to_use",
+                ""
             )
+            .strip()
+        )
 
-            knowledge_unit.estimated_minutes = (
-                form.cleaned_data[
-                    "estimated_minutes"
-                ]
+        # ----------------------------------------------------
+        # OPTIONAL ADDITIONAL DETAILS
+        # ----------------------------------------------------
+
+        selected_book = (
+            request.POST.get(
+                "book_name",
+                ""
             )
+            .strip()
+        )
 
-            knowledge_unit.save()
+        chapter = (
+            request.POST.get(
+                "chapter",
+                ""
+            )
+            .strip()
+        )
 
-            # ================================================
-            # UPDATE FORMULA
-            # ================================================
+        # ----------------------------------------------------
+        # FORMULA STRUCTURE
+        # ----------------------------------------------------
 
-            formula.structure = request.POST.get(
+        formula_structure = (
+            request.POST.get(
                 "formula_structure",
                 "[]"
             )
+            or
+            "[]"
+        )
 
-            formula.purpose = (
-                form.cleaned_data[
-                    "purpose"
-                ]
+        # ====================================================
+        # VALIDATE NAME
+        # ====================================================
+
+        if not title:
+
+            error = (
+                "Please enter a formula name."
             )
 
-            formula.when_to_use = (
-                form.cleaned_data[
-                    "when_to_use"
-                ]
+        # ====================================================
+        # VALIDATE BOOK
+        # ====================================================
+
+        if (
+            error is None
+            and
+            selected_book
+        ):
+
+            valid_book = (
+                textbooks
+                .filter(
+                    name=selected_book
+                )
+                .exists()
             )
 
-            formula.save()
+            if not valid_book:
 
-            # ================================================
-            # READ STRUCTURE
-            # ================================================
-
-            try:
-
-                structure_data = json.loads(
-                    formula.structure
+                error = (
+                    "The selected textbook "
+                    "does not belong to this subject."
                 )
 
-            except (
-                json.JSONDecodeError,
-                TypeError
+        # ====================================================
+        # PARSE FORMULA STRUCTURE
+        # ====================================================
+
+        try:
+
+            structure_data = json.loads(
+                formula_structure
+            )
+
+            if not isinstance(
+                structure_data,
+                list
             ):
 
                 structure_data = []
 
-            # ================================================
-            # DELETE OLD VARIABLES
-            # ================================================
+                formula_structure = "[]"
+
+        except (
+            json.JSONDecodeError,
+            TypeError
+        ):
+
+            structure_data = []
+
+            formula_structure = "[]"
+
+        # ====================================================
+        # SAVE
+        # ====================================================
+
+        if error is None:
+
+            # ------------------------------------------------
+            # KNOWLEDGE UNIT
+            #
+            # Difficulty and estimated time are deliberately
+            # left alone because they are no longer
+            # student-entered fields.
+            # ------------------------------------------------
+
+            knowledge_unit.title = (
+                title
+            )
+
+            knowledge_unit.save(
+                update_fields=[
+                    "title",
+                ]
+            )
+
+            # ------------------------------------------------
+            # FORMULA
+            # ------------------------------------------------
+
+            formula.structure = (
+                formula_structure
+            )
+
+            formula.purpose = (
+                purpose
+            )
+
+            formula.when_to_use = (
+                when_to_use
+            )
+
+            formula.book_name = (
+                selected_book
+            )
+
+            formula.chapter = (
+                chapter
+            )
+
+            formula.save(
+                update_fields=[
+                    "structure",
+                    "purpose",
+                    "when_to_use",
+                    "book_name",
+                    "chapter",
+                ]
+            )
+
+            # =================================================
+            # REBUILD VARIABLES
+            # =================================================
 
             formula.variables.all().delete()
-
-            # ================================================
-            # REBUILD VARIABLES
-            # ================================================
 
             seen_symbols = set()
 
@@ -820,9 +1405,11 @@ def edit_formula(
                 ).strip()
 
                 if not symbol:
+
                     continue
 
                 if symbol in seen_symbols:
+
                     continue
 
                 seen_symbols.add(
@@ -830,18 +1417,17 @@ def edit_formula(
                 )
 
                 FormulaVariable.objects.create(
-
                     formula=formula,
-
                     symbol=symbol,
-
                     meaning=meaning,
-
                     order=variable_order,
-
                 )
 
                 variable_order += 1
+
+            # =================================================
+            # DONE
+            # =================================================
 
             return redirect(
                 "formula_detail",
@@ -849,44 +1435,47 @@ def edit_formula(
             )
 
     # ========================================================
-    # GET
+    # RENDER
     # ========================================================
-
-    else:
-
-        form = FormulaForm(
-
-            initial={
-
-                "title":
-                    knowledge_unit.title,
-
-                "difficulty":
-                    knowledge_unit.difficulty,
-
-                "estimated_minutes":
-                    knowledge_unit.estimated_minutes,
-
-                "purpose":
-                    formula.purpose,
-
-                "when_to_use":
-                    formula.when_to_use,
-
-            }
-
-        )
 
     return render(
         request,
         "learning/edit_formula.html",
         {
-            "form": form,
+            "formula":
+                formula,
 
-            "formula": formula,
+            "subject":
+                subject,
+
+            "subject_index":
+                subject_index,
+
+            "textbooks":
+                textbooks,
+
+            "title":
+                title,
+
+            "purpose":
+                purpose,
+
+            "when_to_use":
+                when_to_use,
+
+            "selected_book":
+                selected_book,
+
+            "chapter":
+                chapter,
+
+            "formula_structure":
+                formula_structure,
+
+            "error":
+                error,
         }
     )
-
 
 # ============================================================
 # LIST REVIEW HELPERS
