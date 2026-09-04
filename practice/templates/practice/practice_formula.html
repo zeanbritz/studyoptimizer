@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 
 <head>
@@ -811,13 +810,6 @@
 
         /* =========================================
            INLINE DESCRIPTION TARGET
-
-           This is deliberately designed like an
-           individual formula element box from the
-           formula builder.
-
-           There is NO separate drop area and no
-           "Drop description here" text.
         ========================================= */
 
         .description-inline-target {
@@ -1128,8 +1120,7 @@
 
             margin-top: 16px;
 
-            padding:
-                15px;
+            padding: 15px;
 
             border:
                 1px solid
@@ -1392,8 +1383,8 @@
 
 
             <!-- =================================
-                 THE ACTUAL FORMULA IS NOW
-                 THE DROP TARGET
+                 THE ACTUAL FORMULA IS THE
+                 DROP TARGET
             ================================== -->
 
             <div class="formula-box">
@@ -1692,8 +1683,6 @@
 
         <!-- =====================================
              ACTIONS
-
-             Hidden until matching is finished.
         ====================================== -->
 
         <div
@@ -1988,7 +1977,10 @@
     {% else %}
 
 
-        <form method="post">
+        <form
+            method="post"
+            id="formula-answer-form"
+        >
 
 
             {% csrf_token %}
@@ -2547,9 +2539,6 @@
 
             // =================================================
             // FEEDBACK SOUNDS
-            //
-            // No external sound files are required.
-            // The browser generates the tones.
             // =================================================
 
             let audioContext =
@@ -2621,101 +2610,124 @@
                 }
 
 
+                function createTone() {
+
+                    const oscillator =
+                        context
+                        .createOscillator();
+
+
+                    const gain =
+                        context
+                        .createGain();
+
+
+                    const startTime =
+                        context.currentTime
+                        +
+                        startDelay;
+
+
+                    const endTime =
+                        startTime
+                        +
+                        duration;
+
+
+                    oscillator.type =
+                        type;
+
+
+                    oscillator.frequency
+                        .setValueAtTime(
+                            frequency,
+                            startTime
+                        );
+
+
+                    gain.gain
+                        .setValueAtTime(
+                            0.0001,
+                            startTime
+                        );
+
+
+                    gain.gain
+                        .exponentialRampToValueAtTime(
+                            0.16,
+                            startTime
+                            +
+                            0.015
+                        );
+
+
+                    gain.gain
+                        .exponentialRampToValueAtTime(
+                            0.0001,
+                            endTime
+                        );
+
+
+                    oscillator.connect(
+                        gain
+                    );
+
+
+                    gain.connect(
+                        context.destination
+                    );
+
+
+                    oscillator.start(
+                        startTime
+                    );
+
+
+                    oscillator.stop(
+                        endTime
+                        +
+                        0.02
+                    );
+
+                }
+
+
                 if (
                     context.state
                     ===
                     "suspended"
                 ) {
 
-                    context.resume();
+                    context.resume()
+                        .then(
+                            function () {
+
+                                createTone();
+
+                            }
+                        )
+                        .catch(
+                            function () {
+
+                                // Browser may block automatic
+                                // sound until another interaction.
+
+                            }
+                        );
 
                 }
 
+                else {
 
-                const oscillator =
-                    context
-                    .createOscillator();
+                    createTone();
 
-
-                const gain =
-                    context
-                    .createGain();
-
-
-                const startTime =
-                    context.currentTime
-                    +
-                    startDelay;
-
-
-                const endTime =
-                    startTime
-                    +
-                    duration;
-
-
-                oscillator.type =
-                    type;
-
-
-                oscillator.frequency
-                    .setValueAtTime(
-                        frequency,
-                        startTime
-                    );
-
-
-                gain.gain
-                    .setValueAtTime(
-                        0.0001,
-                        startTime
-                    );
-
-
-                gain.gain
-                    .exponentialRampToValueAtTime(
-                        0.16,
-                        startTime
-                        +
-                        0.015
-                    );
-
-
-                gain.gain
-                    .exponentialRampToValueAtTime(
-                        0.0001,
-                        endTime
-                    );
-
-
-                oscillator.connect(
-                    gain
-                );
-
-
-                gain.connect(
-                    context.destination
-                );
-
-
-                oscillator.start(
-                    startTime
-                );
-
-
-                oscillator.stop(
-                    endTime
-                    +
-                    0.02
-                );
+                }
 
             }
 
 
             // =================================================
             // SUCCESS SOUND
-            //
-            // Short upward two-note chime.
             // =================================================
 
             function playSuccessSound() {
@@ -2740,8 +2752,6 @@
 
             // =================================================
             // FAILURE SOUND
-            //
-            // Short lower downward sound.
             // =================================================
 
             function playFailureSound() {
@@ -2762,6 +2772,146 @@
                 );
 
             }
+
+
+            // =================================================
+            // REMEMBER THAT CHECK ANSWER WAS PRESSED
+            //
+            // This prevents refreshing an old result page
+            // from repeatedly playing the sound.
+            // =================================================
+
+            const formulaAnswerForm =
+                document.getElementById(
+                    "formula-answer-form"
+                );
+
+
+            if (
+                formulaAnswerForm
+            ) {
+
+                formulaAnswerForm
+                    .addEventListener(
+                        "submit",
+                        function () {
+
+                            try {
+
+                                sessionStorage.setItem(
+                                    "formulaAnswerSoundPending",
+                                    "1"
+                                );
+
+                            }
+
+                            catch (
+                                error
+                            ) {
+
+                                // Storage unavailable.
+                                // The formula still submits normally.
+
+                            }
+
+                        }
+                    );
+
+            }
+
+
+            // =================================================
+            // PLAY NORMAL CHECK ANSWER RESULT SOUND
+            // =================================================
+
+            let shouldPlayFormulaResultSound =
+                true;
+
+
+            try {
+
+                shouldPlayFormulaResultSound =
+                    (
+                        sessionStorage.getItem(
+                            "formulaAnswerSoundPending"
+                        )
+                        ===
+                        "1"
+                    );
+
+
+                if (
+                    shouldPlayFormulaResultSound
+                ) {
+
+                    sessionStorage.removeItem(
+                        "formulaAnswerSoundPending"
+                    );
+
+                }
+
+            }
+
+            catch (
+                error
+            ) {
+
+                // If sessionStorage is unavailable,
+                // still allow the result sound.
+
+                shouldPlayFormulaResultSound =
+                    true;
+
+            }
+
+
+            // =================================================
+// NORMAL CHECK ANSWER RESULT
+// =================================================
+
+const formulaResult =
+    "{{ result|default:''|escapejs }}";
+
+
+if (
+    shouldPlayFormulaResultSound
+) {
+
+    if (
+        formulaResult
+        ===
+        "correct"
+    ) {
+
+        setTimeout(
+            function () {
+
+                playSuccessSound();
+
+            },
+            120
+        );
+
+    }
+
+    else if (
+        formulaResult
+        ===
+        "incorrect"
+    ) {
+
+        setTimeout(
+            function () {
+
+                playFailureSound();
+
+            },
+            120
+        );
+
+    }
+
+}
 
 
             // =================================================
@@ -3014,7 +3164,7 @@
 
 
                                 // --------------------------------
-                                // TARGET IS NOW PERMANENTLY USED
+                                // TARGET IS NOW USED
                                 // --------------------------------
 
                                 target.dataset.filled =
@@ -3043,6 +3193,7 @@
 
                                 }
 
+
                                 // =================================
                                 // WRONG
                                 // =================================
@@ -3064,7 +3215,6 @@
 
                                 // =================================
                                 // DESCRIPTION DISAPPEARS
-                                // REGARDLESS OF RIGHT OR WRONG
                                 // =================================
 
                                 draggedCard.remove();
@@ -3136,6 +3286,7 @@
 
                     }
 
+
                     // =========================================
                     // ONE OR MORE WRONG
                     // =========================================
@@ -3166,8 +3317,7 @@
 
 
                         // -------------------------------------
-                        // SHOW WHICH DESCRIPTION BELONGED
-                        // TO WHICH VARIABLE / SYMBOL.
+                        // SHOW CORRECT MATCHES
                         // -------------------------------------
 
                         if (
@@ -3183,19 +3333,6 @@
                         }
 
                     }
-
-
-                    // =========================================
-                    // IMPORTANT
-                    //
-                    // Nothing is posted to Django here.
-                    // Description mistakes therefore do NOT:
-                    //
-                    // - reduce mastery
-                    // - add an incorrect answer
-                    // - alter review_count
-                    // - alter next_review
-                    // =========================================
 
 
                     // =========================================
