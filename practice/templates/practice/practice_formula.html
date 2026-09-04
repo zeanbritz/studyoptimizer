@@ -311,7 +311,7 @@
 
 
         /* =========================================
-           SYMBOLS START COLLAPSED
+           SYMBOLS START MINIMIZED
         ========================================= */
 
         .review-symbol-panel.collapsed {
@@ -348,7 +348,7 @@
 
 
         /* =========================================
-           FORMULA
+           FORMULA BOX
         ========================================= */
 
         .formula-box {
@@ -405,7 +405,11 @@
 
         .formula-element {
 
-            display: inline-block;
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
 
             flex-shrink: 0;
 
@@ -509,6 +513,10 @@
 
             justify-content: center;
 
+            flex-wrap: wrap;
+
+            gap: 4px;
+
             min-height: 45px;
 
             padding:
@@ -530,6 +538,10 @@
             align-items: center;
 
             justify-content: center;
+
+            flex-wrap: wrap;
+
+            gap: 4px;
 
             min-height: 45px;
 
@@ -761,170 +773,80 @@
 
 
         /* =========================================
-           MASTERED SECOND STAGE
+           MASTERED MATCHING INTRO
         ========================================= */
 
-        .mastered-stage-intro {
-
-            display: flex;
-
-            align-items: baseline;
-
-            flex-wrap: wrap;
-
-            gap: 8px;
+        .matching-heading {
 
             margin:
-                5px
+                8px
                 0
-                16px;
-
-            color: #666;
-
-            font-size: 13px;
+                15px;
 
         }
 
 
-        .mastered-stage-intro strong {
-
-            color: #222;
-
-            font-size: 14px;
-
-        }
-
-
-        .mastered-formula-box {
-
-            margin-bottom: 25px;
-
-        }
-
-
-        /* =========================================
-           DESCRIPTION MATCH BOX
-        ========================================= */
-
-        .description-match-box {
-
-            margin-top: 24px;
-
-            padding: 26px;
-
-            border:
-                1px solid
-                #dedede;
-
-            border-radius: 14px;
-
-            background: #fafafa;
-
-        }
-
-
-        .description-match-header {
-
-            display: flex;
-
-            align-items: flex-start;
-
-            justify-content: space-between;
-
-            gap: 20px;
-
-            margin-bottom: 24px;
-
-        }
-
-
-        .description-match-header h2 {
+        .matching-heading h2 {
 
             margin:
                 0
                 0
-                6px;
+                5px;
 
-            font-size: 20px;
+            font-size: 18px;
 
         }
 
 
-        .description-match-header p {
+        .matching-heading p {
 
             margin: 0;
-
-            max-width: 600px;
 
             color: #888;
 
             font-size: 12px;
 
-            line-height: 1.5;
-
-        }
-
-
-        .no-mastery-penalty {
-
-            flex-shrink: 0;
-
-            padding:
-                5px
-                9px;
-
-            border:
-                1px solid
-                #ddd;
-
-            border-radius: 20px;
-
-            background: white;
-
-            color: #777;
-
-            font-size: 10px;
-
-            font-weight: 600;
-
         }
 
 
         /* =========================================
-           DESCRIPTION TARGETS
+           INLINE DESCRIPTION TARGET
+
+           This is deliberately designed like an
+           individual formula element box from the
+           formula builder.
+
+           There is NO separate drop area and no
+           "Drop description here" text.
         ========================================= */
 
-        .description-target-grid {
+        .description-inline-target {
 
-            display: grid;
+            position: relative;
 
-            grid-template-columns:
-                repeat(
-                    auto-fit,
-                    minmax(
-                        170px,
-                        1fr
-                    )
-                );
+            min-width: 48px;
 
-            gap: 13px;
+            min-height: 48px;
 
-        }
+            padding:
+                5px
+                10px;
 
-
-        .description-target {
-
-            min-height: 145px;
-
-            padding: 14px;
+            margin:
+                0
+                4px;
 
             border:
                 2px solid
-                #d9d9d9;
+                #bdbdbd;
 
-            border-radius: 11px;
+            border-radius: 8px;
 
             background: white;
+
+            color: #111;
+
+            cursor: default;
 
             transition:
                 border-color
@@ -932,16 +854,48 @@
                 background
                 0.15s ease,
                 box-shadow
+                0.15s ease,
+                transform
                 0.15s ease;
 
         }
 
 
-        .description-target.drag-over {
+        .description-inline-target.drag-over {
 
-            border-color: #777;
+            border-color: #555;
 
-            background: #f3f3f3;
+            background: #f1f1f1;
+
+            box-shadow:
+                0
+                0
+                0
+                4px
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.05
+                );
+
+            transform:
+                translateY(
+                    -1px
+                );
+
+        }
+
+
+        /* =========================================
+           CORRECT TARGET
+        ========================================= */
+
+        .description-inline-target.correct-match {
+
+            border-color: #4f9b60;
+
+            background: #e8f6eb;
 
             box-shadow:
                 0
@@ -949,201 +903,64 @@
                 0
                 3px
                 rgba(
-                    0,
-                    0,
-                    0,
-                    0.04
+                    79,
+                    155,
+                    96,
+                    0.10
                 );
 
         }
 
 
         /* =========================================
-           GREEN CORRECT TARGET
+           WRONG TARGET
         ========================================= */
 
-        .description-target.correct-match {
+        .description-inline-target.wrong-match {
 
-            border-color: #65a66f;
+            border-color: #c65f5f;
 
-            background: #f1f8f2;
+            background: #fdeaea;
 
-        }
-
-
-        /* =========================================
-           RED WRONG TARGET
-        ========================================= */
-
-        .description-target.wrong-match {
-
-            border-color: #c86767;
-
-            background: #fff1f1;
-
-        }
-
-
-        .description-target-symbol {
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-            min-height: 52px;
-
-            margin-bottom: 10px;
-
-            padding:
-                7px
-                10px;
-
-            border:
-                1px solid
-                #e1e1e1;
-
-            border-radius: 8px;
-
-            background: #fafafa;
-
-            color: #111;
-
-            font-size: 27px;
-
-            font-weight: 700;
-
-            word-break: break-word;
-
-        }
-
-
-        .description-target.correct-match
-        .description-target-symbol {
-
-            border-color: #8dbb95;
-
-            background: #e8f4ea;
-
-        }
-
-
-        .description-target.wrong-match
-        .description-target-symbol {
-
-            border-color: #da9999;
-
-            background: #fde3e3;
-
-        }
-
-
-        .description-drop-zone {
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-            min-height: 48px;
-
-            padding: 8px;
-
-            border:
-                1px dashed
-                #ccc;
-
-            border-radius: 7px;
-
-            color: #aaa;
-
-            font-size: 11px;
-
-            line-height: 1.4;
-
-            text-align: center;
-
-        }
-
-
-        .description-target.correct-match
-        .description-drop-zone,
-        .description-target.wrong-match
-        .description-drop-zone {
-
-            border-style: solid;
-
-            color: #333;
-
-            font-weight: 600;
-
-        }
-
-
-        /* =========================================
-           CORRECTION
-        ========================================= */
-
-        .description-correction {
-
-            display: none;
-
-            margin-top: 10px;
-
-            padding:
-                9px
-                8px
-                0;
-
-            border-top:
-                1px solid
+            box-shadow:
+                0
+                0
+                0
+                3px
                 rgba(
-                    0,
-                    0,
-                    0,
-                    0.08
+                    198,
+                    95,
+                    95,
+                    0.10
                 );
-
-            color: #8a3434;
-
-            font-size: 11px;
-
-            font-weight: 600;
-
-            line-height: 1.4;
-
-        }
-
-
-        .description-correction.show {
-
-            display: block;
 
         }
 
 
         /* =========================================
-           DESCRIPTION CARDS
+           DESCRIPTION CARD AREA
         ========================================= */
 
         .description-card-area {
 
-            margin-top: 25px;
+            margin-top: 20px;
 
-            padding-top: 21px;
+            padding: 20px;
 
-            border-top:
+            border:
                 1px solid
-                #e5e5e5;
+                #dedede;
+
+            border-radius: 12px;
+
+            background: #fafafa;
 
         }
 
 
-        .description-card-label {
+        .description-card-area-header {
 
-            margin-bottom: 11px;
+            margin-bottom: 12px;
 
             color: #555;
 
@@ -1164,30 +981,30 @@
 
             gap: 10px;
 
-            min-height: 52px;
+            min-height: 48px;
 
         }
 
 
         .description-card {
 
-            max-width: 280px;
+            max-width: 300px;
 
             padding:
                 11px
-                13px;
+                14px;
 
             border:
                 1px solid
-                #d3d3d3;
+                #d1d1d1;
 
-            border-radius: 9px;
+            border-radius: 8px;
 
             background: white;
 
             color: #333;
 
-            font-size: 12px;
+            font-size: 13px;
 
             line-height: 1.45;
 
@@ -1199,6 +1016,8 @@
                 border-color
                 0.15s ease,
                 box-shadow
+                0.15s ease,
+                transform
                 0.15s ease;
 
         }
@@ -1206,7 +1025,7 @@
 
         .description-card:hover {
 
-            border-color: #999;
+            border-color: #888;
 
             box-shadow:
                 0
@@ -1216,7 +1035,12 @@
                     0,
                     0,
                     0,
-                    0.05
+                    0.07
+                );
+
+            transform:
+                translateY(
+                    -1px
                 );
 
         }
@@ -1237,16 +1061,18 @@
 
 
         /* =========================================
-           DESCRIPTION RESULT
+           MATCH RESULT
         ========================================= */
 
         .description-match-result {
 
             display: none;
 
-            margin-top: 20px;
+            margin-top: 18px;
 
-            padding: 14px;
+            padding:
+                13px
+                15px;
 
             border-radius: 9px;
 
@@ -1270,9 +1096,11 @@
 
             border:
                 1px solid
-                #b8d9be;
+                #b3d6ba;
 
-            background: #edf7ef;
+            background: #edf8ef;
+
+            color: #3f7448;
 
         }
 
@@ -1281,9 +1109,98 @@
 
             border:
                 1px solid
-                #e1b4b4;
+                #dfb1b1;
 
             background: #fff1f1;
+
+            color: #8f4141;
+
+        }
+
+
+        /* =========================================
+           CORRECT MATCHES AFTER FAILURE
+        ========================================= */
+
+        .correct-match-list {
+
+            display: none;
+
+            margin-top: 16px;
+
+            padding:
+                15px;
+
+            border:
+                1px solid
+                #dedede;
+
+            border-radius: 9px;
+
+            background: white;
+
+        }
+
+
+        .correct-match-list.show {
+
+            display: block;
+
+        }
+
+
+        .correct-match-list-title {
+
+            margin-bottom: 10px;
+
+            color: #333;
+
+            font-size: 12px;
+
+            font-weight: 700;
+
+        }
+
+
+        .correct-match-row {
+
+            display: flex;
+
+            align-items: baseline;
+
+            gap: 8px;
+
+            padding:
+                7px
+                0;
+
+            border-bottom:
+                1px solid
+                #eeeeee;
+
+            color: #555;
+
+            font-size: 12px;
+
+        }
+
+
+        .correct-match-row:last-child {
+
+            border-bottom: none;
+
+        }
+
+
+        .correct-match-symbol {
+
+            min-width: 45px;
+
+            color: #111;
+
+            font-size: 16px;
+
+            font-weight: 700;
 
         }
 
@@ -1339,6 +1256,19 @@
             }
 
 
+            .description-inline-target {
+
+                min-width: 42px;
+
+                min-height: 42px;
+
+                padding:
+                    4px
+                    8px;
+
+            }
+
+
             .review-symbol-header {
 
                 align-items: flex-start;
@@ -1366,20 +1296,6 @@
             .finish-review-button {
 
                 width: 100%;
-
-            }
-
-
-            .description-match-header {
-
-                flex-direction: column;
-
-            }
-
-
-            .description-target-grid {
-
-                grid-template-columns: 1fr;
 
             }
 
@@ -1452,34 +1368,35 @@
 
 
         <!-- =====================================
-             MASTERED SECOND-STAGE TEST
+             MASTERED DESCRIPTION TEST
         ====================================== -->
 
         {% if show_description_match %}
 
 
-            <div class="mastered-stage-intro">
+            <div class="matching-heading">
 
 
-                <strong>
-                    Formula mastered.
-                </strong>
+                <h2>
+                    Match the descriptions
+                </h2>
 
 
-                <span>
-                    Now match each description to the
-                    correct variable or symbol.
-                </span>
+                <p>
+                    Drag each description onto the boxed
+                    variable or symbol in the formula.
+                </p>
 
 
             </div>
 
 
             <!-- =================================
-                 FULL FORMULA
+                 THE ACTUAL FORMULA IS NOW
+                 THE DROP TARGET
             ================================== -->
 
-            <div class="formula-box mastered-formula-box">
+            <div class="formula-box">
 
 
                 <div class="formula">
@@ -1487,6 +1404,10 @@
 
                     {% for element in formula_elements %}
 
+
+                        <!-- =========================
+                             FRACTION
+                        ========================== -->
 
                         {% if element.type == "fraction" %}
 
@@ -1504,9 +1425,42 @@
                                     {% for numerator in element.numerator %}
 
 
-                                        <span class="formula-element">
-                                            {{ numerator.value }}
-                                        </span>
+                                        {% if numerator.type == "variable" or numerator.type == "symbol" %}
+
+
+                                            {% if numerator.meaning %}
+
+
+                                                <span
+                                                    class="formula-element description-inline-target"
+                                                    data-target-id="{{ numerator.id }}"
+                                                    data-correct-description="{{ numerator.meaning }}"
+                                                    data-symbol="{{ numerator.value }}"
+                                                >
+                                                    {{ numerator.value }}
+                                                </span>
+
+
+                                            {% else %}
+
+
+                                                <span class="formula-element">
+                                                    {{ numerator.value }}
+                                                </span>
+
+
+                                            {% endif %}
+
+
+                                        {% else %}
+
+
+                                            <span class="formula-element">
+                                                {{ numerator.value }}
+                                            </span>
+
+
+                                        {% endif %}
 
 
                                     {% endfor %}
@@ -1525,9 +1479,42 @@
                                     {% for denominator in element.denominator %}
 
 
-                                        <span class="formula-element">
-                                            {{ denominator.value }}
-                                        </span>
+                                        {% if denominator.type == "variable" or denominator.type == "symbol" %}
+
+
+                                            {% if denominator.meaning %}
+
+
+                                                <span
+                                                    class="formula-element description-inline-target"
+                                                    data-target-id="{{ denominator.id }}"
+                                                    data-correct-description="{{ denominator.meaning }}"
+                                                    data-symbol="{{ denominator.value }}"
+                                                >
+                                                    {{ denominator.value }}
+                                                </span>
+
+
+                                            {% else %}
+
+
+                                                <span class="formula-element">
+                                                    {{ denominator.value }}
+                                                </span>
+
+
+                                            {% endif %}
+
+
+                                        {% else %}
+
+
+                                            <span class="formula-element">
+                                                {{ denominator.value }}
+                                            </span>
+
+
+                                        {% endif %}
 
 
                                     {% endfor %}
@@ -1539,12 +1526,49 @@
                             </span>
 
 
+                        <!-- =========================
+                             NORMAL FORMULA ELEMENT
+                        ========================== -->
+
                         {% else %}
 
 
-                            <span class="formula-element">
-                                {{ element.value }}
-                            </span>
+                            {% if element.type == "variable" or element.type == "symbol" %}
+
+
+                                {% if element.meaning %}
+
+
+                                    <span
+                                        class="formula-element description-inline-target"
+                                        data-target-id="{{ element.id }}"
+                                        data-correct-description="{{ element.meaning }}"
+                                        data-symbol="{{ element.value }}"
+                                    >
+                                        {{ element.value }}
+                                    </span>
+
+
+                                {% else %}
+
+
+                                    <span class="formula-element">
+                                        {{ element.value }}
+                                    </span>
+
+
+                                {% endif %}
+
+
+                            {% else %}
+
+
+                                <span class="formula-element">
+                                    {{ element.value }}
+                                </span>
+
+
+                            {% endif %}
 
 
                         {% endif %}
@@ -1560,80 +1584,33 @@
 
 
             <!-- =================================
-                 DESCRIPTION MATCH
+                 DRAGGABLE DESCRIPTIONS
             ================================== -->
 
-            <section
-                class="description-match-box"
-                id="description-match-box"
-            >
+            <div class="description-card-area">
 
 
-                <div class="description-match-header">
-
-
-                    <div>
-
-
-                        <h2>
-                            Match the descriptions
-                        </h2>
-
-
-                        <p>
-                            Drag each description onto the
-                            variable or symbol it belongs to.
-                            Once you drop a description it is
-                            used, whether the answer is right
-                            or wrong.
-                        </p>
-
-
-                    </div>
-
-
-                    <span class="no-mastery-penalty">
-                        No mastery penalty
-                    </span>
-
-
+                <div class="description-card-area-header">
+                    Descriptions
                 </div>
 
 
-                <!-- =============================
-                     TARGETS
-                ============================== -->
+                <div
+                    class="description-card-pool"
+                    id="description-card-pool"
+                >
 
-                <div class="description-target-grid">
 
-
-                    {% for item in description_match_items %}
+                    {% for item in description_match_cards %}
 
 
                         <div
-                            class="description-target"
-                            data-target-id="{{ item.id }}"
-                            data-correct-description="{{ item.meaning }}"
+                            class="description-card"
+                            draggable="true"
+                            data-description="{{ item.meaning }}"
                         >
 
-
-                            <div class="description-target-symbol">
-
-                                {{ item.value }}
-
-                            </div>
-
-
-                            <div class="description-drop-zone">
-
-                                Drop description here
-
-                            </div>
-
-
-                            <div class="description-correction">
-                            </div>
-
+                            {{ item.meaning }}
 
                         </div>
 
@@ -1645,50 +1622,7 @@
 
 
                 <!-- =============================
-                     DESCRIPTION CARDS
-                ============================== -->
-
-                <div class="description-card-area">
-
-
-                    <div class="description-card-label">
-
-                        Descriptions
-
-                    </div>
-
-
-                    <div
-                        class="description-card-pool"
-                        id="description-card-pool"
-                    >
-
-
-                        {% for item in description_match_cards %}
-
-
-                            <div
-                                class="description-card"
-                                draggable="true"
-                                data-description="{{ item.meaning }}"
-                            >
-
-                                {{ item.meaning }}
-
-                            </div>
-
-
-                        {% endfor %}
-
-
-                    </div>
-
-
-                </div>
-
-
-                <!-- =============================
-                     FINAL MATCH RESULT
+                     RESULT
                 ============================== -->
 
                 <div
@@ -1698,7 +1632,47 @@
                 </div>
 
 
-            </section>
+                <!-- =============================
+                     CORRECT ANSWERS AFTER FAILURE
+                ============================== -->
+
+                <div
+                    class="correct-match-list"
+                    id="correct-match-list"
+                >
+
+
+                    <div class="correct-match-list-title">
+                        Correct matches
+                    </div>
+
+
+                    {% for item in description_match_items %}
+
+
+                        <div class="correct-match-row">
+
+
+                            <span class="correct-match-symbol">
+                                {{ item.value }}
+                            </span>
+
+
+                            <span>
+                                {{ item.meaning }}
+                            </span>
+
+
+                        </div>
+
+
+                    {% endfor %}
+
+
+                </div>
+
+
+            </div>
 
 
         {% endif %}
@@ -1717,10 +1691,9 @@
 
 
         <!-- =====================================
-             CONTINUE ACTIONS
+             ACTIONS
 
-             Hidden until mastered description
-             matching has been completed.
+             Hidden until matching is finished.
         ====================================== -->
 
         <div
@@ -1846,7 +1819,7 @@
 
 
     <!-- =========================================
-         INCORRECT
+         INCORRECT NORMAL FORMULA
     ========================================== -->
 
     {% elif result == "incorrect" %}
@@ -2009,7 +1982,7 @@
 
 
     <!-- =========================================
-         QUESTION
+         NORMAL QUESTION
     ========================================== -->
 
     {% else %}
@@ -2037,8 +2010,7 @@
 
             <!-- =================================
                  SYMBOL PANEL
-
-                 Starts minimized.
+                 STARTS MINIMIZED
             ================================== -->
 
             <div
@@ -2080,7 +2052,6 @@
 
                 <div
                     class="review-symbol-grid-wrapper"
-                    id="review-symbol-grid-wrapper"
                 >
 
 
@@ -2178,7 +2149,7 @@
 
 
             <!-- =================================
-                 FORMULA QUESTION
+                 NORMAL FORMULA QUESTION
             ================================== -->
 
             <div class="formula-box">
@@ -2190,9 +2161,9 @@
                     {% for element in formula_elements %}
 
 
-                        <!-- =============================
+                        <!-- =========================
                              FRACTION
-                        ============================== -->
+                        ========================== -->
 
                         {% if element.type == "fraction" %}
 
@@ -2295,9 +2266,9 @@
                             </span>
 
 
-                        <!-- =============================
+                        <!-- =========================
                              NORMAL ELEMENT
-                        ============================== -->
+                        ========================== -->
 
                         {% else %}
 
@@ -2344,10 +2315,6 @@
             </div>
 
 
-            <!-- =================================
-                 CHECK ANSWER
-            ================================== -->
-
             <button
                 type="submit"
                 class="submit-button"
@@ -2372,7 +2339,7 @@
         function () {
 
             // =================================================
-            // ACTIVE FORMULA ANSWER INPUT
+            // NORMAL FORMULA ANSWER INPUTS
             // =================================================
 
             let activeAnswerInput =
@@ -2579,44 +2546,265 @@
 
 
             // =================================================
-            // MASTERED DESCRIPTION MATCHING
+            // FEEDBACK SOUNDS
+            //
+            // No external sound files are required.
+            // The browser generates the tones.
             // =================================================
 
-            const descriptionMatchBox =
+            let audioContext =
+                null;
+
+
+            function getAudioContext() {
+
+                if (
+                    audioContext
+                ) {
+
+                    return (
+                        audioContext
+                    );
+
+                }
+
+
+                const AudioContextClass =
+                    (
+                        window.AudioContext
+                        ||
+                        window.webkitAudioContext
+                    );
+
+
+                if (
+                    !AudioContextClass
+                ) {
+
+                    return null;
+
+                }
+
+
+                audioContext =
+                    new AudioContextClass();
+
+
+                return (
+                    audioContext
+                );
+
+            }
+
+
+            // =================================================
+            // PLAY ONE TONE
+            // =================================================
+
+            function playTone(
+                frequency,
+                startDelay,
+                duration,
+                type
+            ) {
+
+                const context =
+                    getAudioContext();
+
+
+                if (
+                    !context
+                ) {
+
+                    return;
+
+                }
+
+
+                if (
+                    context.state
+                    ===
+                    "suspended"
+                ) {
+
+                    context.resume();
+
+                }
+
+
+                const oscillator =
+                    context
+                    .createOscillator();
+
+
+                const gain =
+                    context
+                    .createGain();
+
+
+                const startTime =
+                    context.currentTime
+                    +
+                    startDelay;
+
+
+                const endTime =
+                    startTime
+                    +
+                    duration;
+
+
+                oscillator.type =
+                    type;
+
+
+                oscillator.frequency
+                    .setValueAtTime(
+                        frequency,
+                        startTime
+                    );
+
+
+                gain.gain
+                    .setValueAtTime(
+                        0.0001,
+                        startTime
+                    );
+
+
+                gain.gain
+                    .exponentialRampToValueAtTime(
+                        0.16,
+                        startTime
+                        +
+                        0.015
+                    );
+
+
+                gain.gain
+                    .exponentialRampToValueAtTime(
+                        0.0001,
+                        endTime
+                    );
+
+
+                oscillator.connect(
+                    gain
+                );
+
+
+                gain.connect(
+                    context.destination
+                );
+
+
+                oscillator.start(
+                    startTime
+                );
+
+
+                oscillator.stop(
+                    endTime
+                    +
+                    0.02
+                );
+
+            }
+
+
+            // =================================================
+            // SUCCESS SOUND
+            //
+            // Short upward two-note chime.
+            // =================================================
+
+            function playSuccessSound() {
+
+                playTone(
+                    523.25,
+                    0,
+                    0.12,
+                    "sine"
+                );
+
+
+                playTone(
+                    659.25,
+                    0.10,
+                    0.16,
+                    "sine"
+                );
+
+            }
+
+
+            // =================================================
+            // FAILURE SOUND
+            //
+            // Short lower downward sound.
+            // =================================================
+
+            function playFailureSound() {
+
+                playTone(
+                    220,
+                    0,
+                    0.15,
+                    "triangle"
+                );
+
+
+                playTone(
+                    165,
+                    0.11,
+                    0.18,
+                    "triangle"
+                );
+
+            }
+
+
+            // =================================================
+            // DESCRIPTION MATCHING
+            // =================================================
+
+            const descriptionTargets =
+                document.querySelectorAll(
+                    ".description-inline-target"
+                );
+
+
+            const descriptionCards =
+                document.querySelectorAll(
+                    ".description-card"
+                );
+
+
+            const descriptionMatchResult =
                 document.getElementById(
-                    "description-match-box"
+                    "description-match-result"
+                );
+
+
+            const correctMatchList =
+                document.getElementById(
+                    "correct-match-list"
+                );
+
+
+            const afterCorrectActions =
+                document.getElementById(
+                    "after-correct-actions"
                 );
 
 
             if (
-                descriptionMatchBox
+                descriptionTargets.length
+                >
+                0
             ) {
 
-                const descriptionCards =
-                    document.querySelectorAll(
-                        ".description-card"
-                    );
-
-
-                const descriptionTargets =
-                    document.querySelectorAll(
-                        ".description-target"
-                    );
-
-
-                const descriptionMatchResult =
-                    document.getElementById(
-                        "description-match-result"
-                    );
-
-
-                const afterCorrectActions =
-                    document.getElementById(
-                        "after-correct-actions"
-                    );
-
-
-                let draggedDescriptionCard =
+                let draggedCard =
                     null;
 
 
@@ -2629,7 +2817,7 @@
 
 
                 // =============================================
-                // DRAG DESCRIPTION CARDS
+                // DRAG CARDS
                 // =============================================
 
                 descriptionCards.forEach(
@@ -2643,7 +2831,7 @@
                                 event
                             ) {
 
-                                draggedDescriptionCard =
+                                draggedCard =
                                     card;
 
 
@@ -2693,7 +2881,7 @@
                                     );
 
 
-                                draggedDescriptionCard =
+                                draggedCard =
                                     null;
 
                             }
@@ -2704,7 +2892,7 @@
 
 
                 // =============================================
-                // DROP TARGETS
+                // FORMULA TARGETS
                 // =============================================
 
                 descriptionTargets.forEach(
@@ -2737,14 +2925,14 @@
                                 event.preventDefault();
 
 
-                                target.classList.add(
-                                    "drag-over"
-                                );
-
-
                                 event.dataTransfer
                                     .dropEffect =
                                     "move";
+
+
+                                target.classList.add(
+                                    "drag-over"
+                                );
 
                             }
                         );
@@ -2784,9 +2972,9 @@
                                 );
 
 
-                                // =================================
-                                // TARGET ALREADY USED
-                                // =================================
+                                // --------------------------------
+                                // ALREADY USED
+                                // --------------------------------
 
                                 if (
                                     target.dataset
@@ -2800,12 +2988,12 @@
                                 }
 
 
-                                // =================================
-                                // NO ACTIVE CARD
-                                // =================================
+                                // --------------------------------
+                                // NO CARD
+                                // --------------------------------
 
                                 if (
-                                    !draggedDescriptionCard
+                                    !draggedCard
                                 ) {
 
                                     return;
@@ -2814,7 +3002,7 @@
 
 
                                 const droppedDescription =
-                                    draggedDescriptionCard
+                                    draggedCard
                                         .dataset
                                         .description;
 
@@ -2825,17 +3013,9 @@
                                         .correctDescription;
 
 
-                                const dropZone =
-                                    target.querySelector(
-                                        ".description-drop-zone"
-                                    );
-
-
-                                const correction =
-                                    target.querySelector(
-                                        ".description-correction"
-                                    );
-
+                                // --------------------------------
+                                // TARGET IS NOW PERMANENTLY USED
+                                // --------------------------------
 
                                 target.dataset.filled =
                                     "true";
@@ -2859,14 +3039,7 @@
                                     );
 
 
-                                    if (
-                                        dropZone
-                                    ) {
-
-                                        dropZone.textContent =
-                                            droppedDescription;
-
-                                    }
+                                    playSuccessSound();
 
                                 }
 
@@ -2876,56 +3049,33 @@
 
                                 else {
 
-                                    wrongTargets++;
-
-
                                     target.classList.add(
                                         "wrong-match"
                                     );
 
 
-                                    if (
-                                        dropZone
-                                    ) {
-
-                                        dropZone.textContent =
-                                            droppedDescription;
-
-                                    }
+                                    wrongTargets++;
 
 
-                                    if (
-                                        correction
-                                    ) {
-
-                                        correction.textContent =
-                                            (
-                                                "Correct: "
-                                                +
-                                                correctDescription
-                                            );
-
-                                    }
+                                    playFailureSound();
 
                                 }
 
 
                                 // =================================
                                 // DESCRIPTION DISAPPEARS
-                                //
-                                // Correct or incorrect.
+                                // REGARDLESS OF RIGHT OR WRONG
                                 // =================================
 
-                                draggedDescriptionCard
-                                    .remove();
+                                draggedCard.remove();
 
 
-                                draggedDescriptionCard =
+                                draggedCard =
                                     null;
 
 
                                 // =================================
-                                // EVERYTHING HAS BEEN PLACED
+                                // EVERYTHING HAS BEEN USED
                                 // =================================
 
                                 if (
@@ -2947,13 +3097,13 @@
 
 
                 // =============================================
-                // FINISH DESCRIPTION TEST
+                // FINISH MATCHING
                 // =============================================
 
                 function finishDescriptionMatch() {
 
                     // =========================================
-                    // PERFECT RESULT
+                    // EVERYTHING CORRECT
                     // =========================================
 
                     if (
@@ -2987,7 +3137,7 @@
                     }
 
                     // =========================================
-                    // SOME WRONG
+                    // ONE OR MORE WRONG
                     // =========================================
 
                     else {
@@ -3001,9 +3151,7 @@
                                 (
                                     "Some descriptions were "
                                     +
-                                    "misplaced. The correct "
-                                    +
-                                    "matches are shown below."
+                                    "matched incorrectly."
                                 );
 
 
@@ -3018,26 +3166,21 @@
 
 
                         // -------------------------------------
-                        // SHOW CORRECTION UNDER WRONG TARGETS
+                        // SHOW WHICH DESCRIPTION BELONGED
+                        // TO WHICH VARIABLE / SYMBOL.
                         // -------------------------------------
 
-                        document
-                            .querySelectorAll(
-                                ".description-target.wrong-match .description-correction"
-                            )
-                            .forEach(
-                                function (
-                                    correction
-                                ) {
+                        if (
+                            correctMatchList
+                        ) {
 
-                                    correction
-                                        .classList
-                                        .add(
-                                            "show"
-                                        );
+                            correctMatchList
+                                .classList
+                                .add(
+                                    "show"
+                                );
 
-                                }
-                            );
+                        }
 
                     }
 
@@ -3045,20 +3188,18 @@
                     // =========================================
                     // IMPORTANT
                     //
-                    // There is deliberately NO POST request
-                    // here.
+                    // Nothing is posted to Django here.
+                    // Description mistakes therefore do NOT:
                     //
-                    // Therefore:
-                    //
-                    // - mastery cannot decrease
-                    // - incorrect_count does not increase
-                    // - review_count does not increase
-                    // - next_review does not change
+                    // - reduce mastery
+                    // - add an incorrect answer
+                    // - alter review_count
+                    // - alter next_review
                     // =========================================
 
 
                     // =========================================
-                    // ALLOW NEXT / CONTINUE
+                    // SHOW NEXT / CONTINUE
                     // =========================================
 
                     if (

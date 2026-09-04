@@ -39,10 +39,8 @@ def get_all_elements(
 
     for element in elements:
 
-        element_type = (
-            element.get(
-                "type"
-            )
+        element_type = element.get(
+            "type"
         )
 
         value = str(
@@ -147,14 +145,12 @@ def find_element(
             # NUMERATOR
             # ------------------------------------------------
 
-            found = (
-                find_element(
-                    element.get(
-                        "numerator",
-                        []
-                    ),
-                    element_id
-                )
+            found = find_element(
+                element.get(
+                    "numerator",
+                    []
+                ),
+                element_id
             )
 
             if found:
@@ -165,14 +161,12 @@ def find_element(
             # DENOMINATOR
             # ------------------------------------------------
 
-            found = (
-                find_element(
-                    element.get(
-                        "denominator",
-                        []
-                    ),
-                    element_id
-                )
+            found = find_element(
+                element.get(
+                    "denominator",
+                    []
+                ),
+                element_id
             )
 
             if found:
@@ -193,8 +187,8 @@ def get_description_match_items(
     Find every variable or symbol that has a saved
     meaning / description.
 
-    These become the targets in the second-stage
-    mastered-formula test.
+    These are used for the second-stage test that appears
+    after a mastered formula is completed correctly.
 
     Works recursively inside fractions.
     """
@@ -203,11 +197,9 @@ def get_description_match_items(
 
     for element in elements:
 
-        element_type = (
-            element.get(
-                "type",
-                ""
-            )
+        element_type = element.get(
+            "type",
+            ""
         )
 
         # ----------------------------------------------------
@@ -241,7 +233,7 @@ def get_description_match_items(
             continue
 
         # ----------------------------------------------------
-        # ONLY VARIABLE + SYMBOL
+        # ONLY VARIABLES + SYMBOLS
         # ----------------------------------------------------
 
         if (
@@ -320,28 +312,13 @@ def get_formula_review_interval(
     """
 
     intervals = {
-
-        0:
-            0,
-
-        1:
-            1,
-
-        2:
-            2,
-
-        3:
-            4,
-
-        4:
-            7,
-
-        5:
-            14,
-
-        6:
-            30,
-
+        0: 0,
+        1: 1,
+        2: 2,
+        3: 4,
+        4: 7,
+        5: 14,
+        6: 30,
     }
 
     return intervals.get(
@@ -364,33 +341,89 @@ def get_hidden_percentage(
     """
 
     percentages = {
-
-        0:
-            10,
-
-        1:
-            15,
-
-        2:
-            30,
-
-        3:
-            45,
-
-        4:
-            60,
-
-        5:
-            80,
-
-        6:
-            100,
-
+        0: 10,
+        1: 15,
+        2: 30,
+        3: 45,
+        4: 60,
+        5: 80,
+        6: 100,
     }
 
     return percentages.get(
         mastery_level,
         15
+    )
+
+
+# ============================================================
+# CHECK FORMULA ANSWER
+# ============================================================
+
+def formula_answer_is_correct(
+    user_answer,
+    correct_answer,
+    element_type
+):
+    """
+    Compare one submitted formula element with its saved value.
+
+    Multiplication operators accept:
+
+        ×
+        x
+        X
+        *
+
+    This only applies to elements whose type is "operator",
+    so a real variable named x is unaffected.
+    """
+
+    user_answer = str(
+        user_answer
+        or
+        ""
+    ).strip()
+
+    correct_answer = str(
+        correct_answer
+        or
+        ""
+    ).strip()
+
+    # ========================================================
+    # MULTIPLICATION
+    # ========================================================
+
+    multiplication_symbols = {
+        "×",
+        "x",
+        "X",
+        "*",
+    }
+
+    if (
+        element_type
+        ==
+        "operator"
+        and
+        correct_answer
+        in multiplication_symbols
+    ):
+
+        return (
+            user_answer
+            in multiplication_symbols
+        )
+
+    # ========================================================
+    # NORMAL EXACT MATCH
+    # ========================================================
+
+    return (
+        user_answer
+        ==
+        correct_answer
     )
 
 
@@ -422,11 +455,9 @@ def record_element_performance(
 
         return
 
-    element_type = (
-        element.get(
-            "type",
-            ""
-        )
+    element_type = element.get(
+        "type",
+        ""
     )
 
     value = str(
@@ -571,6 +602,14 @@ def choose_hidden_elements(
         []
     )
 
+    previous_ids = {
+        str(
+            element_id
+        )
+        for element_id
+        in previous_ids
+    }
+
     # ========================================================
     # PERFORMANCE DATA
     # ========================================================
@@ -583,7 +622,6 @@ def choose_hidden_elements(
     )
 
     performance_map = {
-
         str(
             record.element_id
         ):
@@ -591,11 +629,10 @@ def choose_hidden_elements(
 
         for record
         in performance_records
-
     }
 
     # ========================================================
-    # WEAKNESS
+    # CALCULATE WEAKNESS
     # ========================================================
 
     weighted_elements = []
@@ -604,7 +641,8 @@ def choose_hidden_elements(
 
         element_id = str(
             element.get(
-                "id"
+                "id",
+                ""
             )
         )
 
@@ -664,19 +702,16 @@ def choose_hidden_elements(
     # ========================================================
 
     available = [
-
         item
-
         for item
         in weighted_elements
-
         if str(
             item[0].get(
-                "id"
+                "id",
+                ""
             )
         )
         not in previous_ids
-
     ]
 
     if (
@@ -722,17 +757,13 @@ def choose_hidden_elements(
     )
 
     weak_candidates = [
-
         element
-
         for (
             element,
             weakness
         )
         in sorted_elements
-
         if weakness > 0
-
     ]
 
     selected = []
@@ -744,19 +775,18 @@ def choose_hidden_elements(
     if weak_candidates:
 
         weak_pool_size = max(
-
             weak_count,
 
             min(
                 len(
                     weak_candidates
                 ),
+
                 max(
                     1,
                     weak_count * 2
                 )
             )
-
         )
 
         weak_pool = (
@@ -783,18 +813,14 @@ def choose_hidden_elements(
     # ========================================================
 
     remaining = [
-
         element
-
         for (
             element,
             weakness
         )
         in available
-
         if element
         not in selected
-
     ]
 
     if (
@@ -817,7 +843,7 @@ def choose_hidden_elements(
         )
 
     # ========================================================
-    # FILL ANY REMAINING SLOTS
+    # FILL REMAINING SLOTS
     # ========================================================
 
     if (
@@ -829,18 +855,14 @@ def choose_hidden_elements(
     ):
 
         remaining = [
-
             element
-
             for (
                 element,
                 weakness
             )
             in available
-
             if element
             not in selected
-
         ]
 
         if remaining:
@@ -958,7 +980,7 @@ def get_formula_subject_index(
             return index
 
     # --------------------------------------------------------
-    # NAME FALLBACK
+    # SUBJECT NAME FALLBACK
     # --------------------------------------------------------
 
     for (
@@ -968,11 +990,16 @@ def get_formula_subject_index(
         subjects
     ):
 
-        if (
+        subject_name = (
             subject_data.get(
                 "name",
                 ""
-            ).strip()
+            )
+            .strip()
+        )
+
+        if (
+            subject_name
             ==
             subject.name.strip()
         ):
@@ -1005,7 +1032,6 @@ def get_next_due_formula(
         Formula.objects
         .filter(
             knowledge_unit__subject__user=user,
-
             knowledge_unit__active=True,
         )
         .exclude(
@@ -1060,7 +1086,7 @@ def get_next_due_formula(
             return formula
 
         # ----------------------------------------------------
-        # NO DATE = DUE
+        # NO NEXT REVIEW
         # ----------------------------------------------------
 
         if (
@@ -1071,7 +1097,7 @@ def get_next_due_formula(
             return formula
 
         # ----------------------------------------------------
-        # REVIEW DUE
+        # DUE
         # ----------------------------------------------------
 
         if (
@@ -1095,7 +1121,7 @@ def build_formula_practice_url(
     subject_index
 ):
     """
-    Build the next formula URL while preserving review mode.
+    Build a formula practice URL while preserving review mode.
     """
 
     url = reverse(
@@ -1190,7 +1216,10 @@ def practice_formula(
         "normal"
     )
 
-    # Support old/global links too.
+    # --------------------------------------------------------
+    # SUPPORT OLD GLOBAL LINKS
+    # --------------------------------------------------------
+
     if (
         request.GET.get(
             "all_subjects"
@@ -1263,7 +1292,7 @@ def practice_formula(
     )
 
     # ========================================================
-    # DESCRIPTION MATCHING DATA
+    # DESCRIPTION MATCH DATA
     # ========================================================
 
     description_match_items = (
@@ -1273,12 +1302,9 @@ def practice_formula(
     )
 
     description_match_cards = [
-
         item.copy()
-
         for item
         in description_match_items
-
     ]
 
     random.shuffle(
@@ -1286,7 +1312,7 @@ def practice_formula(
     )
 
     # ========================================================
-    # ACTION BUTTONS AFTER RESULT
+    # ACTION BUTTONS AFTER A RESULT
     # ========================================================
 
     if (
@@ -1303,7 +1329,7 @@ def practice_formula(
         )
 
         # ----------------------------------------------------
-        # NEXT FORMULA — GLOBAL
+        # NEXT FORMULA — GLOBAL REVIEW
         # ----------------------------------------------------
 
         if (
@@ -1398,14 +1424,14 @@ def practice_formula(
     ):
 
         # ====================================================
-        # IMPORTANT:
+        # WAS IT ALREADY MASTERED BEFORE THIS REVIEW?
         #
-        # Remember mastery BEFORE marking the formula.
+        # 5/6 -> correct -> 6/6
         #
-        # If student was 5/6 and this answer makes them 6/6,
-        # the matching stage must NOT appear yet.
+        # does NOT start description matching yet.
         #
-        # It only appears on a future review that STARTED 6/6.
+        # Description matching only starts on a future
+        # review that began at 6/6.
         # ====================================================
 
         was_already_mastered = (
@@ -1421,8 +1447,10 @@ def practice_formula(
         )
 
         # ====================================================
-        # CHECK EVERY HIDDEN ELEMENT
+        # CHECK EACH ANSWER ONCE
         # ====================================================
+
+        answer_results = []
 
         for hidden_id in hidden_ids:
 
@@ -1439,9 +1467,21 @@ def practice_formula(
 
             element_id = str(
                 element.get(
-                    "id"
+                    "id",
+                    ""
                 )
             )
+
+            element_type = (
+                element.get(
+                    "type",
+                    ""
+                )
+            )
+
+            # ------------------------------------------------
+            # USER ANSWER
+            # ------------------------------------------------
 
             user_answer = (
                 request.POST.get(
@@ -1453,6 +1493,10 @@ def practice_formula(
                 .strip()
             )
 
+            # ------------------------------------------------
+            # CORRECT ANSWER
+            # ------------------------------------------------
+
             correct_answer = str(
                 element.get(
                     "value",
@@ -1460,11 +1504,21 @@ def practice_formula(
                 )
             ).strip()
 
+            # ------------------------------------------------
+            # CHECK THIS ANSWER
+            # ------------------------------------------------
+
             is_correct = (
-                user_answer
-                ==
-                correct_answer
+                formula_answer_is_correct(
+                    user_answer,
+                    correct_answer,
+                    element_type
+                )
             )
+
+            # ------------------------------------------------
+            # KEEP ANSWERS FOR RESULT DISPLAY
+            # ------------------------------------------------
 
             user_answers[
                 element_id
@@ -1479,7 +1533,15 @@ def practice_formula(
             )
 
             # ------------------------------------------------
-            # NORMAL FORMULA ELEMENT PERFORMANCE
+            # STORE BOOLEAN RESULT
+            # ------------------------------------------------
+
+            answer_results.append(
+                is_correct
+            )
+
+            # ------------------------------------------------
+            # RECORD ELEMENT PERFORMANCE
             # ------------------------------------------------
 
             record_element_performance(
@@ -1489,34 +1551,22 @@ def practice_formula(
             )
 
         # ====================================================
-        # DID THEY GET EVERYTHING CORRECT?
+        # WHOLE FORMULA RESULT
+        #
+        # This is the only overall answer check.
+        #
+        # There is deliberately NO second comparison loop.
         # ====================================================
 
-        all_correct = bool(
-            correct_answers
+        all_correct = (
+            bool(
+                answer_results
+            )
+            and
+            all(
+                answer_results
+            )
         )
-
-        if all_correct:
-
-            for (
-                element_id,
-                correct_answer
-            ) in correct_answers.items():
-
-                if (
-                    user_answers.get(
-                        element_id,
-                        ""
-                    )
-                    !=
-                    correct_answer
-                ):
-
-                    all_correct = (
-                        False
-                    )
-
-                    break
 
         # ====================================================
         # CORRECT FORMULA
@@ -1567,25 +1617,15 @@ def practice_formula(
             )
 
             # =================================================
-            # MASTERED SECOND STAGE
-            #
-            # Only if:
-            #
-            # 1. Formula STARTED this review at 6/6
-            # 2. Normal formula was correct
-            # 3. At least one variable/symbol has description
+            # MASTERED DESCRIPTION TEST
             # =================================================
 
             show_description_match = (
-
                 was_already_mastered
-
                 and
-
                 bool(
                     description_match_items
                 )
-
             )
 
         # ====================================================
@@ -1636,17 +1676,12 @@ def practice_formula(
                 "incorrect"
             )
 
-            # ------------------------------------------------
-            # DESCRIPTION TEST NEVER APPEARS IF NORMAL
-            # FORMULA WAS WRONG.
-            # ------------------------------------------------
-
             show_description_match = (
                 False
             )
 
         # ====================================================
-        # KEEP CURRENT TESTED ELEMENTS
+        # KEEP THE TESTED ELEMENTS
         # ====================================================
 
         hidden_elements = []
@@ -1681,22 +1716,17 @@ def practice_formula(
         )
 
         hidden_ids = [
-
             str(
                 element.get(
                     "id"
                 )
             )
-
             for element
             in hidden_elements
-
         ]
 
     # ========================================================
     # NEXT DUE FORMULA
-    #
-    # Only needed for the result screen.
     # ========================================================
 
     if (
@@ -1784,18 +1814,17 @@ def practice_formula(
         }
     )
 
+
 # ============================================================
 # FORMULA RECONSTRUCTION
 # ============================================================
 #
 # Compatibility view.
 #
-# Older URLs / imports still reference
-# "formula_reconstruction".
+# Older URLs / imports still reference formula_reconstruction.
 #
-# The new practice_formula view now handles full formula
-# reconstruction automatically at mastery 6, so old
-# reconstruction links are redirected there.
+# The new practice_formula view handles full reconstruction
+# automatically when mastery reaches 6/6.
 # ============================================================
 
 @login_required
