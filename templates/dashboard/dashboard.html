@@ -38,16 +38,31 @@
 
 
     <!-- =========================================
-         TODAY PLAN COLUMNS
+         TODAY PLAN GRID
 
-         ROW 1:
-         1. Definitions
-         2. Formulas
-         3. Lists
-         4. Book Summaries
+         All visible plan columns flow naturally.
 
-         ROW 2:
-         5. Steps
+         Desktop:
+         4 columns
+
+         Tablet:
+         2 columns
+
+         Mobile:
+         1 column
+
+         Example:
+
+         Definitions | Formulas | Lists | Book Summaries
+         Steps
+
+         If Lists disappears:
+
+         Definitions | Formulas | Book Summaries | Steps
+
+         If Formulas disappears too:
+
+         Definitions | Book Summaries | Steps
     ========================================== -->
 
     <style>
@@ -64,25 +79,54 @@
 
             gap: 18px;
 
+            /*
+             * Automatically fill open grid positions.
+             *
+             * No category owns a permanent slot.
+             */
+            grid-auto-flow: row dense;
+
+        }
+
+
+        /* =========================================
+           PLAN COLUMN
+
+           Prevent long content from forcing
+           a grid column wider than intended.
+        ========================================= */
+
+        .today-plan-column {
+
+            min-width: 0;
+
+            /*
+             * Every visible column uses the next
+             * available grid position.
+             */
+            grid-column: auto;
+
         }
 
 
         /* =========================================
            STEPS
 
-           Start Steps on a new row on desktop.
-        ========================================== */
+           Steps used to be forced into column 1.
+           It now behaves exactly like every
+           other Today's Plan column.
+        ========================================= */
 
         .steps-plan-column {
 
-            grid-column: 1;
+            grid-column: auto;
 
         }
 
 
         /* =========================================
            TABLET
-        ========================================== */
+        ========================================= */
 
         @media (max-width: 1250px) {
 
@@ -96,19 +140,12 @@
 
             }
 
-
-            .steps-plan-column {
-
-                grid-column: auto;
-
-            }
-
         }
 
 
         /* =========================================
            MOBILE
-        ========================================== */
+        ========================================= */
 
         @media (max-width: 750px) {
 
@@ -116,13 +153,6 @@
 
                 grid-template-columns:
                     1fr;
-
-            }
-
-
-            .steps-plan-column {
-
-                grid-column: auto;
 
             }
 
@@ -592,7 +622,9 @@
                         <!-- =================================
                              STEPS
 
-                             Starts on a new row on desktop.
+                             Steps now uses the next available
+                             position instead of being forced
+                             onto a new row.
                         ================================== -->
 
                         {% if due_step_subjects %}
