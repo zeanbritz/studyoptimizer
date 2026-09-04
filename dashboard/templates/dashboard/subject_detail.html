@@ -2608,22 +2608,53 @@
 {% endif %}
 
 
-                            <!-- KEY IDEA -->
+                            <!-- =================================
+     NOTES
+================================== -->
 
-                            <button
-                                type="button"
-                                class="summary-option"
-                            >
+{% if database_subject %}
 
-                                <h3>
-                                    Key Idea
-                                </h3>
 
-                                <p>
-                                    Capture the central idea of a topic.
-                                </p>
+    <a
+        href="{% url 'create_note' subject_id=database_subject.id %}?subject_index={{ subject_index }}"
+        class="summary-option"
+    >
 
-                            </button>
+
+        <h3>
+            Notes
+        </h3>
+
+
+        <p>
+            Write and save your own study notes
+            for this subject.
+        </p>
+
+
+    </a>
+
+
+{% else %}
+
+
+    <div class="summary-option">
+
+
+        <h3>
+            Notes
+        </h3>
+
+
+        <p>
+            Save the subject first before adding notes.
+        </p>
+
+
+    </div>
+
+
+{% endif %}
 
 
                             <!-- COMPARISON -->

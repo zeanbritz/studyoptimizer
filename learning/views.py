@@ -19,6 +19,7 @@ from .models import (
     StepList,
     StepItem,
     StudentKnowledge,
+    Note,
 )
 
 from dashboard.models import (
@@ -5897,5 +5898,300 @@ def create_list(
 
             "variable_suggestions":
                 variable_suggestions,
+        }
+    )
+
+# ============================================================
+# CREATE NOTE
+# ============================================================
+
+@login_required
+def create_note(
+    request,
+    subject_id
+):
+
+    # ========================================================
+    # SUBJECT
+    # ========================================================
+
+    subject = get_object_or_404(
+        Subject,
+        id=subject_id,
+        user=request.user,
+    )
+
+    # ========================================================
+    # SUBJECT INDEX
+    # ========================================================
+
+    subject_index = (
+        request.POST.get(
+            "subject_index"
+        )
+        or
+        request.GET.get(
+            "subject_index"
+        )
+    )
+
+    if (
+        subject_index
+        is None
+    ):
+
+        subjects = request.session.get(
+            "onboarding_subjects",
+            []
+        )
+
+        # ----------------------------------------------------
+        # DATABASE ID
+        # ----------------------------------------------------
+
+        for (
+            index,
+            subject_data
+        ) in enumerate(
+            subjects
+        ):
+
+            database_id = (
+                subject_data.get(
+                    "database_id"
+                )
+            )
+
+            try:
+
+                database_id = int(
+                    database_id
+                )
+
+            except (
+                TypeError,
+                ValueError
+            ):
+
+                database_id = None
+
+            if (
+                database_id
+                ==
+                subject.id
+            ):
+
+                subject_index = index
+
+                break
+
+        # ----------------------------------------------------
+        # NAME FALLBACK
+        # ----------------------------------------------------
+
+        if (
+            subject_index
+            is None
+        ):
+
+            for (
+                index,
+                subject_data
+            ) in enumerate(
+                subjects
+            ):
+
+                subject_name = (
+                    subject_data.get(
+                        "name",
+                        ""
+                    )
+                    .strip()
+                )
+
+                if (
+                    subject_name
+                    ==
+                    subject.name.strip()
+                ):
+
+                    subject_index = index
+
+                    break
+
+    try:
+
+        subject_index = int(
+            subject_index
+        )
+
+    except (
+        TypeError,
+        ValueError
+    ):
+
+        subject_index = 0
+
+    # ========================================================
+    # TEXTBOOKS
+    # ========================================================
+
+    textbooks = (
+        SubjectTextbook.objects
+        .filter(
+            subject=subject
+        )
+        .order_by(
+            "created",
+            "id",
+        )
+    )
+
+    # ========================================================
+    # FORM STATE
+    # ========================================================
+
+    title = ""
+    content = ""
+    selected_book = ""
+    chapter = ""
+    error = None
+
+    # ========================================================
+    # SUBMIT
+    # ========================================================
+
+    if (
+        request.method
+        ==
+        "POST"
+    ):
+
+        title = (
+            request.POST.get(
+                "title",
+                ""
+            )
+            .strip()
+        )
+
+        content = (
+            request.POST.get(
+                "content",
+                ""
+            )
+            .strip()
+        )
+
+        selected_book = (
+            request.POST.get(
+                "book_name",
+                ""
+            )
+            .strip()
+        )
+
+        chapter = (
+            request.POST.get(
+                "chapter",
+                ""
+            )
+            .strip()
+        )
+
+        # ----------------------------------------------------
+        # VALIDATE TITLE
+        # ----------------------------------------------------
+
+        if not title:
+
+            error = (
+                "Please enter a name for the note."
+            )
+
+        # ----------------------------------------------------
+        # VALIDATE CONTENT
+        # ----------------------------------------------------
+
+        elif not content:
+
+            error = (
+                "Please enter some note content."
+            )
+
+        # ----------------------------------------------------
+        # VALIDATE TEXTBOOK
+        # ----------------------------------------------------
+
+        elif selected_book:
+
+            valid_book = (
+                textbooks
+                .filter(
+                    name=selected_book
+                )
+                .exists()
+            )
+
+            if not valid_book:
+
+                error = (
+                    "The selected textbook does not "
+                    "belong to this subject."
+                )
+
+        # ----------------------------------------------------
+        # SAVE
+        # ----------------------------------------------------
+
+        if (
+            error
+            is None
+        ):
+
+            Note.objects.create(
+                subject=subject,
+                title=title,
+                content=content,
+                book_name=selected_book,
+                chapter=chapter,
+            )
+
+            return redirect(
+                "subject_detail",
+                subject_index=subject_index,
+            )
+
+    # ========================================================
+    # RENDER
+    # ========================================================
+
+    return render(
+        request,
+        "learning/create_note.html",
+        {
+            "subject":
+                subject,
+
+            "subject_index":
+                subject_index,
+
+            "textbooks":
+                textbooks,
+
+            "title":
+                title,
+
+            "content":
+                content,
+
+            "selected_book":
+                selected_book,
+
+            "chapter":
+                chapter,
+
+            "error":
+                error,
         }
     )
