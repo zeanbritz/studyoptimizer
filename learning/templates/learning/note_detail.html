@@ -135,11 +135,14 @@
 
         .study-card {
 
+            position: relative;
+
             min-height: 600px;
 
             padding:
-                55px
-                65px;
+                65px
+                65px
+                55px;
 
             border:
                 1px solid
@@ -159,6 +162,89 @@
                     0,
                     0.05
                 );
+
+        }
+
+
+        /* =========================================
+           NOTE CONTROLS
+        ========================================= */
+
+        .note-controls {
+
+            position: absolute;
+
+            top: 20px;
+
+            right: 20px;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 7px;
+
+        }
+
+
+        .note-control {
+
+            width: 38px;
+
+            height: 38px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding: 0;
+
+            border:
+                1px solid
+                #d7dadd;
+
+            border-radius: 8px;
+
+            background: white;
+
+            color: #555;
+
+            text-decoration: none;
+
+            font-family: inherit;
+
+            font-size: 17px;
+
+            cursor: pointer;
+
+        }
+
+
+        .note-control:hover {
+
+            background: #f3f3f3;
+
+        }
+
+
+        .delete-control {
+
+            border-color: #e0b7b7;
+
+            color: #bd3434;
+
+        }
+
+
+        .delete-control:hover {
+
+            border-color: #d79292;
+
+            background: #fff0f0;
+
+            color: #a92525;
 
         }
 
@@ -185,7 +271,7 @@
 
 
         /* =========================================
-           NOTE TITLE
+           TITLE
         ========================================= */
 
         .note-title {
@@ -194,6 +280,8 @@
                 0
                 0
                 18px;
+
+            padding-right: 70px;
 
             color: #161616;
 
@@ -242,10 +330,6 @@
         }
 
 
-        /* =========================================
-           DIVIDER
-        ========================================= */
-
         .divider {
 
             height: 1px;
@@ -259,8 +343,6 @@
 
         /* =========================================
            NOTE CONTENT
-
-           Large, readable and deliberately prominent.
         ========================================= */
 
         .note-content {
@@ -327,12 +409,6 @@
 
             font-weight: 700;
 
-            transition:
-                background
-                0.15s ease,
-                transform
-                0.15s ease;
-
         }
 
 
@@ -340,19 +416,14 @@
 
             background: #ededed;
 
-            transform:
-                translateY(
-                    -1px
-                );
-
         }
 
 
         .next-button {
 
-            background: #222;
-
             border-color: #222;
+
+            background: #222;
 
             color: white;
 
@@ -398,6 +469,165 @@
 
 
         /* =========================================
+           DELETE MODAL
+        ========================================= */
+
+        .modal-overlay {
+
+            position: fixed;
+
+            inset: 0;
+
+            display: none;
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding: 20px;
+
+            background:
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.48
+                );
+
+            z-index: 9999;
+
+        }
+
+
+        .modal-overlay.open {
+
+            display: flex;
+
+        }
+
+
+        .modal {
+
+            width: 100%;
+
+            max-width: 430px;
+
+            padding: 28px;
+
+            border-radius: 14px;
+
+            background: white;
+
+            box-shadow:
+                0
+                20px
+                60px
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.20
+                );
+
+        }
+
+
+        .modal h2 {
+
+            margin:
+                0
+                0
+                9px;
+
+            font-size: 21px;
+
+        }
+
+
+        .modal p {
+
+            margin:
+                0
+                0
+                22px;
+
+            color: #777;
+
+            font-size: 13px;
+
+            line-height: 1.55;
+
+        }
+
+
+        .modal-actions {
+
+            display: flex;
+
+            gap: 10px;
+
+        }
+
+
+        .modal-cancel,
+        .modal-delete {
+
+            flex: 1;
+
+            padding: 12px;
+
+            border-radius: 8px;
+
+            font-family: inherit;
+
+            font-size: 14px;
+
+            font-weight: 700;
+
+            cursor: pointer;
+
+        }
+
+
+        .modal-cancel {
+
+            border:
+                1px solid
+                #d7d7d7;
+
+            background: white;
+
+            color: #444;
+
+        }
+
+
+        .modal-cancel:hover {
+
+            background: #f5f5f5;
+
+        }
+
+
+        .modal-delete {
+
+            border: none;
+
+            background: #b93636;
+
+            color: white;
+
+        }
+
+
+        .modal-delete:hover {
+
+            background: #9f2e2e;
+
+        }
+
+
+        /* =========================================
            MOBILE
         ========================================= */
 
@@ -418,13 +648,16 @@
                 min-height: 500px;
 
                 padding:
-                    35px
-                    25px;
+                    70px
+                    25px
+                    35px;
 
             }
 
 
             .note-title {
+
+                padding-right: 0;
 
                 font-size: 28px;
 
@@ -444,6 +677,13 @@
 
                 grid-template-columns:
                     1fr;
+
+            }
+
+
+            .modal-actions {
+
+                flex-direction: column;
 
             }
 
@@ -485,9 +725,7 @@
             href="{% url 'note_list' subject_id=subject.id %}?subject_index={{ subject_index }}"
             class="exit-button"
         >
-
             ✕ Exit
-
         </a>
 
 
@@ -495,11 +733,46 @@
 
 
     <!-- =========================================
-         NOTE
+         STUDY NOTE
     ========================================== -->
 
     <article class="study-card">
 
+
+        <!-- =====================================
+             EDIT / DELETE
+        ====================================== -->
+
+        <div class="note-controls">
+
+
+            <a
+                href="{% url 'edit_note' note_id=note.id %}"
+                class="note-control"
+                title="Edit note"
+                aria-label="Edit note"
+            >
+                ✎
+            </a>
+
+
+            <button
+                type="button"
+                class="note-control delete-control"
+                onclick="openDeleteModal()"
+                title="Delete note"
+                aria-label="Delete note"
+            >
+                🗑
+            </button>
+
+
+        </div>
+
+
+        <!-- =====================================
+             SUBJECT
+        ====================================== -->
 
         <div class="subject-label">
 
@@ -508,12 +781,20 @@
         </div>
 
 
+        <!-- =====================================
+             TITLE
+        ====================================== -->
+
         <h1 class="note-title">
 
             {{ note.title }}
 
         </h1>
 
+
+        <!-- =====================================
+             BOOK / CHAPTER
+        ====================================== -->
 
         {% if note.book_name or note.chapter %}
 
@@ -523,26 +804,18 @@
 
                 {% if note.book_name %}
 
-
                     <span class="meta-item">
-
                         📖 {{ note.book_name }}
-
                     </span>
-
 
                 {% endif %}
 
 
                 {% if note.chapter %}
 
-
                     <span class="meta-item">
-
                         {{ note.chapter }}
-
                     </span>
-
 
                 {% endif %}
 
@@ -556,6 +829,10 @@
         <div class="divider">
         </div>
 
+
+        <!-- =====================================
+             NOTE CONTENT
+        ====================================== -->
 
         <div class="note-content">{{ note.content }}</div>
 
@@ -572,52 +849,36 @@
 
         {% if previous_note %}
 
-
             <a
-                href="{% url 'note_detail' note_id=previous_note.id %}?subject_index={{ subject_index }}"
+                href="{% url 'note_detail' note_id=previous_note.id %}"
                 class="nav-button"
             >
-
                 ← Back
-
             </a>
-
 
         {% else %}
 
-
             <div class="nav-disabled">
-
                 ← Back
-
             </div>
-
 
         {% endif %}
 
 
         {% if next_note %}
 
-
             <a
-                href="{% url 'note_detail' note_id=next_note.id %}?subject_index={{ subject_index }}"
+                href="{% url 'note_detail' note_id=next_note.id %}"
                 class="nav-button next-button"
             >
-
                 Next →
-
             </a>
-
 
         {% else %}
 
-
             <div class="nav-disabled">
-
                 Next →
-
             </div>
-
 
         {% endif %}
 
@@ -626,6 +887,180 @@
 
 
 </div>
+
+
+<!-- =========================================
+     DELETE NOTE MODAL
+========================================== -->
+
+<div
+    class="modal-overlay"
+    id="delete-note-modal"
+    onclick="handleDeleteBackground(event)"
+>
+
+
+    <div class="modal">
+
+
+        <h2>
+            Delete Note?
+        </h2>
+
+
+        <p>
+
+            Are you sure you want to delete
+
+            <strong>
+                {{ note.title }}
+            </strong>?
+
+            This cannot be undone.
+
+        </p>
+
+
+        <form method="post">
+
+
+            {% csrf_token %}
+
+
+            <input
+                type="hidden"
+                name="action"
+                value="delete_note"
+            >
+
+
+            <div class="modal-actions">
+
+
+                <button
+                    type="button"
+                    class="modal-cancel"
+                    onclick="closeDeleteModal()"
+                >
+                    Cancel
+                </button>
+
+
+                <button
+                    type="submit"
+                    class="modal-delete"
+                >
+                    🗑 Delete Note
+                </button>
+
+
+            </div>
+
+
+        </form>
+
+
+    </div>
+
+
+</div>
+
+
+<script>
+
+    // =============================================
+    // OPEN DELETE MODAL
+    // =============================================
+
+    function openDeleteModal() {
+
+        const modal =
+            document.getElementById(
+                "delete-note-modal"
+            );
+
+        if (
+            modal
+        ) {
+
+            modal.classList.add(
+                "open"
+            );
+
+        }
+
+    }
+
+
+    // =============================================
+    // CLOSE DELETE MODAL
+    // =============================================
+
+    function closeDeleteModal() {
+
+        const modal =
+            document.getElementById(
+                "delete-note-modal"
+            );
+
+        if (
+            modal
+        ) {
+
+            modal.classList.remove(
+                "open"
+            );
+
+        }
+
+    }
+
+
+    // =============================================
+    // CLICK BACKDROP
+    // =============================================
+
+    function handleDeleteBackground(
+        event
+    ) {
+
+        if (
+            event.target.id
+            ===
+            "delete-note-modal"
+        ) {
+
+            closeDeleteModal();
+
+        }
+
+    }
+
+
+    // =============================================
+    // ESCAPE KEY
+    // =============================================
+
+    document.addEventListener(
+        "keydown",
+        function (
+            event
+        ) {
+
+            if (
+                event.key
+                ===
+                "Escape"
+            ) {
+
+                closeDeleteModal();
+
+            }
+
+        }
+    );
+
+</script>
 
 
 </body>

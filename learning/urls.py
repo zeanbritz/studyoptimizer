@@ -156,4 +156,10 @@ urlpatterns = [
         name="note_detail",
     ),
 
+    path(
+        "notes/<int:note_id>/edit/",
+        views.edit_note,
+        name="edit_note",
+    ),
+
 ]

@@ -6374,6 +6374,40 @@ def note_detail(
     )
 
     # ========================================================
+    # DELETE NOTE
+    # ========================================================
+
+    if (
+        request.method
+        ==
+        "POST"
+    ):
+
+        action = (
+            request.POST.get(
+                "action",
+                ""
+            )
+        )
+
+        if (
+            action
+            ==
+            "delete_note"
+        ):
+
+            subject_id = (
+                subject.id
+            )
+
+            note.delete()
+
+            return redirect(
+                "note_list",
+                subject_id=subject_id,
+            )
+
+    # ========================================================
     # SUBJECT INDEX
     # ========================================================
 
@@ -6466,7 +6500,7 @@ def note_detail(
         subject_index = 0
 
     # ========================================================
-    # ALL NOTES FOR THIS SUBJECT
+    # ALL NOTES FOR SUBJECT
     # ========================================================
 
     notes = list(
@@ -6491,7 +6525,7 @@ def note_detail(
     next_note = None
 
     # ========================================================
-    # FIND CURRENT NOTE
+    # CURRENT POSITION
     # ========================================================
 
     if notes:
@@ -6523,8 +6557,6 @@ def note_detail(
 
         # ====================================================
         # PREVIOUS / NEXT
-        #
-        # Wrap around when more than one note exists.
         # ====================================================
 
         if (
@@ -6585,5 +6617,316 @@ def note_detail(
 
             "note_count":
                 note_count,
+        }
+    )
+
+# ============================================================
+# EDIT NOTE
+# ============================================================
+
+@login_required
+def edit_note(
+    request,
+    note_id
+):
+
+    # ========================================================
+    # NOTE
+    # ========================================================
+
+    note = get_object_or_404(
+        Note.objects.select_related(
+            "subject"
+        ),
+        id=note_id,
+        subject__user=request.user,
+    )
+
+    subject = (
+        note.subject
+    )
+
+    # ========================================================
+    # SUBJECT INDEX
+    # ========================================================
+
+    subjects = request.session.get(
+        "onboarding_subjects",
+        []
+    )
+
+    subject_index = None
+
+    # --------------------------------------------------------
+    # DATABASE ID
+    # --------------------------------------------------------
+
+    for (
+        index,
+        subject_data
+    ) in enumerate(
+        subjects
+    ):
+
+        database_id = (
+            subject_data.get(
+                "database_id"
+            )
+        )
+
+        try:
+
+            database_id = int(
+                database_id
+            )
+
+        except (
+            TypeError,
+            ValueError
+        ):
+
+            database_id = None
+
+        if (
+            database_id
+            ==
+            subject.id
+        ):
+
+            subject_index = index
+
+            break
+
+    # --------------------------------------------------------
+    # NAME FALLBACK
+    # --------------------------------------------------------
+
+    if (
+        subject_index
+        is None
+    ):
+
+        for (
+            index,
+            subject_data
+        ) in enumerate(
+            subjects
+        ):
+
+            subject_name = (
+                subject_data.get(
+                    "name",
+                    ""
+                )
+                .strip()
+            )
+
+            if (
+                subject_name
+                ==
+                subject.name.strip()
+            ):
+
+                subject_index = index
+
+                break
+
+    if (
+        subject_index
+        is None
+    ):
+
+        subject_index = 0
+
+    # ========================================================
+    # TEXTBOOKS
+    # ========================================================
+
+    textbooks = (
+        SubjectTextbook.objects
+        .filter(
+            subject=subject
+        )
+        .order_by(
+            "created",
+            "id",
+        )
+    )
+
+    # ========================================================
+    # CURRENT VALUES
+    # ========================================================
+
+    title = (
+        note.title
+    )
+
+    content = (
+        note.content
+    )
+
+    selected_book = (
+        note.book_name
+        or
+        ""
+    )
+
+    chapter = (
+        note.chapter
+        or
+        ""
+    )
+
+    error = None
+
+    # ========================================================
+    # SAVE CHANGES
+    # ========================================================
+
+    if (
+        request.method
+        ==
+        "POST"
+    ):
+
+        title = (
+            request.POST.get(
+                "title",
+                ""
+            )
+            .strip()
+        )
+
+        content = (
+            request.POST.get(
+                "content",
+                ""
+            )
+            .strip()
+        )
+
+        selected_book = (
+            request.POST.get(
+                "book_name",
+                ""
+            )
+            .strip()
+        )
+
+        chapter = (
+            request.POST.get(
+                "chapter",
+                ""
+            )
+            .strip()
+        )
+
+        # ----------------------------------------------------
+        # VALIDATION
+        # ----------------------------------------------------
+
+        if not title:
+
+            error = (
+                "Please enter a name for the note."
+            )
+
+        elif not content:
+
+            error = (
+                "Please enter some note content."
+            )
+
+        elif selected_book:
+
+            valid_book = (
+                textbooks
+                .filter(
+                    name=selected_book
+                )
+                .exists()
+            )
+
+            if not valid_book:
+
+                error = (
+                    "The selected textbook does not "
+                    "belong to this subject."
+                )
+
+        # ----------------------------------------------------
+        # UPDATE
+        # ----------------------------------------------------
+
+        if (
+            error
+            is None
+        ):
+
+            note.title = (
+                title
+            )
+
+            note.content = (
+                content
+            )
+
+            note.book_name = (
+                selected_book
+            )
+
+            note.chapter = (
+                chapter
+            )
+
+            note.save(
+                update_fields=[
+                    "title",
+                    "content",
+                    "book_name",
+                    "chapter",
+                    "updated",
+                ]
+            )
+
+            return redirect(
+                "note_detail",
+                note_id=note.id,
+            )
+
+    # ========================================================
+    # RENDER
+    # ========================================================
+
+    return render(
+        request,
+        "learning/edit_note.html",
+        {
+            "note":
+                note,
+
+            "subject":
+                subject,
+
+            "subject_index":
+                subject_index,
+
+            "textbooks":
+                textbooks,
+
+            "title":
+                title,
+
+            "content":
+                content,
+
+            "selected_book":
+                selected_book,
+
+            "chapter":
+                chapter,
+
+            "error":
+                error,
         }
     )
