@@ -2753,257 +2753,219 @@
                         <div class="review-categories">
 
 
-                            <!-- =================================
-                                 PAGES TO SUMMARIZE
-                            ================================== -->
+    <!-- =================================
+         PAGES TO SUMMARIZE
+    ================================== -->
 
-                            {% if pages_to_summarize_total %}
+    {% if pages_to_summarize_total %}
 
+        <a
+            href="{% url 'book_summary' subject_index=subject_index %}"
+            class="review-category pages-review-category"
+        >
 
-                                <a
-                                    href="{% url 'book_summary' subject_index=subject_index %}"
-                                    class="review-category pages-review-category"
-                                >
+            <div class="pages-review-header">
 
+                <div class="pages-review-title">
 
-                                    <div class="pages-review-header">
+                    <h3>
+                        Pages to Summarize
+                    </h3>
 
+                    <span class="pages-review-count">
+                        {{ pages_to_summarize_total }}
+                    </span>
 
-                                        <div class="pages-review-title">
+                </div>
 
+                <span>
+                    📖
+                </span>
 
-                                            <h3>
-                                                Pages to Summarize
-                                            </h3>
+            </div>
 
 
-                                            <span class="pages-review-count">
-                                                {{ pages_to_summarize_total }}
-                                            </span>
+            <p class="pages-review-description">
+                Recommended textbook pages to summarize today
+                based on your available study time.
+            </p>
 
 
-                                        </div>
+            <div class="pages-review-breakdown">
 
+                {% for item in pages_to_summarize %}
 
-                                        <span>
-                                            📖
-                                        </span>
+                    <div class="pages-review-book">
 
+                        <span class="pages-review-book-name">
+                            {{ item.textbook.name }}
+                        </span>
 
-                                    </div>
+                        <span class="pages-review-book-pages">
+                            {{ item.pages }}
+                            page{{ item.pages|pluralize }}
+                        </span>
 
+                    </div>
 
-                                    <p class="pages-review-description">
-                                        Recommended textbook pages to summarize today
-                                        based on your available study time.
-                                    </p>
+                {% endfor %}
 
+            </div>
 
-                                    <div class="pages-review-breakdown">
 
+            <div class="pages-review-calculation">
 
-                                        {% for item in pages_to_summarize %}
+                {{ pages_today_weekday }}
+                occurs
+                {{ pages_today_weekday_count }}
+                more time{{ pages_today_weekday_count|pluralize }}
+                during your remaining learning period.
 
+                Each {{ pages_today_weekday }}
+                has {{ pages_today_study_time }}
+                available,
 
-                                            <div class="pages-review-book">
+                giving
+                {{ pages_today_weekday_total_time }}
+                across all remaining
+                {{ pages_today_weekday }}s.
 
+                This represents
+                {{ pages_today_weekday_percentage }}%
+                of your remaining
+                {{ pages_total_learning_time }}
+                of learning time.
 
-                                                <span class="pages-review-book-name">
-                                                    {{ item.textbook.name }}
-                                                </span>
+            </div>
 
+        </a>
 
-                                                <span class="pages-review-book-pages">
+    {% endif %}
 
-                                                    {{ item.pages }}
 
-                                                    page{{ item.pages|pluralize }}
+    <!-- =================================
+         FORMULAS
+    ================================== -->
 
-                                                </span>
+    {% if due_formulas %}
 
+        <a
+            href="{% url 'formula_review_list' subject_index=subject_index %}"
+            class="review-category"
+        >
 
-                                            </div>
+            <div class="review-category-header">
 
+                <div class="review-category-title">
 
-                                        {% endfor %}
+                    <h3>
+                        Formulas to Review
+                    </h3>
 
+                    <span class="review-count">
+                        {{ due_formula_count }}
+                    </span>
 
-                                    </div>
+                </div>
 
+                <span>
+                    →
+                </span>
 
-                                    <div class="pages-review-calculation">
+            </div>
 
-                                        {{ pages_today_weekday }}
-                                        occurs
-                                        {{ pages_today_weekday_count }}
-                                        more time{{ pages_today_weekday_count|pluralize }}
-                                        during your remaining learning period.
+            <p class="review-description">
+                Formulas you need to review today.
+            </p>
 
-                                        Each {{ pages_today_weekday }}
-                                        has {{ pages_today_study_time }}
-                                        available,
+        </a>
 
-                                        giving
-                                        {{ pages_today_weekday_total_time }}
-                                        across all remaining
-                                        {{ pages_today_weekday }}s.
+    {% endif %}
 
-                                        This represents
-                                        {{ pages_today_weekday_percentage }}%
-                                        of your remaining
-                                        {{ pages_total_learning_time }}
-                                        of learning time.
 
-                                    </div>
+    <!-- =================================
+         DEFINITIONS
+    ================================== -->
 
+    {% if due_definitions %}
 
-                                </a>
+        <a
+            href="{% url 'definition_review_list' subject_index=subject_index %}"
+            class="review-category"
+        >
 
+            <div class="review-category-header">
 
-                            {% endif %}
+                <div class="review-category-title">
 
+                    <h3>
+                        Definitions to Review
+                    </h3>
 
-                            <!-- =================================
-                                 FORMULAS
-                            ================================== -->
+                    <span class="review-count">
+                        {{ due_definition_count }}
+                    </span>
 
-                            {% if due_formulas %}
+                </div>
 
+                <span>
+                    →
+                </span>
 
-                                <a
-                                    href="{% url 'formula_review_list' subject_index=subject_index %}"
-                                    class="review-category"
-                                >
+            </div>
 
+            <p class="review-description">
+                Definitions you need to review today.
+            </p>
 
-                                    <div class="review-category-header">
+        </a>
 
+    {% endif %}
 
-                                        <div class="review-category-title">
 
-                                            <h3>
-                                                Formulas to Review
-                                            </h3>
-
-                                            <span class="review-count">
-                                                {{ due_formula_count }}
-                                            </span>
-
-                                        </div>
-
-
-                                        <span>
-                                            →
-                                        </span>
-
-
-                                    </div>
-
-
-                                    <p class="review-description">
-                                        Formulas you need to review today.
-                                    </p>
-
-
-                                </a>
-
-
-                            {% endif %}
-
-
-                            <!-- =================================
-                                 DEFINITIONS
-                            ================================== -->
-
-                            {% if due_definitions %}
-
-
-                                <a
-                                    href="{% url 'definition_review_list' subject_index=subject_index %}"
-                                    class="review-category"
-                                >
-
-
-                                    <div class="review-category-header">
-
-
-                                        <div class="review-category-title">
-
-                                            <h3>
-                                                Definitions to Review
-                                            </h3>
-
-                                            <span class="review-count">
-                                                {{ due_definition_count }}
-                                            </span>
-
-                                        </div>
-
-
-                                        <span>
-                                            →
-                                        </span>
-
-
-                                    </div>
-
-
-                                    <p class="review-description">
-                                        Definitions you need to review today.
-                                    </p>
-
-
-                                </a>
-
-
-                            {% endif %}
-
-                            <!-- =================================
-        LISTS
+    <!-- =================================
+         LISTS
     ================================== -->
 
     {% if due_bullet_lists %}
-
 
         <a
             href="{% url 'list_review_list' subject_index=subject_index %}"
             class="review-category"
         >
 
-
             <div class="review-category-header">
 
-
                 <div class="review-category-title">
-
 
                     <h3>
                         Lists to Review
                     </h3>
 
-
                     <span class="review-count">
                         {{ due_bullet_list_count }}
                     </span>
 
-
                 </div>
-
 
                 <span>
                     →
                 </span>
 
-
             </div>
-
 
             <p class="review-description">
                 Lists you need to review today.
             </p>
 
-
         </a>
+
+    {% endif %}
+
+
+    <!-- =================================
+         STEPS
+    ================================== -->
 
     {% if due_step_lists %}
 
@@ -3041,25 +3003,60 @@
     {% endif %}
 
 
-{% endif %}
+    <!-- =================================
+         NOTES
+    ================================== -->
+
+    {% if note_count > 0 and database_subject %}
+
+        <a
+            href="{% url 'note_list' subject_id=database_subject.id %}?subject_index={{ subject_index }}"
+            class="review-category"
+        >
+
+            <div class="review-category-header">
+
+                <div class="review-category-title">
+
+                    <h3>
+                        Notes
+                    </h3>
+
+                    <span class="review-count">
+                        {{ note_count }}
+                    </span>
+
+                </div>
+
+                <span>
+                    →
+                </span>
+
+            </div>
+
+            <p class="review-description">
+                View and study your saved notes for this subject.
+            </p>
+
+        </a>
+
+    {% endif %}
 
 
-                            <!-- =================================
-                                 EMPTY
-                            ================================== -->
+    <!-- =================================
+         EMPTY
+    ================================== -->
 
-                            {% if not pages_to_summarize_total and not due_formulas and not due_definitions and not due_bullet_lists %}
+    {% if not pages_to_summarize_total and not due_formulas and not due_definitions and not due_bullet_lists and not due_step_lists and not note_count %}
 
+        <div class="empty-review">
+            No reviews or notes available.
+        </div>
 
-                                <div class="empty-review">
-                                    No reviews due today.
-                                </div>
-
-
-                            {% endif %}
+    {% endif %}
 
 
-                        </div>
+</div>
 
 
                     </div>

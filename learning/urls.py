@@ -134,10 +134,26 @@ urlpatterns = [
         name="step_review_list",
     ),
 
+    # ========================================================
+    # NOTES
+    # ========================================================
+
     path(
         "subjects/<int:subject_id>/notes/create/",
         views.create_note,
         name="create_note",
+    ),
+
+    path(
+        "subjects/<int:subject_id>/notes/",
+        views.note_list,
+        name="note_list",
+    ),
+
+    path(
+        "notes/<int:note_id>/",
+        views.note_detail,
+        name="note_detail",
     ),
 
 ]

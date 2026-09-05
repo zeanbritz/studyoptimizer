@@ -6195,3 +6195,395 @@ def create_note(
                 error,
         }
     )
+
+
+# ============================================================
+# NOTE LIST
+# ============================================================
+
+@login_required
+def note_list(
+    request,
+    subject_id
+):
+
+    # ========================================================
+    # SUBJECT
+    # ========================================================
+
+    subject = get_object_or_404(
+        Subject,
+        id=subject_id,
+        user=request.user,
+    )
+
+    # ========================================================
+    # SUBJECT INDEX
+    # ========================================================
+
+    subjects = request.session.get(
+        "onboarding_subjects",
+        []
+    )
+
+    subject_index = None
+
+    # --------------------------------------------------------
+    # DATABASE ID
+    # --------------------------------------------------------
+
+    for (
+        index,
+        subject_data
+    ) in enumerate(
+        subjects
+    ):
+
+        database_id = (
+            subject_data.get(
+                "database_id"
+            )
+        )
+
+        try:
+
+            database_id = int(
+                database_id
+            )
+
+        except (
+            TypeError,
+            ValueError
+        ):
+
+            database_id = None
+
+        if (
+            database_id
+            ==
+            subject.id
+        ):
+
+            subject_index = index
+
+            break
+
+    # --------------------------------------------------------
+    # NAME FALLBACK
+    # --------------------------------------------------------
+
+    if (
+        subject_index
+        is None
+    ):
+
+        for (
+            index,
+            subject_data
+        ) in enumerate(
+            subjects
+        ):
+
+            subject_name = (
+                subject_data.get(
+                    "name",
+                    ""
+                )
+                .strip()
+            )
+
+            if (
+                subject_name
+                ==
+                subject.name.strip()
+            ):
+
+                subject_index = index
+
+                break
+
+    if (
+        subject_index
+        is None
+    ):
+
+        subject_index = 0
+
+    # ========================================================
+    # NOTES
+    # ========================================================
+
+    notes = (
+        Note.objects
+        .filter(
+            subject=subject
+        )
+        .order_by(
+            "created",
+            "id",
+        )
+    )
+
+    # ========================================================
+    # RENDER
+    # ========================================================
+
+    return render(
+        request,
+        "learning/note_list.html",
+        {
+            "subject":
+                subject,
+
+            "subject_index":
+                subject_index,
+
+            "notes":
+                notes,
+
+            "note_count":
+                notes.count(),
+        }
+    )
+
+
+# ============================================================
+# NOTE DETAIL
+# ============================================================
+
+@login_required
+def note_detail(
+    request,
+    note_id
+):
+
+    # ========================================================
+    # NOTE
+    # ========================================================
+
+    note = get_object_or_404(
+        Note.objects.select_related(
+            "subject"
+        ),
+        id=note_id,
+        subject__user=request.user,
+    )
+
+    subject = (
+        note.subject
+    )
+
+    # ========================================================
+    # SUBJECT INDEX
+    # ========================================================
+
+    subjects = request.session.get(
+        "onboarding_subjects",
+        []
+    )
+
+    subject_index = None
+
+    # --------------------------------------------------------
+    # DATABASE ID
+    # --------------------------------------------------------
+
+    for (
+        index,
+        subject_data
+    ) in enumerate(
+        subjects
+    ):
+
+        database_id = (
+            subject_data.get(
+                "database_id"
+            )
+        )
+
+        try:
+
+            database_id = int(
+                database_id
+            )
+
+        except (
+            TypeError,
+            ValueError
+        ):
+
+            database_id = None
+
+        if (
+            database_id
+            ==
+            subject.id
+        ):
+
+            subject_index = index
+
+            break
+
+    # --------------------------------------------------------
+    # NAME FALLBACK
+    # --------------------------------------------------------
+
+    if (
+        subject_index
+        is None
+    ):
+
+        for (
+            index,
+            subject_data
+        ) in enumerate(
+            subjects
+        ):
+
+            subject_name = (
+                subject_data.get(
+                    "name",
+                    ""
+                )
+                .strip()
+            )
+
+            if (
+                subject_name
+                ==
+                subject.name.strip()
+            ):
+
+                subject_index = index
+
+                break
+
+    if (
+        subject_index
+        is None
+    ):
+
+        subject_index = 0
+
+    # ========================================================
+    # ALL NOTES FOR THIS SUBJECT
+    # ========================================================
+
+    notes = list(
+        Note.objects
+        .filter(
+            subject=subject
+        )
+        .order_by(
+            "created",
+            "id",
+        )
+    )
+
+    note_count = len(
+        notes
+    )
+
+    current_position = 1
+
+    previous_note = None
+
+    next_note = None
+
+    # ========================================================
+    # FIND CURRENT NOTE
+    # ========================================================
+
+    if notes:
+
+        current_index = 0
+
+        for (
+            index,
+            subject_note
+        ) in enumerate(
+            notes
+        ):
+
+            if (
+                subject_note.id
+                ==
+                note.id
+            ):
+
+                current_index = index
+
+                break
+
+        current_position = (
+            current_index
+            +
+            1
+        )
+
+        # ====================================================
+        # PREVIOUS / NEXT
+        #
+        # Wrap around when more than one note exists.
+        # ====================================================
+
+        if (
+            note_count
+            >
+            1
+        ):
+
+            previous_index = (
+                current_index
+                -
+                1
+            ) % note_count
+
+            next_index = (
+                current_index
+                +
+                1
+            ) % note_count
+
+            previous_note = (
+                notes[
+                    previous_index
+                ]
+            )
+
+            next_note = (
+                notes[
+                    next_index
+                ]
+            )
+
+    # ========================================================
+    # RENDER
+    # ========================================================
+
+    return render(
+        request,
+        "learning/note_detail.html",
+        {
+            "note":
+                note,
+
+            "subject":
+                subject,
+
+            "subject_index":
+                subject_index,
+
+            "previous_note":
+                previous_note,
+
+            "next_note":
+                next_note,
+
+            "current_position":
+                current_position,
+
+            "note_count":
+                note_count,
+        }
+    )

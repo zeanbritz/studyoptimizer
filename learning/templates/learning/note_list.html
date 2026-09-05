@@ -1,0 +1,586 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        {{ subject.name }} Notes - StudyOptimizer
+    </title>
+
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        body {
+
+            margin: 0;
+
+            min-height: 100vh;
+
+            padding:
+                35px
+                20px
+                60px;
+
+            background: #f5f6f8;
+
+            color: #222;
+
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Arial,
+                sans-serif;
+
+        }
+
+
+        .page {
+
+            width: 100%;
+
+            max-width: 900px;
+
+            margin: 0 auto;
+
+        }
+
+
+        /* =========================================
+           HEADER
+        ========================================= */
+
+        .header {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            gap: 20px;
+
+            margin-bottom: 25px;
+
+        }
+
+
+        .header-left {
+
+            display: flex;
+
+            align-items: flex-start;
+
+            gap: 15px;
+
+        }
+
+
+        .back-button {
+
+            width: 42px;
+
+            height: 42px;
+
+            flex-shrink: 0;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            border:
+                1px solid
+                #dcdcdc;
+
+            border-radius: 9px;
+
+            background: white;
+
+            color: #333;
+
+            text-decoration: none;
+
+            font-size: 20px;
+
+        }
+
+
+        .back-button:hover {
+
+            background: #f0f0f0;
+
+        }
+
+
+        .header h1 {
+
+            margin:
+                0
+                0
+                5px;
+
+            font-size: 29px;
+
+        }
+
+
+        .header p {
+
+            margin: 0;
+
+            color: #777;
+
+            font-size: 13px;
+
+        }
+
+
+        .new-note-button {
+
+            flex-shrink: 0;
+
+            padding:
+                11px
+                17px;
+
+            border-radius: 8px;
+
+            background: #222;
+
+            color: white;
+
+            text-decoration: none;
+
+            font-size: 13px;
+
+            font-weight: 700;
+
+        }
+
+
+        .new-note-button:hover {
+
+            background: #333;
+
+        }
+
+
+        /* =========================================
+           NOTE COUNT
+        ========================================= */
+
+        .note-count {
+
+            margin-bottom: 15px;
+
+            color: #777;
+
+            font-size: 13px;
+
+            font-weight: 600;
+
+        }
+
+
+        /* =========================================
+           LIST
+        ========================================= */
+
+        .note-list {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 12px;
+
+        }
+
+
+        .note-card {
+
+            display: block;
+
+            padding:
+                20px
+                22px;
+
+            border:
+                1px solid
+                #e0e0e0;
+
+            border-radius: 12px;
+
+            background: white;
+
+            color: inherit;
+
+            text-decoration: none;
+
+            transition:
+                border-color
+                0.15s ease,
+                transform
+                0.15s ease,
+                box-shadow
+                0.15s ease;
+
+        }
+
+
+        .note-card:hover {
+
+            border-color: #bdbdbd;
+
+            transform:
+                translateY(
+                    -1px
+                );
+
+            box-shadow:
+                0
+                4px
+                14px
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.05
+                );
+
+        }
+
+
+        .note-card-header {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            gap: 15px;
+
+        }
+
+
+        .note-title {
+
+            margin: 0;
+
+            color: #222;
+
+            font-size: 17px;
+
+            font-weight: 700;
+
+        }
+
+
+        .note-arrow {
+
+            flex-shrink: 0;
+
+            color: #777;
+
+            font-size: 19px;
+
+        }
+
+
+        .note-meta {
+
+            display: flex;
+
+            flex-wrap: wrap;
+
+            gap: 7px;
+
+            margin-top: 9px;
+
+        }
+
+
+        .meta-item {
+
+            padding:
+                5px
+                8px;
+
+            border-radius: 6px;
+
+            background: #f4f5f6;
+
+            color: #666;
+
+            font-size: 11px;
+
+            font-weight: 600;
+
+        }
+
+
+        /* =========================================
+           EMPTY
+        ========================================= */
+
+        .empty {
+
+            padding:
+                50px
+                20px;
+
+            border:
+                1px dashed
+                #d3d3d3;
+
+            border-radius: 12px;
+
+            background: white;
+
+            color: #888;
+
+            text-align: center;
+
+        }
+
+
+        .empty p {
+
+            margin:
+                0
+                0
+                18px;
+
+        }
+
+
+        /* =========================================
+           MOBILE
+        ========================================= */
+
+        @media (max-width: 650px) {
+
+            .header {
+
+                align-items:
+                    flex-start;
+
+                flex-direction:
+                    column;
+
+            }
+
+
+            .new-note-button {
+
+                width: 100%;
+
+                text-align: center;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="page">
+
+
+    <!-- =========================================
+         HEADER
+    ========================================== -->
+
+    <header class="header">
+
+
+        <div class="header-left">
+
+
+            <a
+                href="{% url 'subject_detail' subject_index=subject_index %}"
+                class="back-button"
+            >
+
+                ←
+
+            </a>
+
+
+            <div>
+
+
+                <h1>
+                    Notes
+                </h1>
+
+
+                <p>
+                    {{ subject.name }}
+                </p>
+
+
+            </div>
+
+
+        </div>
+
+
+        <a
+            href="{% url 'create_note' subject_id=subject.id %}?subject_index={{ subject_index }}"
+            class="new-note-button"
+        >
+
+            + New Note
+
+        </a>
+
+
+    </header>
+
+
+    {% if notes %}
+
+
+        <div class="note-count">
+
+            {{ note_count }}
+            note{{ note_count|pluralize }}
+
+        </div>
+
+
+        <div class="note-list">
+
+
+            {% for note in notes %}
+
+
+                <a
+                    href="{% url 'note_detail' note_id=note.id %}?subject_index={{ subject_index }}"
+                    class="note-card"
+                >
+
+
+                    <div class="note-card-header">
+
+
+                        <h2 class="note-title">
+
+                            {{ note.title }}
+
+                        </h2>
+
+
+                        <span class="note-arrow">
+
+                            →
+
+                        </span>
+
+
+                    </div>
+
+
+                    {% if note.book_name or note.chapter %}
+
+
+                        <div class="note-meta">
+
+
+                            {% if note.book_name %}
+
+
+                                <span class="meta-item">
+
+                                    📖 {{ note.book_name }}
+
+                                </span>
+
+
+                            {% endif %}
+
+
+                            {% if note.chapter %}
+
+
+                                <span class="meta-item">
+
+                                    {{ note.chapter }}
+
+                                </span>
+
+
+                            {% endif %}
+
+
+                        </div>
+
+
+                    {% endif %}
+
+
+                </a>
+
+
+            {% endfor %}
+
+
+        </div>
+
+
+    {% else %}
+
+
+        <div class="empty">
+
+
+            <p>
+                No notes have been saved for this subject yet.
+            </p>
+
+
+            <a
+                href="{% url 'create_note' subject_id=subject.id %}?subject_index={{ subject_index }}"
+                class="new-note-button"
+            >
+
+                Create First Note
+
+            </a>
+
+
+        </div>
+
+
+    {% endif %}
+
+
+</div>
+
+
+</body>
+
+</html>
