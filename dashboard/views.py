@@ -1072,13 +1072,23 @@ def dashboard(request):
 @login_required
 def review(request):
 
-    subjects = Subject.objects.filter(
-        user=request.user
+    # ========================================================
+    # SUBJECTS
+    # ========================================================
+
+    subjects = (
+        Subject.objects
+        .filter(
+            user=request.user
+        )
+        .order_by(
+            "name"
+        )
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # DEFINITIONS
-    # --------------------------------------------------------
+    # ========================================================
 
     definition_knowledge_units = (
         KnowledgeUnit.objects
@@ -1119,9 +1129,9 @@ def review(request):
                 definition
             )
 
-    # --------------------------------------------------------
+    # ========================================================
     # FORMULAS
-    # --------------------------------------------------------
+    # ========================================================
 
     formula_knowledge_units = (
         KnowledgeUnit.objects
@@ -1162,6 +1172,29 @@ def review(request):
                 formula
             )
 
+    # ========================================================
+    # NOTES
+    # ========================================================
+
+    notes = (
+        Note.objects
+        .filter(
+            subject__user=request.user
+        )
+        .select_related(
+            "subject"
+        )
+        .order_by(
+            "subject__name",
+            "created",
+            "id",
+        )
+    )
+
+    # ========================================================
+    # COUNTS
+    # ========================================================
+
     definition_count = len(
         definitions
     )
@@ -1170,6 +1203,14 @@ def review(request):
         formulas
     )
 
+    note_count = (
+        notes.count()
+    )
+
+    # ========================================================
+    # RENDER
+    # ========================================================
+
     return render(
         request,
         "dashboard/review.html",
@@ -1177,20 +1218,37 @@ def review(request):
             "subjects":
                 subjects,
 
+            # --------------------------------------------
+            # DEFINITIONS
+            # --------------------------------------------
+
             "definitions":
                 definitions,
 
             "definition_count":
                 definition_count,
 
+            # --------------------------------------------
+            # FORMULAS
+            # --------------------------------------------
+
             "formulas":
                 formulas,
 
             "formula_count":
                 formula_count,
+
+            # --------------------------------------------
+            # NOTES
+            # --------------------------------------------
+
+            "notes":
+                notes,
+
+            "note_count":
+                note_count,
         }
     )
-
 
 # ============================================================
 # ONBOARDING
@@ -4564,6 +4622,68 @@ def review_steps(request):
         }
     )
 
+
+# ============================================================
+# REVIEW NOTES
+# ============================================================
+
+@login_required
+def review_notes(request):
+
+    # ========================================================
+    # ALL NOTES FOR THIS USER
+    # ========================================================
+
+    notes = (
+        Note.objects
+        .filter(
+            subject__user=request.user
+        )
+        .select_related(
+            "subject"
+        )
+        .order_by(
+            "subject__name",
+            "created",
+            "id",
+        )
+    )
+
+    # ========================================================
+    # BUILD TEMPLATE ITEMS
+    # ========================================================
+
+    note_items = []
+
+    for note in notes:
+
+        note_items.append(
+            {
+                "note":
+                    note,
+
+                "subject":
+                    note.subject,
+            }
+        )
+
+    # ========================================================
+    # RENDER
+    # ========================================================
+
+    return render(
+        request,
+        "dashboard/review_notes.html",
+        {
+            "notes":
+                note_items,
+
+            "note_count":
+                len(
+                    note_items
+                ),
+        }
+    )
 
 # ============================================================
 # PROGRESS

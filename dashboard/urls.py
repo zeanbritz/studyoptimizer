@@ -71,4 +71,10 @@ urlpatterns = [
         name="review_steps",
     ),
 
+    path(
+        "review/notes/",
+        views.review_notes,
+        name="review_notes",
+    ),
+
 ]

@@ -401,21 +401,29 @@
 
 
                     <!-- ================================
-                         KEY IDEAS
+                         Notes
                     ================================= -->
 
                     <a
-                        href="#"
+                        href="{% url 'review_notes' %}"
                         class="review-card"
                     >
 
-                        <h2>
-                            Key Idea
-                        </h2>
+                        <div class="review-card-header">
+
+                            <h3>
+                                Notes
+                            </h3>
+
+                            <span class="review-count">
+                                {{ note_count }}
+                            </span>
+
+                        </div>
 
                         <p>
-                            Review the most important ideas and concepts
-                            from your subjects.
+                            View and study all of your saved notes
+                            across your subjects.
                         </p>
 
                     </a>
