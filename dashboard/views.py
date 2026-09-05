@@ -736,6 +736,9 @@ def dashboard(request):
             .filter(
                 subject__user=request.user
             )
+            .exclude(
+                last_studied_date=today
+            )
             .select_related(
                 "subject"
             )
@@ -744,6 +747,63 @@ def dashboard(request):
                 "created",
                 "id",
             )
+        )
+
+        note_groups = {}
+
+        for note in notes:
+
+            database_subject = (
+                note.subject
+            )
+
+            if not database_subject:
+
+                continue
+
+            subject_index = (
+                find_subject_index(
+                    database_subject
+                )
+            )
+
+            if subject_index is None:
+
+                continue
+
+            subject_id = (
+                database_subject.id
+            )
+
+            if (
+                subject_id
+                not in
+                note_groups
+            ):
+
+                note_groups[
+                    subject_id
+                ] = {
+                    "subject":
+                        database_subject,
+
+                    "subject_index":
+                        subject_index,
+
+                    "count":
+                        0,
+                }
+
+            note_groups[
+                subject_id
+            ][
+                "count"
+            ] += 1
+
+            note_total += 1
+
+        note_subjects = list(
+            note_groups.values()
         )
 
         note_groups = {}
@@ -2546,10 +2606,7 @@ def subject_detail(
             request.session.modified = True
 
     # ========================================================
-    # NOTES
-    #
-    # This is the important new section.
-    # It must be AFTER database_subject is resolved.
+    # NOTES TO STUDY TODAY
     # ========================================================
 
     if database_subject:
@@ -2558,6 +2615,9 @@ def subject_detail(
             Note.objects
             .filter(
                 subject=database_subject
+            )
+            .exclude(
+                last_studied_date=timezone.localdate()
             )
             .order_by(
                 "created",

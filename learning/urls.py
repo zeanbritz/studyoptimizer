@@ -162,4 +162,10 @@ urlpatterns = [
         name="edit_note",
     ),
 
+    path(
+        "notes/review/random/",
+        views.random_note_review,
+        name="random_note_review",
+    ),
+
 ]

@@ -3010,7 +3010,7 @@
     {% if note_count > 0 and database_subject %}
 
         <a
-            href="{% url 'note_list' subject_id=database_subject.id %}?subject_index={{ subject_index }}"
+            href="{% url 'note_list' subject_id=database_subject.id %}?subject_index={{ subject_index }}&mode=subject_review"
             class="review-category"
         >
 

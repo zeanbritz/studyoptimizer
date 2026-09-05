@@ -5,6 +5,7 @@ from datetime import date, datetime, timedelta
 
 import json
 import random
+from django.urls import reverse
 
 from .forms import FormulaForm
 
@@ -6218,6 +6219,28 @@ def note_list(
     )
 
     # ========================================================
+    # MODE
+    # ========================================================
+
+    review_mode = (
+        request.GET.get(
+            "mode",
+            "browse"
+        )
+    )
+
+    if (
+        review_mode
+        not in
+        {
+            "browse",
+            "subject_review",
+        }
+    ):
+
+        review_mode = "browse"
+
+    # ========================================================
     # SUBJECT INDEX
     # ========================================================
 
@@ -6227,10 +6250,6 @@ def note_list(
     )
 
     subject_index = None
-
-    # --------------------------------------------------------
-    # DATABASE ID
-    # --------------------------------------------------------
 
     for (
         index,
@@ -6267,10 +6286,6 @@ def note_list(
             subject_index = index
 
             break
-
-    # --------------------------------------------------------
-    # NAME FALLBACK
-    # --------------------------------------------------------
 
     if (
         subject_index
@@ -6324,6 +6339,25 @@ def note_list(
         )
     )
 
+    # --------------------------------------------------------
+    # SUBJECT REVIEW:
+    # ONLY NOTES NOT STUDIED TODAY
+    # --------------------------------------------------------
+
+    if (
+        review_mode
+        ==
+        "subject_review"
+    ):
+
+        notes = (
+            notes.exclude(
+                last_studied_date=(
+                    timezone.localdate()
+                )
+            )
+        )
+
     # ========================================================
     # RENDER
     # ========================================================
@@ -6343,6 +6377,9 @@ def note_list(
 
             "note_count":
                 notes.count(),
+
+            "review_mode":
+                review_mode,
         }
     )
 
@@ -6373,39 +6410,37 @@ def note_detail(
         note.subject
     )
 
+    today = (
+        timezone.localdate()
+    )
+
     # ========================================================
-    # DELETE NOTE
+    # REVIEW MODE
     # ========================================================
+
+    review_mode = (
+        request.GET.get(
+            "mode"
+        )
+        or
+        request.POST.get(
+            "mode"
+        )
+        or
+        "browse"
+    )
 
     if (
-        request.method
-        ==
-        "POST"
+        review_mode
+        not in
+        {
+            "browse",
+            "subject_review",
+            "global_review",
+        }
     ):
 
-        action = (
-            request.POST.get(
-                "action",
-                ""
-            )
-        )
-
-        if (
-            action
-            ==
-            "delete_note"
-        ):
-
-            subject_id = (
-                subject.id
-            )
-
-            note.delete()
-
-            return redirect(
-                "note_list",
-                subject_id=subject_id,
-            )
+        review_mode = "browse"
 
     # ========================================================
     # SUBJECT INDEX
@@ -6417,10 +6452,6 @@ def note_detail(
     )
 
     subject_index = None
-
-    # --------------------------------------------------------
-    # DATABASE ID
-    # --------------------------------------------------------
 
     for (
         index,
@@ -6457,10 +6488,6 @@ def note_detail(
             subject_index = index
 
             break
-
-    # --------------------------------------------------------
-    # NAME FALLBACK
-    # --------------------------------------------------------
 
     if (
         subject_index
@@ -6500,93 +6527,677 @@ def note_detail(
         subject_index = 0
 
     # ========================================================
-    # ALL NOTES FOR SUBJECT
+    # NAVIGATION DATA
     # ========================================================
 
-    notes = list(
-        Note.objects
-        .filter(
-            subject=subject
-        )
-        .order_by(
-            "created",
-            "id",
-        )
-    )
-
-    note_count = len(
-        notes
-    )
-
-    current_position = 1
+    sequence_notes = []
 
     previous_note = None
-
     next_note = None
 
+    current_position = 1
+    note_count = 1
+
     # ========================================================
-    # CURRENT POSITION
+    # GLOBAL REVIEW
+    #
+    # ALL NOTES FROM ALL SUBJECTS.
+    # THIS MODE LOOPS.
     # ========================================================
 
-    if notes:
+    if (
+        review_mode
+        ==
+        "global_review"
+    ):
 
-        current_index = 0
-
-        for (
-            index,
-            subject_note
-        ) in enumerate(
-            notes
-        ):
-
-            if (
-                subject_note.id
-                ==
-                note.id
-            ):
-
-                current_index = index
-
-                break
-
-        current_position = (
-            current_index
-            +
-            1
+        sequence_notes = list(
+            Note.objects
+            .filter(
+                subject__user=request.user
+            )
+            .select_related(
+                "subject"
+            )
+            .order_by(
+                "subject__name",
+                "created",
+                "id",
+            )
         )
 
-        # ====================================================
-        # PREVIOUS / NEXT
-        # ====================================================
+        note_count = len(
+            sequence_notes
+        )
 
-        if (
-            note_count
-            >
-            1
-        ):
+        if sequence_notes:
 
-            previous_index = (
-                current_index
-                -
-                1
-            ) % note_count
+            current_index = 0
 
-            next_index = (
+            for (
+                index,
+                sequence_note
+            ) in enumerate(
+                sequence_notes
+            ):
+
+                if (
+                    sequence_note.id
+                    ==
+                    note.id
+                ):
+
+                    current_index = index
+
+                    break
+
+            current_position = (
                 current_index
                 +
                 1
-            ) % note_count
+            )
 
-            previous_note = (
-                notes[
-                    previous_index
+            # ------------------------------------------------
+            # GLOBAL REVIEW WRAPS FOREVER
+            # ------------------------------------------------
+
+            if (
+                note_count
+                >
+                1
+            ):
+
+                previous_note = (
+                    sequence_notes[
+                        (
+                            current_index
+                            -
+                            1
+                        )
+                        %
+                        note_count
+                    ]
+                )
+
+                next_note = (
+                    sequence_notes[
+                        (
+                            current_index
+                            +
+                            1
+                        )
+                        %
+                        note_count
+                    ]
+                )
+
+            elif (
+                note_count
+                ==
+                1
+            ):
+
+                # One global note can keep looping
+                # until Stop Review is clicked.
+
+                next_note = (
+                    sequence_notes[0]
+                )
+
+    # ========================================================
+    # SUBJECT REVIEW
+    #
+    # ONLY NOTES THAT WERE DUE WHEN REVIEW STARTED.
+    # FIXED QUEUE.
+    # DOES NOT LOOP.
+    # ========================================================
+
+    elif (
+        review_mode
+        ==
+        "subject_review"
+    ):
+
+        queue_key = (
+            f"subject_note_review_queue_"
+            f"{subject.id}"
+        )
+
+        start_review = (
+            request.GET.get(
+                "start"
+            )
+            ==
+            "1"
+        )
+
+        queue = (
+            request.session.get(
+                queue_key,
+                []
+            )
+        )
+
+        # ----------------------------------------------------
+        # CREATE A NEW REVIEW QUEUE
+        # ----------------------------------------------------
+
+        if (
+            start_review
+            or
+            not queue
+            or
+            note.id not in queue
+        ):
+
+            queue = list(
+                Note.objects
+                .filter(
+                    subject=subject
+                )
+                .exclude(
+                    last_studied_date=today
+                )
+                .order_by(
+                    "created",
+                    "id",
+                )
+                .values_list(
+                    "id",
+                    flat=True,
+                )
+            )
+
+            # ------------------------------------------------
+            # SAFETY:
+            # CURRENT NOTE SHOULD ALWAYS BE IN QUEUE
+            # ------------------------------------------------
+
+            if (
+                note.id
+                not in
+                queue
+            ):
+
+                queue.insert(
+                    0,
+                    note.id
+                )
+
+            # ------------------------------------------------
+            # START QUEUE FROM THE NOTE THE USER CLICKED
+            # ------------------------------------------------
+
+            if (
+                note.id
+                in
+                queue
+            ):
+
+                selected_index = (
+                    queue.index(
+                        note.id
+                    )
+                )
+
+                queue = (
+                    queue[
+                        selected_index:
+                    ]
+                    +
+                    queue[
+                        :selected_index
+                    ]
+                )
+
+            request.session[
+                queue_key
+            ] = queue
+
+            request.session.modified = True
+
+        # ----------------------------------------------------
+        # LOAD NOTES IN THE SAVED QUEUE ORDER
+        # ----------------------------------------------------
+
+        queue_notes = (
+            Note.objects
+            .filter(
+                id__in=queue,
+                subject=subject,
+            )
+            .select_related(
+                "subject"
+            )
+        )
+
+        note_map = {
+            queue_note.id:
+                queue_note
+
+            for queue_note
+            in queue_notes
+        }
+
+        # Remove deleted notes from queue.
+
+        queue = [
+            queued_id
+            for queued_id
+            in queue
+            if queued_id in note_map
+        ]
+
+        request.session[
+            queue_key
+        ] = queue
+
+        request.session.modified = True
+
+        sequence_notes = [
+            note_map[
+                queued_id
+            ]
+            for queued_id
+            in queue
+        ]
+
+        note_count = len(
+            sequence_notes
+        )
+
+        if (
+            note.id
+            in
+            queue
+        ):
+
+            current_index = (
+                queue.index(
+                    note.id
+                )
+            )
+
+            current_position = (
+                current_index
+                +
+                1
+            )
+
+            # ------------------------------------------------
+            # NO WRAPPING
+            # ------------------------------------------------
+
+            if (
+                current_index
+                >
+                0
+            ):
+
+                previous_note = (
+                    sequence_notes[
+                        current_index
+                        -
+                        1
+                    ]
+                )
+
+            if (
+                current_index
+                <
+                (
+                    note_count
+                    -
+                    1
+                )
+            ):
+
+                next_note = (
+                    sequence_notes[
+                        current_index
+                        +
+                        1
+                    ]
+                )
+
+    # ========================================================
+    # NORMAL BROWSING
+    #
+    # SUBJECT NOTES ONLY.
+    # DOES NOT LOOP.
+    # ========================================================
+
+    else:
+
+        sequence_notes = list(
+            Note.objects
+            .filter(
+                subject=subject
+            )
+            .order_by(
+                "created",
+                "id",
+            )
+        )
+
+        note_count = len(
+            sequence_notes
+        )
+
+        if sequence_notes:
+
+            current_index = 0
+
+            for (
+                index,
+                sequence_note
+            ) in enumerate(
+                sequence_notes
+            ):
+
+                if (
+                    sequence_note.id
+                    ==
+                    note.id
+                ):
+
+                    current_index = index
+
+                    break
+
+            current_position = (
+                current_index
+                +
+                1
+            )
+
+            if (
+                current_index
+                >
+                0
+            ):
+
+                previous_note = (
+                    sequence_notes[
+                        current_index
+                        -
+                        1
+                    ]
+                )
+
+            if (
+                current_index
+                <
+                (
+                    note_count
+                    -
+                    1
+                )
+            ):
+
+                next_note = (
+                    sequence_notes[
+                        current_index
+                        +
+                        1
+                    ]
+                )
+
+    # ========================================================
+    # POST ACTION
+    # ========================================================
+
+    if (
+        request.method
+        ==
+        "POST"
+    ):
+
+        action = (
+            request.POST.get(
+                "action",
+                ""
+            )
+        )
+
+        # ====================================================
+        # DELETE NOTE
+        # ====================================================
+
+        if (
+            action
+            ==
+            "delete_note"
+        ):
+
+            # ------------------------------------------------
+            # REMOVE FROM SUBJECT REVIEW QUEUE
+            # ------------------------------------------------
+
+            if (
+                review_mode
+                ==
+                "subject_review"
+            ):
+
+                queue_key = (
+                    f"subject_note_review_queue_"
+                    f"{subject.id}"
+                )
+
+                queue = (
+                    request.session.get(
+                        queue_key,
+                        []
+                    )
+                )
+
+                queue = [
+                    queued_id
+                    for queued_id
+                    in queue
+                    if queued_id != note.id
+                ]
+
+                request.session[
+                    queue_key
+                ] = queue
+
+                request.session.modified = True
+
+            note.delete()
+
+            # ------------------------------------------------
+            # GLOBAL
+            # ------------------------------------------------
+
+            if (
+                review_mode
+                ==
+                "global_review"
+            ):
+
+                return redirect(
+                    "review_notes"
+                )
+
+            # ------------------------------------------------
+            # SUBJECT REVIEW
+            # ------------------------------------------------
+
+            if (
+                review_mode
+                ==
+                "subject_review"
+            ):
+
+                if next_note:
+
+                    next_url = (
+                        reverse(
+                            "note_detail",
+                            kwargs={
+                                "note_id":
+                                    next_note.id,
+                            },
+                        )
+                        +
+                        "?mode=subject_review"
+                        +
+                        f"&subject_index={subject_index}"
+                    )
+
+                    return redirect(
+                        next_url
+                    )
+
+                return redirect(
+                    "subject_detail",
+                    subject_index=subject_index,
+                )
+
+            # ------------------------------------------------
+            # NORMAL BROWSE
+            # ------------------------------------------------
+
+            return redirect(
+                "note_list",
+                subject_id=subject.id,
+            )
+
+        # ====================================================
+        # NEXT / FINISH
+        #
+        # CLICKING THIS MARKS CURRENT NOTE STUDIED TODAY.
+        # ====================================================
+
+        if (
+            action
+            ==
+            "next_note"
+        ):
+
+            note.last_studied_date = (
+                today
+            )
+
+            note.save(
+                update_fields=[
+                    "last_studied_date",
+                    "updated",
                 ]
             )
 
-            next_note = (
-                notes[
-                    next_index
-                ]
+            # =================================================
+            # GLOBAL REVIEW
+            #
+            # ALWAYS CONTINUES / WRAPS.
+            # =================================================
+
+            if (
+                review_mode
+                ==
+                "global_review"
+            ):
+
+                if next_note:
+
+                    next_url = (
+                        reverse(
+                            "note_detail",
+                            kwargs={
+                                "note_id":
+                                    next_note.id,
+                            },
+                        )
+                        +
+                        "?mode=global_review"
+                    )
+
+                    return redirect(
+                        next_url
+                    )
+
+                return redirect(
+                    "review_notes"
+                )
+
+            # =================================================
+            # SUBJECT REVIEW
+            #
+            # FINITE. LAST NOTE FINISHES REVIEW.
+            # =================================================
+
+            if (
+                review_mode
+                ==
+                "subject_review"
+            ):
+
+                if next_note:
+
+                    next_url = (
+                        reverse(
+                            "note_detail",
+                            kwargs={
+                                "note_id":
+                                    next_note.id,
+                            },
+                        )
+                        +
+                        "?mode=subject_review"
+                        +
+                        f"&subject_index={subject_index}"
+                    )
+
+                    return redirect(
+                        next_url
+                    )
+
+                # --------------------------------------------
+                # REVIEW COMPLETE
+                # --------------------------------------------
+
+                queue_key = (
+                    f"subject_note_review_queue_"
+                    f"{subject.id}"
+                )
+
+                request.session.pop(
+                    queue_key,
+                    None
+                )
+
+                request.session.modified = True
+
+                return redirect(
+                    "subject_detail",
+                    subject_index=subject_index,
+                )
+
+            # =================================================
+            # NORMAL BROWSE
+            # =================================================
+
+            if next_note:
+
+                next_url = (
+                    reverse(
+                        "note_detail",
+                        kwargs={
+                            "note_id":
+                                next_note.id,
+                        },
+                    )
+                )
+
+                return redirect(
+                    next_url
+                )
+
+            return redirect(
+                "note_list",
+                subject_id=subject.id,
             )
 
     # ========================================================
@@ -6617,8 +7228,34 @@ def note_detail(
 
             "note_count":
                 note_count,
+
+            "review_mode":
+                review_mode,
+
+            "is_global_review":
+                (
+                    review_mode
+                    ==
+                    "global_review"
+                ),
+
+            "is_subject_review":
+                (
+                    review_mode
+                    ==
+                    "subject_review"
+                ),
+
+            "studied_today":
+                (
+                    note.last_studied_date
+                    ==
+                    today
+                ),
         }
     )
+
+
 
 # ============================================================
 # EDIT NOTE
@@ -6929,4 +7566,46 @@ def edit_note(
             "error":
                 error,
         }
+    )
+
+# ============================================================
+# RANDOM GLOBAL NOTE REVIEW
+# ============================================================
+
+@login_required
+def random_note_review(
+    request
+):
+
+    random_note = (
+        Note.objects
+        .filter(
+            subject__user=request.user
+        )
+        .order_by(
+            "?"
+        )
+        .first()
+    )
+
+    if not random_note:
+
+        return redirect(
+            "review_notes"
+        )
+
+    review_url = (
+        reverse(
+            "note_detail",
+            kwargs={
+                "note_id":
+                    random_note.id,
+            },
+        )
+        +
+        "?mode=global_review"
+    )
+
+    return redirect(
+        review_url
     )

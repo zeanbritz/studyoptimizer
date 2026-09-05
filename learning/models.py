@@ -447,6 +447,15 @@ class Note(models.Model):
         default="",
     )
 
+    # ========================================================
+    # STUDY TRACKING
+    # ========================================================
+
+    last_studied_date = models.DateField(
+        null=True,
+        blank=True,
+    )
+
     created = models.DateTimeField(
         auto_now_add=True
     )
@@ -456,8 +465,7 @@ class Note(models.Model):
     )
 
     def __str__(self):
-
-        return self.title   
+        return self.title  
 
 
 # ============================================================

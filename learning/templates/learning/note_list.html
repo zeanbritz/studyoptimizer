@@ -182,6 +182,35 @@
 
 
         /* =========================================
+           REVIEW LABEL
+        ========================================= */
+
+        .review-label {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            margin-top: 7px;
+
+            padding:
+                5px
+                8px;
+
+            border-radius: 6px;
+
+            background: #eef7ef;
+
+            color: #397345;
+
+            font-size: 11px;
+
+            font-weight: 700;
+
+        }
+
+
+        /* =========================================
            NOTE COUNT
         ========================================= */
 
@@ -234,12 +263,9 @@
             text-decoration: none;
 
             transition:
-                border-color
-                0.15s ease,
-                transform
-                0.15s ease,
-                box-shadow
-                0.15s ease;
+                border-color 0.15s ease,
+                transform 0.15s ease,
+                box-shadow 0.15s ease;
 
         }
 
@@ -361,12 +387,92 @@
         }
 
 
+        .empty h2 {
+
+            margin:
+                0
+                0
+                8px;
+
+            color: #333;
+
+            font-size: 19px;
+
+        }
+
+
         .empty p {
 
             margin:
                 0
                 0
                 18px;
+
+            line-height: 1.6;
+
+        }
+
+
+        .complete-icon {
+
+            width: 48px;
+
+            height: 48px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            margin:
+                0
+                auto
+                15px;
+
+            border-radius: 50%;
+
+            background: #e8f5eb;
+
+            color: #308044;
+
+            font-size: 23px;
+
+            font-weight: 800;
+
+        }
+
+
+        .return-button {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding:
+                11px
+                17px;
+
+            border-radius: 8px;
+
+            background: #222;
+
+            color: white;
+
+            text-decoration: none;
+
+            font-size: 13px;
+
+            font-weight: 700;
+
+        }
+
+
+        .return-button:hover {
+
+            background: #333;
 
         }
 
@@ -379,11 +485,9 @@
 
             .header {
 
-                align-items:
-                    flex-start;
+                align-items: flex-start;
 
-                flex-direction:
-                    column;
+                flex-direction: column;
 
             }
 
@@ -423,23 +527,38 @@
                 href="{% url 'subject_detail' subject_index=subject_index %}"
                 class="back-button"
             >
-
                 ←
-
             </a>
 
 
             <div>
 
 
-                <h1>
-                    Notes
-                </h1>
+                {% if review_mode == "subject_review" %}
 
+                    <h1>
+                        Notes to Review
+                    </h1>
 
-                <p>
-                    {{ subject.name }}
-                </p>
+                    <p>
+                        {{ subject.name }}
+                    </p>
+
+                    <span class="review-label">
+                        Today's Review
+                    </span>
+
+                {% else %}
+
+                    <h1>
+                        Notes
+                    </h1>
+
+                    <p>
+                        {{ subject.name }}
+                    </p>
+
+                {% endif %}
 
 
             </div>
@@ -448,26 +567,42 @@
         </div>
 
 
-        <a
-            href="{% url 'create_note' subject_id=subject.id %}?subject_index={{ subject_index }}"
-            class="new-note-button"
-        >
+        {% if review_mode != "subject_review" %}
 
-            + New Note
+            <a
+                href="{% url 'create_note' subject_id=subject.id %}?subject_index={{ subject_index }}"
+                class="new-note-button"
+            >
+                + New Note
+            </a>
 
-        </a>
+        {% endif %}
 
 
     </header>
 
+
+    <!-- =========================================
+         NOTES
+    ========================================== -->
 
     {% if notes %}
 
 
         <div class="note-count">
 
-            {{ note_count }}
-            note{{ note_count|pluralize }}
+            {% if review_mode == "subject_review" %}
+
+                {{ note_count }}
+                note{{ note_count|pluralize }}
+                remaining today
+
+            {% else %}
+
+                {{ note_count }}
+                note{{ note_count|pluralize }}
+
+            {% endif %}
 
         </div>
 
@@ -478,26 +613,33 @@
             {% for note in notes %}
 
 
-                <a
-                    href="{% url 'note_detail' note_id=note.id %}?subject_index={{ subject_index }}"
-                    class="note-card"
-                >
+                {% if review_mode == "subject_review" %}
+
+                    <a
+                        href="{% url 'note_detail' note_id=note.id %}?mode=subject_review&start=1&subject_index={{ subject_index }}"
+                        class="note-card"
+                    >
+
+                {% else %}
+
+                    <a
+                        href="{% url 'note_detail' note_id=note.id %}?subject_index={{ subject_index }}"
+                        class="note-card"
+                    >
+
+                {% endif %}
 
 
                     <div class="note-card-header">
 
 
                         <h2 class="note-title">
-
                             {{ note.title }}
-
                         </h2>
 
 
                         <span class="note-arrow">
-
                             →
-
                         </span>
 
 
@@ -512,26 +654,18 @@
 
                             {% if note.book_name %}
 
-
                                 <span class="meta-item">
-
                                     📖 {{ note.book_name }}
-
                                 </span>
-
 
                             {% endif %}
 
 
                             {% if note.chapter %}
 
-
                                 <span class="meta-item">
-
                                     {{ note.chapter }}
-
                                 </span>
-
 
                             {% endif %}
 
@@ -557,19 +691,55 @@
         <div class="empty">
 
 
-            <p>
-                No notes have been saved for this subject yet.
-            </p>
+            {% if review_mode == "subject_review" %}
 
 
-            <a
-                href="{% url 'create_note' subject_id=subject.id %}?subject_index={{ subject_index }}"
-                class="new-note-button"
-            >
+                <div class="complete-icon">
+                    ✓
+                </div>
 
-                Create First Note
 
-            </a>
+                <h2>
+                    Review Complete
+                </h2>
+
+
+                <p>
+                    You have studied all of this subject's
+                    notes for today.
+                </p>
+
+
+                <a
+                    href="{% url 'subject_detail' subject_index=subject_index %}"
+                    class="return-button"
+                >
+                    Back to Subject
+                </a>
+
+
+            {% else %}
+
+
+                <h2>
+                    No Notes Yet
+                </h2>
+
+
+                <p>
+                    No notes have been saved for this subject yet.
+                </p>
+
+
+                <a
+                    href="{% url 'create_note' subject_id=subject.id %}?subject_index={{ subject_index }}"
+                    class="new-note-button"
+                >
+                    Create First Note
+                </a>
+
+
+            {% endif %}
 
 
         </div>

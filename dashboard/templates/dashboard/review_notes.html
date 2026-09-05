@@ -17,10 +17,12 @@
         Notes - StudyOptimizer
     </title>
 
+
     <link
         rel="stylesheet"
         href="{% static 'dashboard/css/sidebar.css' %}"
     >
+
 
     <style>
 
@@ -122,6 +124,21 @@
 
             font-size: 13px;
 
+            line-height: 1.5;
+
+        }
+
+
+        .header-actions {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+            flex-shrink: 0;
+
         }
 
 
@@ -158,23 +175,62 @@
 
 
         /* =========================================
-           SUMMARY
+           RANDOM REVIEW
         ========================================= */
 
-        .summary-bar {
+        .random-review-button {
 
-            display: flex;
+            padding:
+                10px
+                17px;
 
-            align-items: center;
+            border:
+                1px solid
+                #278b48;
 
-            justify-content: space-between;
+            border-radius: 8px;
 
-            gap: 15px;
+            background: #2fa856;
+
+            color: white;
+
+            text-decoration: none;
+
+            font-size: 13px;
+
+            font-weight: 700;
+
+            box-shadow:
+                0
+                2px
+                6px
+                rgba(
+                    47,
+                    168,
+                    86,
+                    0.15
+                );
+
+        }
+
+
+        .random-review-button:hover {
+
+            background: #278f4a;
+
+        }
+
+
+        /* =========================================
+           INFORMATION
+        ========================================= */
+
+        .review-info {
 
             margin-bottom: 18px;
 
             padding:
-                16px
+                15px
                 18px;
 
             border:
@@ -185,39 +241,11 @@
 
             background: white;
 
-        }
-
-
-        .summary-title {
-
-            color: #555;
+            color: #666;
 
             font-size: 13px;
 
-            font-weight: 700;
-
-        }
-
-
-        .summary-count {
-
-            min-width: 32px;
-
-            padding:
-                6px
-                10px;
-
-            border-radius: 20px;
-
-            background: #eeeeee;
-
-            color: #333;
-
-            font-size: 13px;
-
-            font-weight: 800;
-
-            text-align: center;
+            line-height: 1.6;
 
         }
 
@@ -266,7 +294,8 @@
             transition:
                 border-color 0.15s ease,
                 background 0.15s ease,
-                transform 0.15s ease;
+                transform 0.15s ease,
+                box-shadow 0.15s ease;
 
         }
 
@@ -277,7 +306,21 @@
 
             background: #fafafa;
 
-            transform: translateY(-1px);
+            transform:
+                translateY(
+                    -1px
+                );
+
+            box-shadow:
+                0
+                4px
+                14px
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.04
+                );
 
         }
 
@@ -405,7 +448,7 @@
            MOBILE
         ========================================= */
 
-        @media (max-width: 650px) {
+        @media (max-width: 750px) {
 
             .page {
 
@@ -421,7 +464,24 @@
 
                 align-items: flex-start;
 
-                flex-direction: column-reverse;
+                flex-direction: column;
+
+            }
+
+
+            .header-actions {
+
+                width: 100%;
+
+            }
+
+
+            .back-button,
+            .random-review-button {
+
+                flex: 1;
+
+                text-align: center;
 
             }
 
@@ -431,6 +491,25 @@
                 padding:
                     17px
                     16px;
+
+            }
+
+        }
+
+
+        @media (max-width: 500px) {
+
+            .header-actions {
+
+                flex-direction: column;
+
+            }
+
+
+            .back-button,
+            .random-review-button {
+
+                width: 100%;
 
             }
 
@@ -472,42 +551,60 @@
 
 
                     <p>
-                        Study all of your saved notes across every subject.
+                        Study notes from all of your subjects.
                     </p>
 
 
                 </div>
 
 
-                <a
-                    href="{% url 'review' %}"
-                    class="back-button"
-                >
-                    ← Back to Review
-                </a>
+                <div class="header-actions">
+
+
+                    <a
+                        href="{% url 'review' %}"
+                        class="back-button"
+                    >
+                        ← Back to Review
+                    </a>
+
+
+                    {% if notes %}
+
+                        <a
+                            href="{% url 'random_note_review' %}"
+                            class="random-review-button"
+                        >
+                            ↻ Random Review
+                        </a>
+
+                    {% endif %}
+
+
+                </div>
 
 
             </header>
 
 
             <!-- =====================================
-                 SUMMARY
+                 INFORMATION
             ====================================== -->
 
-            <div class="summary-bar">
+            {% if notes %}
 
+                <div class="review-info">
 
-                <span class="summary-title">
-                    All Notes
-                </span>
+                    Select any note to begin a global review
+                    from that point, or use Random Review to
+                    start from a randomly selected note.
 
+                    Global review continues through notes from
+                    all subjects until you choose Stop Review.
 
-                <span class="summary-count">
-                    {{ note_count }}
-                </span>
+                </div>
 
-
-            </div>
+            {% endif %}
 
 
             <!-- =====================================
@@ -524,7 +621,7 @@
 
 
                         <a
-                            href="{% url 'note_detail' note_id=item.note.id %}"
+                            href="{% url 'note_detail' note_id=item.note.id %}?mode=global_review"
                             class="note-card"
                         >
 
@@ -533,16 +630,12 @@
 
 
                                 <span class="note-title">
-
                                     {{ item.note.title }}
-
                                 </span>
 
 
                                 <span class="note-subject">
-
                                     {{ item.subject.name }}
-
                                 </span>
 
 

@@ -82,6 +82,19 @@
         }
 
 
+        .review-type {
+
+            justify-self: start;
+
+            color: #888;
+
+            font-size: 12px;
+
+            font-weight: 700;
+
+        }
+
+
         .position {
 
             color: #777;
@@ -95,7 +108,8 @@
         }
 
 
-        .exit-button {
+        .exit-button,
+        .stop-review-button {
 
             justify-self: end;
 
@@ -103,15 +117,7 @@
                 10px
                 16px;
 
-            border:
-                1px solid
-                #d5d5d5;
-
             border-radius: 8px;
-
-            background: white;
-
-            color: #444;
 
             text-decoration: none;
 
@@ -122,9 +128,42 @@
         }
 
 
+        .exit-button {
+
+            border:
+                1px solid
+                #d5d5d5;
+
+            background: white;
+
+            color: #444;
+
+        }
+
+
         .exit-button:hover {
 
             background: #ededed;
+
+        }
+
+
+        .stop-review-button {
+
+            border:
+                1px solid
+                #d99595;
+
+            background: #fff5f5;
+
+            color: #a92d2d;
+
+        }
+
+
+        .stop-review-button:hover {
+
+            background: #ffeaea;
 
         }
 
@@ -361,6 +400,37 @@
 
 
         /* =========================================
+           STUDIED STATUS
+        ========================================= */
+
+        .studied-status {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            gap: 5px;
+
+            margin-top: 30px;
+
+            padding:
+                7px
+                10px;
+
+            border-radius: 7px;
+
+            background: #eef7ef;
+
+            color: #3d6942;
+
+            font-size: 12px;
+
+            font-weight: 700;
+
+        }
+
+
+        /* =========================================
            NAVIGATION
         ========================================= */
 
@@ -379,7 +449,18 @@
         }
 
 
+        .navigation form {
+
+            width: 100%;
+
+            margin: 0;
+
+        }
+
+
         .nav-button {
+
+            width: 100%;
 
             min-height: 52px;
 
@@ -405,9 +486,13 @@
 
             text-decoration: none;
 
+            font-family: inherit;
+
             font-size: 14px;
 
             font-weight: 700;
+
+            cursor: pointer;
 
         }
 
@@ -437,7 +522,27 @@
         }
 
 
+        .finish-button {
+
+            border-color: #278b48;
+
+            background: #2f9d54;
+
+            color: white;
+
+        }
+
+
+        .finish-button:hover {
+
+            background: #278747;
+
+        }
+
+
         .nav-disabled {
+
+            width: 100%;
 
             min-height: 52px;
 
@@ -643,6 +748,29 @@
             }
 
 
+            .top-bar {
+
+                grid-template-columns:
+                    1fr
+                    auto;
+
+            }
+
+
+            .review-type {
+
+                display: none;
+
+            }
+
+
+            .position {
+
+                justify-self: start;
+
+            }
+
+
             .study-card {
 
                 min-height: 500px;
@@ -707,7 +835,22 @@
     <div class="top-bar">
 
 
-        <div>
+        <div class="review-type">
+
+            {% if is_global_review %}
+
+                Global Review
+
+            {% elif is_subject_review %}
+
+                {{ subject.name }} Review
+
+            {% else %}
+
+                {{ subject.name }}
+
+            {% endif %}
+
         </div>
 
 
@@ -721,12 +864,34 @@
         </div>
 
 
-        <a
-            href="{% url 'note_list' subject_id=subject.id %}?subject_index={{ subject_index }}"
-            class="exit-button"
-        >
-            ✕ Exit
-        </a>
+        {% if is_global_review %}
+
+            <a
+                href="{% url 'review_notes' %}"
+                class="stop-review-button"
+            >
+                ■ Stop Review
+            </a>
+
+        {% elif is_subject_review %}
+
+            <a
+                href="{% url 'subject_detail' subject_index=subject_index %}"
+                class="exit-button"
+            >
+                ✕ Exit Review
+            </a>
+
+        {% else %}
+
+            <a
+                href="{% url 'note_list' subject_id=subject.id %}?subject_index={{ subject_index }}"
+                class="exit-button"
+            >
+                ✕ Exit
+            </a>
+
+        {% endif %}
 
 
     </div>
@@ -775,9 +940,7 @@
         ====================================== -->
 
         <div class="subject-label">
-
             {{ subject.name }}
-
         </div>
 
 
@@ -786,9 +949,7 @@
         ====================================== -->
 
         <h1 class="note-title">
-
             {{ note.title }}
-
         </h1>
 
 
@@ -831,10 +992,23 @@
 
 
         <!-- =====================================
-             NOTE CONTENT
+             CONTENT
         ====================================== -->
 
         <div class="note-content">{{ note.content }}</div>
+
+
+        <!-- =====================================
+             STUDIED TODAY
+        ====================================== -->
+
+        {% if studied_today %}
+
+            <div class="studied-status">
+                ✓ Studied today
+            </div>
+
+        {% endif %}
 
 
     </article>
@@ -847,14 +1021,42 @@
     <div class="navigation">
 
 
+        <!-- =====================================
+             BACK
+        ====================================== -->
+
         {% if previous_note %}
 
-            <a
-                href="{% url 'note_detail' note_id=previous_note.id %}"
-                class="nav-button"
-            >
-                ← Back
-            </a>
+
+            {% if is_global_review %}
+
+                <a
+                    href="{% url 'note_detail' note_id=previous_note.id %}?mode=global_review"
+                    class="nav-button"
+                >
+                    ← Back
+                </a>
+
+            {% elif is_subject_review %}
+
+                <a
+                    href="{% url 'note_detail' note_id=previous_note.id %}?mode=subject_review&subject_index={{ subject_index }}"
+                    class="nav-button"
+                >
+                    ← Back
+                </a>
+
+            {% else %}
+
+                <a
+                    href="{% url 'note_detail' note_id=previous_note.id %}?subject_index={{ subject_index }}"
+                    class="nav-button"
+                >
+                    ← Back
+                </a>
+
+            {% endif %}
+
 
         {% else %}
 
@@ -865,22 +1067,67 @@
         {% endif %}
 
 
-        {% if next_note %}
+        <!-- =====================================
+             NEXT / FINISH
+        ====================================== -->
 
-            <a
-                href="{% url 'note_detail' note_id=next_note.id %}"
-                class="nav-button next-button"
+        <form method="post">
+
+            {% csrf_token %}
+
+            <input
+                type="hidden"
+                name="action"
+                value="next_note"
             >
-                Next →
-            </a>
 
-        {% else %}
+            <input
+                type="hidden"
+                name="mode"
+                value="{{ review_mode }}"
+            >
 
-            <div class="nav-disabled">
-                Next →
-            </div>
 
-        {% endif %}
+            {% if is_subject_review and not next_note %}
+
+                <button
+                    type="submit"
+                    class="nav-button finish-button"
+                >
+                    Finish Review ✓
+                </button>
+
+            {% elif is_global_review %}
+
+                <button
+                    type="submit"
+                    class="nav-button next-button"
+                >
+                    Next →
+                </button>
+
+            {% elif next_note %}
+
+                <button
+                    type="submit"
+                    class="nav-button next-button"
+                >
+                    Next →
+                </button>
+
+            {% else %}
+
+                <button
+                    type="submit"
+                    class="nav-button finish-button"
+                >
+                    Finish ✓
+                </button>
+
+            {% endif %}
+
+
+        </form>
 
 
     </div>
@@ -934,6 +1181,13 @@
             >
 
 
+            <input
+                type="hidden"
+                name="mode"
+                value="{{ review_mode }}"
+            >
+
+
             <div class="modal-actions">
 
 
@@ -979,9 +1233,7 @@
                 "delete-note-modal"
             );
 
-        if (
-            modal
-        ) {
+        if (modal) {
 
             modal.classList.add(
                 "open"
@@ -1003,9 +1255,7 @@
                 "delete-note-modal"
             );
 
-        if (
-            modal
-        ) {
+        if (modal) {
 
             modal.classList.remove(
                 "open"
@@ -1038,7 +1288,7 @@
 
 
     // =============================================
-    // ESCAPE KEY
+    // ESCAPE
     // =============================================
 
     document.addEventListener(
