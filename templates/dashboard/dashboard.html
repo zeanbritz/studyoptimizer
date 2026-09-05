@@ -251,7 +251,7 @@
                      HAS PLAN ITEMS
                 ============================== -->
 
-                {% elif due_definition_subjects or due_formula_subjects or due_list_subjects or book_summary_subjects or due_step_subjects %}
+                {% elif due_definition_subjects or due_formula_subjects or due_list_subjects or book_summary_subjects or due_step_subjects or note_subjects %}
 
 
                     <div class="today-plan-columns">
@@ -709,6 +709,93 @@
 
 
                         {% endif %}
+
+                        <!-- =================================
+     NOTES
+================================== -->
+
+{% if note_subjects %}
+
+
+    <div class="today-plan-column">
+
+
+        <div class="plan-column-header">
+
+
+            <div>
+
+
+                <h3>
+                    Notes
+                </h3>
+
+
+                <p>
+                    Saved notes available to study.
+                </p>
+
+
+            </div>
+
+
+            <span class="plan-total-count">
+
+                {{ note_total }}
+
+            </span>
+
+
+        </div>
+
+
+        <div class="plan-subject-list">
+
+
+            {% for item in note_subjects %}
+
+
+                <a
+                    href="{% url 'note_list' subject_id=item.subject.id %}?subject_index={{ item.subject_index }}"
+                    class="plan-subject-card"
+                >
+
+
+                    <div class="plan-card-content">
+
+
+                        <span class="plan-card-title">
+
+                            {{ item.subject.name }}
+                            Notes
+
+                        </span>
+
+
+                        <span class="plan-card-count">
+
+                            {{ item.count }}
+                            note{{ item.count|pluralize }}
+
+                        </span>
+
+
+                    </div>
+
+
+                </a>
+
+
+            {% endfor %}
+
+
+        </div>
+
+
+    </div>
+
+
+{% endif %}
 
 
                     </div>

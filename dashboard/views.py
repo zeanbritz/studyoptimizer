@@ -94,6 +94,13 @@ def dashboard(request):
     due_step_subjects = []
     due_step_total = 0
 
+    # --------------------------------------------------------
+    # NOTE DATA
+    # --------------------------------------------------------
+
+    note_subjects = []
+    note_total = 0
+
     # ========================================================
     # HELPER:
     # FIND SESSION SUBJECT INDEX
@@ -721,6 +728,99 @@ def dashboard(request):
         )
 
         # ====================================================
+        # NOTES
+        # ====================================================
+
+        notes = (
+            Note.objects
+            .filter(
+                subject__user=request.user
+            )
+            .select_related(
+                "subject"
+            )
+            .order_by(
+                "subject__name",
+                "created",
+                "id",
+            )
+        )
+
+        note_groups = {}
+
+        # ----------------------------------------------------
+        # GROUP NOTES BY SUBJECT
+        # ----------------------------------------------------
+
+        for note in notes:
+
+            database_subject = (
+                note.subject
+            )
+
+            if not database_subject:
+
+                continue
+
+            # ------------------------------------------------
+            # SUBJECT INDEX
+            # ------------------------------------------------
+
+            subject_index = (
+                find_subject_index(
+                    database_subject
+                )
+            )
+
+            if subject_index is None:
+
+                continue
+
+            # ------------------------------------------------
+            # GROUP
+            # ------------------------------------------------
+
+            subject_id = (
+                database_subject.id
+            )
+
+            if (
+                subject_id
+                not in
+                note_groups
+            ):
+
+                note_groups[
+                    subject_id
+                ] = {
+
+                    "subject":
+                        database_subject,
+
+                    "subject_index":
+                        subject_index,
+
+                    "count":
+                        0,
+                }
+
+            note_groups[
+                subject_id
+            ][
+                "count"
+            ] += 1
+
+            note_total += 1
+
+        # ----------------------------------------------------
+        # FINAL NOTE SUBJECTS
+        # ----------------------------------------------------
+
+        note_subjects = list(
+            note_groups.values()
+        )
+
+        # ====================================================
         # BOOK SUMMARIES
         # ====================================================
 
@@ -896,8 +996,16 @@ def dashboard(request):
         request,
         "dashboard/dashboard.html",
         {
+            # --------------------------------------------
+            # ONBOARDING
+            # --------------------------------------------
+
             "onboarding_complete":
                 onboarding_complete,
+
+            # --------------------------------------------
+            # DEFINITIONS
+            # --------------------------------------------
 
             "due_definition_subjects":
                 due_definition_subjects,
@@ -905,11 +1013,19 @@ def dashboard(request):
             "due_definition_total":
                 due_definition_total,
 
+            # --------------------------------------------
+            # FORMULAS
+            # --------------------------------------------
+
             "due_formula_subjects":
                 due_formula_subjects,
 
             "due_formula_total":
                 due_formula_total,
+
+            # --------------------------------------------
+            # LISTS
+            # --------------------------------------------
 
             "due_list_subjects":
                 due_list_subjects,
@@ -917,11 +1033,29 @@ def dashboard(request):
             "due_list_total":
                 due_list_total,
 
+            # --------------------------------------------
+            # STEPS
+            # --------------------------------------------
+
             "due_step_subjects":
                 due_step_subjects,
 
             "due_step_total":
                 due_step_total,
+
+            # --------------------------------------------
+            # NOTES
+            # --------------------------------------------
+
+            "note_subjects":
+                note_subjects,
+
+            "note_total":
+                note_total,
+
+            # --------------------------------------------
+            # BOOK SUMMARIES
+            # --------------------------------------------
 
             "book_summary_subjects":
                 book_summary_subjects,
@@ -930,8 +1064,7 @@ def dashboard(request):
                 book_summary_total,
         }
     )
-
-
+    
 # ============================================================
 # REVIEW
 # ============================================================
