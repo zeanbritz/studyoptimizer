@@ -7609,3 +7609,25 @@ def random_note_review(
     return redirect(
         review_url
     )
+
+@login_required
+def create_comparison(request, subject_id):
+    subject = get_object_or_404(
+        Subject,
+        id=subject_id,
+        user=request.user,
+    )
+
+    try:
+        subject_index = int(request.GET.get("subject_index", 0))
+    except (TypeError, ValueError):
+        subject_index = 0
+
+    return render(
+        request,
+        "learning/create_comparison.html",
+        {
+            "subject": subject,
+            "subject_index": subject_index,
+        },
+    )

@@ -1,0 +1,161 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Create Comparison - {{ subject.name }}
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{% static 'dashboard/css/sidebar.css' %}"
+    >
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #f5f6f8;
+            color: #222;
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Arial,
+                sans-serif;
+        }
+
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .page {
+            min-height: 100vh;
+            padding: 30px 40px 50px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 24px;
+            color: #555;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            color: #222;
+        }
+
+        .page-header {
+            margin-bottom: 24px;
+        }
+
+        .page-header h1 {
+            margin: 0 0 7px;
+            font-size: 30px;
+        }
+
+        .page-header p {
+            margin: 0;
+            color: #777;
+            font-size: 14px;
+        }
+
+        .comparison-box {
+            padding: 25px;
+            border: 1px solid #e5e5e5;
+            border-radius: 14px;
+            background: white;
+        }
+
+        .comparison-box h2 {
+            margin: 0 0 8px;
+            font-size: 20px;
+        }
+
+        .comparison-box p {
+            margin: 0;
+            color: #777;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 700px) {
+            .page {
+                padding: 22px 18px 40px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="app">
+
+    {% include 'partials/sidebar.html' with active_page='summarize' %}
+
+    <main class="main">
+
+        <div class="page">
+
+            <a
+                href="{% url 'subject_detail' subject_index=subject_index %}"
+                class="back-link"
+            >
+                &larr; Back to {{ subject.name }}
+            </a>
+
+            <header class="page-header">
+
+                <h1>
+                    Create Comparison
+                </h1>
+
+                <p>
+                    Compare important concepts for {{ subject.name }}.
+                </p>
+
+            </header>
+
+            <section class="comparison-box">
+
+                <h2>
+                    New Comparison
+                </h2>
+
+                <p>
+                    The comparison form will go here.
+                </p>
+
+            </section>
+
+        </div>
+
+    </main>
+
+</div>
+
+<script src="{% static 'dashboard/js/sidebar.js' %}"></script>
+
+</body>
+
+</html>

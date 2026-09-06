@@ -168,4 +168,10 @@ urlpatterns = [
         name="random_note_review",
     ),
 
+    path(
+        "subjects/<int:subject_id>/comparisons/create/",
+        views.create_comparison,
+        name="create_comparison",
+    ),
+
 ]

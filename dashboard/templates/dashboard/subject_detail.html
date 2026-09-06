@@ -2659,20 +2659,34 @@
 
                             <!-- COMPARISON -->
 
-                            <button
-                                type="button"
-                                class="summary-option"
-                            >
+{% if database_subject %}
 
-                                <h3>
-                                    Comparison
-                                </h3>
+    <a
+        href="{% url 'create_comparison' subject_id=database_subject.id %}?subject_index={{ subject_index }}"
+        class="summary-option"
+    >
+        <h3>
+            Comparison
+        </h3>
 
-                                <p>
-                                    Summarize differences between concepts.
-                                </p>
+        <p>
+            Summarize differences between concepts.
+        </p>
+    </a>
 
-                            </button>
+{% else %}
+
+    <div class="summary-option">
+        <h3>
+            Comparison
+        </h3>
+
+        <p>
+            Save the subject first before adding comparisons.
+        </p>
+    </div>
+
+{% endif %}
 
 
                         </div>
