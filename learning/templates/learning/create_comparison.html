@@ -4,6 +4,7 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
 
     <meta
@@ -21,6 +22,7 @@
     >
 
     <style>
+
         * {
             box-sizing: border-box;
         }
@@ -35,6 +37,13 @@
                 "Segoe UI",
                 Arial,
                 sans-serif;
+        }
+
+        button,
+        input,
+        select,
+        textarea {
+            font: inherit;
         }
 
         .app {
@@ -54,7 +63,7 @@
 
         .back-link {
             display: inline-block;
-            margin-bottom: 24px;
+            margin-bottom: 22px;
             color: #555;
             font-size: 14px;
             font-weight: 600;
@@ -70,7 +79,7 @@
         }
 
         .page-header h1 {
-            margin: 0 0 7px;
+            margin: 0 0 6px;
             font-size: 30px;
         }
 
@@ -80,31 +89,293 @@
             font-size: 14px;
         }
 
-        .comparison-box {
-            padding: 25px;
-            border: 1px solid #e5e5e5;
+        .form-card {
+            padding: 26px;
+            border: 1px solid #e4e4e4;
             border-radius: 14px;
             background: white;
         }
 
-        .comparison-box h2 {
-            margin: 0 0 8px;
-            font-size: 20px;
+        .error-message {
+            margin-bottom: 20px;
+            padding: 12px 14px;
+            border: 1px solid #e1bcbc;
+            border-radius: 8px;
+            background: #fff3f3;
+            color: #9f3535;
+            font-size: 13px;
+            font-weight: 600;
         }
 
-        .comparison-box p {
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .field label {
+            color: #444;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .field-help {
+            color: #888;
+            font-size: 12px;
+        }
+
+        .text-input,
+        .select-input {
+            width: 100%;
+            padding: 11px 12px;
+            border: 1px solid #d8d8d8;
+            border-radius: 8px;
+            background: white;
+            color: #222;
+            outline: none;
+        }
+
+        .text-input:focus,
+        .select-input:focus,
+        .table-input:focus,
+        .cell-input:focus {
+            border-color: #222;
+        }
+
+        .name-field {
+            max-width: 650px;
+            margin-bottom: 26px;
+        }
+
+        .table-section {
+            padding-top: 22px;
+            border-top: 1px solid #eeeeee;
+        }
+
+        .table-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 16px;
+        }
+
+        .table-header h2 {
+            margin: 0 0 5px;
+            font-size: 19px;
+        }
+
+        .table-header p {
             margin: 0;
-            color: #777;
-            font-size: 14px;
-            line-height: 1.5;
+            color: #888;
+            font-size: 12px;
         }
 
-        @media (max-width: 700px) {
+        .table-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .secondary-button {
+            padding: 9px 13px;
+            border: 1px solid #d6d6d6;
+            border-radius: 8px;
+            background: white;
+            color: #333;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .secondary-button:hover {
+            background: #f3f3f3;
+        }
+
+        .comparison-table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid #dedede;
+            border-radius: 10px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            min-width: 720px;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 10px;
+            border-right: 1px solid #e4e4e4;
+            border-bottom: 1px solid #e4e4e4;
+            vertical-align: top;
+        }
+
+        .comparison-table th:last-child,
+        .comparison-table td:last-child {
+            border-right: none;
+        }
+
+        .comparison-table tbody tr:last-child th,
+        .comparison-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table thead th {
+            background: #f5f6f8;
+        }
+
+        .row-heading {
+            width: 210px;
+            background: #fafafa;
+        }
+
+        .header-editor {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .table-input {
+            width: 100%;
+            min-width: 120px;
+            padding: 9px 10px;
+            border: 1px solid #d8d8d8;
+            border-radius: 7px;
+            background: white;
+            outline: none;
+        }
+
+        .cell-input {
+            width: 100%;
+            min-height: 90px;
+            padding: 10px;
+            border: 1px solid #d8d8d8;
+            border-radius: 7px;
+            background: white;
+            resize: vertical;
+            outline: none;
+        }
+
+        .delete-table-button {
+            width: 30px;
+            height: 30px;
+            flex-shrink: 0;
+            border: 1px solid #ddbebe;
+            border-radius: 7px;
+            background: white;
+            color: #a33a3a;
+            font-size: 18px;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .delete-table-button:hover {
+            background: #fff0f0;
+        }
+
+        .delete-table-button:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        .table-status {
+            margin-top: 10px;
+            color: #777;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .additional-details {
+            margin-top: 25px;
+            padding-top: 22px;
+            border-top: 1px solid #eeeeee;
+        }
+
+        .additional-details h2 {
+            margin: 0 0 5px;
+            font-size: 18px;
+        }
+
+        .additional-details > p {
+            margin: 0 0 16px;
+            color: #888;
+            font-size: 12px;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns:
+                repeat(
+                    2,
+                    minmax(0, 1fr)
+                );
+            gap: 16px;
+        }
+
+        .form-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 26px;
+            padding-top: 22px;
+            border-top: 1px solid #eeeeee;
+        }
+
+        .cancel-button {
+            padding: 11px 18px;
+            border: 1px solid #d5d5d5;
+            border-radius: 8px;
+            background: white;
+            color: #333;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .save-button {
+            padding: 11px 20px;
+            border: none;
+            border-radius: 8px;
+            background: #222;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .save-button:hover {
+            background: #333;
+        }
+
+        @media (max-width: 760px) {
+
             .page {
                 padding: 22px 18px 40px;
             }
+
+            .table-header {
+                flex-direction: column;
+            }
+
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-footer {
+                flex-direction: column;
+            }
+
+            .cancel-button,
+            .save-button {
+                width: 100%;
+                text-align: center;
+            }
         }
+
     </style>
+
 </head>
 
 <body>
@@ -131,28 +402,866 @@
                 </h1>
 
                 <p>
-                    Compare important concepts for {{ subject.name }}.
+                    Build a comparison table for {{ subject.name }}.
                 </p>
 
             </header>
 
-            <section class="comparison-box">
+            <form
+                method="POST"
+                class="form-card"
+                id="comparison-form"
+            >
 
-                <h2>
-                    New Comparison
-                </h2>
+                {% csrf_token %}
 
-                <p>
-                    The comparison form will go here.
-                </p>
+                <input
+                    type="hidden"
+                    name="subject_index"
+                    value="{{ subject_index }}"
+                >
 
-            </section>
+                <input
+                    type="hidden"
+                    name="comparison_data"
+                    id="comparison-data"
+                >
+
+                {% if error %}
+
+                    <div class="error-message">
+                        {{ error }}
+                    </div>
+
+                {% endif %}
+
+                <div class="field name-field">
+
+                    <label for="comparison-name">
+                        Comparison name
+                    </label>
+
+                    <span class="field-help">
+                        Give this comparison a clear title.
+                    </span>
+
+                    <input
+                        type="text"
+                        name="comparison_name"
+                        id="comparison-name"
+                        class="text-input"
+                        value="{{ comparison_name }}"
+                        maxlength="255"
+                        placeholder="e.g. Classical vs operant conditioning"
+                        required
+                    >
+
+                </div>
+
+                <section class="table-section">
+
+                    <div class="table-header">
+
+                        <div>
+
+                            <h2>
+                                Comparison table
+                            </h2>
+
+                            <p>
+                                Start with two columns and five rows.
+                                Cells may be left empty.
+                            </p>
+
+                        </div>
+
+                        <div class="table-actions">
+
+                            <button
+                                type="button"
+                                class="secondary-button"
+                                id="add-row-button"
+                            >
+                                + Add Row
+                            </button>
+
+                            <button
+                                type="button"
+                                class="secondary-button"
+                                id="add-column-button"
+                            >
+                                + Add Column
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                    <div
+                        class="comparison-table-wrapper"
+                        id="comparison-table-wrapper"
+                    ></div>
+
+                    <div
+                        class="table-status"
+                        id="table-status"
+                    ></div>
+
+                </section>
+
+                <section class="additional-details">
+
+                    <h2>
+                        Additional Details
+                    </h2>
+
+                    <p>
+                        Book and chapter information is optional.
+                    </p>
+
+                    <div class="details-grid">
+
+                        <div class="field">
+
+                            <label for="book-id">
+                                Textbook
+                            </label>
+
+                            <select
+                                name="book_id"
+                                id="book-id"
+                                class="select-input"
+                            >
+
+                                <option value="">
+                                    No textbook selected
+                                </option>
+
+                                {% for textbook in textbooks %}
+
+                                    <option
+                                        value="{{ textbook.id }}"
+                                        {% if selected_book_id == textbook.id|stringformat:"s" %}
+                                            selected
+                                        {% endif %}
+                                    >
+                                        {{ textbook.name }}
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+                        <div class="field">
+
+                            <label for="chapter">
+                                Chapter
+                            </label>
+
+                            <input
+                                type="text"
+                                name="chapter"
+                                id="chapter"
+                                class="text-input"
+                                value="{{ chapter }}"
+                                maxlength="255"
+                                placeholder="e.g. Chapter 4"
+                            >
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+                <div class="form-footer">
+
+                    <a
+                        href="{% url 'subject_detail' subject_index=subject_index %}"
+                        class="cancel-button"
+                    >
+                        Cancel
+                    </a>
+
+                    <button
+                        type="submit"
+                        class="save-button"
+                    >
+                        Save Comparison
+                    </button>
+
+                </div>
+
+            </form>
 
         </div>
 
     </main>
 
 </div>
+
+{{ comparison_data|json_script:"initial-comparison-data" }}
+
+<script>
+
+    const form =
+        document.getElementById(
+            "comparison-form"
+        );
+
+    const tableWrapper =
+        document.getElementById(
+            "comparison-table-wrapper"
+        );
+
+    const dataInput =
+        document.getElementById(
+            "comparison-data"
+        );
+
+    const statusElement =
+        document.getElementById(
+            "table-status"
+        );
+
+    const initialDataElement =
+        document.getElementById(
+            "initial-comparison-data"
+        );
+
+    let comparisonState =
+        JSON.parse(
+            initialDataElement.textContent
+        );
+
+    // ========================================================
+    // COPY CURRENT INPUT VALUES INTO STATE
+    // ========================================================
+
+    function syncStateFromTable() {
+
+        const columnInputs =
+            tableWrapper.querySelectorAll(
+                "[data-column-name]"
+            );
+
+        comparisonState.columns =
+            Array.from(
+                columnInputs
+            ).map(
+                function(input) {
+
+                    return input.value;
+
+                }
+            );
+
+        const rowElements =
+            tableWrapper.querySelectorAll(
+                "[data-comparison-row]"
+            );
+
+        comparisonState.rows =
+            Array.from(
+                rowElements
+            ).map(
+                function(rowElement) {
+
+                    const rowNameInput =
+                        rowElement.querySelector(
+                            "[data-row-name]"
+                        );
+
+                    const cellInputs =
+                        rowElement.querySelectorAll(
+                            "[data-cell]"
+                        );
+
+                    return {
+                        name:
+                            rowNameInput.value,
+
+                        cells:
+                            Array.from(
+                                cellInputs
+                            ).map(
+                                function(cellInput) {
+
+                                    return cellInput.value;
+
+                                }
+                            ),
+                    };
+
+                }
+            );
+
+    }
+
+    // ========================================================
+    // CREATE INPUT
+    // ========================================================
+
+    function createTextInput(
+        value,
+        placeholder,
+        dataAttribute
+    ) {
+
+        const input =
+            document.createElement(
+                "input"
+            );
+
+        input.type = "text";
+        input.className = "table-input";
+        input.value = value || "";
+        input.placeholder = placeholder;
+        input.maxLength = 255;
+        input.required = true;
+
+        input.setAttribute(
+            dataAttribute,
+            ""
+        );
+
+        return input;
+
+    }
+
+    // ========================================================
+    // RENDER TABLE
+    // ========================================================
+
+    function renderTable() {
+
+        tableWrapper.innerHTML = "";
+
+        const table =
+            document.createElement(
+                "table"
+            );
+
+        table.className =
+            "comparison-table";
+
+        const tableHead =
+            document.createElement(
+                "thead"
+            );
+
+        const headerRow =
+            document.createElement(
+                "tr"
+            );
+
+        const cornerHeading =
+            document.createElement(
+                "th"
+            );
+
+        cornerHeading.className =
+            "row-heading";
+
+        cornerHeading.textContent =
+            "Rows / aspects";
+
+        headerRow.appendChild(
+            cornerHeading
+        );
+
+        comparisonState.columns.forEach(
+            function(
+                columnName,
+                columnIndex
+            ) {
+
+                const heading =
+                    document.createElement(
+                        "th"
+                    );
+
+                const editor =
+                    document.createElement(
+                        "div"
+                    );
+
+                editor.className =
+                    "header-editor";
+
+                const input =
+                    createTextInput(
+                        columnName,
+                        (
+                            "Column "
+                            +
+                            (
+                                columnIndex + 1
+                            )
+                        ),
+                        "data-column-name"
+                    );
+
+                input.setAttribute(
+                    "aria-label",
+                    (
+                        "Column "
+                        +
+                        (
+                            columnIndex + 1
+                        )
+                        +
+                        " name"
+                    )
+                );
+
+                const deleteButton =
+                    document.createElement(
+                        "button"
+                    );
+
+                deleteButton.type =
+                    "button";
+
+                deleteButton.className =
+                    "delete-table-button";
+
+                deleteButton.textContent =
+                    "×";
+
+                deleteButton.title =
+                    "Delete column";
+
+                deleteButton.disabled =
+                    (
+                        comparisonState
+                        .columns
+                        .length
+                        <= 2
+                    );
+
+                deleteButton.addEventListener(
+                    "click",
+                    function() {
+
+                        removeColumn(
+                            columnIndex
+                        );
+
+                    }
+                );
+
+                editor.appendChild(
+                    input
+                );
+
+                editor.appendChild(
+                    deleteButton
+                );
+
+                heading.appendChild(
+                    editor
+                );
+
+                headerRow.appendChild(
+                    heading
+                );
+
+            }
+        );
+
+        tableHead.appendChild(
+            headerRow
+        );
+
+        table.appendChild(
+            tableHead
+        );
+
+        const tableBody =
+            document.createElement(
+                "tbody"
+            );
+
+        comparisonState.rows.forEach(
+            function(
+                row,
+                rowIndex
+            ) {
+
+                const tableRow =
+                    document.createElement(
+                        "tr"
+                    );
+
+                tableRow.setAttribute(
+                    "data-comparison-row",
+                    ""
+                );
+
+                const rowHeading =
+                    document.createElement(
+                        "th"
+                    );
+
+                rowHeading.className =
+                    "row-heading";
+
+                const rowEditor =
+                    document.createElement(
+                        "div"
+                    );
+
+                rowEditor.className =
+                    "header-editor";
+
+                const rowInput =
+                    createTextInput(
+                        row.name,
+                        (
+                            "Row "
+                            +
+                            (
+                                rowIndex + 1
+                            )
+                        ),
+                        "data-row-name"
+                    );
+
+                rowInput.setAttribute(
+                    "aria-label",
+                    (
+                        "Row "
+                        +
+                        (
+                            rowIndex + 1
+                        )
+                        +
+                        " name"
+                    )
+                );
+
+                const deleteButton =
+                    document.createElement(
+                        "button"
+                    );
+
+                deleteButton.type =
+                    "button";
+
+                deleteButton.className =
+                    "delete-table-button";
+
+                deleteButton.textContent =
+                    "×";
+
+                deleteButton.title =
+                    "Delete row";
+
+                deleteButton.disabled =
+                    (
+                        comparisonState
+                        .rows
+                        .length
+                        <= 1
+                    );
+
+                deleteButton.addEventListener(
+                    "click",
+                    function() {
+
+                        removeRow(
+                            rowIndex
+                        );
+
+                    }
+                );
+
+                rowEditor.appendChild(
+                    rowInput
+                );
+
+                rowEditor.appendChild(
+                    deleteButton
+                );
+
+                rowHeading.appendChild(
+                    rowEditor
+                );
+
+                tableRow.appendChild(
+                    rowHeading
+                );
+
+                comparisonState.columns.forEach(
+                    function(
+                        column,
+                        columnIndex
+                    ) {
+
+                        const cell =
+                            document.createElement(
+                                "td"
+                            );
+
+                        const textarea =
+                            document.createElement(
+                                "textarea"
+                            );
+
+                        textarea.className =
+                            "cell-input";
+
+                        textarea.placeholder =
+                            "Enter comparison details...";
+
+                        textarea.value =
+                            (
+                                row.cells[
+                                    columnIndex
+                                ]
+                                ||
+                                ""
+                            );
+
+                        textarea.setAttribute(
+                            "data-cell",
+                            ""
+                        );
+
+                        textarea.setAttribute(
+                            "aria-label",
+                            (
+                                "Row "
+                                +
+                                (
+                                    rowIndex + 1
+                                )
+                                +
+                                ", column "
+                                +
+                                (
+                                    columnIndex + 1
+                                )
+                            )
+                        );
+
+                        cell.appendChild(
+                            textarea
+                        );
+
+                        tableRow.appendChild(
+                            cell
+                        );
+
+                    }
+                );
+
+                tableBody.appendChild(
+                    tableRow
+                );
+
+            }
+        );
+
+        table.appendChild(
+            tableBody
+        );
+
+        tableWrapper.appendChild(
+            table
+        );
+
+        statusElement.textContent =
+            (
+                comparisonState.columns.length
+                +
+                " columns · "
+                +
+                comparisonState.rows.length
+                +
+                " rows"
+            );
+
+    }
+
+    // ========================================================
+    // ADD COLUMN
+    // ========================================================
+
+    function addColumn() {
+
+        syncStateFromTable();
+
+        comparisonState.columns.push(
+            ""
+        );
+
+        comparisonState.rows.forEach(
+            function(row) {
+
+                row.cells.push(
+                    ""
+                );
+
+            }
+        );
+
+        renderTable();
+
+    }
+
+    // ========================================================
+    // DELETE COLUMN
+    // ========================================================
+
+    function removeColumn(
+        columnIndex
+    ) {
+
+        syncStateFromTable();
+
+        if (
+            comparisonState.columns.length
+            <= 2
+        ) {
+
+            return;
+
+        }
+
+        comparisonState.columns.splice(
+            columnIndex,
+            1
+        );
+
+        comparisonState.rows.forEach(
+            function(row) {
+
+                row.cells.splice(
+                    columnIndex,
+                    1
+                );
+
+            }
+        );
+
+        renderTable();
+
+    }
+
+    // ========================================================
+    // ADD ROW
+    // ========================================================
+
+    function addRow() {
+
+        syncStateFromTable();
+
+        comparisonState.rows.push(
+            {
+                name: "",
+
+                cells:
+                    comparisonState
+                    .columns
+                    .map(
+                        function() {
+
+                            return "";
+
+                        }
+                    ),
+            }
+        );
+
+        renderTable();
+
+    }
+
+    // ========================================================
+    // DELETE ROW
+    // ========================================================
+
+    function removeRow(
+        rowIndex
+    ) {
+
+        syncStateFromTable();
+
+        if (
+            comparisonState.rows.length
+            <= 1
+        ) {
+
+            return;
+
+        }
+
+        comparisonState.rows.splice(
+            rowIndex,
+            1
+        );
+
+        renderTable();
+
+    }
+
+    // ========================================================
+    // EVENTS
+    // ========================================================
+
+    document
+        .getElementById(
+            "add-column-button"
+        )
+        .addEventListener(
+            "click",
+            addColumn
+        );
+
+    document
+        .getElementById(
+            "add-row-button"
+        )
+        .addEventListener(
+            "click",
+            addRow
+        );
+
+    form.addEventListener(
+        "submit",
+        function(event) {
+
+            syncStateFromTable();
+
+            if (
+                comparisonState.columns.length
+                < 2
+                ||
+                comparisonState.rows.length
+                < 1
+            ) {
+
+                event.preventDefault();
+
+                return;
+
+            }
+
+            dataInput.value =
+                JSON.stringify(
+                    comparisonState
+                );
+
+        }
+    );
+
+    renderTable();
+
+</script>
 
 <script src="{% static 'dashboard/js/sidebar.js' %}"></script>
 

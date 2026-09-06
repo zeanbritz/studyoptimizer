@@ -101,6 +101,11 @@ class KnowledgeUnit(models.Model):
             "Steps",
         )
 
+        COMPARISON = (
+            "COMPARISON",
+            "Comparison",
+        )
+
     title = models.CharField(
         max_length=255
     )
@@ -415,6 +420,169 @@ class StepItem(models.Model):
         return (
             f"{self.order}. "
             f"{self.text}"
+        )
+
+# ============================================================
+# COMPARISON
+# ============================================================
+
+class Comparison(models.Model):
+
+    knowledge_unit = models.OneToOneField(
+        KnowledgeUnit,
+        on_delete=models.CASCADE,
+        related_name="comparison",
+    )
+
+    name = models.CharField(
+        max_length=255
+    )
+
+    book_name = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+    )
+
+    chapter = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+    )
+
+    created = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+
+        return self.name
+
+
+# ============================================================
+# COMPARISON COLUMN
+# ============================================================
+
+class ComparisonColumn(models.Model):
+
+    comparison = models.ForeignKey(
+        Comparison,
+        on_delete=models.CASCADE,
+        related_name="columns",
+    )
+
+    name = models.CharField(
+        max_length=255
+    )
+
+    order = models.PositiveIntegerField(
+        default=1
+    )
+
+    class Meta:
+
+        ordering = [
+            "order",
+            "id",
+        ]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "comparison",
+                    "order",
+                ],
+                name="unique_comparison_column_order",
+            )
+        ]
+
+    def __str__(self):
+
+        return self.name
+
+
+# ============================================================
+# COMPARISON ROW
+# ============================================================
+
+class ComparisonRow(models.Model):
+
+    comparison = models.ForeignKey(
+        Comparison,
+        on_delete=models.CASCADE,
+        related_name="rows",
+    )
+
+    name = models.CharField(
+        max_length=255
+    )
+
+    order = models.PositiveIntegerField(
+        default=1
+    )
+
+    class Meta:
+
+        ordering = [
+            "order",
+            "id",
+        ]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "comparison",
+                    "order",
+                ],
+                name="unique_comparison_row_order",
+            )
+        ]
+
+    def __str__(self):
+
+        return self.name
+
+
+# ============================================================
+# COMPARISON CELL
+# ============================================================
+
+class ComparisonCell(models.Model):
+
+    row = models.ForeignKey(
+        ComparisonRow,
+        on_delete=models.CASCADE,
+        related_name="cells",
+    )
+
+    column = models.ForeignKey(
+        ComparisonColumn,
+        on_delete=models.CASCADE,
+        related_name="cells",
+    )
+
+    content = models.TextField(
+        blank=True,
+        default="",
+    )
+
+    class Meta:
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "row",
+                    "column",
+                ],
+                name="unique_comparison_cell",
+            )
+        ]
+
+    def __str__(self):
+
+        return (
+            f"{self.row.name} - "
+            f"{self.column.name}"
         )
 
 # ============================================================

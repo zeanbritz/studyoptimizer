@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from datetime import date, datetime, timedelta
+from django.db import transaction
 
 import json
 import random
@@ -21,6 +22,10 @@ from .models import (
     StepItem,
     StudentKnowledge,
     Note,
+    Comparison,
+    ComparisonColumn,
+    ComparisonRow,
+    ComparisonCell,
 )
 
 from dashboard.models import (
@@ -7610,24 +7615,551 @@ def random_note_review(
         review_url
     )
 
+# ============================================================
+# CREATE COMPARISON
+# ============================================================
+
 @login_required
-def create_comparison(request, subject_id):
+def create_comparison(
+    request,
+    subject_id
+):
+
+    # ========================================================
+    # SUBJECT
+    # ========================================================
+
     subject = get_object_or_404(
         Subject,
         id=subject_id,
         user=request.user,
     )
 
+    # ========================================================
+    # SUBJECT INDEX
+    # ========================================================
+
+    subject_index = (
+        request.POST.get(
+            "subject_index"
+        )
+        or
+        request.GET.get(
+            "subject_index"
+        )
+    )
+
     try:
-        subject_index = int(request.GET.get("subject_index", 0))
-    except (TypeError, ValueError):
+
+        subject_index = int(
+            subject_index
+        )
+
+    except (
+        TypeError,
+        ValueError
+    ):
+
         subject_index = 0
+
+    # ========================================================
+    # TEXTBOOKS
+    # ========================================================
+
+    textbooks = (
+        SubjectTextbook.objects
+        .filter(
+            subject=subject
+        )
+        .order_by(
+            "created",
+            "id",
+        )
+    )
+
+    # ========================================================
+    # DEFAULT FORM VALUES
+    # ========================================================
+
+    comparison_name = ""
+    selected_book_id = ""
+    chapter = ""
+    error = None
+
+    comparison_data = {
+        "columns": [
+            "",
+            "",
+        ],
+        "rows": [
+            {
+                "name": "",
+                "cells": [
+                    "",
+                    "",
+                ],
+            }
+            for row_number in range(5)
+        ],
+    }
+
+    # ========================================================
+    # POST
+    # ========================================================
+
+    if request.method == "POST":
+
+        comparison_name = (
+            request.POST.get(
+                "comparison_name",
+                ""
+            )
+            .strip()
+        )
+
+        selected_book_id = (
+            request.POST.get(
+                "book_id",
+                ""
+            )
+            .strip()
+        )
+
+        chapter = (
+            request.POST.get(
+                "chapter",
+                ""
+            )
+            .strip()
+        )
+
+        comparison_data_raw = (
+            request.POST.get(
+                "comparison_data",
+                ""
+            )
+        )
+
+        # ====================================================
+        # PARSE TABLE DATA
+        # ====================================================
+
+        try:
+
+            submitted_data = json.loads(
+                comparison_data_raw
+            )
+
+            if not isinstance(
+                submitted_data,
+                dict
+            ):
+
+                raise ValueError
+
+            submitted_columns = (
+                submitted_data.get(
+                    "columns",
+                    []
+                )
+            )
+
+            submitted_rows = (
+                submitted_data.get(
+                    "rows",
+                    []
+                )
+            )
+
+            if (
+                not isinstance(
+                    submitted_columns,
+                    list
+                )
+                or
+                not isinstance(
+                    submitted_rows,
+                    list
+                )
+            ):
+
+                raise ValueError
+
+            column_names = []
+
+            for column_name in submitted_columns:
+
+                column_names.append(
+                    str(
+                        column_name
+                    ).strip()
+                )
+
+            normalized_rows = []
+
+            for submitted_row in submitted_rows:
+
+                if not isinstance(
+                    submitted_row,
+                    dict
+                ):
+
+                    raise ValueError
+
+                row_name = str(
+                    submitted_row.get(
+                        "name",
+                        ""
+                    )
+                ).strip()
+
+                submitted_cells = (
+                    submitted_row.get(
+                        "cells",
+                        []
+                    )
+                )
+
+                if not isinstance(
+                    submitted_cells,
+                    list
+                ):
+
+                    submitted_cells = []
+
+                cells = []
+
+                for column_index in range(
+                    len(column_names)
+                ):
+
+                    cell_content = ""
+
+                    if (
+                        column_index
+                        <
+                        len(submitted_cells)
+                    ):
+
+                        cell_content = str(
+                            submitted_cells[
+                                column_index
+                            ]
+                        ).strip()
+
+                    cells.append(
+                        cell_content
+                    )
+
+                normalized_rows.append(
+                    {
+                        "name":
+                            row_name,
+
+                        "cells":
+                            cells,
+                    }
+                )
+
+            comparison_data = {
+                "columns":
+                    column_names,
+
+                "rows":
+                    normalized_rows,
+            }
+
+        except (
+            TypeError,
+            ValueError,
+            json.JSONDecodeError
+        ):
+
+            error = (
+                "The comparison table could not "
+                "be read. Please try again."
+            )
+
+            column_names = []
+            normalized_rows = []
+
+        # ====================================================
+        # VALIDATION
+        # ====================================================
+
+        if (
+            error is None
+            and
+            not comparison_name
+        ):
+
+            error = (
+                "Please enter a name "
+                "for the comparison."
+            )
+
+        elif (
+            error is None
+            and
+            len(column_names) < 2
+        ):
+
+            error = (
+                "A comparison must have "
+                "at least two columns."
+            )
+
+        elif (
+            error is None
+            and
+            len(normalized_rows) < 1
+        ):
+
+            error = (
+                "A comparison must have "
+                "at least one row."
+            )
+
+        elif (
+            error is None
+            and
+            any(
+                not column_name
+                for column_name
+                in column_names
+            )
+        ):
+
+            error = (
+                "Please name every column."
+            )
+
+        elif (
+            error is None
+            and
+            any(
+                not row["name"]
+                for row
+                in normalized_rows
+            )
+        ):
+
+            error = (
+                "Please name every row."
+            )
+
+        elif (
+            error is None
+            and
+            len(comparison_name) > 255
+        ):
+
+            error = (
+                "The comparison name cannot "
+                "be longer than 255 characters."
+            )
+
+        elif (
+            error is None
+            and
+            any(
+                len(column_name) > 255
+                for column_name
+                in column_names
+            )
+        ):
+
+            error = (
+                "Column names cannot be longer "
+                "than 255 characters."
+            )
+
+        elif (
+            error is None
+            and
+            any(
+                len(row["name"]) > 255
+                for row
+                in normalized_rows
+            )
+        ):
+
+            error = (
+                "Row names cannot be longer "
+                "than 255 characters."
+            )
+
+        # ====================================================
+        # VALIDATE OPTIONAL TEXTBOOK
+        # ====================================================
+
+        selected_book = None
+
+        if (
+            error is None
+            and
+            selected_book_id
+        ):
+
+            try:
+
+                selected_book_id_integer = int(
+                    selected_book_id
+                )
+
+            except (
+                TypeError,
+                ValueError
+            ):
+
+                selected_book_id_integer = None
+
+            if selected_book_id_integer:
+
+                selected_book = (
+                    textbooks
+                    .filter(
+                        id=selected_book_id_integer
+                    )
+                    .first()
+                )
+
+            if not selected_book:
+
+                error = (
+                    "The selected textbook does not "
+                    "belong to this subject."
+                )
+
+        # ====================================================
+        # SAVE COMPARISON
+        # ====================================================
+
+        if error is None:
+
+            with transaction.atomic():
+
+                knowledge_unit = (
+                    KnowledgeUnit.objects.create(
+                        subject=subject,
+                        title=comparison_name,
+                        knowledge_type=(
+                            KnowledgeUnit
+                            .KnowledgeType
+                            .COMPARISON
+                        ),
+                        difficulty=1,
+                        estimated_minutes=max(
+                            2,
+                            len(normalized_rows),
+                        ),
+                        active=True,
+                    )
+                )
+
+                comparison = (
+                    Comparison.objects.create(
+                        knowledge_unit=knowledge_unit,
+                        name=comparison_name,
+                        book_name=(
+                            selected_book.name
+                            if selected_book
+                            else ""
+                        ),
+                        chapter=chapter,
+                    )
+                )
+
+                saved_columns = []
+
+                for (
+                    column_order,
+                    column_name
+                ) in enumerate(
+                    column_names,
+                    start=1,
+                ):
+
+                    saved_column = (
+                        ComparisonColumn.objects.create(
+                            comparison=comparison,
+                            name=column_name,
+                            order=column_order,
+                        )
+                    )
+
+                    saved_columns.append(
+                        saved_column
+                    )
+
+                for (
+                    row_order,
+                    row_data
+                ) in enumerate(
+                    normalized_rows,
+                    start=1,
+                ):
+
+                    saved_row = (
+                        ComparisonRow.objects.create(
+                            comparison=comparison,
+                            name=row_data["name"],
+                            order=row_order,
+                        )
+                    )
+
+                    for (
+                        column_index,
+                        saved_column
+                    ) in enumerate(
+                        saved_columns
+                    ):
+
+                        ComparisonCell.objects.create(
+                            row=saved_row,
+                            column=saved_column,
+                            content=(
+                                row_data["cells"][
+                                    column_index
+                                ]
+                            ),
+                        )
+
+            return redirect(
+                "subject_detail",
+                subject_index=subject_index,
+            )
+
+    # ========================================================
+    # RENDER
+    # ========================================================
 
     return render(
         request,
         "learning/create_comparison.html",
         {
-            "subject": subject,
-            "subject_index": subject_index,
-        },
+            "subject":
+                subject,
+
+            "subject_index":
+                subject_index,
+
+            "textbooks":
+                textbooks,
+
+            "comparison_name":
+                comparison_name,
+
+            "selected_book_id":
+                selected_book_id,
+
+            "chapter":
+                chapter,
+
+            "comparison_data":
+                comparison_data,
+
+            "error":
+                error,
+        }
     )
