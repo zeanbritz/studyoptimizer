@@ -1,0 +1,608 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Comparisons to Review
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{% static 'dashboard/css/sidebar.css' %}"
+    >
+
+    <style>
+
+        :root {
+            --green: #58cc02;
+            --green-dark: #46a302;
+            --blue: #1cb0f6;
+            --blue-dark: #168fc7;
+            --red: #ff4b4b;
+            --ink: #3c3c3c;
+            --muted: #777;
+            --border: #e5e5e5;
+            --background: #f7f7f5;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--background);
+            color: var(--ink);
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Arial,
+                sans-serif;
+        }
+
+        button {
+            font: inherit;
+        }
+
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .page {
+            width: 100%;
+            max-width: 1150px;
+            padding: 28px 38px 60px;
+        }
+
+        .top-bar {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .back-button {
+            width: 42px;
+            height: 42px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            border: 2px solid var(--border);
+            border-radius: 12px;
+
+            background: white;
+            color: var(--ink);
+
+            font-size: 22px;
+            font-weight: 900;
+            text-decoration: none;
+
+            box-shadow: 0 3px 0 #d5d5d5;
+        }
+
+        .top-bar h1 {
+            margin: 0;
+            font-size: 27px;
+            letter-spacing: -0.5px;
+        }
+
+        .review-count {
+            margin-left: auto;
+            padding: 8px 13px;
+
+            border: 2px solid #cceeb3;
+            border-radius: 999px;
+
+            background: #e9fbdc;
+            color: #398500;
+
+            font-size: 13px;
+            font-weight: 850;
+        }
+
+        .review-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .review-card {
+            padding: 22px;
+
+            border: 2px solid var(--border);
+            border-radius: 18px;
+
+            background: white;
+
+            box-shadow: 0 4px 0 #dededb;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+
+            gap: 20px;
+
+            margin-bottom: 18px;
+        }
+
+        .card-header h2 {
+            margin: 0;
+            font-size: 21px;
+        }
+
+        .details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+            margin-top: 9px;
+        }
+
+        .detail-pill {
+            padding: 5px 9px;
+            border-radius: 999px;
+            background: #f0f0ee;
+            color: #696969;
+            font-size: 11px;
+            font-weight: 750;
+        }
+
+        .reveal-button {
+            min-width: 110px;
+            min-height: 42px;
+
+            border: 2px solid var(--blue);
+            border-radius: 11px;
+
+            background: var(--blue);
+            color: white;
+
+            font-weight: 850;
+            cursor: pointer;
+
+            box-shadow: 0 4px 0 var(--blue-dark);
+        }
+
+        .reveal-button:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        .answer {
+            overflow-x: auto;
+        }
+
+        .answer[hidden],
+        .rating-actions[hidden] {
+            display: none;
+        }
+
+        .comparison-table {
+            width: 100%;
+            min-width: 650px;
+
+            border: 2px solid var(--border);
+            border-radius: 13px;
+
+            border-collapse: separate;
+            border-spacing: 0;
+            overflow: hidden;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 13px;
+
+            border-right: 2px solid #eeeeec;
+            border-bottom: 2px solid #eeeeec;
+
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .comparison-table th:last-child,
+        .comparison-table td:last-child {
+            border-right: none;
+        }
+
+        .comparison-table tr:last-child th,
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table thead th {
+            background: #f0f8ff;
+            color: #137dac;
+            font-size: 13px;
+            font-weight: 850;
+        }
+
+        .row-name {
+            width: 180px;
+            background: #fafaf8;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .comparison-table td {
+            color: #4a4a4a;
+            font-size: 13px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+
+        .empty-cell {
+            color: #b0b0b0;
+        }
+
+        .rating-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+
+            margin-top: 18px;
+            padding-top: 18px;
+
+            border-top: 2px solid #f0f0ee;
+        }
+
+        .rating-button {
+            min-width: 120px;
+            min-height: 44px;
+
+            border-radius: 11px;
+
+            font-weight: 850;
+            cursor: pointer;
+        }
+
+        .again-button {
+            border: 2px solid #ffc4c4;
+            background: #fff0f0;
+            color: #d83b3b;
+            box-shadow: 0 4px 0 #ffc4c4;
+        }
+
+        .got-it-button {
+            border: 2px solid var(--green);
+            background: var(--green);
+            color: white;
+            box-shadow: 0 4px 0 var(--green-dark);
+        }
+
+        .rating-button:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        .empty-state {
+            padding: 55px 25px;
+
+            border: 2px solid var(--border);
+            border-radius: 18px;
+
+            background: white;
+
+            text-align: center;
+            box-shadow: 0 4px 0 #dededb;
+        }
+
+        .empty-icon {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 38px;
+        }
+
+        .empty-state h2 {
+            margin: 0;
+            font-size: 21px;
+        }
+
+        @media (max-width: 700px) {
+
+            .page {
+                padding: 20px 16px 45px;
+            }
+
+            .review-count {
+                display: none;
+            }
+
+            .card-header {
+                flex-direction: column;
+            }
+
+            .reveal-button {
+                width: 100%;
+            }
+
+            .rating-actions {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="app">
+
+    {% include 'partials/sidebar.html' with active_page='review' %}
+
+    <main class="main">
+
+        <div class="page">
+
+            <div class="top-bar">
+
+                <a
+                    href="{% url 'subject_detail' subject_index=subject_index %}"
+                    class="back-button"
+                    aria-label="Back to subject"
+                >
+                    ←
+                </a>
+
+                <h1>
+                    Comparisons
+                </h1>
+
+                <span class="review-count">
+                    {{ due_comparison_count }} due
+                </span>
+
+            </div>
+
+            {% if due_comparisons %}
+
+                <div class="review-stack">
+
+                    {% for item in due_comparisons %}
+
+                        <article class="review-card">
+
+                            <div class="card-header">
+
+                                <div>
+
+                                    <h2>
+                                        {{ item.comparison.name }}
+                                    </h2>
+
+                                    {% if item.comparison.book_name or item.comparison.chapter %}
+
+                                        <div class="details">
+
+                                            {% if item.comparison.book_name %}
+
+                                                <span class="detail-pill">
+                                                    {{ item.comparison.book_name }}
+                                                </span>
+
+                                            {% endif %}
+
+                                            {% if item.comparison.chapter %}
+
+                                                <span class="detail-pill">
+                                                    {{ item.comparison.chapter }}
+                                                </span>
+
+                                            {% endif %}
+
+                                        </div>
+
+                                    {% endif %}
+
+                                </div>
+
+                                <button
+                                    type="button"
+                                    class="reveal-button"
+                                    onclick="revealComparison(this)"
+                                >
+                                    Reveal
+                                </button>
+
+                            </div>
+
+                            <div
+                                class="answer"
+                                hidden
+                            >
+
+                                <table class="comparison-table">
+
+                                    <thead>
+
+                                        <tr>
+
+                                            <th>
+                                                Rows
+                                            </th>
+
+                                            {% for column in item.columns %}
+
+                                                <th>
+                                                    {{ column.name }}
+                                                </th>
+
+                                            {% endfor %}
+
+                                        </tr>
+
+                                    </thead>
+
+                                    <tbody>
+
+                                        {% for row in item.rows %}
+
+                                            <tr>
+
+                                                <th class="row-name">
+
+                                                    {% if row.name %}
+
+                                                        {{ row.name }}
+
+                                                    {% else %}
+
+                                                        Row {{ forloop.counter }}
+
+                                                    {% endif %}
+
+                                                </th>
+
+                                                {% for cell in row.cells %}
+
+                                                    <td>
+
+                                                        {% if cell %}
+
+                                                            {{ cell }}
+
+                                                        {% else %}
+
+                                                            <span class="empty-cell">
+                                                                —
+                                                            </span>
+
+                                                        {% endif %}
+
+                                                    </td>
+
+                                                {% endfor %}
+
+                                            </tr>
+
+                                        {% endfor %}
+
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+
+                            <form
+                                method="POST"
+                                class="rating-actions"
+                                hidden
+                            >
+
+                                {% csrf_token %}
+
+                                <input
+                                    type="hidden"
+                                    name="comparison_id"
+                                    value="{{ item.comparison.id }}"
+                                >
+
+                                <button
+                                    type="submit"
+                                    name="rating"
+                                    value="again"
+                                    class="rating-button again-button"
+                                >
+                                    Again
+                                </button>
+
+                                <button
+                                    type="submit"
+                                    name="rating"
+                                    value="got_it"
+                                    class="rating-button got-it-button"
+                                >
+                                    Got it
+                                </button>
+
+                            </form>
+
+                        </article>
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <div class="empty-state">
+
+                    <span class="empty-icon">
+                        ✓
+                    </span>
+
+                    <h2>
+                        All done
+                    </h2>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </main>
+
+</div>
+
+<script>
+
+    function revealComparison(
+        button
+    ) {
+
+        const card =
+            button.closest(
+                ".review-card"
+            );
+
+        const answer =
+            card.querySelector(
+                ".answer"
+            );
+
+        const ratingActions =
+            card.querySelector(
+                ".rating-actions"
+            );
+
+        answer.hidden =
+            false;
+
+        ratingActions.hidden =
+            false;
+
+        button.hidden =
+            true;
+
+    }
+
+</script>
+
+<script src="{% static 'dashboard/js/sidebar.js' %}"></script>
+
+</body>
+
+</html>

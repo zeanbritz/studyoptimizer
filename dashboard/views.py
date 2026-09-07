@@ -15,6 +15,7 @@ from learning.models import (
     StepList,
     StudentKnowledge,
     Note,
+    Comparison,
 )
 
 from .models import (
@@ -3739,6 +3740,7 @@ def subject_detail(
     due_definitions = []
     due_bullet_lists = []
     due_step_lists = []
+    due_comparisons = []
 
     # ========================================================
     # FIND DUE ITEMS
@@ -4042,6 +4044,74 @@ def subject_detail(
                     step_list
                 )
 
+        # ====================================================
+        # COMPARISONS
+        # ====================================================
+
+        comparisons = (
+            Comparison.objects
+            .filter(
+                knowledge_unit__subject=database_subject,
+                knowledge_unit__knowledge_type=(
+                    KnowledgeUnit
+                    .KnowledgeType
+                    .COMPARISON
+                ),
+                knowledge_unit__active=True,
+            )
+            .select_related(
+                "knowledge_unit"
+            )
+            .order_by(
+                "knowledge_unit__created",
+                "id",
+            )
+        )
+
+        for comparison in comparisons:
+
+            progress = (
+                StudentKnowledge.objects
+                .filter(
+                    student=request.user,
+                    knowledge_unit=(
+                        comparison.knowledge_unit
+                    ),
+                )
+                .first()
+            )
+
+            is_due = False
+
+            if progress is None:
+
+                is_due = True
+
+            elif progress.next_review is None:
+
+                is_due = True
+
+            else:
+
+                next_review_date = (
+                    timezone.localtime(
+                        progress.next_review
+                    )
+                    .date()
+                )
+
+                if next_review_date <= today:
+
+                    is_due = True
+
+            if is_due:
+
+                due_comparisons.append(
+                    comparison
+                )
+
+
+
     # ========================================================
     # COUNTS
     # ========================================================
@@ -4062,6 +4132,10 @@ def subject_detail(
         due_step_lists
     )
 
+    due_comparison_count = len(
+        due_comparisons
+    )
+
     total_due_reviews = (
         due_formula_count
         +
@@ -4070,6 +4144,8 @@ def subject_detail(
         due_bullet_list_count
         +
         due_step_list_count
+        +
+        due_comparison_count
     )
 
     # ========================================================
@@ -4219,6 +4295,12 @@ def subject_detail(
 
             "total_due_reviews":
                 total_due_reviews,
+
+            "due_comparisons":
+                due_comparisons,
+
+            "due_comparison_count":
+                due_comparison_count,
         }
     )
 

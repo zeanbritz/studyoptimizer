@@ -174,4 +174,10 @@ urlpatterns = [
         name="create_comparison",
     ),
 
+    path(
+        "subjects/<int:subject_index>/comparisons/review/",
+        views.comparison_review_list,
+        name="comparison_review_list",
+    ),
+
 ]

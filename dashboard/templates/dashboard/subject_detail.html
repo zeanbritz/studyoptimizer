@@ -3018,6 +3018,46 @@
 
 
     <!-- =================================
+     COMPARISONS
+================================== -->
+
+{% if due_comparisons %}
+
+    <a
+        href="{% url 'comparison_review_list' subject_index=subject_index %}"
+        class="review-category"
+    >
+
+        <div class="review-category-header">
+
+            <div class="review-category-title">
+
+                <h3>
+                    Comparisons to Review
+                </h3>
+
+                <span class="review-count">
+                    {{ due_comparison_count }}
+                </span>
+
+            </div>
+
+            <span>
+                →
+            </span>
+
+        </div>
+
+        <p class="review-description">
+            Review your saved comparison tables.
+        </p>
+
+    </a>
+
+{% endif %}
+
+
+    <!-- =================================
          NOTES
     ================================== -->
 
@@ -3061,7 +3101,7 @@
          EMPTY
     ================================== -->
 
-    {% if not pages_to_summarize_total and not due_formulas and not due_definitions and not due_bullet_lists and not due_step_lists and not note_count %}
+    {% if not pages_to_summarize_total and not due_formulas and not due_definitions and not due_bullet_lists and not due_step_lists and not due_comparisons and not note_count %}
 
         <div class="empty-review">
             No reviews or notes available.

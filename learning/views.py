@@ -8150,3 +8150,370 @@ def create_comparison(
                 error,
         }
     )
+
+
+
+# ============================================================
+# COMPARISON REVIEW LIST
+# ============================================================
+
+@login_required
+def comparison_review_list(
+    request,
+    subject_index
+):
+
+    # ========================================================
+    # SESSION SUBJECT
+    # ========================================================
+
+    subjects = request.session.get(
+        "onboarding_subjects",
+        []
+    )
+
+    try:
+
+        subject_index = int(
+            subject_index
+        )
+
+    except (
+        TypeError,
+        ValueError
+    ):
+
+        return redirect(
+            "goals"
+        )
+
+    if (
+        subject_index < 0
+        or
+        subject_index >= len(subjects)
+    ):
+
+        return redirect(
+            "goals"
+        )
+
+    subject_data = (
+        subjects[
+            subject_index
+        ]
+    )
+
+    # ========================================================
+    # DATABASE SUBJECT
+    # ========================================================
+
+    subject = None
+
+    database_id = (
+        subject_data.get(
+            "database_id"
+        )
+    )
+
+    try:
+
+        database_id = int(
+            database_id
+        )
+
+    except (
+        TypeError,
+        ValueError
+    ):
+
+        database_id = None
+
+    if database_id:
+
+        subject = (
+            Subject.objects
+            .filter(
+                id=database_id,
+                user=request.user,
+            )
+            .first()
+        )
+
+    if not subject:
+
+        subject_name = (
+            subject_data.get(
+                "name",
+                ""
+            )
+            .strip()
+        )
+
+        if subject_name:
+
+            subject = (
+                Subject.objects
+                .filter(
+                    user=request.user,
+                    name=subject_name,
+                )
+                .first()
+            )
+
+    if not subject:
+
+        return redirect(
+            "subject_detail",
+            subject_index=subject_index,
+        )
+
+    # ========================================================
+    # SAVE REVIEW RESULT
+    # ========================================================
+
+    if request.method == "POST":
+
+        comparison_id = (
+            request.POST.get(
+                "comparison_id",
+                ""
+            )
+        )
+
+        rating = (
+            request.POST.get(
+                "rating",
+                ""
+            )
+        )
+
+        comparison = get_object_or_404(
+            Comparison,
+            id=comparison_id,
+            knowledge_unit__subject=subject,
+            knowledge_unit__subject__user=(
+                request.user
+            ),
+        )
+
+        if rating in [
+            "again",
+            "got_it",
+        ]:
+
+            progress, created = (
+                StudentKnowledge.objects
+                .get_or_create(
+                    student=request.user,
+                    knowledge_unit=(
+                        comparison.knowledge_unit
+                    ),
+                )
+            )
+
+            progress.review_count = (
+                progress.review_count
+                +
+                1
+            )
+
+            progress.last_reviewed = (
+                timezone.now()
+            )
+
+            if rating == "got_it":
+
+                progress.correct_count = (
+                    progress.correct_count
+                    +
+                    1
+                )
+
+                progress.mastery_level = min(
+                    6,
+                    (
+                        progress.mastery_level
+                        +
+                        1
+                    ),
+                )
+
+            else:
+
+                progress.incorrect_count = (
+                    progress.incorrect_count
+                    +
+                    1
+                )
+
+                progress.mastery_level = max(
+                    0,
+                    (
+                        progress.mastery_level
+                        -
+                        1
+                    ),
+                )
+
+            interval_days = max(
+                1,
+                get_review_interval(
+                    progress.mastery_level
+                ),
+            )
+
+            progress.next_review = (
+                timezone.now()
+                +
+                timedelta(
+                    days=interval_days
+                )
+            )
+
+            progress.save()
+
+        return redirect(
+            "comparison_review_list",
+            subject_index=subject_index,
+        )
+
+    # ========================================================
+    # FIND DUE COMPARISONS
+    # ========================================================
+
+    today = timezone.localdate()
+
+    comparisons = (
+        Comparison.objects
+        .filter(
+            knowledge_unit__subject=subject,
+            knowledge_unit__knowledge_type=(
+                KnowledgeUnit
+                .KnowledgeType
+                .COMPARISON
+            ),
+            knowledge_unit__active=True,
+        )
+        .select_related(
+            "knowledge_unit"
+        )
+        .prefetch_related(
+            "columns",
+            "rows__cells",
+        )
+        .order_by(
+            "knowledge_unit__created",
+            "id",
+        )
+    )
+
+    due_comparisons = []
+
+    for comparison in comparisons:
+
+        progress = (
+            StudentKnowledge.objects
+            .filter(
+                student=request.user,
+                knowledge_unit=(
+                    comparison.knowledge_unit
+                ),
+            )
+            .first()
+        )
+
+        is_due = False
+
+        if progress is None:
+
+            is_due = True
+
+        elif progress.next_review is None:
+
+            is_due = True
+
+        else:
+
+            next_review_date = (
+                timezone.localtime(
+                    progress.next_review
+                )
+                .date()
+            )
+
+            if next_review_date <= today:
+
+                is_due = True
+
+        if not is_due:
+
+            continue
+
+        columns = list(
+            comparison.columns.all()
+        )
+
+        review_rows = []
+
+        for row in comparison.rows.all():
+
+            cell_lookup = {
+                cell.column_id:
+                    cell.content
+
+                for cell
+                in row.cells.all()
+            }
+
+            review_rows.append(
+                {
+                    "name":
+                        row.name,
+
+                    "cells": [
+                        cell_lookup.get(
+                            column.id,
+                            ""
+                        )
+                        for column
+                        in columns
+                    ],
+                }
+            )
+
+        due_comparisons.append(
+            {
+                "comparison":
+                    comparison,
+
+                "columns":
+                    columns,
+
+                "rows":
+                    review_rows,
+            }
+        )
+
+    # ========================================================
+    # RENDER
+    # ========================================================
+
+    return render(
+        request,
+        "learning/comparison_review_list.html",
+        {
+            "subject":
+                subject,
+
+            "subject_index":
+                subject_index,
+
+            "due_comparisons":
+                due_comparisons,
+
+            "due_comparison_count":
+                len(
+                    due_comparisons
+                ),
+        }
+    )
