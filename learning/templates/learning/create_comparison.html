@@ -13,7 +13,7 @@
     >
 
     <title>
-        Create Comparison - {{ subject.name }}
+        Create Comparison
     </title>
 
     <link
@@ -23,14 +23,29 @@
 
     <style>
 
+        :root {
+            --green: #58cc02;
+            --green-dark: #46a302;
+            --green-soft: #e9fbdc;
+            --blue: #1cb0f6;
+            --blue-dark: #168fc7;
+            --red: #ff4b4b;
+            --red-soft: #fff0f0;
+            --ink: #3c3c3c;
+            --muted: #777777;
+            --border: #e5e5e5;
+            --surface: #ffffff;
+            --background: #f7f7f5;
+        }
+
         * {
             box-sizing: border-box;
         }
 
         body {
             margin: 0;
-            background: #f5f6f8;
-            color: #222;
+            background: var(--background);
+            color: var(--ink);
             font-family:
                 -apple-system,
                 BlinkMacSystemFont,
@@ -46,6 +61,11 @@
             font: inherit;
         }
 
+        button,
+        a {
+            -webkit-tap-highlight-color: transparent;
+        }
+
         .app {
             display: flex;
             min-height: 100vh;
@@ -57,54 +77,117 @@
         }
 
         .page {
-            min-height: 100vh;
-            padding: 30px 40px 50px;
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 28px 38px 50px;
         }
 
-        .back-link {
-            display: inline-block;
-            margin-bottom: 22px;
-            color: #555;
-            font-size: 14px;
-            font-weight: 600;
-            text-decoration: none;
-        }
+        /* =========================================
+           TOP BAR
+        ========================================= */
 
-        .back-link:hover {
-            color: #222;
-        }
-
-        .page-header {
+        .top-bar {
+            display: flex;
+            align-items: center;
+            gap: 14px;
             margin-bottom: 24px;
         }
 
-        .page-header h1 {
-            margin: 0 0 6px;
-            font-size: 30px;
+        .back-button {
+            width: 42px;
+            height: 42px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            flex-shrink: 0;
+
+            border: 2px solid var(--border);
+            border-radius: 12px;
+
+            background: var(--surface);
+            color: var(--ink);
+
+            font-size: 22px;
+            font-weight: 800;
+            line-height: 1;
+            text-decoration: none;
+
+            box-shadow: 0 3px 0 #d5d5d5;
+
+            transition:
+                transform 0.1s ease,
+                box-shadow 0.1s ease;
         }
 
-        .page-header p {
-            margin: 0;
-            color: #777;
-            font-size: 14px;
+        .back-button:active {
+            transform: translateY(3px);
+            box-shadow: none;
         }
+
+        .page-title {
+            min-width: 0;
+        }
+
+        .page-title h1 {
+            margin: 0;
+            font-size: 27px;
+            line-height: 1.1;
+            letter-spacing: -0.6px;
+        }
+
+        .subject-pill {
+            display: inline-flex;
+            align-items: center;
+
+            max-width: 280px;
+
+            margin-left: auto;
+            padding: 8px 13px;
+
+            border: 2px solid #cceeb3;
+            border-radius: 999px;
+
+            background: var(--green-soft);
+            color: #398500;
+
+            font-size: 13px;
+            font-weight: 800;
+
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* =========================================
+           FORM
+        ========================================= */
 
         .form-card {
-            padding: 26px;
-            border: 1px solid #e4e4e4;
-            border-radius: 14px;
-            background: white;
+            padding: 24px;
+
+            border: 2px solid var(--border);
+            border-radius: 18px;
+
+            background: var(--surface);
+
+            box-shadow: 0 4px 0 #dededb;
         }
 
         .error-message {
             margin-bottom: 20px;
-            padding: 12px 14px;
-            border: 1px solid #e1bcbc;
-            border-radius: 8px;
-            background: #fff3f3;
-            color: #9f3535;
+            padding: 13px 15px;
+
+            border: 2px solid #ffc1c1;
+            border-radius: 12px;
+
+            background: var(--red-soft);
+            color: #be3333;
+
             font-size: 13px;
-            font-weight: 600;
+            font-weight: 750;
         }
 
         .field {
@@ -113,104 +196,148 @@
             gap: 7px;
         }
 
-        .field label {
-            color: #444;
+        .field-label {
+            color: var(--ink);
             font-size: 13px;
-            font-weight: 700;
-        }
-
-        .field-help {
-            color: #888;
-            font-size: 12px;
+            font-weight: 800;
         }
 
         .text-input,
         .select-input {
             width: 100%;
-            padding: 11px 12px;
-            border: 1px solid #d8d8d8;
-            border-radius: 8px;
-            background: white;
-            color: #222;
+            height: 47px;
+
+            padding: 0 14px;
+
+            border: 2px solid var(--border);
+            border-radius: 12px;
+
+            background: #ffffff;
+            color: var(--ink);
+
+            font-weight: 650;
             outline: none;
+
+            transition:
+                border-color 0.15s ease,
+                box-shadow 0.15s ease;
         }
 
         .text-input:focus,
         .select-input:focus,
         .table-input:focus,
         .cell-input:focus {
-            border-color: #222;
+            border-color: var(--blue);
+            box-shadow:
+                0 0 0 3px
+                rgba(28, 176, 246, 0.14);
         }
 
-        .name-field {
-            max-width: 650px;
-            margin-bottom: 26px;
+        .comparison-name-field {
+            max-width: 700px;
+            margin-bottom: 24px;
         }
+
+        /* =========================================
+           TABLE TOOLBAR
+        ========================================= */
 
         .table-section {
             padding-top: 22px;
-            border-top: 1px solid #eeeeee;
+            border-top: 2px solid #f0f0ee;
         }
 
-        .table-header {
+        .table-toolbar {
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             justify-content: space-between;
-            gap: 20px;
-            margin-bottom: 16px;
+
+            gap: 14px;
+
+            margin-bottom: 15px;
         }
 
-        .table-header h2 {
-            margin: 0 0 5px;
-            font-size: 19px;
-        }
-
-        .table-header p {
+        .table-toolbar h2 {
             margin: 0;
-            color: #888;
-            font-size: 12px;
+            font-size: 18px;
+            letter-spacing: -0.2px;
         }
 
         .table-actions {
             display: flex;
-            gap: 8px;
-            flex-shrink: 0;
+            align-items: center;
+            gap: 9px;
         }
 
-        .secondary-button {
-            padding: 9px 13px;
-            border: 1px solid #d6d6d6;
-            border-radius: 8px;
-            background: white;
-            color: #333;
+        .action-button {
+            min-height: 40px;
+
+            padding: 0 14px;
+
+            border: 2px solid var(--border);
+            border-radius: 11px;
+
+            background: #ffffff;
+            color: var(--ink);
+
             font-size: 13px;
-            font-weight: 700;
+            font-weight: 800;
             cursor: pointer;
+
+            box-shadow: 0 3px 0 #d8d8d5;
+
+            transition:
+                transform 0.1s ease,
+                box-shadow 0.1s ease,
+                background 0.15s ease;
         }
 
-        .secondary-button:hover {
-            background: #f3f3f3;
+        .action-button:hover {
+            background: #f7f7f5;
         }
+
+        .action-button:active {
+            transform: translateY(3px);
+            box-shadow: none;
+        }
+
+        .add-column-button {
+            border-color: #a7dcff;
+            background: #eef9ff;
+            color: #087fba;
+            box-shadow: 0 3px 0 #a7dcf5;
+        }
+
+        /* =========================================
+           COMPARISON TABLE
+        ========================================= */
 
         .comparison-table-wrapper {
             width: 100%;
             overflow-x: auto;
-            border: 1px solid #dedede;
-            border-radius: 10px;
+
+            border: 2px solid var(--border);
+            border-radius: 14px;
+
+            background: #ffffff;
         }
 
         .comparison-table {
             width: 100%;
-            min-width: 720px;
-            border-collapse: collapse;
+            min-width: 760px;
+
+            border-collapse: separate;
+            border-spacing: 0;
             table-layout: fixed;
         }
 
         .comparison-table th,
         .comparison-table td {
             padding: 10px;
-            border-right: 1px solid #e4e4e4;
-            border-bottom: 1px solid #e4e4e4;
+
+            border-right: 2px solid #eeeeec;
+            border-bottom: 2px solid #eeeeec;
+
             vertical-align: top;
         }
 
@@ -225,12 +352,21 @@
         }
 
         .comparison-table thead th {
-            background: #f5f6f8;
+            background: #f4f4f2;
         }
 
         .row-heading {
-            width: 210px;
-            background: #fafafa;
+            width: 205px;
+            background: #fafaf8;
+        }
+
+        .corner-heading {
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 850;
+            text-align: left;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .header-editor {
@@ -242,121 +378,190 @@
         .table-input {
             width: 100%;
             min-width: 120px;
-            padding: 9px 10px;
-            border: 1px solid #d8d8d8;
-            border-radius: 7px;
-            background: white;
+            height: 40px;
+
+            padding: 0 11px;
+
+            border: 2px solid #ddddda;
+            border-radius: 10px;
+
+            background: #ffffff;
+            color: var(--ink);
+
+            font-size: 13px;
+            font-weight: 750;
             outline: none;
+        }
+
+        .row-name-input {
+            font-weight: 650;
         }
 
         .cell-input {
             width: 100%;
-            min-height: 90px;
-            padding: 10px;
-            border: 1px solid #d8d8d8;
-            border-radius: 7px;
-            background: white;
+            min-height: 95px;
+
+            padding: 11px;
+
+            border: 2px solid #e2e2df;
+            border-radius: 10px;
+
+            background: #ffffff;
+            color: var(--ink);
+
+            font-size: 13px;
+            font-weight: 550;
+            line-height: 1.45;
+
             resize: vertical;
             outline: none;
         }
 
-        .delete-table-button {
-            width: 30px;
-            height: 30px;
+        .cell-input::placeholder,
+        .table-input::placeholder,
+        .text-input::placeholder {
+            color: #adadad;
+            font-weight: 550;
+        }
+
+        .delete-button {
+            width: 32px;
+            height: 32px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
             flex-shrink: 0;
-            border: 1px solid #ddbebe;
-            border-radius: 7px;
-            background: white;
-            color: #a33a3a;
+
+            padding: 0;
+
+            border: 2px solid #ffc8c8;
+            border-radius: 9px;
+
+            background: var(--red-soft);
+            color: var(--red);
+
             font-size: 18px;
+            font-weight: 900;
             line-height: 1;
             cursor: pointer;
         }
 
-        .delete-table-button:hover {
-            background: #fff0f0;
+        .delete-button:hover {
+            background: #ffe2e2;
         }
 
-        .delete-table-button:disabled {
-            opacity: 0.35;
+        .delete-button:disabled {
+            border-color: #e7e7e7;
+            background: #f4f4f4;
+            color: #bbbbbb;
             cursor: not-allowed;
         }
 
-        .table-status {
-            margin-top: 10px;
-            color: #777;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .additional-details {
-            margin-top: 25px;
-            padding-top: 22px;
-            border-top: 1px solid #eeeeee;
-        }
-
-        .additional-details h2 {
-            margin: 0 0 5px;
-            font-size: 18px;
-        }
-
-        .additional-details > p {
-            margin: 0 0 16px;
-            color: #888;
-            font-size: 12px;
-        }
+        /* =========================================
+           OPTIONAL DETAILS
+        ========================================= */
 
         .details-grid {
             display: grid;
+
             grid-template-columns:
                 repeat(
                     2,
                     minmax(0, 1fr)
                 );
+
             gap: 16px;
+
+            margin-top: 22px;
+            padding-top: 22px;
+
+            border-top: 2px solid #f0f0ee;
         }
+
+        /* =========================================
+           FOOTER
+        ========================================= */
 
         .form-footer {
             display: flex;
             justify-content: flex-end;
-            gap: 10px;
-            margin-top: 26px;
+            align-items: center;
+
+            gap: 11px;
+
+            margin-top: 24px;
             padding-top: 22px;
-            border-top: 1px solid #eeeeee;
+
+            border-top: 2px solid #f0f0ee;
+        }
+
+        .cancel-button,
+        .save-button {
+            min-width: 130px;
+            min-height: 46px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            padding: 0 20px;
+
+            border-radius: 12px;
+
+            font-size: 14px;
+            font-weight: 850;
+            text-decoration: none;
+            cursor: pointer;
+
+            transition:
+                transform 0.1s ease,
+                box-shadow 0.1s ease;
         }
 
         .cancel-button {
-            padding: 11px 18px;
-            border: 1px solid #d5d5d5;
-            border-radius: 8px;
-            background: white;
-            color: #333;
-            font-weight: 700;
-            text-decoration: none;
+            border: 2px solid var(--border);
+            background: #ffffff;
+            color: var(--muted);
+            box-shadow: 0 4px 0 #d8d8d5;
         }
 
         .save-button {
-            padding: 11px 20px;
-            border: none;
-            border-radius: 8px;
-            background: #222;
-            color: white;
-            font-weight: 700;
-            cursor: pointer;
+            border: 2px solid var(--green);
+            background: var(--green);
+            color: #ffffff;
+            box-shadow: 0 4px 0 var(--green-dark);
         }
 
-        .save-button:hover {
-            background: #333;
+        .cancel-button:active,
+        .save-button:active {
+            transform: translateY(4px);
+            box-shadow: none;
         }
 
         @media (max-width: 760px) {
 
             .page {
-                padding: 22px 18px 40px;
+                padding: 20px 16px 40px;
             }
 
-            .table-header {
+            .subject-pill {
+                display: none;
+            }
+
+            .form-card {
+                padding: 17px;
+            }
+
+            .table-toolbar {
+                align-items: stretch;
                 flex-direction: column;
+            }
+
+            .table-actions {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
             }
 
             .details-grid {
@@ -364,13 +569,12 @@
             }
 
             .form-footer {
-                flex-direction: column;
+                flex-direction: column-reverse;
             }
 
             .cancel-button,
             .save-button {
                 width: 100%;
-                text-align: center;
             }
         }
 
@@ -388,24 +592,29 @@
 
         <div class="page">
 
-            <a
-                href="{% url 'subject_detail' subject_index=subject_index %}"
-                class="back-link"
-            >
-                &larr; Back to {{ subject.name }}
-            </a>
+            <div class="top-bar">
 
-            <header class="page-header">
+                <a
+                    href="{% url 'subject_detail' subject_index=subject_index %}"
+                    class="back-button"
+                    aria-label="Back to subject"
+                >
+                    ←
+                </a>
 
-                <h1>
-                    Create Comparison
-                </h1>
+                <div class="page-title">
 
-                <p>
-                    Build a comparison table for {{ subject.name }}.
-                </p>
+                    <h1>
+                        Create comparison
+                    </h1>
 
-            </header>
+                </div>
+
+                <div class="subject-pill">
+                    {{ subject.name }}
+                </div>
+
+            </div>
 
             <form
                 method="POST"
@@ -435,15 +644,14 @@
 
                 {% endif %}
 
-                <div class="field name-field">
+                <div class="field comparison-name-field">
 
-                    <label for="comparison-name">
+                    <label
+                        for="comparison-name"
+                        class="field-label"
+                    >
                         Comparison name
                     </label>
-
-                    <span class="field-help">
-                        Give this comparison a clear title.
-                    </span>
 
                     <input
                         type="text"
@@ -452,7 +660,7 @@
                         class="text-input"
                         value="{{ comparison_name }}"
                         maxlength="255"
-                        placeholder="e.g. Classical vs operant conditioning"
+                        placeholder="e.g. Assets vs liabilities"
                         required
                     >
 
@@ -460,37 +668,28 @@
 
                 <section class="table-section">
 
-                    <div class="table-header">
+                    <div class="table-toolbar">
 
-                        <div>
-
-                            <h2>
-                                Comparison table
-                            </h2>
-
-                            <p>
-                                Start with two columns and five rows.
-                                Cells may be left empty.
-                            </p>
-
-                        </div>
+                        <h2>
+                            Comparison
+                        </h2>
 
                         <div class="table-actions">
 
                             <button
                                 type="button"
-                                class="secondary-button"
+                                class="action-button"
                                 id="add-row-button"
                             >
-                                + Add Row
+                                + Row
                             </button>
 
                             <button
                                 type="button"
-                                class="secondary-button"
+                                class="action-button add-column-button"
                                 id="add-column-button"
                             >
-                                + Add Column
+                                + Column
                             </button>
 
                         </div>
@@ -502,79 +701,68 @@
                         id="comparison-table-wrapper"
                     ></div>
 
-                    <div
-                        class="table-status"
-                        id="table-status"
-                    ></div>
-
                 </section>
 
-                <section class="additional-details">
+                <div class="details-grid">
 
-                    <h2>
-                        Additional Details
-                    </h2>
+                    <div class="field">
 
-                    <p>
-                        Book and chapter information is optional.
-                    </p>
+                        <label
+                            for="book-id"
+                            class="field-label"
+                        >
+                            Textbook · optional
+                        </label>
 
-                    <div class="details-grid">
+                        <select
+                            name="book_id"
+                            id="book-id"
+                            class="select-input"
+                        >
 
-                        <div class="field">
+                            <option value="">
+                                Select textbook
+                            </option>
 
-                            <label for="book-id">
-                                Textbook
-                            </label>
+                            {% for textbook in textbooks %}
 
-                            <select
-                                name="book_id"
-                                id="book-id"
-                                class="select-input"
-                            >
-
-                                <option value="">
-                                    No textbook selected
+                                <option
+                                    value="{{ textbook.id }}"
+                                    {% if selected_book_id == textbook.id|stringformat:"s" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    {{ textbook.name }}
                                 </option>
 
-                                {% for textbook in textbooks %}
+                            {% endfor %}
 
-                                    <option
-                                        value="{{ textbook.id }}"
-                                        {% if selected_book_id == textbook.id|stringformat:"s" %}
-                                            selected
-                                        {% endif %}
-                                    >
-                                        {{ textbook.name }}
-                                    </option>
-
-                                {% endfor %}
-
-                            </select>
-
-                        </div>
-
-                        <div class="field">
-
-                            <label for="chapter">
-                                Chapter
-                            </label>
-
-                            <input
-                                type="text"
-                                name="chapter"
-                                id="chapter"
-                                class="text-input"
-                                value="{{ chapter }}"
-                                maxlength="255"
-                                placeholder="e.g. Chapter 4"
-                            >
-
-                        </div>
+                        </select>
 
                     </div>
 
-                </section>
+                    <div class="field">
+
+                        <label
+                            for="chapter"
+                            class="field-label"
+                        >
+                            Chapter · optional
+                        </label>
+
+                        <input
+                            type="text"
+                            name="chapter"
+                            id="chapter"
+                            class="text-input"
+                            value="{{ chapter }}"
+                            maxlength="255"
+                            placeholder="Chapter 4"
+                        >
+
+                    </div>
+
+                </div>
 
                 <div class="form-footer">
 
@@ -589,7 +777,7 @@
                         type="submit"
                         class="save-button"
                     >
-                        Save Comparison
+                        Save
                     </button>
 
                 </div>
@@ -606,6 +794,9 @@
 
 <script>
 
+    const MIN_COLUMNS = 2;
+    const MIN_ROWS = 1;
+
     const form =
         document.getElementById(
             "comparison-form"
@@ -621,11 +812,6 @@
             "comparison-data"
         );
 
-    const statusElement =
-        document.getElementById(
-            "table-status"
-        );
-
     const initialDataElement =
         document.getElementById(
             "initial-comparison-data"
@@ -636,9 +822,9 @@
             initialDataElement.textContent
         );
 
-    // ========================================================
-    // COPY CURRENT INPUT VALUES INTO STATE
-    // ========================================================
+    // =============================================
+    // READ CURRENT TABLE
+    // =============================================
 
     function syncStateFromTable() {
 
@@ -669,27 +855,27 @@
             ).map(
                 function(rowElement) {
 
-                    const rowNameInput =
+                    const rowName =
                         rowElement.querySelector(
                             "[data-row-name]"
                         );
 
-                    const cellInputs =
+                    const cells =
                         rowElement.querySelectorAll(
                             "[data-cell]"
                         );
 
                     return {
                         name:
-                            rowNameInput.value,
+                            rowName.value,
 
                         cells:
                             Array.from(
-                                cellInputs
+                                cells
                             ).map(
-                                function(cellInput) {
+                                function(cell) {
 
-                                    return cellInput.value;
+                                    return cell.value;
 
                                 }
                             ),
@@ -700,14 +886,16 @@
 
     }
 
-    // ========================================================
-    // CREATE INPUT
-    // ========================================================
+    // =============================================
+    // TEXT INPUT
+    // =============================================
 
-    function createTextInput(
+    function createTableInput(
         value,
         placeholder,
-        dataAttribute
+        attribute,
+        required,
+        extraClass
     ) {
 
         const input =
@@ -716,14 +904,32 @@
             );
 
         input.type = "text";
-        input.className = "table-input";
-        input.value = value || "";
-        input.placeholder = placeholder;
-        input.maxLength = 255;
-        input.required = true;
+
+        input.className =
+            (
+                "table-input "
+                +
+                (
+                    extraClass
+                    ||
+                    ""
+                )
+            );
+
+        input.value =
+            value || "";
+
+        input.placeholder =
+            placeholder;
+
+        input.maxLength =
+            255;
+
+        input.required =
+            required;
 
         input.setAttribute(
-            dataAttribute,
+            attribute,
             ""
         );
 
@@ -731,13 +937,58 @@
 
     }
 
-    // ========================================================
-    // RENDER TABLE
-    // ========================================================
+    // =============================================
+    // DELETE BUTTON
+    // =============================================
+
+    function createDeleteButton(
+        title,
+        disabled,
+        callback
+    ) {
+
+        const button =
+            document.createElement(
+                "button"
+            );
+
+        button.type =
+            "button";
+
+        button.className =
+            "delete-button";
+
+        button.textContent =
+            "×";
+
+        button.title =
+            title;
+
+        button.setAttribute(
+            "aria-label",
+            title
+        );
+
+        button.disabled =
+            disabled;
+
+        button.addEventListener(
+            "click",
+            callback
+        );
+
+        return button;
+
+    }
+
+    // =============================================
+    // RENDER
+    // =============================================
 
     function renderTable() {
 
-        tableWrapper.innerHTML = "";
+        tableWrapper.innerHTML =
+            "";
 
         const table =
             document.createElement(
@@ -757,19 +1008,19 @@
                 "tr"
             );
 
-        const cornerHeading =
+        const corner =
             document.createElement(
                 "th"
             );
 
-        cornerHeading.className =
-            "row-heading";
+        corner.className =
+            "row-heading corner-heading";
 
-        cornerHeading.textContent =
-            "Rows / aspects";
+        corner.textContent =
+            "Rows";
 
         headerRow.appendChild(
-            cornerHeading
+            corner
         );
 
         comparisonState.columns.forEach(
@@ -792,7 +1043,7 @@
                     "header-editor";
 
                 const input =
-                    createTextInput(
+                    createTableInput(
                         columnName,
                         (
                             "Column "
@@ -801,7 +1052,9 @@
                                 columnIndex + 1
                             )
                         ),
-                        "data-column-name"
+                        "data-column-name",
+                        true,
+                        ""
                     );
 
                 input.setAttribute(
@@ -818,40 +1071,22 @@
                 );
 
                 const deleteButton =
-                    document.createElement(
-                        "button"
+                    createDeleteButton(
+                        "Delete column",
+                        (
+                            comparisonState
+                            .columns
+                            .length
+                            <= MIN_COLUMNS
+                        ),
+                        function() {
+
+                            removeColumn(
+                                columnIndex
+                            );
+
+                        }
                     );
-
-                deleteButton.type =
-                    "button";
-
-                deleteButton.className =
-                    "delete-table-button";
-
-                deleteButton.textContent =
-                    "×";
-
-                deleteButton.title =
-                    "Delete column";
-
-                deleteButton.disabled =
-                    (
-                        comparisonState
-                        .columns
-                        .length
-                        <= 2
-                    );
-
-                deleteButton.addEventListener(
-                    "click",
-                    function() {
-
-                        removeColumn(
-                            columnIndex
-                        );
-
-                    }
-                );
 
                 editor.appendChild(
                     input
@@ -918,7 +1153,7 @@
                     "header-editor";
 
                 const rowInput =
-                    createTextInput(
+                    createTableInput(
                         row.name,
                         (
                             "Row "
@@ -926,8 +1161,12 @@
                             (
                                 rowIndex + 1
                             )
+                            +
+                            " · optional"
                         ),
-                        "data-row-name"
+                        "data-row-name",
+                        false,
+                        "row-name-input"
                     );
 
                 rowInput.setAttribute(
@@ -944,40 +1183,22 @@
                 );
 
                 const deleteButton =
-                    document.createElement(
-                        "button"
+                    createDeleteButton(
+                        "Delete row",
+                        (
+                            comparisonState
+                            .rows
+                            .length
+                            <= MIN_ROWS
+                        ),
+                        function() {
+
+                            removeRow(
+                                rowIndex
+                            );
+
+                        }
                     );
-
-                deleteButton.type =
-                    "button";
-
-                deleteButton.className =
-                    "delete-table-button";
-
-                deleteButton.textContent =
-                    "×";
-
-                deleteButton.title =
-                    "Delete row";
-
-                deleteButton.disabled =
-                    (
-                        comparisonState
-                        .rows
-                        .length
-                        <= 1
-                    );
-
-                deleteButton.addEventListener(
-                    "click",
-                    function() {
-
-                        removeRow(
-                            rowIndex
-                        );
-
-                    }
-                );
 
                 rowEditor.appendChild(
                     rowInput
@@ -1015,7 +1236,7 @@
                             "cell-input";
 
                         textarea.placeholder =
-                            "Enter comparison details...";
+                            "Add details";
 
                         textarea.value =
                             (
@@ -1074,22 +1295,11 @@
             table
         );
 
-        statusElement.textContent =
-            (
-                comparisonState.columns.length
-                +
-                " columns · "
-                +
-                comparisonState.rows.length
-                +
-                " rows"
-            );
-
     }
 
-    // ========================================================
+    // =============================================
     // ADD COLUMN
-    // ========================================================
+    // =============================================
 
     function addColumn() {
 
@@ -1113,9 +1323,9 @@
 
     }
 
-    // ========================================================
-    // DELETE COLUMN
-    // ========================================================
+    // =============================================
+    // REMOVE COLUMN
+    // =============================================
 
     function removeColumn(
         columnIndex
@@ -1125,7 +1335,7 @@
 
         if (
             comparisonState.columns.length
-            <= 2
+            <= MIN_COLUMNS
         ) {
 
             return;
@@ -1152,9 +1362,9 @@
 
     }
 
-    // ========================================================
+    // =============================================
     // ADD ROW
-    // ========================================================
+    // =============================================
 
     function addRow() {
 
@@ -1181,9 +1391,9 @@
 
     }
 
-    // ========================================================
-    // DELETE ROW
-    // ========================================================
+    // =============================================
+    // REMOVE ROW
+    // =============================================
 
     function removeRow(
         rowIndex
@@ -1193,7 +1403,7 @@
 
         if (
             comparisonState.rows.length
-            <= 1
+            <= MIN_ROWS
         ) {
 
             return;
@@ -1209,9 +1419,9 @@
 
     }
 
-    // ========================================================
+    // =============================================
     // EVENTS
-    // ========================================================
+    // =============================================
 
     document
         .getElementById(
@@ -1239,10 +1449,10 @@
 
             if (
                 comparisonState.columns.length
-                < 2
+                < MIN_COLUMNS
                 ||
                 comparisonState.rows.length
-                < 1
+                < MIN_ROWS
             ) {
 
                 event.preventDefault();

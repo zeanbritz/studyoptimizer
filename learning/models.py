@@ -514,7 +514,9 @@ class ComparisonRow(models.Model):
     )
 
     name = models.CharField(
-        max_length=255
+        max_length=255,
+        blank=True,
+        default="",
     )
 
     order = models.PositiveIntegerField(
@@ -540,8 +542,11 @@ class ComparisonRow(models.Model):
 
     def __str__(self):
 
-        return self.name
-
+        return (
+            self.name
+            or
+            f"Row {self.order}"
+        )
 
 # ============================================================
 # COMPARISON CELL

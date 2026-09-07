@@ -7934,19 +7934,6 @@ def create_comparison(
                 "Please name every column."
             )
 
-        elif (
-            error is None
-            and
-            any(
-                not row["name"]
-                for row
-                in normalized_rows
-            )
-        ):
-
-            error = (
-                "Please name every row."
-            )
 
         elif (
             error is None
