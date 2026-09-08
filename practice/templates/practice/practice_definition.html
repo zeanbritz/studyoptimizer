@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 
 <html lang="en">
@@ -14,6 +15,8 @@
     <title>
         Review Definition
     </title>
+
+    <link rel="stylesheet" href="{% static 'dashboard/css/sidebar.css' %}">
 
 
     <style>
@@ -461,6 +464,110 @@
 
         }
 
+        /* UNIFIED LEARNING UI */
+        :root {
+            --brand-green: #58b82a;
+            --brand-green-dark: #3f8f1d;
+            --brand-green-soft: #eef9e9;
+            --brand-blue: #1f8fe5;
+            --brand-blue-dark: #1472b8;
+            --ink: #2f3133;
+            --muted: #737a80;
+            --raised-border: #dfe3e6;
+            --danger: #df4b4b;
+            --danger-dark: #b93636;
+        }
+
+        body { display: block; padding: 0; background: #f7f8fa; color: var(--ink); }
+        .app { display: flex; min-height: 100vh; }
+        .main { flex: 1; min-width: 0; }
+        .page { min-height: 100vh; padding: 30px 40px 55px; }
+        .container { max-width: 900px; margin: 0 auto; padding: 0; border: 0; border-radius: 0; background: transparent; }
+        .header { margin-bottom: 22px; }
+        .header h1 { font-size: 32px; font-weight: 850; letter-spacing: -0.8px; }
+        .header p { color: var(--muted); font-weight: 650; }
+
+        .mastery {
+            margin-bottom: 18px;
+            padding: 16px 19px;
+            border: 2px solid #d5e9ca;
+            border-bottom-width: 5px;
+            border-radius: 15px;
+            background: var(--brand-green-soft);
+        }
+
+        .mastery-label, .mastery-value { color: var(--brand-green-dark); font-weight: 900; }
+
+        .term {
+            margin-bottom: 17px;
+            padding: 19px 22px;
+            border: 2px solid #bcdcf0;
+            border-bottom-width: 5px;
+            border-radius: 16px;
+            background: #edf8ff;
+            color: #176d9f;
+            font-size: 24px;
+            font-weight: 850;
+        }
+
+        .definition-question {
+            border: 2px solid var(--raised-border);
+            border-bottom-width: 5px;
+            border-radius: 17px;
+            background: white;
+            font-weight: 600;
+            line-height: 1.75;
+        }
+
+        .missing-input {
+            border: 2px solid #cfd6da;
+            border-bottom-width: 4px;
+            border-radius: 11px;
+            background: #fbfcfd;
+            font-weight: 650;
+        }
+
+        .missing-input:focus { border-color: #78c950; box-shadow: 0 0 0 4px rgba(88, 184, 42, 0.13); }
+
+        .submit-button, .next-button {
+            border: 2px solid var(--brand-green-dark);
+            border-bottom-width: 5px;
+            border-radius: 12px;
+            background: var(--brand-green);
+            color: white;
+            font-weight: 850;
+        }
+
+        .submit-button:hover, .next-button:hover { background: #65c936; transform: translateY(-1px); }
+
+        .finish-review-button {
+            border: 2px solid var(--brand-blue-dark);
+            border-bottom-width: 5px;
+            border-radius: 12px;
+            background: var(--brand-blue);
+            color: white;
+            font-weight: 850;
+        }
+
+        .finish-review-button:hover { background: #329deb; transform: translateY(-1px); }
+        .submit-button:active, .next-button:active, .finish-review-button:active { border-bottom-width: 2px; transform: translateY(3px); }
+
+        .result {
+            border: 2px solid;
+            border-bottom-width: 5px;
+            border-radius: 16px;
+        }
+
+        .result.correct { border-color: #a9d994; background: var(--brand-green-soft); color: #2f7018; }
+        .result.incorrect { border-color: #efb0b0; background: #fff1f1; color: #a53131; }
+        .result-title { font-size: 20px; font-weight: 900; }
+        .result-answer { padding-top: 14px; border-top: 1px solid currentColor; line-height: 1.6; }
+
+        @media (max-width: 700px) {
+            .page { padding: 22px 18px 42px; }
+            .header h1 { font-size: 26px; }
+            .definition-question { padding: 19px; }
+        }
     </style>
 
 </head>
@@ -468,7 +575,10 @@
 
 <body>
 
-
+<div class="app">
+{% include 'partials/sidebar.html' with active_page='review' %}
+<main class="main">
+<div class="page">
 <div class="container">
 
 
@@ -754,6 +864,90 @@
 
 
 </div>
+
+</div>
+</main>
+</div>
+
+{% if submitted %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const resultKind = document.querySelector(".result.correct")
+            ? "correct"
+            : (document.querySelector(".result.incorrect") ? "incorrect" : null);
+
+        if (!resultKind) {
+            return;
+        }
+
+        let feedbackPlayed = false;
+
+        function playFeedbackSound() {
+            if (feedbackPlayed) {
+                return;
+            }
+
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContextClass) {
+                return;
+            }
+
+            const audioContext = new AudioContextClass();
+
+            function playNotes() {
+                feedbackPlayed = true;
+                const notes = resultKind === "correct"
+                    ? [
+                        { frequency: 523.25, offset: 0, duration: 0.13 },
+                        { frequency: 659.25, offset: 0.11, duration: 0.18 }
+                    ]
+                    : [
+                        { frequency: 196, offset: 0, duration: 0.16 },
+                        { frequency: 146.83, offset: 0.13, duration: 0.24 }
+                    ];
+
+                notes.forEach(function (note) {
+                    const oscillator = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+                    const startTime = audioContext.currentTime + note.offset;
+                    const endTime = startTime + note.duration;
+
+                    oscillator.type = resultKind === "correct" ? "sine" : "triangle";
+                    oscillator.frequency.setValueAtTime(note.frequency, startTime);
+                    gain.gain.setValueAtTime(0.0001, startTime);
+                    gain.gain.exponentialRampToValueAtTime(
+                        resultKind === "correct" ? 0.18 : 0.13,
+                        startTime + 0.02
+                    );
+                    gain.gain.exponentialRampToValueAtTime(0.0001, endTime);
+                    oscillator.connect(gain);
+                    gain.connect(audioContext.destination);
+                    oscillator.start(startTime);
+                    oscillator.stop(endTime);
+                });
+
+                window.setTimeout(function () {
+                    audioContext.close();
+                }, 700);
+            }
+
+            if (audioContext.state === "suspended") {
+                audioContext.resume().then(playNotes).catch(function () {
+                    audioContext.close();
+                });
+            } else {
+                playNotes();
+            }
+        }
+
+        playFeedbackSound();
+        document.addEventListener("pointerdown", playFeedbackSound, { once: true });
+        document.addEventListener("keydown", playFeedbackSound, { once: true });
+    });
+</script>
+{% endif %}
+
+<script src="{% static 'dashboard/js/sidebar.js' %}"></script>
 
 
 </body>

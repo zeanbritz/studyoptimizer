@@ -643,6 +643,56 @@
 
         }
 
+        /* UNIFIED LEARNING UI */
+        :root {
+            --brand-green: #58b82a;
+            --brand-green-dark: #3f8f1d;
+            --brand-green-soft: #eef9e9;
+            --ink: #2f3133;
+            --muted: #737a80;
+            --raised-border: #dfe3e6;
+            --danger: #df4b4b;
+        }
+
+        body { background: #f7f8fa; color: var(--ink); }
+        .page { max-width: 1040px; margin: 0 auto; padding: 30px 40px 55px; }
+        .page-header { align-items: center; margin-bottom: 22px; }
+        .page-header h1 { font-size: 32px; font-weight: 850; letter-spacing: -0.8px; }
+        .page-header p { color: var(--muted); font-weight: 650; }
+        .back-link { padding: 11px 16px 9px; border: 2px solid #9fd0f2; border-bottom: 5px solid #62acd9; border-radius: 12px; background: #e7f5ff; color: #1879b8; font-weight: 850; }
+        .back-link:hover { border-color: #76bce8; background: #d9efff; transform: translateY(-1px); }
+        .mastery-card, .review-card { border: 2px solid var(--raised-border); border-bottom-width: 5px; border-radius: 17px; background: white; box-shadow: none; }
+        .mastery-card { background: var(--brand-green-soft); border-color: #d5e9ca; }
+        .mastery-label, .mastery-value { color: var(--brand-green-dark); font-weight: 900; }
+        .mastery-bar { height: 15px; border: 2px solid #c9ddbe; border-radius: 999px; background: white; overflow: hidden; }
+        .mastery-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--brand-green), #78cf4e); }
+        .mastery-description { color: #65705f; font-weight: 600; }
+        .review-card { padding: 28px; }
+        .step-heading h2 { font-weight: 850; letter-spacing: -0.35px; }
+        .step-heading p { color: var(--muted); font-weight: 600; }
+        .review-step { border: 2px solid #e1e5e8; border-bottom-width: 4px; border-radius: 14px; background: white; }
+        .review-step.hidden-step { border-color: #bddcf0; background: #f3faff; }
+        .step-number { border-radius: 11px; background: var(--brand-green-soft); color: var(--brand-green-dark); font-weight: 900; }
+        .hidden-step .step-number { background: #dff2ff; color: #1879b8; }
+        .answer-input { border: 2px solid #cfd6da; border-bottom-width: 4px; border-radius: 11px; background: white; font-weight: 650; }
+        .answer-input:focus { border-color: #78c950; box-shadow: 0 0 0 4px rgba(88, 184, 42, 0.13); }
+        .submit-button, .continue-button { border: 2px solid var(--brand-green-dark); border-bottom-width: 5px; border-radius: 12px; background: var(--brand-green); color: white; font-weight: 850; }
+        .submit-button:hover, .continue-button:hover { background: #65c936; transform: translateY(-1px); }
+        .submit-button:active, .continue-button:active { border-bottom-width: 2px; transform: translateY(3px); }
+        .result-panel { border: 2px solid var(--raised-border); border-bottom-width: 5px; border-radius: 16px; background: #fafbfc; }
+        .result-panel:has(.result-icon.correct) { border-color: #aad994; background: var(--brand-green-soft); }
+        .result-panel:has(.result-icon.incorrect) { border-color: #efb0b0; background: #fff1f1; }
+        .result-icon.correct { background: var(--brand-green); color: white; }
+        .result-icon.incorrect { background: var(--danger); color: white; }
+        .correct-answer-box { border: 2px solid #e2e6e8; border-radius: 13px; background: white; }
+        .correct-answer-title { font-weight: 850; }
+        .error-box { border: 2px solid #efb0b0; border-radius: 12px; background: #fff1f1; color: #a53131; }
+        @media (max-width: 700px) {
+            .page { padding: 22px 18px 42px; }
+            .page-header { align-items: flex-start; flex-direction: column; }
+            .back-link { width: 100%; text-align: center; }
+            .review-card { padding: 19px; }
+        }
     </style>
 
 </head>
@@ -1255,6 +1305,217 @@
             if (firstAnswer) {
 
                 firstAnswer.focus();
+
+            }
+
+
+            /* =====================================
+               CORRECT / INCORRECT SOUND
+            ====================================== */
+
+            const resultKind =
+                document.querySelector(
+                    ".result-icon.correct"
+                )
+                    ? "correct"
+                    : (
+                        document.querySelector(
+                            ".result-icon.incorrect"
+                        )
+                            ? "incorrect"
+                            : null
+                    );
+
+
+            if (resultKind) {
+
+                let feedbackPlayed = false;
+
+
+                const playFeedbackSound =
+                    function () {
+
+                        if (feedbackPlayed) {
+                            return;
+                        }
+
+
+                        const AudioContextClass =
+                            window.AudioContext
+                            ||
+                            window.webkitAudioContext;
+
+
+                        if (!AudioContextClass) {
+                            return;
+                        }
+
+
+                        const audioContext =
+                            new AudioContextClass();
+
+
+                        const playNotes =
+                            function () {
+
+                                feedbackPlayed = true;
+
+                                const notes =
+                                    resultKind === "correct"
+                                        ? [
+                                            {
+                                                frequency: 523.25,
+                                                offset: 0,
+                                                duration: 0.13,
+                                            },
+                                            {
+                                                frequency: 659.25,
+                                                offset: 0.11,
+                                                duration: 0.18,
+                                            },
+                                        ]
+                                        : [
+                                            {
+                                                frequency: 196,
+                                                offset: 0,
+                                                duration: 0.16,
+                                            },
+                                            {
+                                                frequency: 146.83,
+                                                offset: 0.13,
+                                                duration: 0.24,
+                                            },
+                                        ];
+
+
+                                notes.forEach(
+                                    function (note) {
+
+                                        const oscillator =
+                                            audioContext
+                                            .createOscillator();
+
+                                        const gain =
+                                            audioContext
+                                            .createGain();
+
+                                        const startTime =
+                                            audioContext.currentTime
+                                            +
+                                            note.offset;
+
+                                        const endTime =
+                                            startTime
+                                            +
+                                            note.duration;
+
+
+                                        oscillator.type =
+                                            resultKind === "correct"
+                                                ? "sine"
+                                                : "triangle";
+
+                                        oscillator.frequency
+                                            .setValueAtTime(
+                                                note.frequency,
+                                                startTime
+                                            );
+
+                                        gain.gain
+                                            .setValueAtTime(
+                                                0.0001,
+                                                startTime
+                                            );
+
+                                        gain.gain
+                                            .exponentialRampToValueAtTime(
+                                                resultKind === "correct"
+                                                    ? 0.18
+                                                    : 0.13,
+                                                startTime + 0.02
+                                            );
+
+                                        gain.gain
+                                            .exponentialRampToValueAtTime(
+                                                0.0001,
+                                                endTime
+                                            );
+
+                                        oscillator.connect(
+                                            gain
+                                        );
+
+                                        gain.connect(
+                                            audioContext.destination
+                                        );
+
+                                        oscillator.start(
+                                            startTime
+                                        );
+
+                                        oscillator.stop(
+                                            endTime
+                                        );
+
+                                    }
+                                );
+
+
+                                window.setTimeout(
+                                    function () {
+                                        audioContext.close();
+                                    },
+                                    700
+                                );
+
+                            };
+
+
+                        if (
+                            audioContext.state
+                            ===
+                            "suspended"
+                        ) {
+
+                            audioContext
+                                .resume()
+                                .then(
+                                    playNotes
+                                )
+                                .catch(
+                                    function () {
+
+                                        audioContext.close();
+
+                                    }
+                                );
+
+                        } else {
+
+                            playNotes();
+
+                        }
+
+                    };
+
+
+                playFeedbackSound();
+
+                document.addEventListener(
+                    "pointerdown",
+                    playFeedbackSound,
+                    {
+                        once: true,
+                    }
+                );
+
+                document.addEventListener(
+                    "keydown",
+                    playFeedbackSound,
+                    {
+                        once: true,
+                    }
+                );
 
             }
 

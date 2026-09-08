@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 
 <html lang="en">
@@ -14,6 +15,8 @@
     <title>
         Add Formula - {{ subject.name }}
     </title>
+
+    <link rel="stylesheet" href="{% static 'dashboard/css/sidebar.css' %}">
 
 
     <style>
@@ -407,6 +410,92 @@
 
         }
 
+        /* UNIFIED LEARNING UI */
+        :root {
+            --brand-green: #58b82a;
+            --brand-green-dark: #3f8f1d;
+            --brand-green-soft: #eef9e9;
+            --ink: #2f3133;
+            --muted: #737a80;
+            --raised-border: #dfe3e6;
+        }
+
+        body { min-height: 100vh; padding: 0; background: #f7f8fa; color: var(--ink); }
+        .app { display: flex; min-height: 100vh; }
+        .main { flex: 1; min-width: 0; }
+        .page { min-height: 100vh; padding: 30px 40px 55px; }
+        .container { max-width: 960px; margin: 0 auto; }
+        .header { margin-bottom: 24px; }
+        .header h1 { font-size: 32px; font-weight: 850; letter-spacing: -0.8px; }
+        .header p { color: var(--muted); font-weight: 650; }
+
+        .form-card {
+            padding: 28px;
+            border: 2px solid var(--raised-border);
+            border-bottom-width: 5px;
+            border-radius: 17px;
+            background: white;
+            box-shadow: none;
+        }
+
+        .form-card h2, .existing-header h2 { font-weight: 850; letter-spacing: -0.35px; }
+        .field label { color: #596066; font-weight: 850; }
+
+        .field input, .field textarea {
+            border: 2px solid #d4dadd;
+            border-bottom-width: 4px;
+            border-radius: 12px;
+            background: #fbfcfd;
+            font-weight: 650;
+        }
+
+        .field input:focus, .field textarea:focus {
+            border-color: #78c950;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(88, 184, 42, 0.13);
+        }
+
+        .save-button {
+            border: 2px solid var(--brand-green-dark);
+            border-bottom-width: 5px;
+            border-radius: 12px;
+            background: var(--brand-green);
+            color: white;
+            font-weight: 850;
+        }
+
+        .save-button:hover { background: #65c936; transform: translateY(-1px); }
+        .save-button:active { border-bottom-width: 2px; transform: translateY(3px); }
+        .existing-section { margin-top: 34px; }
+        .existing-header p { color: var(--muted); font-weight: 600; }
+        .formula-list { gap: 16px; }
+
+        .formula-card {
+            border: 2px solid var(--raised-border);
+            border-bottom-width: 5px;
+            border-radius: 16px;
+            background: white;
+            transition: transform 0.15s ease, border-color 0.15s ease;
+        }
+
+        .formula-card:hover { border-color: #9bd77c; transform: translateY(-2px); }
+        .formula-card h3 { font-weight: 850; }
+        .formula-value { border: 1px solid #dbead4; border-radius: 11px; background: var(--brand-green-soft); color: var(--brand-green-dark); font-weight: 750; }
+        .formula-description { color: var(--muted); }
+
+        .empty-state {
+            border: 2px dashed #ced5d9;
+            border-radius: 16px;
+            background: white;
+            color: var(--muted);
+            font-weight: 700;
+        }
+
+        @media (max-width: 700px) {
+            .page { padding: 22px 18px 42px; }
+            .header h1 { font-size: 26px; }
+            .form-card { padding: 20px; }
+        }
     </style>
 
 </head>
@@ -414,7 +503,10 @@
 
 <body>
 
-
+<div class="app">
+{% include 'partials/sidebar.html' with active_page='summarize' %}
+<main class="main">
+<div class="page">
 <div class="container">
 
 
@@ -614,6 +706,12 @@
 
 
 </div>
+
+</div>
+</main>
+</div>
+
+<script src="{% static 'dashboard/js/sidebar.js' %}"></script>
 
 
 </body>
