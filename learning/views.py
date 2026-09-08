@@ -2989,6 +2989,146 @@ def definition_review_list(
         subject_index
     ]
 
+    # ========================================================
+    # FIND DATABASE SUBJECT
+    # ========================================================
+
+    database_subject = None
+
+    database_subject_id = subject_data.get(
+        "database_id"
+    )
+
+    if database_subject_id:
+
+        database_subject = (
+            Subject.objects
+            .filter(
+                id=database_subject_id,
+                user=request.user,
+            )
+            .first()
+        )
+
+    if not database_subject:
+
+        subject_name = subject_data.get(
+            "name",
+            ""
+        ).strip()
+
+        if subject_name:
+
+            database_subject = (
+                Subject.objects
+                .filter(
+                    user=request.user,
+                    name=subject_name,
+                )
+                .first()
+            )
+
+    if not database_subject:
+
+        return redirect(
+            "subject_detail",
+            subject_index=subject_index,
+        )
+
+    # ========================================================
+    # FIND DEFINITIONS DUE ON THE LOCAL CALENDAR DAY
+    # ========================================================
+
+    today = timezone.localdate()
+
+    knowledge_units = (
+        KnowledgeUnit.objects
+        .filter(
+            subject=database_subject,
+            knowledge_type=(
+                KnowledgeUnit
+                .KnowledgeType
+                .DEFINITION
+            ),
+            active=True,
+        )
+        .select_related(
+            "definition"
+        )
+        .order_by(
+            "title",
+            "id",
+        )
+    )
+
+    due_definitions = []
+
+    for knowledge_unit in knowledge_units:
+
+        definition = getattr(
+            knowledge_unit,
+            "definition",
+            None,
+        )
+
+        if not definition:
+            continue
+
+        progress = (
+            StudentKnowledge.objects
+            .filter(
+                student=request.user,
+                knowledge_unit=knowledge_unit,
+            )
+            .first()
+        )
+
+        is_due = False
+
+        if progress is None:
+
+            is_due = True
+
+        elif progress.next_review is None:
+
+            is_due = True
+
+        elif (
+            timezone.localtime(
+                progress.next_review
+            ).date()
+            <= today
+        ):
+
+            is_due = True
+
+        if is_due:
+
+            due_definitions.append(
+                definition
+            )
+
+    return render(
+        request,
+        "learning/definition_review_list.html",
+        {
+            "subject":
+                database_subject,
+
+            "subject_data":
+                subject_data,
+
+            "subject_index":
+                subject_index,
+
+            "definitions":
+                due_definitions,
+
+            "due_definition_count":
+                len(due_definitions),
+        }
+    )
+
 # ============================================================
 # LIST REVIEW LIST
 # ============================================================
@@ -3200,201 +3340,6 @@ def list_review_list(
         }
     )
 
-    # ========================================================
-    # FIND DATABASE SUBJECT
-    # ========================================================
-
-    database_subject = None
-
-    database_subject_id = (
-        subject_data.get(
-            "database_id"
-        )
-    )
-
-    if database_subject_id:
-
-        database_subject = (
-            Subject.objects.filter(
-                id=database_subject_id,
-                user=request.user
-            ).first()
-        )
-
-    if not database_subject:
-
-        subject_name = subject_data.get(
-            "name",
-            ""
-        ).strip()
-
-        if subject_name:
-
-            database_subject = (
-                Subject.objects.filter(
-                    user=request.user,
-                    name=subject_name
-                ).first()
-            )
-
-    # ========================================================
-    # FIND DUE DEFINITIONS
-    # ========================================================
-
-    due_definitions = []
-
-    if database_subject:
-
-        today = timezone.localdate()
-
-        knowledge_units = (
-            KnowledgeUnit.objects
-            .filter(
-                subject=database_subject,
-
-                knowledge_type=(
-                    KnowledgeUnit
-                    .KnowledgeType
-                    .DEFINITION
-                ),
-
-                active=True,
-            )
-            .select_related(
-                "definition"
-            )
-        )
-
-        for knowledge_unit in knowledge_units:
-
-            definition = getattr(
-                knowledge_unit,
-                "definition",
-                None
-            )
-
-            if not definition:
-                continue
-
-            progress = (
-                StudentKnowledge.objects
-                .filter(
-                    student=request.user,
-
-                    knowledge_unit=(
-                        knowledge_unit
-                    )
-                )
-                .first()
-            )
-
-            # ------------------------------------------------
-            # NEVER REVIEWED
-            # ------------------------------------------------
-
-            if progress is None:
-
-                due_definitions.append(
-                    definition
-                )
-
-                continue
-
-            # ------------------------------------------------
-            # REVIEW DUE
-            # ------------------------------------------------
-
-            if (
-                progress.next_review is not None
-                and
-                progress.next_review.date()
-                <= today
-            ):
-
-                due_definitions.append(
-                    definition
-                )
-
-    return render(
-        request,
-        "learning/definition_review_list.html",
-        {
-            "subject":
-                subject_data,
-
-            "subject_index":
-                subject_index,
-
-            "definitions":
-                due_definitions,
-        }
-    )
-
-    # ====================================================
-    # LISTS
-    # ====================================================
-
-    bullet_lists = (
-        BulletList.objects
-        .filter(
-            knowledge_unit__subject=database_subject,
-            knowledge_unit__knowledge_type=(
-                KnowledgeUnit
-                .KnowledgeType
-                .BULLET_LIST
-            ),
-            knowledge_unit__active=True,
-        )
-        .select_related(
-            "knowledge_unit"
-        )
-        .prefetch_related(
-            "items"
-        )
-        .order_by(
-            "knowledge_unit__created",
-            "id",
-        )
-    )
-
-    for bullet_list in (
-        bullet_lists
-    ):
-
-        progress = (
-            StudentKnowledge.objects
-            .filter(
-                student=request.user,
-                knowledge_unit=(
-                    bullet_list.knowledge_unit
-                ),
-            )
-            .first()
-        )
-
-        is_due = False
-
-        if progress is None:
-
-            is_due = True
-
-        elif progress.next_review is None:
-
-            is_due = True
-
-        elif (
-            progress.next_review.date()
-            <= today
-        ):
-
-            is_due = True
-
-        if is_due:
-
-            due_bullet_lists.append(
-                bullet_list
-            )
-
 # ============================================================
 # REVIEW DEFINITION
 # ============================================================
@@ -3411,9 +3356,23 @@ def review_definition(
         knowledge_unit__subject__user=request.user
     )
 
-    return redirect(
+    practice_url = reverse(
         "practice_definition_review",
-        definition_id=definition.id
+        kwargs={
+            "definition_id": definition.id,
+        },
+    )
+
+    query_string = request.GET.urlencode()
+
+    if query_string:
+
+        practice_url = (
+            f"{practice_url}?{query_string}"
+        )
+
+    return redirect(
+        practice_url
     )
 
 
