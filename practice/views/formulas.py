@@ -1,10 +1,11 @@
-from datetime import timedelta
+from datetime import datetime, time, timedelta
 from urllib.parse import urlencode
 
 import json
 import random
 
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from django.shortcuts import (
     render,
     redirect,
@@ -328,6 +329,89 @@ def get_formula_review_interval(
 
 
 # ============================================================
+# NEXT REVIEW AT LOCAL MIDNIGHT
+# ============================================================
+
+def get_next_formula_review_at_midnight(
+    mastery_level,
+    reviewed_at=None
+):
+    """
+    Return the next review time at 00:00 in the active timezone.
+
+    A minimum interval of one calendar day keeps a formula that was
+    answered incorrectly from immediately re-entering today's queue.
+    """
+
+    reviewed_at = (
+        reviewed_at
+        or
+        timezone.now()
+    )
+
+    interval_days = max(
+        1,
+        get_formula_review_interval(
+            mastery_level
+        )
+    )
+
+    next_review_date = (
+        timezone.localdate(
+            reviewed_at
+        )
+        +
+        timedelta(
+            days=interval_days
+        )
+    )
+
+    local_midnight = datetime.combine(
+        next_review_date,
+        time.min
+    )
+
+    return timezone.make_aware(
+        local_midnight,
+        timezone.get_current_timezone()
+    )
+
+
+def formula_review_is_due(
+    progress,
+    today=None
+):
+    """
+    Check review eligibility by local calendar date.
+
+    Comparing dates also fixes existing rows whose next_review value
+    still contains the exact time at which the previous review ended.
+    """
+
+    if (
+        progress is None
+        or
+        progress.next_review is None
+    ):
+
+        return True
+
+    today = (
+        today
+        or
+        timezone.localdate()
+    )
+
+    return (
+        timezone.localdate(
+            progress.next_review
+        )
+        <=
+        today
+    )
+
+
+# ============================================================
 # MASTERY -> HIDDEN PERCENTAGE
 # ============================================================
 
@@ -363,7 +447,9 @@ def get_hidden_percentage(
 def formula_answer_is_correct(
     user_answer,
     correct_answer,
-    element_type
+    element_type,
+    description="",
+    acceptable_answers=None
 ):
     """
     Compare one submitted formula element with its saved value.
@@ -375,8 +461,9 @@ def formula_answer_is_correct(
         X
         *
 
-    This only applies to elements whose type is "operator",
-    so a real variable named x is unaffected.
+    Variable and symbol descriptions are accepted without regard to
+    case. User-approved alternative answers are also accepted without
+    regard to case.
     """
 
     user_answer = str(
@@ -390,6 +477,19 @@ def formula_answer_is_correct(
         or
         ""
     ).strip()
+
+    description = str(
+        description
+        or
+        ""
+    ).strip()
+
+    if not isinstance(
+        acceptable_answers,
+        list
+    ):
+
+        acceptable_answers = []
 
     # ========================================================
     # MULTIPLICATION
@@ -414,6 +514,70 @@ def formula_answer_is_correct(
         return (
             user_answer
             in multiplication_symbols
+        )
+
+    # ========================================================
+    # SAVED DESCRIPTION
+    # ========================================================
+
+    if (
+        element_type
+        in (
+            "variable",
+            "symbol",
+        )
+        and
+        description
+        and
+        user_answer.casefold()
+        ==
+        description.casefold()
+    ):
+
+        return True
+
+    # ========================================================
+    # USER-APPROVED ALTERNATIVE ANSWERS
+    # ========================================================
+
+    for acceptable_answer in acceptable_answers:
+
+        acceptable_answer = str(
+            acceptable_answer
+            or
+            ""
+        ).strip()
+
+        if (
+            acceptable_answer
+            and
+            user_answer.casefold()
+            ==
+            acceptable_answer.casefold()
+        ):
+
+            return True
+
+    # ========================================================
+    # VARIABLE CASE RULE
+    # ========================================================
+
+    if (
+        element_type
+        ==
+        "variable"
+        and
+        len(
+            correct_answer
+        )
+        >
+        2
+    ):
+
+        return (
+            user_answer.casefold()
+            ==
+            correct_answer.casefold()
         )
 
     # ========================================================
@@ -1059,8 +1223,8 @@ def get_next_due_formula(
             )
         )
 
-    now = (
-        timezone.now()
+    today = (
+        timezone.localdate()
     )
 
     for formula in formulas:
@@ -1100,10 +1264,9 @@ def get_next_due_formula(
         # DUE
         # ----------------------------------------------------
 
-        if (
-            progress.next_review
-            <=
-            now
+        if formula_review_is_due(
+            progress,
+            today=today
         ):
 
             return formula
@@ -1329,6 +1492,110 @@ def practice_formula(
         )
 
         # ----------------------------------------------------
+        # SAVE A USER-APPROVED ALTERNATIVE ANSWER
+        # ----------------------------------------------------
+
+        if (
+            action
+            ==
+            "accept_answer"
+        ):
+
+            element_id = str(
+                request.POST.get(
+                    "element_id",
+                    ""
+                )
+            ).strip()
+
+            acceptable_answer = str(
+                request.POST.get(
+                    "acceptable_answer",
+                    ""
+                )
+            ).strip()
+
+            element = find_element(
+                formula_elements,
+                element_id
+            )
+
+            if (
+                not element
+                or
+                not acceptable_answer
+            ):
+
+                return JsonResponse(
+                    {
+                        "ok": False,
+                        "message": (
+                            "This answer could not be saved."
+                        ),
+                    },
+                    status=400
+                )
+
+            acceptable_answers = (
+                element.get(
+                    "acceptable_answers",
+                    []
+                )
+            )
+
+            if not isinstance(
+                acceptable_answers,
+                list
+            ):
+
+                acceptable_answers = []
+
+            answer_already_saved = any(
+                str(
+                    saved_answer
+                    or
+                    ""
+                ).strip().casefold()
+                ==
+                acceptable_answer.casefold()
+                for saved_answer
+                in acceptable_answers
+            )
+
+            if not answer_already_saved:
+
+                acceptable_answers.append(
+                    acceptable_answer
+                )
+
+                element[
+                    "acceptable_answers"
+                ] = (
+                    acceptable_answers
+                )
+
+                formula.structure = json.dumps(
+                    formula_elements,
+                    ensure_ascii=False
+                )
+
+                formula.save(
+                    update_fields=[
+                        "structure"
+                    ]
+                )
+
+            return JsonResponse(
+                {
+                    "ok": True,
+                    "answer": acceptable_answer,
+                    "already_saved": (
+                        answer_already_saved
+                    ),
+                }
+            )
+
+        # ----------------------------------------------------
         # NEXT FORMULA — GLOBAL REVIEW
         # ----------------------------------------------------
 
@@ -1403,9 +1670,7 @@ def practice_formula(
 
     result = None
 
-    correct_answers = {}
-
-    user_answers = {}
+    wrong_answers = []
 
     next_formula = None
 
@@ -1512,25 +1777,52 @@ def practice_formula(
                 formula_answer_is_correct(
                     user_answer,
                     correct_answer,
-                    element_type
+                    element_type,
+                    description=element.get(
+                        "meaning",
+                        ""
+                    ),
+                    acceptable_answers=element.get(
+                        "acceptable_answers",
+                        []
+                    )
                 )
             )
 
             # ------------------------------------------------
-            # KEEP ANSWERS FOR RESULT DISPLAY
+            # KEEP THIS FIELD'S RESULT FOR THE FORMULA DISPLAY
             # ------------------------------------------------
 
-            user_answers[
-                element_id
+            element[
+                "submitted_answer"
             ] = (
                 user_answer
             )
 
-            correct_answers[
-                element_id
+            element[
+                "answer_is_correct"
             ] = (
-                correct_answer
+                is_correct
             )
+
+            # ------------------------------------------------
+            # THE SEPARATE PANEL ONLY SHOWS WRONG ANSWERS
+            # ------------------------------------------------
+
+            if not is_correct:
+
+                wrong_answers.append(
+                    {
+                        "element_id":
+                            element_id,
+
+                        "student_answer":
+                            user_answer,
+
+                        "expected_answer":
+                            correct_answer,
+                    }
+                )
 
             # ------------------------------------------------
             # STORE BOOLEAN RESULT
@@ -1568,6 +1860,10 @@ def practice_formula(
             )
         )
 
+        reviewed_at = (
+            timezone.now()
+        )
+
         # ====================================================
         # CORRECT FORMULA
         # ====================================================
@@ -1593,20 +1889,13 @@ def practice_formula(
             )
 
             progress.last_reviewed = (
-                timezone.now()
-            )
-
-            interval = (
-                get_formula_review_interval(
-                    progress.mastery_level
-                )
+                reviewed_at
             )
 
             progress.next_review = (
-                timezone.now()
-                +
-                timedelta(
-                    days=interval
+                get_next_formula_review_at_midnight(
+                    progress.mastery_level,
+                    reviewed_at=reviewed_at
                 )
             )
 
@@ -1653,20 +1942,13 @@ def practice_formula(
             )
 
             progress.last_reviewed = (
-                timezone.now()
-            )
-
-            interval = (
-                get_formula_review_interval(
-                    progress.mastery_level
-                )
+                reviewed_at
             )
 
             progress.next_review = (
-                timezone.now()
-                +
-                timedelta(
-                    days=interval
+                get_next_formula_review_at_midnight(
+                    progress.mastery_level,
+                    reviewed_at=reviewed_at
                 )
             )
 
@@ -1784,11 +2066,8 @@ def practice_formula(
             "result":
                 result,
 
-            "correct_answers":
-                correct_answers,
-
-            "user_answers":
-                user_answers,
+            "wrong_answers":
+                wrong_answers,
 
             "review_mode":
                 review_mode,

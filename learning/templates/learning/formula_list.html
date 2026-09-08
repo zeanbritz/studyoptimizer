@@ -18,6 +18,12 @@
     </title>
 
 
+    <link
+        rel="stylesheet"
+        href="{% static 'dashboard/css/sidebar.css' %}"
+    >
+
+
     <style>
 
         * {
@@ -43,6 +49,24 @@
         }
 
 
+        .app {
+
+            display: flex;
+
+            min-height: 100vh;
+
+        }
+
+
+        .main {
+
+            flex: 1;
+
+            min-width: 0;
+
+        }
+
+
         /* =========================================
            PAGE
         ========================================= */
@@ -52,16 +76,16 @@
             min-height: 100vh;
 
             padding:
+                30px
                 40px
-                20px
-                60px;
+                50px;
 
         }
 
 
         .container {
 
-            max-width: 900px;
+            max-width: 1000px;
 
             margin: 0 auto;
 
@@ -785,8 +809,8 @@
             .page {
 
                 padding:
-                    25px
-                    15px
+                    22px
+                    18px
                     40px;
 
             }
@@ -845,7 +869,16 @@
 <body>
 
 
-<div class="page">
+<div class="app">
+
+
+    {% include 'partials/sidebar.html' with active_page='summarize' %}
+
+
+    <main class="main">
+
+
+        <div class="page">
 
 
     <div class="container">
@@ -1222,6 +1255,12 @@
 </div>
 
 
+</main>
+
+
+</div>
+
+
 <script>
 
     function toggleFormula(card) {
@@ -1231,6 +1270,9 @@
     }
 
 </script>
+
+
+<script src="{% static 'dashboard/js/sidebar.js' %}"></script>
 
 
 </body>

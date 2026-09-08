@@ -311,7 +311,7 @@
                 {% for formula in formulas %}
 
                     <a
-                        href="{% url 'review_formula' formula_id=formula.id %}"
+                        href="{% url 'review_formula' formula_id=formula.id %}?review_mode=normal&amp;subject_index={{ subject_index }}"
                         class="review-item"
                     >
 
