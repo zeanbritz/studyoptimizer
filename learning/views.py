@@ -934,20 +934,42 @@ def delete_formula(request, formula_id):
         ""
     )
 
+    return_to = request.POST.get(
+        "return_to",
+        "formula_list"
+    )
+
     if request.method == "POST":
 
         # Delete the complete formula knowledge unit so an
         # invisible orphan record is not left behind.
         knowledge_unit.delete()
 
-        redirect_url = reverse(
-            "formula_list",
-            kwargs={
-                "subject_id": subject_id,
-            },
-        )
+        if (
+            return_to == "formula_review_list"
+            and subject_index
+        ):
 
-        if subject_index:
+            redirect_url = reverse(
+                "formula_review_list",
+                kwargs={
+                    "subject_index": subject_index,
+                },
+            )
+
+        else:
+
+            redirect_url = reverse(
+                "formula_list",
+                kwargs={
+                    "subject_id": subject_id,
+                },
+            )
+
+        if (
+            subject_index
+            and return_to != "formula_review_list"
+        ):
 
             redirect_url = (
                 f"{redirect_url}?"

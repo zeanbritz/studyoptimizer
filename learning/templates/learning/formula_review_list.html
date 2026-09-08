@@ -17,6 +17,8 @@
             --border: #dfe3e6;
             --blue: #1f8fe5;
             --blue-dark: #1472b8;
+            --danger: #df4b4b;
+            --danger-dark: #b93636;
         }
 
         * { box-sizing: border-box; }
@@ -41,24 +43,24 @@
         }
 
         .back-button {
-            width: 44px;
-            height: 44px;
+            width: 48px;
+            height: 48px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            border: 2px solid var(--border);
-            border-bottom-width: 4px;
+            border: 2px solid #9fd0f2;
+            border-bottom: 5px solid #62acd9;
             border-radius: 12px;
-            background: white;
-            color: #596066;
+            background: #e7f5ff;
+            color: #1879b8;
             text-decoration: none;
-            font-size: 21px;
-            font-weight: 900;
+            font-size: 0;
             transition: transform 0.15s ease, border-color 0.15s ease;
         }
 
-        .back-button:hover { border-color: #cbd1d5; transform: translateY(-1px); }
+        .back-button svg { width: 27px; height: 27px; stroke-width: 3.4; }
+        .back-button:hover { border-color: #76bce8; background: #d9efff; transform: translateY(-1px); }
         .back-button:active { border-bottom-width: 2px; transform: translateY(2px); }
 
         .header h1 {
@@ -152,20 +154,30 @@
         .review-item {
             display: flex;
             align-items: center;
-            gap: 18px;
             min-height: 92px;
-            padding: 18px 20px;
+            overflow: hidden;
             border: 2px solid var(--border);
             border-bottom-width: 5px;
             border-radius: 17px;
             background: white;
             color: inherit;
-            text-decoration: none;
             transition: transform 0.15s ease, border-color 0.15s ease;
         }
 
         .review-item[hidden] { display: none; }
         .review-item:hover { border-color: #9bd77c; transform: translateY(-2px); }
+
+        .review-link {
+            display: flex;
+            align-items: center;
+            align-self: stretch;
+            gap: 18px;
+            min-width: 0;
+            flex: 1;
+            padding: 18px 20px;
+            color: inherit;
+            text-decoration: none;
+        }
 
         .formula-number {
             width: 46px;
@@ -198,21 +210,102 @@
             font-weight: 650;
         }
 
-        .start-button {
-            min-width: 112px;
-            padding: 11px 16px 9px;
+        .review-actions {
+            width: 64px;
+            align-self: stretch;
+            display: grid;
+            grid-template-rows: 1fr 1fr;
             flex-shrink: 0;
-            border: 2px solid var(--green-dark);
-            border-bottom-width: 5px;
-            border-radius: 12px;
-            background: var(--green);
-            color: white;
-            text-align: center;
-            font-size: 13px;
-            font-weight: 850;
+            border-left: 2px solid var(--border);
         }
 
-        .review-item:hover .start-button { background: #63c833; }
+        .edge-action,
+        .edge-action-form,
+        .edge-action-form button { width: 100%; height: 100%; }
+
+        .edge-action {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 0;
+            background: #edf8ff;
+            color: #2182be;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.15s ease, color 0.15s ease;
+        }
+
+        .review-actions > .edge-action:first-child { border-bottom: 2px solid var(--border); }
+        .edge-action:hover { background: #d9efff; color: #12689f; }
+        .edge-action svg { width: 23px; height: 23px; stroke-width: 2.6; }
+        .edge-action-form { margin: 0; }
+        .edge-action-form button { border: 0; background: #fff0f0; color: var(--danger); }
+        .edge-action-form button:hover { background: #ffe0e0; color: var(--danger-dark); }
+
+        body.modal-open { overflow: hidden; }
+        .delete-modal[hidden] { display: none; }
+
+        .delete-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: rgba(28, 31, 33, 0.5);
+        }
+
+        .delete-modal-card {
+            width: min(470px, 100%);
+            padding: 28px;
+            border: 2px solid var(--border);
+            border-bottom-width: 5px;
+            border-radius: 17px;
+            background: white;
+            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.22);
+        }
+
+        .delete-modal-icon {
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 17px;
+            border-radius: 14px;
+            background: #fff0f0;
+            color: var(--danger);
+        }
+
+        .delete-modal-icon svg { width: 29px; height: 29px; stroke-width: 2.7; }
+        .delete-modal-card h2 { margin: 0 0 8px; font-size: 23px; font-weight: 850; }
+        .delete-modal-card p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
+        .delete-formula-name { color: var(--ink); font-weight: 850; }
+
+        .delete-modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #eceeef;
+        }
+
+        .modal-button {
+            padding: 11px 17px 9px;
+            border: 2px solid;
+            border-bottom-width: 4px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 850;
+            cursor: pointer;
+        }
+
+        .modal-cancel { border-color: #d7dcdf; background: white; color: #555d62; }
+        .modal-delete { border-color: var(--danger-dark); background: var(--danger); color: white; }
+        .modal-cancel:hover { background: #f4f5f6; }
+        .modal-delete:hover { background: #e75b5b; }
 
         .empty {
             padding: 48px 24px;
@@ -282,9 +375,11 @@
             .header { align-items: flex-start; }
             .header h1 { font-size: 25px; }
             .progress-card { padding: 16px; }
-            .review-item { align-items: flex-start; flex-wrap: wrap; }
-            .review-copy { width: calc(100% - 64px); flex: auto; }
-            .start-button { width: 100%; margin-left: 64px; }
+            .review-link { gap: 13px; padding: 16px 14px; }
+            .review-actions { width: 58px; }
+            .formula-number { width: 40px; height: 40px; }
+            .delete-modal-actions { flex-direction: column-reverse; }
+            .modal-button { width: 100%; }
         }
     </style>
 </head>
@@ -301,7 +396,12 @@
                         href="{% url 'subject_detail' subject_index=subject_index %}"
                         class="back-button"
                         aria-label="Back to subject"
-                    >←</a>
+                    >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                            <path d="M19 12H5"></path>
+                            <path d="m11 18-6-6 6-6"></path>
+                        </svg>
+                    </a>
 
                     <div>
                         <h1>Formula Review</h1>
@@ -331,18 +431,60 @@
 
                     <div class="review-list" id="review-list">
                         {% for formula in formulas %}
-                            <a
-                                href="{% url 'review_formula' formula_id=formula.id %}?review_mode=normal&amp;subject_index={{ subject_index }}"
+                            <article
                                 class="review-item"
                                 data-review-item
                             >
-                                <span class="formula-number">{{ forloop.counter }}</span>
-                                <div class="review-copy">
-                                    <h2>{{ formula.knowledge_unit.title }}</h2>
-                                    <p>Formula · Due today</p>
+                                <a
+                                    href="{% url 'review_formula' formula_id=formula.id %}?review_mode=normal&amp;subject_index={{ subject_index }}"
+                                    class="review-link"
+                                >
+                                    <span class="formula-number">{{ forloop.counter }}</span>
+                                    <div class="review-copy">
+                                        <h2>{{ formula.knowledge_unit.title }}</h2>
+                                        <p>Formula · Due today</p>
+                                    </div>
+                                </a>
+
+                                <div class="review-actions">
+                                    <a
+                                        href="{% url 'edit_formula' formula_id=formula.id %}"
+                                        class="edge-action"
+                                        aria-label="Edit {{ formula.knowledge_unit.title }}"
+                                        title="Edit formula"
+                                    >
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                                            <path d="M12 20h9"></path>
+                                            <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"></path>
+                                        </svg>
+                                    </a>
+
+                                    <form
+                                        method="POST"
+                                        action="{% url 'delete_formula' formula_id=formula.id %}"
+                                        class="edge-action-form"
+                                        data-delete-form
+                                        data-formula-name="{{ formula.knowledge_unit.title|escape }}"
+                                    >
+                                        {% csrf_token %}
+                                        <input type="hidden" name="subject_index" value="{{ subject_index }}">
+                                        <input type="hidden" name="return_to" value="formula_review_list">
+                                        <button
+                                            type="submit"
+                                            class="edge-action"
+                                            aria-label="Delete {{ formula.knowledge_unit.title }}"
+                                            title="Delete formula"
+                                        >
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                                                <path d="M3 6h18"></path>
+                                                <path d="M8 6V4h8v2"></path>
+                                                <path d="m19 6-1 14H6L5 6"></path>
+                                                <path d="M10 10v6M14 10v6"></path>
+                                            </svg>
+                                        </button>
+                                    </form>
                                 </div>
-                                <span class="start-button">Review →</span>
-                            </a>
+                            </article>
                         {% endfor %}
                     </div>
 
@@ -368,12 +510,54 @@
     </main>
 </div>
 
+<div
+    class="delete-modal"
+    id="delete-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="delete-modal-title"
+    hidden
+>
+    <div class="delete-modal-card">
+        <div class="delete-modal-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M3 6h18"></path>
+                <path d="M8 6V4h8v2"></path>
+                <path d="m19 6-1 14H6L5 6"></path>
+                <path d="M10 10v6M14 10v6"></path>
+            </svg>
+        </div>
+
+        <h2 id="delete-modal-title">Delete this formula?</h2>
+        <p>
+            Are you sure you want to permanently delete
+            <span class="delete-formula-name" id="delete-formula-name"></span>?
+            This cannot be undone.
+        </p>
+
+        <div class="delete-modal-actions">
+            <button type="button" class="modal-button modal-cancel" id="delete-modal-cancel">
+                Keep Formula
+            </button>
+            <button type="button" class="modal-button modal-delete" id="delete-modal-confirm">
+                Delete Formula
+            </button>
+        </div>
+    </div>
+</div>
+
 {% if formulas %}
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const searchInput = document.getElementById("review-search");
         const reviewItems = Array.from(document.querySelectorAll("[data-review-item]"));
         const searchEmpty = document.getElementById("search-empty");
+        const deleteModal = document.getElementById("delete-modal");
+        const deleteFormulaName = document.getElementById("delete-formula-name");
+        const deleteModalCancel = document.getElementById("delete-modal-cancel");
+        const deleteModalConfirm = document.getElementById("delete-modal-confirm");
+        let pendingDeleteForm = null;
+        let previousFocus = null;
 
         if (!searchInput) {
             return;
@@ -392,6 +576,47 @@
             });
 
             searchEmpty.hidden = visibleCount !== 0;
+        });
+
+        function closeDeleteModal() {
+            deleteModal.hidden = true;
+            document.body.classList.remove("modal-open");
+            pendingDeleteForm = null;
+            if (previousFocus) {
+                previousFocus.focus();
+            }
+        }
+
+        document.querySelectorAll("[data-delete-form]").forEach(function (form) {
+            form.addEventListener("submit", function (event) {
+                event.preventDefault();
+                pendingDeleteForm = form;
+                previousFocus = document.activeElement;
+                deleteFormulaName.textContent = form.dataset.formulaName || "this formula";
+                deleteModal.hidden = false;
+                document.body.classList.add("modal-open");
+                deleteModalCancel.focus();
+            });
+        });
+
+        deleteModalCancel.addEventListener("click", closeDeleteModal);
+
+        deleteModalConfirm.addEventListener("click", function () {
+            if (pendingDeleteForm) {
+                pendingDeleteForm.submit();
+            }
+        });
+
+        deleteModal.addEventListener("click", function (event) {
+            if (event.target === deleteModal) {
+                closeDeleteModal();
+            }
+        });
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape" && !deleteModal.hidden) {
+                closeDeleteModal();
+            }
         });
     });
 </script>

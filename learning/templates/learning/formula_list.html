@@ -896,18 +896,25 @@
         }
 
         .back-button {
-            width: 44px;
-            height: 44px;
-            border: 2px solid var(--raised-border);
-            border-bottom-width: 4px;
+            width: 48px;
+            height: 48px;
+            border: 2px solid #9fd0f2;
+            border-bottom: 5px solid #62acd9;
             border-radius: 12px;
-            color: #596066;
-            font-weight: 800;
+            background: #e7f5ff;
+            color: #1879b8;
+            font-size: 0;
+        }
+
+        .back-button svg {
+            width: 27px;
+            height: 27px;
+            stroke-width: 3.4;
         }
 
         .back-button:hover {
-            border-color: #cfd4d7;
-            background: white;
+            border-color: #76bce8;
+            background: #d9efff;
             transform: translateY(-1px);
         }
 
@@ -1324,8 +1331,12 @@
                 <a
                     href="{% url 'subject_detail' subject_index=subject_index %}"
                     class="back-button"
+                    aria-label="Back to subject"
                 >
-                    ←
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                        <path d="M19 12H5"></path>
+                        <path d="m11 18-6-6 6-6"></path>
+                    </svg>
                 </a>
 
 
