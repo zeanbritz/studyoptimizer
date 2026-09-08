@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from datetime import date, datetime, timedelta
+from urllib.parse import urlencode
 from django.db import transaction
 
 import json
@@ -925,15 +926,41 @@ def delete_formula(request, formula_id):
         knowledge_unit__subject__user=request.user,
     )
 
-    subject_id = formula.knowledge_unit.subject.id
+    knowledge_unit = formula.knowledge_unit
+    subject_id = knowledge_unit.subject_id
+
+    subject_index = request.POST.get(
+        "subject_index",
+        ""
+    )
 
     if request.method == "POST":
 
-        formula.delete()
+        # Delete the complete formula knowledge unit so an
+        # invisible orphan record is not left behind.
+        knowledge_unit.delete()
+
+        redirect_url = reverse(
+            "formula_list",
+            kwargs={
+                "subject_id": subject_id,
+            },
+        )
+
+        if subject_index:
+
+            redirect_url = (
+                f"{redirect_url}?"
+                + urlencode(
+                    {
+                        "subject_index":
+                            subject_index,
+                    }
+                )
+            )
 
         return redirect(
-            "formula_list",
-            subject_id=subject_id
+            redirect_url
         )
 
     return redirect(
@@ -2680,9 +2707,26 @@ def review_formula(request, formula_id):
     # The Practice app handles the actual formula review.
     # --------------------------------------------------------
 
-    return redirect(
+    practice_url = reverse(
         "practice_formula",
-        formula_id=formula.id
+        kwargs={
+            "formula_id": formula.id,
+        },
+    )
+
+    # The practice app uses these values to keep a daily-review
+    # session moving to the next formula. Preserve them during
+    # the hand-off from the learning app.
+    query_string = request.GET.urlencode()
+
+    if query_string:
+
+        practice_url = (
+            f"{practice_url}?{query_string}"
+        )
+
+    return redirect(
+        practice_url
     )
 
 
@@ -2833,16 +2877,33 @@ def formula_review_list(
             # REVIEW DUE
             # ------------------------------------------------
 
-            if (
-                progress.next_review is not None
-                and
-                progress.next_review.date()
-                <= today
-            ):
+            if progress.next_review is None:
 
                 due_formulas.append(
                     formula
                 )
+
+                continue
+
+            next_review_date = (
+                timezone.localtime(
+                    progress.next_review
+                )
+                .date()
+            )
+
+            if next_review_date <= today:
+
+                due_formulas.append(
+                    formula
+                )
+
+        due_formulas.sort(
+            key=lambda formula: (
+                formula.knowledge_unit.title.casefold(),
+                formula.id,
+            )
+        )
 
     return render(
         request,
@@ -2856,6 +2917,9 @@ def formula_review_list(
 
             "formulas":
                 due_formulas,
+
+            "due_formula_count":
+                len(due_formulas),
         }
     )
 

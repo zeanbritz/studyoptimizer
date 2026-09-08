@@ -861,6 +861,433 @@
 
         }
 
+
+        /* =========================================
+           PLAYFUL LEARNING UI
+        ========================================= */
+
+        :root {
+            --brand-green: #58b82a;
+            --brand-green-dark: #3f8f1d;
+            --brand-green-soft: #eef9e9;
+            --page-ink: #2f3133;
+            --muted-ink: #70757a;
+            --raised-border: #dfe3e6;
+            --raised-shadow: #d5d9dc;
+            --danger: #d94a4a;
+            --danger-dark: #ad3434;
+        }
+
+        body {
+            background: #f7f8fa;
+            color: var(--page-ink);
+        }
+
+        .page {
+            padding: 30px 40px 55px;
+        }
+
+        .container {
+            max-width: 1040px;
+        }
+
+        .header {
+            margin-bottom: 24px;
+        }
+
+        .back-button {
+            width: 44px;
+            height: 44px;
+            border: 2px solid var(--raised-border);
+            border-bottom-width: 4px;
+            border-radius: 12px;
+            color: #596066;
+            font-weight: 800;
+        }
+
+        .back-button:hover {
+            border-color: #cfd4d7;
+            background: white;
+            transform: translateY(-1px);
+        }
+
+        .back-button:active {
+            border-bottom-width: 2px;
+            transform: translateY(2px);
+        }
+
+        .header-text h1 {
+            color: var(--page-ink);
+            font-size: 32px;
+            font-weight: 850;
+            letter-spacing: -0.8px;
+        }
+
+        .header-text p {
+            color: var(--muted-ink);
+            font-weight: 600;
+        }
+
+        .create-button {
+            padding: 12px 19px 10px;
+            border: 2px solid var(--brand-green-dark);
+            border-bottom-width: 5px;
+            border-radius: 12px;
+            background: var(--brand-green);
+            font-weight: 800;
+            letter-spacing: 0.02em;
+        }
+
+        .create-button:hover {
+            background: #63c833;
+            transform: translateY(-1px);
+        }
+
+        .create-button:active {
+            border-bottom-width: 2px;
+            transform: translateY(3px);
+        }
+
+        .formula-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .formula-search {
+            position: relative;
+            flex: 1;
+            max-width: 620px;
+        }
+
+        .formula-search-icon {
+            position: absolute;
+            top: 50%;
+            left: 16px;
+            color: #8a9095;
+            font-size: 19px;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
+        .formula-search-input {
+            width: 100%;
+            min-height: 50px;
+            padding: 12px 46px;
+            border: 2px solid var(--raised-border);
+            border-bottom-width: 4px;
+            border-radius: 14px;
+            background: white;
+            color: var(--page-ink);
+            font-size: 15px;
+            font-weight: 650;
+            outline: none;
+        }
+
+        .formula-search-input::placeholder {
+            color: #9a9fa4;
+        }
+
+        .formula-search-input:focus {
+            border-color: #8bc96a;
+            box-shadow: 0 0 0 4px rgba(88, 184, 42, 0.12);
+        }
+
+        .formula-count {
+            flex-shrink: 0;
+            color: var(--muted-ink);
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .formulas {
+            gap: 17px;
+        }
+
+        .formula-card {
+            overflow: hidden;
+            border: 2px solid var(--raised-border);
+            border-bottom-width: 5px;
+            border-radius: 17px;
+            box-shadow: none;
+            background: white;
+        }
+
+        .formula-card[hidden] {
+            display: none;
+        }
+
+        .formula-card:hover {
+            border-color: #cbd1d5;
+            box-shadow: none;
+            transform: translateY(-2px);
+        }
+
+        .formula-card.open {
+            border-color: #9bd77c;
+            border-bottom-color: var(--brand-green-dark);
+            box-shadow: 0 8px 24px rgba(47, 76, 34, 0.08);
+        }
+
+        .formula-header {
+            min-height: 86px;
+            padding: 21px 23px;
+        }
+
+        .formula-title h2 {
+            color: var(--page-ink);
+            font-size: 19px;
+            font-weight: 850;
+            letter-spacing: -0.25px;
+        }
+
+        .formula-hint {
+            color: #8a9095;
+            font-weight: 600;
+        }
+
+        .formula-arrow {
+            width: 38px;
+            height: 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: var(--brand-green-soft);
+            color: var(--brand-green-dark);
+            font-size: 18px;
+            font-weight: 900;
+        }
+
+        .formula-card.open .formula-arrow {
+            background: var(--brand-green);
+            color: white;
+        }
+
+        .formula-content {
+            background: #fcfdfc;
+        }
+
+        .formula-display {
+            border: 2px solid #e3e6e8;
+            border-radius: 14px;
+            background: white;
+        }
+
+        .info-section {
+            border-color: #e8eaec;
+        }
+
+        .info-section h3 {
+            color: #5e6468;
+            font-weight: 850;
+            letter-spacing: 0.01em;
+        }
+
+        .variable {
+            border: 1px solid #dfe9d9;
+            border-radius: 10px;
+            background: var(--brand-green-soft);
+        }
+
+        .variable-symbol {
+            color: var(--brand-green-dark);
+        }
+
+        .formula-actions {
+            gap: 10px;
+            padding-top: 20px;
+            border-top: 1px solid #e8eaec;
+        }
+
+        .action-button {
+            min-height: 43px;
+            padding: 10px 15px 8px;
+            border: 2px solid #d7dcdf;
+            border-bottom-width: 4px;
+            border-radius: 10px;
+            background: white;
+            color: #555d62;
+            font-size: 13px;
+            font-weight: 850;
+        }
+
+        .action-button:hover {
+            background: #f5f6f7;
+            transform: translateY(-1px);
+        }
+
+        .action-button:active {
+            border-bottom-width: 2px;
+            transform: translateY(2px);
+        }
+
+        .edit-button {
+            border-color: #83c760;
+            background: var(--brand-green-soft);
+            color: var(--brand-green-dark);
+        }
+
+        .edit-button:hover {
+            background: #e3f5da;
+        }
+
+        .delete-button {
+            border-color: #e39a9a;
+            background: #fff4f4;
+            color: var(--danger-dark);
+        }
+
+        .delete-button:hover {
+            background: #ffe8e8;
+        }
+
+        .no-search-results {
+            padding: 34px 22px;
+            border: 2px dashed #d8dddf;
+            border-radius: 16px;
+            background: white;
+            color: var(--muted-ink);
+            text-align: center;
+            font-weight: 750;
+        }
+
+        .no-search-results[hidden] {
+            display: none;
+        }
+
+        body.modal-open {
+            overflow: hidden;
+        }
+
+        .delete-modal[hidden] {
+            display: none;
+        }
+
+        .delete-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: rgba(28, 31, 33, 0.48);
+        }
+
+        .delete-modal-card {
+            width: min(470px, 100%);
+            padding: 28px;
+            border: 2px solid var(--raised-border);
+            border-bottom-width: 5px;
+            border-radius: 17px;
+            background: white;
+            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.22);
+        }
+
+        .delete-modal-icon {
+            width: 54px;
+            height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 18px;
+            border-radius: 50%;
+            background: #fff0f0;
+            color: var(--danger);
+            font-size: 25px;
+            font-weight: 900;
+        }
+
+        .delete-modal-card h2 {
+            margin: 0 0 8px;
+            color: var(--page-ink);
+            font-size: 23px;
+            font-weight: 850;
+        }
+
+        .delete-modal-card p {
+            margin: 0;
+            color: var(--muted-ink);
+            font-size: 14px;
+            line-height: 1.55;
+        }
+
+        .delete-formula-name {
+            color: var(--page-ink);
+            font-weight: 800;
+        }
+
+        .delete-modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #eceeef;
+        }
+
+        .delete-modal-cancel,
+        .delete-modal-confirm {
+            padding: 11px 17px 9px;
+            border: 2px solid;
+            border-bottom-width: 4px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 850;
+            cursor: pointer;
+        }
+
+        .delete-modal-cancel {
+            border-color: #d7dcdf;
+            background: white;
+            color: #555d62;
+        }
+
+        .delete-modal-confirm {
+            border-color: var(--danger-dark);
+            background: var(--danger);
+            color: white;
+        }
+
+        .delete-modal-cancel:hover {
+            background: #f4f5f6;
+        }
+
+        .delete-modal-confirm:hover {
+            background: #e35555;
+        }
+
+        @media (max-width: 650px) {
+            .page {
+                padding: 22px 18px 44px;
+            }
+
+            .formula-toolbar {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .formula-search {
+                max-width: none;
+            }
+
+            .formula-count {
+                padding-left: 3px;
+            }
+
+            .delete-modal-actions {
+                flex-direction: column-reverse;
+            }
+
+            .delete-modal-cancel,
+            .delete-modal-confirm {
+                width: 100%;
+            }
+        }
+
     </style>
 
 </head>
@@ -936,6 +1363,51 @@
         {% if formulas %}
 
 
+            <div class="formula-toolbar">
+
+
+                <label class="formula-search">
+
+                    <span
+                        class="formula-search-icon"
+                        aria-hidden="true"
+                    >
+                        &#128269;
+                    </span>
+
+                    <input
+                        type="search"
+                        class="formula-search-input"
+                        id="formula-search-input"
+                        placeholder="Search formulas..."
+                        aria-label="Search formulas"
+                        autocomplete="off"
+                    >
+
+                </label>
+
+
+                <div
+                    class="formula-count"
+                    id="formula-count"
+                    aria-live="polite"
+                >
+                    {{ formulas|length }} formula{{ formulas|length|pluralize }}
+                </div>
+
+
+            </div>
+
+
+            <div
+                class="no-search-results"
+                id="no-search-results"
+                hidden
+            >
+                No formulas match that search.
+            </div>
+
+
             <div class="formulas">
 
 
@@ -944,6 +1416,7 @@
 
                     <div
                         class="formula-card"
+                        data-formula-card
                         onclick="toggleFormula(this)"
                     >
 
@@ -1163,7 +1636,7 @@
 
                                 <a
                                     href="{% url 'formula_detail' formula_id=formula.id %}"
-                                    class="action-button"
+                                    class="action-button view-button"
                                 >
                                     View Formula
                                 </a>
@@ -1171,7 +1644,7 @@
 
                                 <a
                                     href="{% url 'edit_formula' formula_id=formula.id %}"
-                                    class="action-button"
+                                    class="action-button edit-button"
                                 >
                                     Edit
                                 </a>
@@ -1181,14 +1654,16 @@
                                     method="POST"
                                     action="{% url 'delete_formula' formula_id=formula.id %}"
                                     class="delete-form"
-                                    onsubmit="
-                                        return confirm(
-                                            'Are you sure you want to delete this formula? This cannot be undone.'
-                                        );
-                                    "
+                                    data-formula-name="{{ formula.knowledge_unit.title|escape }}"
                                 >
 
                                     {% csrf_token %}
+
+                                    <input
+                                        type="hidden"
+                                        name="subject_index"
+                                        value="{{ subject_index }}"
+                                    >
 
                                     <button
                                         type="submit"
@@ -1261,6 +1736,62 @@
 </div>
 
 
+<div
+    class="delete-modal"
+    id="delete-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="delete-modal-title"
+    hidden
+>
+
+    <div class="delete-modal-card">
+
+        <div
+            class="delete-modal-icon"
+            aria-hidden="true"
+        >
+            !
+        </div>
+
+        <h2 id="delete-modal-title">
+            Delete this formula?
+        </h2>
+
+        <p>
+            You are about to permanently delete
+            <span
+                class="delete-formula-name"
+                id="delete-formula-name"
+            ></span>.
+            This action cannot be undone.
+        </p>
+
+        <div class="delete-modal-actions">
+
+            <button
+                type="button"
+                class="delete-modal-cancel"
+                id="delete-modal-cancel"
+            >
+                Keep Formula
+            </button>
+
+            <button
+                type="button"
+                class="delete-modal-confirm"
+                id="delete-modal-confirm"
+            >
+                Delete Formula
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
 <script>
 
     function toggleFormula(card) {
@@ -1268,6 +1799,309 @@
         card.classList.toggle("open");
 
     }
+
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+
+            // =============================================
+            // LIVE FORMULA SEARCH
+            // =============================================
+
+            const searchInput =
+                document.getElementById(
+                    "formula-search-input"
+                );
+
+            const formulaCards =
+                Array.from(
+                    document.querySelectorAll(
+                        "[data-formula-card]"
+                    )
+                );
+
+            const formulaCount =
+                document.getElementById(
+                    "formula-count"
+                );
+
+            const noSearchResults =
+                document.getElementById(
+                    "no-search-results"
+                );
+
+
+            function updateFormulaSearch() {
+
+                if (!searchInput) {
+                    return;
+                }
+
+                const query =
+                    searchInput
+                        .value
+                        .trim()
+                        .toLocaleLowerCase();
+
+                let visibleCount = 0;
+
+                formulaCards.forEach(
+                    function (card) {
+
+                        const searchableText =
+                            card
+                                .textContent
+                                .toLocaleLowerCase();
+
+                        const matches =
+                            !query
+                            ||
+                            searchableText.includes(
+                                query
+                            );
+
+                        card.hidden = !matches;
+
+                        if (matches) {
+                            visibleCount += 1;
+                        } else {
+                            card.classList.remove(
+                                "open"
+                            );
+                        }
+
+                    }
+                );
+
+                if (formulaCount) {
+
+                    formulaCount.textContent =
+                        visibleCount
+                        +
+                        (
+                            visibleCount
+                            ===
+                            1
+                            ?
+                            " formula"
+                            :
+                            " formulas"
+                        );
+
+                }
+
+                if (noSearchResults) {
+
+                    noSearchResults.hidden =
+                        visibleCount
+                        !==
+                        0;
+
+                }
+
+            }
+
+
+            if (searchInput) {
+
+                searchInput.addEventListener(
+                    "input",
+                    updateFormulaSearch
+                );
+
+            }
+
+
+            // =============================================
+            // STYLED DELETE CONFIRMATION
+            // =============================================
+
+            const deleteModal =
+                document.getElementById(
+                    "delete-modal"
+                );
+
+            const deleteFormulaName =
+                document.getElementById(
+                    "delete-formula-name"
+                );
+
+            const deleteModalCancel =
+                document.getElementById(
+                    "delete-modal-cancel"
+                );
+
+            const deleteModalConfirm =
+                document.getElementById(
+                    "delete-modal-confirm"
+                );
+
+            let pendingDeleteForm = null;
+
+            let deletePreviousFocus = null;
+
+
+            function closeDeleteModal() {
+
+                if (
+                    !deleteModal
+                    ||
+                    deleteModal.hidden
+                ) {
+                    return;
+                }
+
+                deleteModal.hidden = true;
+
+                document.body.classList.remove(
+                    "modal-open"
+                );
+
+                pendingDeleteForm = null;
+
+                if (
+                    deletePreviousFocus
+                    &&
+                    typeof deletePreviousFocus.focus
+                    ==
+                    "function"
+                ) {
+                    deletePreviousFocus.focus();
+                }
+
+            }
+
+
+            document
+                .querySelectorAll(
+                    ".delete-form"
+                )
+                .forEach(
+                    function (deleteForm) {
+
+                        deleteForm.addEventListener(
+                            "submit",
+                            function (event) {
+
+                                event.preventDefault();
+
+                                if (
+                                    !deleteModal
+                                    ||
+                                    !deleteModalConfirm
+                                ) {
+                                    return;
+                                }
+
+                                pendingDeleteForm =
+                                    deleteForm;
+
+                                deletePreviousFocus =
+                                    document.activeElement;
+
+                                if (deleteFormulaName) {
+                                    deleteFormulaName.textContent =
+                                        deleteForm.dataset
+                                            .formulaName
+                                        ||
+                                        "this formula";
+                                }
+
+                                deleteModal.hidden = false;
+
+                                document.body.classList.add(
+                                    "modal-open"
+                                );
+
+                                window.setTimeout(
+                                    function () {
+                                        deleteModalConfirm.focus();
+                                    },
+                                    0
+                                );
+
+                            }
+                        );
+
+                    }
+                );
+
+
+            if (deleteModalCancel) {
+
+                deleteModalCancel.addEventListener(
+                    "click",
+                    closeDeleteModal
+                );
+
+            }
+
+
+            if (deleteModalConfirm) {
+
+                deleteModalConfirm.addEventListener(
+                    "click",
+                    function () {
+
+                        if (!pendingDeleteForm) {
+                            return;
+                        }
+
+                        deleteModalConfirm.disabled = true;
+
+                        deleteModalConfirm.textContent =
+                            "Deleting...";
+
+                        pendingDeleteForm.submit();
+
+                    }
+                );
+
+            }
+
+
+            if (deleteModal) {
+
+                deleteModal.addEventListener(
+                    "click",
+                    function (event) {
+
+                        if (
+                            event.target
+                            ===
+                            deleteModal
+                        ) {
+                            closeDeleteModal();
+                        }
+
+                    }
+                );
+
+            }
+
+
+            document.addEventListener(
+                "keydown",
+                function (event) {
+
+                    if (
+                        event.key
+                        ==
+                        "Escape"
+                        &&
+                        deleteModal
+                        &&
+                        !deleteModal.hidden
+                    ) {
+                        closeDeleteModal();
+                    }
+
+                }
+            );
+
+        }
+    );
 
 </script>
 

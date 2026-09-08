@@ -1054,6 +1054,204 @@
         }
 
 
+        body.modal-open {
+
+            overflow: hidden;
+
+        }
+
+
+        .acceptable-answer-modal[hidden] {
+
+            display: none;
+
+        }
+
+
+        .acceptable-answer-modal {
+
+            position: fixed;
+
+            inset: 0;
+
+            z-index: 10001;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding: 24px;
+
+            background:
+                rgba(
+                    20,
+                    20,
+                    20,
+                    0.42
+                );
+
+        }
+
+
+        .acceptable-answer-modal-card {
+
+            width: min(460px, 100%);
+
+            padding: 26px;
+
+            border:
+                1px solid
+                #e1e1e1;
+
+            border-radius: 14px;
+
+            background: white;
+
+            box-shadow:
+                0
+                22px
+                65px
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.22
+                );
+
+        }
+
+
+        .acceptable-answer-modal-card h2 {
+
+            margin:
+                0
+                0
+                8px;
+
+            color: #222;
+
+            font-size: 22px;
+
+        }
+
+
+        .acceptable-answer-modal-card p {
+
+            margin: 0;
+
+            color: #777;
+
+            font-size: 14px;
+
+            line-height: 1.5;
+
+        }
+
+
+        .acceptable-answer-modal-value {
+
+            margin-top: 18px;
+
+            padding:
+                12px
+                14px;
+
+            border:
+                1px solid
+                #dedede;
+
+            border-radius: 8px;
+
+            background: #f5f6f8;
+
+            color: #222;
+
+            font-size: 17px;
+
+            font-weight: 700;
+
+            overflow-wrap: anywhere;
+
+        }
+
+
+        .acceptable-answer-modal-actions {
+
+            display: flex;
+
+            justify-content: flex-end;
+
+            gap: 10px;
+
+            margin-top: 24px;
+
+            padding-top: 20px;
+
+            border-top:
+                1px solid
+                #eeeeee;
+
+        }
+
+
+        .modal-cancel-button,
+        .modal-confirm-button {
+
+            padding:
+                10px
+                16px;
+
+            border-radius: 8px;
+
+            font-size: 13px;
+
+            font-weight: 700;
+
+            cursor: pointer;
+
+        }
+
+
+        .modal-cancel-button {
+
+            border:
+                1px solid
+                #d5d5d5;
+
+            background: white;
+
+            color: #333;
+
+        }
+
+
+        .modal-cancel-button:hover {
+
+            background: #f3f3f3;
+
+        }
+
+
+        .modal-confirm-button {
+
+            border: none;
+
+            background: #222;
+
+            color: white;
+
+        }
+
+
+        .modal-confirm-button:hover {
+
+            background: #333;
+
+        }
+
+
         .answer-comparison-arrow {
 
             color: #9a6b6b;
@@ -1678,6 +1876,28 @@
             }
 
 
+            .acceptable-answer-modal {
+
+                padding: 16px;
+
+            }
+
+
+            .acceptable-answer-modal-actions {
+
+                flex-direction: column-reverse;
+
+            }
+
+
+            .modal-cancel-button,
+            .modal-confirm-button {
+
+                width: 100%;
+
+            }
+
+
             .wrong-answer-row {
 
                 grid-template-columns: 1fr;
@@ -1864,7 +2084,7 @@
         >
 
             <div class="result-card">
-                ✗ Not quite.
+                Incorrect
             </div>
 
         </div>
@@ -3076,6 +3296,55 @@
 </div>
 
 
+<div
+    class="acceptable-answer-modal"
+    id="acceptable-answer-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="acceptable-answer-modal-title"
+    hidden
+>
+
+    <div class="acceptable-answer-modal-card">
+
+        <h2 id="acceptable-answer-modal-title">
+            Accept this answer?
+        </h2>
+
+        <p>
+            This answer will be marked correct during future reviews.
+        </p>
+
+        <div
+            class="acceptable-answer-modal-value"
+            id="acceptable-answer-modal-value"
+        ></div>
+
+        <div class="acceptable-answer-modal-actions">
+
+            <button
+                type="button"
+                class="modal-cancel-button"
+                id="acceptable-answer-modal-cancel"
+            >
+                Cancel
+            </button>
+
+            <button
+                type="button"
+                class="modal-confirm-button"
+                id="acceptable-answer-modal-confirm"
+            >
+                Accept Answer
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
 <script>
 
     document.addEventListener(
@@ -3110,6 +3379,224 @@
             // SAVE AN ACCEPTABLE ALTERNATIVE ANSWER
             // =================================================
 
+            const acceptableAnswerModal =
+                document.getElementById(
+                    "acceptable-answer-modal"
+                );
+
+            const acceptableAnswerModalValue =
+                document.getElementById(
+                    "acceptable-answer-modal-value"
+                );
+
+            const acceptableAnswerModalCancel =
+                document.getElementById(
+                    "acceptable-answer-modal-cancel"
+                );
+
+            const acceptableAnswerModalConfirm =
+                document.getElementById(
+                    "acceptable-answer-modal-confirm"
+                );
+
+            let acceptableAnswerModalResolver =
+                null;
+
+            let acceptableAnswerPreviousFocus =
+                null;
+
+
+            function closeAcceptableAnswerModal(
+                confirmed
+            ) {
+
+                if (
+                    !acceptableAnswerModal
+                    ||
+                    acceptableAnswerModal.hidden
+                ) {
+
+                    return;
+
+                }
+
+
+                acceptableAnswerModal.hidden = true;
+
+                document.body.classList.remove(
+                    "modal-open"
+                );
+
+
+                if (
+                    acceptableAnswerPreviousFocus
+                    &&
+                    typeof acceptableAnswerPreviousFocus.focus
+                    ==
+                    "function"
+                ) {
+
+                    acceptableAnswerPreviousFocus.focus();
+
+                }
+
+
+                if (acceptableAnswerModalResolver) {
+
+                    const resolve =
+                        acceptableAnswerModalResolver;
+
+                    acceptableAnswerModalResolver =
+                        null;
+
+                    resolve(confirmed);
+
+                }
+
+            }
+
+
+            function requestAcceptableAnswerConfirmation(
+                answer
+            ) {
+
+                if (
+                    !acceptableAnswerModal
+                    ||
+                    !acceptableAnswerModalValue
+                    ||
+                    !acceptableAnswerModalConfirm
+                ) {
+
+                    return Promise.resolve(
+                        false
+                    );
+
+                }
+
+
+                acceptableAnswerPreviousFocus =
+                    document.activeElement;
+
+                acceptableAnswerModalValue.textContent =
+                    answer;
+
+                acceptableAnswerModal.hidden = false;
+
+                document.body.classList.add(
+                    "modal-open"
+                );
+
+                window.setTimeout(
+                    function () {
+
+                        acceptableAnswerModalConfirm.focus();
+
+                    },
+                    0
+                );
+
+
+                return new Promise(
+                    function (
+                        resolve
+                    ) {
+
+                        acceptableAnswerModalResolver =
+                            resolve;
+
+                    }
+                );
+
+            }
+
+
+            if (acceptableAnswerModalCancel) {
+
+                acceptableAnswerModalCancel
+                    .addEventListener(
+                        "click",
+                        function () {
+
+                            closeAcceptableAnswerModal(
+                                false
+                            );
+
+                        }
+                    );
+
+            }
+
+
+            if (acceptableAnswerModalConfirm) {
+
+                acceptableAnswerModalConfirm
+                    .addEventListener(
+                        "click",
+                        function () {
+
+                            closeAcceptableAnswerModal(
+                                true
+                            );
+
+                        }
+                    );
+
+            }
+
+
+            if (acceptableAnswerModal) {
+
+                acceptableAnswerModal
+                    .addEventListener(
+                        "click",
+                        function (
+                            event
+                        ) {
+
+                            if (
+                                event.target
+                                ===
+                                acceptableAnswerModal
+                            ) {
+
+                                closeAcceptableAnswerModal(
+                                    false
+                                );
+
+                            }
+
+                        }
+                    );
+
+            }
+
+
+            document.addEventListener(
+                "keydown",
+                function (
+                    event
+                ) {
+
+                    if (
+                        event.key
+                        ==
+                        "Escape"
+                        &&
+                        acceptableAnswerModal
+                        &&
+                        !acceptableAnswerModal.hidden
+                    ) {
+
+                        closeAcceptableAnswerModal(
+                            false
+                        );
+
+                    }
+
+                }
+            );
+
             document
                 .querySelectorAll(
                     ".acceptable-answer-form"
@@ -3122,7 +3609,7 @@
                         acceptableAnswerForm
                             .addEventListener(
                                 "submit",
-                                function (
+                                async function (
                                     event
                                 ) {
 
@@ -3149,12 +3636,8 @@
 
 
                                     const confirmed =
-                                        window.confirm(
-                                            "Are you sure you want to save ‘"
-                                            +
+                                        await requestAcceptableAnswerConfirmation(
                                             answer
-                                            +
-                                            "’ as an acceptable answer for future reviews?"
                                         );
 
 
@@ -3266,9 +3749,11 @@
                                                 button.textContent =
                                                     "Acceptable answer";
 
-                                                window.alert(
-                                                    error.message
-                                                );
+                                                button.textContent =
+                                                    "Could not save — try again";
+
+                                                button.title =
+                                                    error.message;
 
                                             }
                                         );
