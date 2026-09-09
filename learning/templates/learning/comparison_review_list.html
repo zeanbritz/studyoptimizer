@@ -125,30 +125,47 @@
             gap: 18px;
         }
 
+        .comparison-link {
+            display: block;
+            color: inherit;
+            text-decoration: none;
+        }
+
         .review-card {
-            padding: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+
+            min-height: 88px;
+            padding: 20px 22px;
 
             border: 2px solid var(--border);
             border-radius: 18px;
 
             background: white;
-
             box-shadow: 0 4px 0 #dededb;
+
+            transition:
+                transform 0.12s ease,
+                border-color 0.12s ease,
+                box-shadow 0.12s ease;
         }
 
-        .card-header {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-
-            gap: 20px;
-
-            margin-bottom: 18px;
+        .comparison-link:hover .review-card {
+            transform: translateY(-2px);
+            border-color: #cfcfca;
+            box-shadow: 0 6px 0 #dededb;
         }
 
-        .card-header h2 {
+        .comparison-link:active .review-card {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        .review-card h2 {
             margin: 0;
-            font-size: 21px;
+            font-size: 20px;
         }
 
         .details {
@@ -167,132 +184,11 @@
             font-weight: 750;
         }
 
-        .reveal-button {
-            min-width: 110px;
-            min-height: 42px;
-
-            border: 2px solid var(--blue);
-            border-radius: 11px;
-
-            background: var(--blue);
-            color: white;
-
-            font-weight: 850;
-            cursor: pointer;
-
-            box-shadow: 0 4px 0 var(--blue-dark);
-        }
-
-        .reveal-button:active {
-            transform: translateY(4px);
-            box-shadow: none;
-        }
-
-        .answer {
-            overflow-x: auto;
-        }
-
-        .answer[hidden],
-        .rating-actions[hidden] {
-            display: none;
-        }
-
-        .comparison-table {
-            width: 100%;
-            min-width: 650px;
-
-            border: 2px solid var(--border);
-            border-radius: 13px;
-
-            border-collapse: separate;
-            border-spacing: 0;
-            overflow: hidden;
-        }
-
-        .comparison-table th,
-        .comparison-table td {
-            padding: 13px;
-
-            border-right: 2px solid #eeeeec;
-            border-bottom: 2px solid #eeeeec;
-
-            text-align: left;
-            vertical-align: top;
-        }
-
-        .comparison-table th:last-child,
-        .comparison-table td:last-child {
-            border-right: none;
-        }
-
-        .comparison-table tr:last-child th,
-        .comparison-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .comparison-table thead th {
-            background: #f0f8ff;
-            color: #137dac;
-            font-size: 13px;
-            font-weight: 850;
-        }
-
-        .row-name {
-            width: 180px;
-            background: #fafaf8;
-            font-size: 13px;
-            font-weight: 800;
-        }
-
-        .comparison-table td {
-            color: #4a4a4a;
-            font-size: 13px;
-            line-height: 1.5;
-            white-space: pre-wrap;
-        }
-
-        .empty-cell {
-            color: #b0b0b0;
-        }
-
-        .rating-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-
-            margin-top: 18px;
-            padding-top: 18px;
-
-            border-top: 2px solid #f0f0ee;
-        }
-
-        .rating-button {
-            min-width: 120px;
-            min-height: 44px;
-
-            border-radius: 11px;
-
-            font-weight: 850;
-            cursor: pointer;
-        }
-
-        .again-button {
-            border: 2px solid #ffc4c4;
-            background: #fff0f0;
-            color: #d83b3b;
-            box-shadow: 0 4px 0 #ffc4c4;
-        }
-
-        .got-it-button {
-            border: 2px solid var(--green);
-            background: var(--green);
-            color: white;
-            box-shadow: 0 4px 0 var(--green-dark);
-        }
-
-        .rating-button:active {
-            transform: translateY(4px);
-            box-shadow: none;
+        .card-arrow {
+            flex-shrink: 0;
+            color: var(--blue);
+            font-size: 25px;
+            font-weight: 900;
         }
 
         .empty-state {
@@ -328,17 +224,8 @@
                 display: none;
             }
 
-            .card-header {
-                flex-direction: column;
-            }
-
-            .reveal-button {
-                width: 100%;
-            }
-
-            .rating-actions {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
+            .review-card {
+                padding: 18px;
             }
         }
 
@@ -380,34 +267,37 @@
 
                 <div class="review-stack">
 
-                    {% for item in due_comparisons %}
+                    {% for comparison in due_comparisons %}
 
-                        <article class="review-card">
+                        <a
+                            href="{% url 'practice_comparison_review' comparison_id=comparison.id %}?subject_index={{ subject_index }}"
+                            class="comparison-link"
+                        >
 
-                            <div class="card-header">
+                            <article class="review-card">
 
                                 <div>
 
                                     <h2>
-                                        {{ item.comparison.name }}
+                                        {{ comparison.name }}
                                     </h2>
 
-                                    {% if item.comparison.book_name or item.comparison.chapter %}
+                                    {% if comparison.book_name or comparison.chapter %}
 
                                         <div class="details">
 
-                                            {% if item.comparison.book_name %}
+                                            {% if comparison.book_name %}
 
                                                 <span class="detail-pill">
-                                                    {{ item.comparison.book_name }}
+                                                    {{ comparison.book_name }}
                                                 </span>
 
                                             {% endif %}
 
-                                            {% if item.comparison.chapter %}
+                                            {% if comparison.chapter %}
 
                                                 <span class="detail-pill">
-                                                    {{ item.comparison.chapter }}
+                                                    {{ comparison.chapter }}
                                                 </span>
 
                                             {% endif %}
@@ -418,128 +308,13 @@
 
                                 </div>
 
-                                <button
-                                    type="button"
-                                    class="reveal-button"
-                                    onclick="revealComparison(this)"
-                                >
-                                    Reveal
-                                </button>
+                                <span class="card-arrow">
+                                    →
+                                </span>
 
-                            </div>
+                            </article>
 
-                            <div
-                                class="answer"
-                                hidden
-                            >
-
-                                <table class="comparison-table">
-
-                                    <thead>
-
-                                        <tr>
-
-                                            <th>
-                                                Rows
-                                            </th>
-
-                                            {% for column in item.columns %}
-
-                                                <th>
-                                                    {{ column.name }}
-                                                </th>
-
-                                            {% endfor %}
-
-                                        </tr>
-
-                                    </thead>
-
-                                    <tbody>
-
-                                        {% for row in item.rows %}
-
-                                            <tr>
-
-                                                <th class="row-name">
-
-                                                    {% if row.name %}
-
-                                                        {{ row.name }}
-
-                                                    {% else %}
-
-                                                        Row {{ forloop.counter }}
-
-                                                    {% endif %}
-
-                                                </th>
-
-                                                {% for cell in row.cells %}
-
-                                                    <td>
-
-                                                        {% if cell %}
-
-                                                            {{ cell }}
-
-                                                        {% else %}
-
-                                                            <span class="empty-cell">
-                                                                —
-                                                            </span>
-
-                                                        {% endif %}
-
-                                                    </td>
-
-                                                {% endfor %}
-
-                                            </tr>
-
-                                        {% endfor %}
-
-                                    </tbody>
-
-                                </table>
-
-                            </div>
-
-                            <form
-                                method="POST"
-                                class="rating-actions"
-                                hidden
-                            >
-
-                                {% csrf_token %}
-
-                                <input
-                                    type="hidden"
-                                    name="comparison_id"
-                                    value="{{ item.comparison.id }}"
-                                >
-
-                                <button
-                                    type="submit"
-                                    name="rating"
-                                    value="again"
-                                    class="rating-button again-button"
-                                >
-                                    Again
-                                </button>
-
-                                <button
-                                    type="submit"
-                                    name="rating"
-                                    value="got_it"
-                                    class="rating-button got-it-button"
-                                >
-                                    Got it
-                                </button>
-
-                            </form>
-
-                        </article>
+                        </a>
 
                     {% endfor %}
 
@@ -566,40 +341,6 @@
     </main>
 
 </div>
-
-<script>
-
-    function revealComparison(
-        button
-    ) {
-
-        const card =
-            button.closest(
-                ".review-card"
-            );
-
-        const answer =
-            card.querySelector(
-                ".answer"
-            );
-
-        const ratingActions =
-            card.querySelector(
-                ".rating-actions"
-            );
-
-        answer.hidden =
-            false;
-
-        ratingActions.hidden =
-            false;
-
-        button.hidden =
-            true;
-
-    }
-
-</script>
 
 <script src="{% static 'dashboard/js/sidebar.js' %}"></script>
 

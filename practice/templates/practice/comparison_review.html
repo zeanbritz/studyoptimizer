@@ -1,0 +1,1279 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        {{ comparison.name }} - Review
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{% static 'dashboard/css/sidebar.css' %}"
+    >
+
+    <style>
+
+        :root {
+            --green: #58cc02;
+            --green-dark: #46a302;
+            --green-soft: #e9fbdc;
+            --red: #ff4b4b;
+            --red-dark: #d93d3d;
+            --red-soft: #fff0f0;
+            --blue: #1cb0f6;
+            --blue-dark: #168fc7;
+            --blue-soft: #edf9ff;
+            --ink: #3c3c3c;
+            --muted: #777;
+            --border: #e5e5e5;
+            --background: #f7f7f5;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--background);
+            color: var(--ink);
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Arial,
+                sans-serif;
+        }
+
+        button {
+            font: inherit;
+        }
+
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .page {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 26px 36px 55px;
+        }
+
+        /* =========================================
+           HEADER
+        ========================================= */
+
+        .top-bar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 22px;
+        }
+
+        .title-area {
+            min-width: 0;
+        }
+
+        .title-area h1 {
+            margin: 0;
+            font-size: 26px;
+            letter-spacing: -0.5px;
+        }
+
+        .title-area span {
+            display: block;
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 650;
+        }
+
+        .quit-button {
+            margin-left: auto;
+            padding: 10px 15px;
+
+            border: 2px solid #ffcaca;
+            border-radius: 11px;
+
+            background: white;
+            color: var(--red-dark);
+
+            font-size: 13px;
+            font-weight: 850;
+            text-decoration: none;
+
+            box-shadow: 0 3px 0 #ffcaca;
+        }
+
+        .quit-button:active {
+            transform: translateY(3px);
+            box-shadow: none;
+        }
+
+        /* =========================================
+           PROGRESS
+        ========================================= */
+
+        .mastery-bar {
+            height: 12px;
+            margin-bottom: 22px;
+
+            border-radius: 999px;
+            background: #e5e5e2;
+            overflow: hidden;
+        }
+
+        .mastery-fill {
+            height: 100%;
+            width: {{ mastery_percentage }}%;
+            border-radius: inherit;
+            background: var(--green);
+        }
+
+        /* =========================================
+           ERROR
+        ========================================= */
+
+        .error-message {
+            margin-bottom: 18px;
+            padding: 13px 15px;
+
+            border: 2px solid #ffcaca;
+            border-radius: 12px;
+
+            background: var(--red-soft);
+            color: var(--red-dark);
+
+            font-size: 13px;
+            font-weight: 750;
+        }
+
+        /* =========================================
+           ANSWER BANK
+        ========================================= */
+
+        .answer-bank,
+        .feedback-box {
+            min-height: 150px;
+            margin-bottom: 20px;
+            padding: 18px;
+
+            border: 2px solid var(--border);
+            border-radius: 16px;
+
+            background: white;
+            box-shadow: 0 4px 0 #dededb;
+        }
+
+        .bank-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 14px;
+        }
+
+        .bank-header strong {
+            font-size: 14px;
+        }
+
+        .placement-count {
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 750;
+        }
+
+        .token-area {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            gap: 10px;
+            min-height: 80px;
+        }
+
+        .answer-token {
+            padding: 11px 14px;
+
+            border: 2px solid #a9dcf8;
+            border-radius: 11px;
+
+            background: var(--blue-soft);
+            color: #137ba9;
+
+            font-size: 13px;
+            font-weight: 750;
+            line-height: 1.4;
+
+            cursor: grab;
+            user-select: none;
+
+            box-shadow: 0 3px 0 #abd9ee;
+        }
+
+        .answer-token:active {
+            cursor: grabbing;
+            box-shadow: none;
+            transform: translateY(3px);
+        }
+
+        .answer-token.selected {
+            border-color: var(--blue);
+            box-shadow:
+                0 0 0 4px
+                rgba(28, 176, 246, 0.18);
+        }
+
+        /* =========================================
+           TABLE
+        ========================================= */
+
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+
+            border: 2px solid var(--border);
+            border-radius: 16px;
+
+            background: white;
+            box-shadow: 0 4px 0 #dededb;
+        }
+
+        .comparison-table {
+            width: 100%;
+            min-width: 760px;
+
+            table-layout: fixed;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 11px;
+
+            border-right: 2px solid #eeeeec;
+            border-bottom: 2px solid #eeeeec;
+
+            vertical-align: top;
+        }
+
+        .comparison-table th:last-child,
+        .comparison-table td:last-child {
+            border-right: none;
+        }
+
+        .comparison-table tbody tr:last-child th,
+        .comparison-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table thead th {
+            background: var(--blue-soft);
+            color: #117fac;
+
+            font-size: 13px;
+            font-weight: 900;
+            text-align: left;
+        }
+
+        .row-heading {
+            width: 190px;
+            background: #fafaf8;
+
+            color: #626262;
+            font-size: 13px;
+            font-weight: 800;
+            text-align: left;
+        }
+
+        .unnamed-row {
+            color: #aaaaaa;
+            font-style: italic;
+        }
+
+        .drop-slot {
+            min-height: 105px;
+            background: #ffffff;
+
+            transition:
+                background 0.12s ease,
+                box-shadow 0.12s ease;
+        }
+
+        .drop-slot.drag-over {
+            background: var(--blue-soft);
+            box-shadow: inset 0 0 0 3px var(--blue);
+        }
+
+        .drop-slot .answer-token {
+            width: 100%;
+        }
+
+        /* =========================================
+           RESULT ANSWERS
+        ========================================= */
+
+        .placed-answer {
+            min-height: 80px;
+            padding: 12px;
+
+            border: 2px solid;
+            border-radius: 11px;
+
+            font-size: 13px;
+            font-weight: 750;
+            line-height: 1.45;
+        }
+
+        .placed-answer.correct {
+            border-color: #9be36a;
+            background: var(--green-soft);
+            color: #347d00;
+        }
+
+        .placed-answer.incorrect {
+            border-color: #ffb7b7;
+            background: var(--red-soft);
+            color: #bd3535;
+        }
+
+        .empty-slot {
+            color: #c2c2c2;
+            font-size: 20px;
+            text-align: center;
+        }
+
+        /* =========================================
+           FEEDBACK
+        ========================================= */
+
+        .feedback-box.correct {
+            border-color: #a7e77a;
+            background: var(--green-soft);
+        }
+
+        .feedback-box.incorrect {
+            border-color: #ffc1c1;
+            background: var(--red-soft);
+        }
+
+        .feedback-title {
+            margin: 0 0 13px;
+            font-size: 20px;
+        }
+
+        .explanation-list {
+            display: grid;
+            gap: 9px;
+        }
+
+        .explanation {
+            padding: 12px;
+
+            border: 2px solid #ffc6c6;
+            border-radius: 11px;
+
+            background: white;
+        }
+
+        .explanation strong {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--ink);
+            font-size: 13px;
+        }
+
+        .location {
+            color: #777;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .correct-location {
+            color: #398500;
+            font-weight: 800;
+        }
+
+        /* =========================================
+           ACTIONS
+        ========================================= */
+
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 22px;
+        }
+
+        .check-button,
+        .next-button {
+            min-width: 175px;
+            min-height: 48px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            padding: 0 22px;
+
+            border: 2px solid var(--green);
+            border-radius: 12px;
+
+            background: var(--green);
+            color: white;
+
+            font-size: 14px;
+            font-weight: 900;
+            text-decoration: none;
+            cursor: pointer;
+
+            box-shadow: 0 4px 0 var(--green-dark);
+        }
+
+        .check-button:active,
+        .next-button:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        .check-button:disabled {
+            border-color: #ccccca;
+            background: #ccccca;
+            color: #eeeeee;
+            box-shadow: 0 4px 0 #aaaaa7;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 700px) {
+
+            .page {
+                padding: 20px 15px 45px;
+            }
+
+            .title-area h1 {
+                font-size: 21px;
+            }
+
+            .actions {
+                display: block;
+            }
+
+            .check-button,
+            .next-button {
+                width: 100%;
+            }
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="app">
+
+    {% include 'partials/sidebar.html' with active_page='review' %}
+
+    <main class="main">
+
+        <div class="page">
+
+            <header class="top-bar">
+
+                <div class="title-area">
+
+                    <h1>
+                        {{ comparison.name }}
+                    </h1>
+
+                    <span>
+                        {{ subject.name }}
+                    </span>
+
+                </div>
+
+                {% if subject_index != None %}
+
+                    <a
+                        href="{% url 'comparison_review_list' subject_index=subject_index %}"
+                        class="quit-button"
+                    >
+                        Quit review
+                    </a>
+
+                {% else %}
+
+                    <a
+                        href="{% url 'dashboard' %}"
+                        class="quit-button"
+                    >
+                        Quit review
+                    </a>
+
+                {% endif %}
+
+            </header>
+
+            <div class="mastery-bar">
+
+                <div class="mastery-fill"></div>
+
+            </div>
+
+            {% if error %}
+
+                <div class="error-message">
+                    {{ error }}
+                </div>
+
+            {% endif %}
+
+            {% if attempt_complete %}
+
+                <section
+                    class="feedback-box {{ result }}"
+                >
+
+                    {% if result == "correct" %}
+
+                        <h2 class="feedback-title">
+                            Correct!
+                        </h2>
+
+                    {% else %}
+
+                        <h2 class="feedback-title">
+                            Review these answers
+                        </h2>
+
+                        <div class="explanation-list">
+
+                            {% for explanation in incorrect_explanations %}
+
+                                <div class="explanation">
+
+                                    <strong>
+                                        {{ explanation.content }}
+                                    </strong>
+
+                                    <div class="location">
+
+                                        Placed:
+                                        {{ explanation.placed }}
+
+                                        <br>
+
+                                        <span class="correct-location">
+                                            Correct:
+                                            {{ explanation.correct }}
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                            {% endfor %}
+
+                        </div>
+
+                    {% endif %}
+
+                </section>
+
+            {% else %}
+
+                <section
+                    class="answer-bank"
+                    id="answer-bank"
+                >
+
+                    <div class="bank-header">
+
+                        <strong>
+                            Answer fields
+                        </strong>
+
+                        <span
+                            class="placement-count"
+                            id="placement-count"
+                        >
+                            0 / {{ total_fields }} placed
+                        </span>
+
+                    </div>
+
+                    <div
+                        class="token-area"
+                        id="token-area"
+                    >
+
+                        {% for cell in shuffled_cells %}
+
+                            <div
+                                class="answer-token"
+                                draggable="true"
+                                data-cell-id="{{ cell.id }}"
+                                tabindex="0"
+                            >
+                                {{ cell.content }}
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                </section>
+
+            {% endif %}
+
+            <div class="table-wrapper">
+
+                <table class="comparison-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Rows
+                            </th>
+
+                            {% for column in columns %}
+
+                                <th>
+                                    {{ column.name }}
+                                </th>
+
+                            {% endfor %}
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for review_row in review_rows %}
+
+                            <tr>
+
+                                <th class="row-heading">
+
+                                    {% if review_row.row.name %}
+
+                                        {{ review_row.row.name }}
+
+                                    {% else %}
+
+                                        <span class="unnamed-row">
+                                            Any row
+                                        </span>
+
+                                    {% endif %}
+
+                                </th>
+
+                                {% for slot in review_row.slots %}
+
+                                    <td
+                                        class="drop-slot"
+                                        data-row-id="{{ review_row.row.id }}"
+                                        data-column-id="{{ slot.column.id }}"
+                                    >
+
+                                        {% if attempt_complete %}
+
+                                            {% if slot.placed %}
+
+                                                <div
+                                                    class="placed-answer {% if slot.placed.is_correct %}correct{% else %}incorrect{% endif %}"
+                                                >
+                                                    {{ slot.placed.content }}
+                                                </div>
+
+                                            {% else %}
+
+                                                <div class="empty-slot">
+                                                    —
+                                                </div>
+
+                                            {% endif %}
+
+                                        {% endif %}
+
+                                    </td>
+
+                                {% endfor %}
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            {% if attempt_complete %}
+
+                <div class="actions">
+
+                    {% if next_comparison %}
+
+                        <a
+                            href="{% url 'practice_comparison_review' comparison_id=next_comparison.id %}?subject_index={{ subject_index }}"
+                            class="next-button"
+                        >
+                            Next comparison →
+                        </a>
+
+                    {% else %}
+
+                        <a
+                            href="{% url 'comparison_review_list' subject_index=subject_index %}"
+                            class="next-button"
+                        >
+                            Finish reviews
+                        </a>
+
+                    {% endif %}
+
+                </div>
+
+            {% elif total_fields > 0 %}
+
+                <form
+                    method="POST"
+                    id="review-form"
+                >
+
+                    {% csrf_token %}
+
+                    <input
+                        type="hidden"
+                        name="subject_index"
+                        value="{{ subject_index }}"
+                    >
+
+                    <input
+                        type="hidden"
+                        name="placements"
+                        id="placements-input"
+                    >
+
+                    <div class="actions">
+
+                        <button
+                            type="submit"
+                            class="check-button"
+                            id="check-button"
+                            disabled
+                        >
+                            Check answer
+                        </button>
+
+                    </div>
+
+                </form>
+
+            {% endif %}
+
+        </div>
+
+    </main>
+
+</div>
+
+{% if not attempt_complete %}
+
+<script>
+
+    const answerBank =
+        document.getElementById(
+            "answer-bank"
+        );
+
+    const tokenArea =
+        document.getElementById(
+            "token-area"
+        );
+
+    const slots =
+        document.querySelectorAll(
+            ".drop-slot"
+        );
+
+    const tokens =
+        document.querySelectorAll(
+            ".answer-token"
+        );
+
+    const checkButton =
+        document.getElementById(
+            "check-button"
+        );
+
+    const placementCount =
+        document.getElementById(
+            "placement-count"
+        );
+
+    const reviewForm =
+        document.getElementById(
+            "review-form"
+        );
+
+    const placementsInput =
+        document.getElementById(
+            "placements-input"
+        );
+
+    let draggedToken = null;
+    let selectedToken = null;
+
+    // =============================================
+    // SELECT TOKEN
+    // =============================================
+
+    function selectToken(
+        token
+    ) {
+
+        if (
+            selectedToken
+            &&
+            selectedToken !== token
+        ) {
+
+            selectedToken.classList.remove(
+                "selected"
+            );
+
+        }
+
+        if (selectedToken === token) {
+
+            token.classList.remove(
+                "selected"
+            );
+
+            selectedToken = null;
+
+            return;
+
+        }
+
+        selectedToken = token;
+
+        token.classList.add(
+            "selected"
+        );
+
+    }
+
+    // =============================================
+    // MOVE TOKEN
+    // =============================================
+
+    function moveToken(
+        token,
+        destination
+    ) {
+
+        if (!token) {
+            return;
+        }
+
+        const previousParent =
+            token.parentElement;
+
+        const existingToken =
+            destination.querySelector(
+                ".answer-token"
+            );
+
+        if (
+            existingToken
+            &&
+            existingToken !== token
+        ) {
+
+            if (
+                previousParent
+                .classList
+                .contains(
+                    "drop-slot"
+                )
+            ) {
+
+                previousParent.appendChild(
+                    existingToken
+                );
+
+            }
+
+            else {
+
+                tokenArea.appendChild(
+                    existingToken
+                );
+
+            }
+
+        }
+
+        destination.appendChild(
+            token
+        );
+
+        token.classList.remove(
+            "selected"
+        );
+
+        selectedToken = null;
+
+        updatePlacementState();
+
+    }
+
+    // =============================================
+    // RETURN TOKEN TO BANK
+    // =============================================
+
+    function returnTokenToBank(
+        token
+    ) {
+
+        if (!token) {
+            return;
+        }
+
+        tokenArea.appendChild(
+            token
+        );
+
+        token.classList.remove(
+            "selected"
+        );
+
+        selectedToken = null;
+
+        updatePlacementState();
+
+    }
+
+    // =============================================
+    // UPDATE COUNT
+    // =============================================
+
+    function updatePlacementState() {
+
+        const totalTokens =
+            tokens.length;
+
+        const placedTokens =
+            document.querySelectorAll(
+                ".drop-slot .answer-token"
+            ).length;
+
+        placementCount.textContent =
+            (
+                placedTokens
+                +
+                " / "
+                +
+                totalTokens
+                +
+                " placed"
+            );
+
+        checkButton.disabled =
+            (
+                totalTokens === 0
+                ||
+                placedTokens !== totalTokens
+            );
+
+    }
+
+    // =============================================
+    // TOKEN EVENTS
+    // =============================================
+
+    tokens.forEach(
+        function(token) {
+
+            token.addEventListener(
+                "dragstart",
+                function(event) {
+
+                    draggedToken = token;
+
+                    event.dataTransfer.setData(
+                        "text/plain",
+                        token.dataset.cellId
+                    );
+
+                    event.dataTransfer.effectAllowed =
+                        "move";
+
+                }
+            );
+
+            token.addEventListener(
+                "dragend",
+                function() {
+
+                    draggedToken = null;
+
+                    slots.forEach(
+                        function(slot) {
+
+                            slot.classList.remove(
+                                "drag-over"
+                            );
+
+                        }
+                    );
+
+                }
+            );
+
+            token.addEventListener(
+                "click",
+                function(event) {
+
+                    event.stopPropagation();
+
+                    selectToken(
+                        token
+                    );
+
+                }
+            );
+
+            token.addEventListener(
+                "contextmenu",
+                function(event) {
+
+                    event.preventDefault();
+
+                    if (
+                        token.parentElement
+                        .classList
+                        .contains(
+                            "drop-slot"
+                        )
+                    ) {
+
+                        returnTokenToBank(
+                            token
+                        );
+
+                    }
+
+                }
+            );
+
+        }
+    );
+
+    // =============================================
+    // SLOT EVENTS
+    // =============================================
+
+    slots.forEach(
+        function(slot) {
+
+            slot.addEventListener(
+                "dragover",
+                function(event) {
+
+                    event.preventDefault();
+
+                    slot.classList.add(
+                        "drag-over"
+                    );
+
+                }
+            );
+
+            slot.addEventListener(
+                "dragleave",
+                function() {
+
+                    slot.classList.remove(
+                        "drag-over"
+                    );
+
+                }
+            );
+
+            slot.addEventListener(
+                "drop",
+                function(event) {
+
+                    event.preventDefault();
+
+                    slot.classList.remove(
+                        "drag-over"
+                    );
+
+                    moveToken(
+                        draggedToken,
+                        slot
+                    );
+
+                }
+            );
+
+            slot.addEventListener(
+                "click",
+                function() {
+
+                    if (selectedToken) {
+
+                        moveToken(
+                            selectedToken,
+                            slot
+                        );
+
+                    }
+
+                }
+            );
+
+        }
+    );
+
+    // =============================================
+    // BANK EVENTS
+    // =============================================
+
+    answerBank.addEventListener(
+        "dragover",
+        function(event) {
+
+            event.preventDefault();
+
+        }
+    );
+
+    answerBank.addEventListener(
+        "drop",
+        function(event) {
+
+            event.preventDefault();
+
+            returnTokenToBank(
+                draggedToken
+            );
+
+        }
+    );
+
+    answerBank.addEventListener(
+        "click",
+        function(event) {
+
+            if (
+                selectedToken
+                &&
+                event.target === answerBank
+            ) {
+
+                returnTokenToBank(
+                    selectedToken
+                );
+
+            }
+
+        }
+    );
+
+    // =============================================
+    // SUBMIT PLACEMENTS
+    // =============================================
+
+    reviewForm.addEventListener(
+        "submit",
+        function(event) {
+
+            const placements = {};
+
+            const placedTokens =
+                document.querySelectorAll(
+                    ".drop-slot .answer-token"
+                );
+
+            if (
+                placedTokens.length
+                !== tokens.length
+            ) {
+
+                event.preventDefault();
+
+                return;
+
+            }
+
+            placedTokens.forEach(
+                function(token) {
+
+                    const slot =
+                        token.closest(
+                            ".drop-slot"
+                        );
+
+                    placements[
+                        token.dataset.cellId
+                    ] = {
+                        row_id:
+                            Number(
+                                slot.dataset.rowId
+                            ),
+
+                        column_id:
+                            Number(
+                                slot.dataset.columnId
+                            ),
+                    };
+
+                }
+            );
+
+            placementsInput.value =
+                JSON.stringify(
+                    placements
+                );
+
+        }
+    );
+
+    updatePlacementState();
+
+</script>
+
+{% endif %}
+
+<script src="{% static 'dashboard/js/sidebar.js' %}"></script>
+
+</body>
+
+</html>

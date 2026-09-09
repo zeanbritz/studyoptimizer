@@ -8313,116 +8313,6 @@ def comparison_review_list(
         )
 
     # ========================================================
-    # SAVE REVIEW RESULT
-    # ========================================================
-
-    if request.method == "POST":
-
-        comparison_id = (
-            request.POST.get(
-                "comparison_id",
-                ""
-            )
-        )
-
-        rating = (
-            request.POST.get(
-                "rating",
-                ""
-            )
-        )
-
-        comparison = get_object_or_404(
-            Comparison,
-            id=comparison_id,
-            knowledge_unit__subject=subject,
-            knowledge_unit__subject__user=(
-                request.user
-            ),
-        )
-
-        if rating in [
-            "again",
-            "got_it",
-        ]:
-
-            progress, created = (
-                StudentKnowledge.objects
-                .get_or_create(
-                    student=request.user,
-                    knowledge_unit=(
-                        comparison.knowledge_unit
-                    ),
-                )
-            )
-
-            progress.review_count = (
-                progress.review_count
-                +
-                1
-            )
-
-            progress.last_reviewed = (
-                timezone.now()
-            )
-
-            if rating == "got_it":
-
-                progress.correct_count = (
-                    progress.correct_count
-                    +
-                    1
-                )
-
-                progress.mastery_level = min(
-                    6,
-                    (
-                        progress.mastery_level
-                        +
-                        1
-                    ),
-                )
-
-            else:
-
-                progress.incorrect_count = (
-                    progress.incorrect_count
-                    +
-                    1
-                )
-
-                progress.mastery_level = max(
-                    0,
-                    (
-                        progress.mastery_level
-                        -
-                        1
-                    ),
-                )
-
-            interval_days = max(
-                1,
-                get_review_interval(
-                    progress.mastery_level
-                ),
-            )
-
-            progress.next_review = (
-                timezone.now()
-                +
-                timedelta(
-                    days=interval_days
-                )
-            )
-
-            progress.save()
-
-        return redirect(
-            "comparison_review_list",
-            subject_index=subject_index,
-        )
-
-    # ========================================================
     # FIND DUE COMPARISONS
     # ========================================================
 
@@ -8441,10 +8331,6 @@ def comparison_review_list(
         )
         .select_related(
             "knowledge_unit"
-        )
-        .prefetch_related(
-            "columns",
-            "rows__cells",
         )
         .order_by(
             "knowledge_unit__created",
@@ -8494,49 +8380,8 @@ def comparison_review_list(
 
             continue
 
-        columns = list(
-            comparison.columns.all()
-        )
-
-        review_rows = []
-
-        for row in comparison.rows.all():
-
-            cell_lookup = {
-                cell.column_id:
-                    cell.content
-
-                for cell
-                in row.cells.all()
-            }
-
-            review_rows.append(
-                {
-                    "name":
-                        row.name,
-
-                    "cells": [
-                        cell_lookup.get(
-                            column.id,
-                            ""
-                        )
-                        for column
-                        in columns
-                    ],
-                }
-            )
-
         due_comparisons.append(
-            {
-                "comparison":
-                    comparison,
-
-                "columns":
-                    columns,
-
-                "rows":
-                    review_rows,
-            }
+            comparison
         )
 
     # ========================================================

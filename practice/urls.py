@@ -39,4 +39,14 @@ urlpatterns = [
         name="practice_step_review",
     ),
 
+    # ========================================================
+    # COMPARISON
+    # ========================================================
+
+    path(
+        "comparison/<int:comparison_id>/review/",
+        views.practice_comparison_review,
+        name="practice_comparison_review",
+    ),
+
 ]

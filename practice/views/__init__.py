@@ -10,3 +10,7 @@ from .definitions import (
 from .steps import (
     practice_step_review,
 )
+
+from .comparisons import (
+    practice_comparison_review,
+)
