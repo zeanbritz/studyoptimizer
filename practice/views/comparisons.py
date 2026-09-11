@@ -187,6 +187,60 @@ def find_next_due_comparison(
 
 
 # ============================================================
+# NEXT GLOBAL COMPARISON
+#
+# ALL ACTIVE COMPARISONS ACROSS ALL SUBJECTS.
+# DUE DATE DOES NOT MATTER IN GLOBAL REVIEW.
+# ============================================================
+
+def find_next_global_comparison(
+    user,
+    current_comparison_id,
+):
+
+    comparisons = list(
+        Comparison.objects
+        .filter(
+            knowledge_unit__subject__user=user,
+            knowledge_unit__active=True,
+        )
+        .select_related(
+            "knowledge_unit",
+            "knowledge_unit__subject",
+        )
+        .order_by(
+            "knowledge_unit__subject__name",
+            "knowledge_unit__created",
+            "id",
+        )
+    )
+
+    current_position = None
+
+    for index, comparison in enumerate(
+        comparisons
+    ):
+
+        if comparison.id == current_comparison_id:
+
+            current_position = index
+
+            break
+
+    if current_position is None:
+
+        return None
+
+    next_position = current_position + 1
+
+    if next_position >= len(comparisons):
+
+        return None
+
+    return comparisons[next_position]
+
+
+# ============================================================
 # PRACTICE COMPARISON
 # ============================================================
 
@@ -195,6 +249,29 @@ def practice_comparison_review(
     request,
     comparison_id
 ):
+
+    # ========================================================
+    # REVIEW SCOPE
+    #
+    # subject = due comparisons from one subject
+    # all     = every active comparison across all subjects
+    # ========================================================
+
+    review_scope = (
+        request.GET.get(
+            "scope"
+        )
+        or
+        request.POST.get(
+            "scope"
+        )
+        or
+        "subject"
+    )
+
+    if review_scope != "all":
+
+        review_scope = "subject"
 
     # ========================================================
     # COMPARISON
@@ -862,15 +939,28 @@ def practice_comparison_review(
 
             progress.save()
 
-            next_comparison = (
-                find_next_due_comparison(
-                    user=request.user,
-                    subject=subject,
-                    exclude_comparison_id=(
-                        comparison.id
-                    ),
+            if review_scope == "all":
+
+                next_comparison = (
+                    find_next_global_comparison(
+                        user=request.user,
+                        current_comparison_id=(
+                            comparison.id
+                        ),
+                    )
                 )
-            )
+
+            else:
+
+                next_comparison = (
+                    find_next_due_comparison(
+                        user=request.user,
+                        subject=subject,
+                        exclude_comparison_id=(
+                            comparison.id
+                        ),
+                    )
+                )
 
     # ========================================================
     # SHUFFLED ANSWER BANK
@@ -958,6 +1048,9 @@ def practice_comparison_review(
 
             "subject_index":
                 subject_index,
+
+            "review_scope":
+                review_scope,
 
             "columns":
                 columns,

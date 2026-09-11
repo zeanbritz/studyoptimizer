@@ -501,19 +501,6 @@
 
 </head>
 
-<script>
-    const masteryFill = document.querySelector(".mastery-fill");
-
-    if (masteryFill) {
-        const value = Number.parseFloat(masteryFill.dataset.mastery);
-        const percentage = Number.isFinite(value)
-            ? Math.min(100, Math.max(0, value))
-            : 0;
-
-        masteryFill.style.width = percentage + "%";
-    }
-</script>
-
 <body>
 
 <div class="app">
@@ -538,7 +525,16 @@
 
                 </div>
 
-                {% if subject_index != None %}
+                {% if review_scope == "all" %}
+
+                    <a
+                        href="{% url 'review_comparisons' %}"
+                        class="quit-button"
+                    >
+                        Quit review
+                    </a>
+
+                {% elif subject_index != None %}
 
                     <a
                         href="{% url 'comparison_review_list' subject_index=subject_index %}"
@@ -775,21 +771,56 @@
 
                     {% if next_comparison %}
 
-                        <a
-                            href="{% url 'practice_comparison_review' comparison_id=next_comparison.id %}?subject_index={{ subject_index }}"
-                            class="next-button"
-                        >
-                            Next comparison →
-                        </a>
+                        {% if review_scope == "all" %}
+
+                            <a
+                                href="{% url 'practice_comparison_review' comparison_id=next_comparison.id %}?scope=all"
+                                class="next-button"
+                            >
+                                Next comparison →
+                            </a>
+
+                        {% else %}
+
+                            <a
+                                href="{% url 'practice_comparison_review' comparison_id=next_comparison.id %}?subject_index={{ subject_index }}"
+                                class="next-button"
+                            >
+                                Next comparison →
+                            </a>
+
+                        {% endif %}
 
                     {% else %}
 
-                        <a
-                            href="{% url 'comparison_review_list' subject_index=subject_index %}"
-                            class="next-button"
-                        >
-                            Finish reviews
-                        </a>
+                        {% if review_scope == "all" %}
+
+                            <a
+                                href="{% url 'review_comparisons' %}"
+                                class="next-button"
+                            >
+                                Finish reviews
+                            </a>
+
+                        {% elif subject_index != None %}
+
+                            <a
+                                href="{% url 'comparison_review_list' subject_index=subject_index %}"
+                                class="next-button"
+                            >
+                                Finish reviews
+                            </a>
+
+                        {% else %}
+
+                            <a
+                                href="{% url 'dashboard' %}"
+                                class="next-button"
+                            >
+                                Finish reviews
+                            </a>
+
+                        {% endif %}
 
                     {% endif %}
 
@@ -814,6 +845,12 @@
                         type="hidden"
                         name="placements"
                         id="placements-input"
+                    >
+
+                    <input
+                        type="hidden"
+                        name="scope"
+                        value="{{ review_scope }}"
                     >
 
                     <div class="actions">
@@ -1362,6 +1399,22 @@
 </script>
 
 {% endif %}
+
+<script>
+    const masteryFill = document.querySelector(".mastery-fill");
+
+    if (masteryFill) {
+        const value = Number.parseFloat(
+            masteryFill.dataset.mastery
+        );
+
+        const percentage = Number.isFinite(value)
+            ? Math.min(100, Math.max(0, value))
+            : 0;
+
+        masteryFill.style.width = percentage + "%";
+    }
+</script>
 
 <script src="{% static 'dashboard/js/sidebar.js' %}"></script>
 

@@ -77,4 +77,10 @@ urlpatterns = [
         name="review_notes",
     ),
 
+    path(
+        "review/comparisons/",
+        views.review_comparisons,
+        name="review_comparisons",
+    ),
+
 ]

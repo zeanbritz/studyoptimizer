@@ -4832,6 +4832,69 @@ def review_steps(request):
 
 
 # ============================================================
+# REVIEW COMPARISONS
+# ============================================================
+
+@login_required
+def review_comparisons(request):
+
+    comparisons = (
+        Comparison.objects
+        .filter(
+            knowledge_unit__subject__user=request.user,
+            knowledge_unit__knowledge_type=(
+                KnowledgeUnit
+                .KnowledgeType
+                .COMPARISON
+            ),
+            knowledge_unit__active=True,
+        )
+        .select_related(
+            "knowledge_unit",
+            "knowledge_unit__subject",
+        )
+        .order_by(
+            "knowledge_unit__subject__name",
+            "knowledge_unit__created",
+            "id",
+        )
+    )
+
+    comparison_items = []
+
+    for comparison in comparisons:
+
+        comparison_items.append(
+            {
+                "comparison":
+                    comparison,
+
+                "subject":
+                    comparison
+                    .knowledge_unit
+                    .subject,
+
+                "knowledge_unit":
+                    comparison.knowledge_unit,
+            }
+        )
+
+    return render(
+        request,
+        "dashboard/review_comparisons.html",
+        {
+            "comparisons":
+                comparison_items,
+
+            "comparison_count":
+                len(
+                    comparison_items
+                ),
+        }
+    )
+
+
+# ============================================================
 # REVIEW NOTES
 # ============================================================
 
