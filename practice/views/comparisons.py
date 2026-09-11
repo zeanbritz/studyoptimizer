@@ -42,6 +42,25 @@ def get_review_interval(
 
 
 # ============================================================
+# NORMALIZE CHARACTERISTIC
+# ============================================================
+
+def normalize_characteristic(
+    value
+):
+
+    return " ".join(
+        str(
+            value
+            or ""
+        )
+        .strip()
+        .casefold()
+        .split()
+    )
+
+
+# ============================================================
 # SUBJECT INDEX
 # ============================================================
 
@@ -280,6 +299,11 @@ def practice_comparison_review(
         )
     )
 
+    has_named_rows = any(
+        row.name.strip()
+        for row in rows
+    )
+
     cells = list(
         ComparisonCell.objects
         .filter(
@@ -505,6 +529,29 @@ def practice_comparison_review(
 
             all_correct = True
 
+            # Identical characteristic text is interchangeable.
+            # A submitted field is correct when its destination
+            # matches any unused saved cell with the same text.
+
+            expected_by_content = {}
+
+            for expected_cell in answer_cells:
+
+                content_key = (
+                    normalize_characteristic(
+                        expected_cell.content
+                    )
+                )
+
+                expected_by_content.setdefault(
+                    content_key,
+                    [],
+                ).append(
+                    expected_cell
+                )
+
+            placement_records = []
+
             for cell in answer_cells:
 
                 destination = (
@@ -525,26 +572,116 @@ def practice_comparison_review(
                     ]
                 )
 
-                column_correct = (
-                    placed_column_id
-                    ==
-                    cell.column_id
+                content_key = (
+                    normalize_characteristic(
+                        cell.content
+                    )
                 )
 
-                # Named rows must match exactly.
-                # Unnamed rows may be placed in any row.
+                matching_cells = [
+                    expected_cell
+                    for expected_cell
+                    in expected_by_content.get(
+                        content_key,
+                        [],
+                    )
+                    if (
+                        expected_cell.column_id
+                        == placed_column_id
+                        and
+                        (
+                            not expected_cell.row.name.strip()
+                            or
+                            expected_cell.row_id
+                            == placed_row_id
+                        )
+                    )
+                ]
 
-                row_correct = (
-                    not cell.row.name.strip()
-                    or
-                    placed_row_id == cell.row_id
+                placement_records.append(
+                    {
+                        "cell":
+                            cell,
+
+                        "row_id":
+                            placed_row_id,
+
+                        "column_id":
+                            placed_column_id,
+
+                        "matching_cells":
+                            matching_cells,
+                    }
                 )
 
-                answer_correct = (
-                    column_correct
-                    and
-                    row_correct
+            # Check the most restricted destinations first so a
+            # flexible unnamed-row match cannot take a named-row
+            # answer needed by another identical characteristic.
+
+            placement_records.sort(
+                key=lambda record: (
+                    len(
+                        record[
+                            "matching_cells"
+                        ]
+                    ),
+                    record[
+                        "cell"
+                    ].id,
                 )
+            )
+
+            used_expected_cell_ids = set()
+
+            for record in placement_records:
+
+                cell = record[
+                    "cell"
+                ]
+
+                placed_row_id = record[
+                    "row_id"
+                ]
+
+                placed_column_id = record[
+                    "column_id"
+                ]
+
+                available_matches = [
+                    expected_cell
+                    for expected_cell
+                    in record[
+                        "matching_cells"
+                    ]
+                    if expected_cell.id
+                    not in used_expected_cell_ids
+                ]
+
+                answer_correct = bool(
+                    available_matches
+                )
+
+                if answer_correct:
+
+                    # Prefer a named exact-row match. This keeps
+                    # unnamed-row answers available for other rows.
+
+                    available_matches.sort(
+                        key=lambda expected_cell: (
+                            1
+                            if not expected_cell.row.name.strip()
+                            else 0,
+                            expected_cell.id,
+                        )
+                    )
+
+                    matched_cell = (
+                        available_matches[0]
+                    )
+
+                    used_expected_cell_ids.add(
+                        matched_cell.id
+                    )
 
                 if not answer_correct:
 
@@ -569,23 +706,46 @@ def practice_comparison_review(
 
                 if not answer_correct:
 
-                    correct_location = (
-                        cell.column.name
+                    content_key = (
+                        normalize_characteristic(
+                            cell.content
+                        )
                     )
 
-                    if cell.row.name.strip():
+                    correct_locations = []
 
-                        correct_location = (
-                            f"{correct_location} "
-                            f"→ {cell.row.name}"
+                    for expected_cell in (
+                        expected_by_content.get(
+                            content_key,
+                            [],
+                        )
+                    ):
+
+                        location = (
+                            expected_cell.column.name
                         )
 
-                    else:
+                        if has_named_rows:
 
-                        correct_location = (
-                            f"{correct_location} "
-                            f"→ any row"
-                        )
+                            if expected_cell.row.name.strip():
+
+                                location = (
+                                    f"{location} "
+                                    f"→ {expected_cell.row.name}"
+                                )
+
+                            else:
+
+                                location = (
+                                    f"{location} "
+                                    f"→ any row"
+                                )
+
+                        if location not in correct_locations:
+
+                            correct_locations.append(
+                                location
+                            )
 
                     placed_row = (
                         row_lookup[
@@ -599,11 +759,22 @@ def practice_comparison_review(
                         ]
                     )
 
-                    placed_row_name = (
-                        placed_row.name.strip()
-                        or
-                        "unnamed row"
+                    placed_location = (
+                        placed_column.name
                     )
+
+                    if has_named_rows:
+
+                        placed_row_name = (
+                            placed_row.name.strip()
+                            or
+                            "unnamed row"
+                        )
+
+                        placed_location = (
+                            f"{placed_location} "
+                            f"→ {placed_row_name}"
+                        )
 
                     incorrect_explanations.append(
                         {
@@ -611,13 +782,12 @@ def practice_comparison_review(
                                 cell.content,
 
                             "placed":
-                                (
-                                    f"{placed_column.name} "
-                                    f"→ {placed_row_name}"
-                                ),
+                                placed_location,
 
                             "correct":
-                                correct_location,
+                                "; ".join(
+                                    correct_locations
+                                ),
                         }
                     )
 
@@ -794,6 +964,9 @@ def practice_comparison_review(
 
             "review_rows":
                 review_rows,
+
+            "has_named_rows":
+                has_named_rows,
 
             "shuffled_cells":
                 shuffled_cells,
