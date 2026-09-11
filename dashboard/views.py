@@ -96,6 +96,13 @@ def dashboard(request):
     due_step_total = 0
 
     # --------------------------------------------------------
+    # COMPARISON DATA
+    # --------------------------------------------------------
+
+    due_comparison_subjects = []
+    due_comparison_total = 0
+
+    # --------------------------------------------------------
     # NOTE DATA
     # --------------------------------------------------------
 
@@ -729,6 +736,129 @@ def dashboard(request):
         )
 
         # ====================================================
+        # COMPARISONS
+        # ====================================================
+
+        comparisons = (
+            Comparison.objects
+            .filter(
+                knowledge_unit__subject__user=request.user,
+                knowledge_unit__knowledge_type=(
+                    KnowledgeUnit
+                    .KnowledgeType
+                    .COMPARISON
+                ),
+                knowledge_unit__active=True,
+            )
+            .select_related(
+                "knowledge_unit",
+                "knowledge_unit__subject",
+            )
+            .order_by(
+                "knowledge_unit__subject__name",
+                "knowledge_unit__created",
+                "id",
+            )
+        )
+
+        comparison_groups = {}
+
+        for comparison in comparisons:
+
+            knowledge_unit = (
+                comparison.knowledge_unit
+            )
+
+            progress = (
+                StudentKnowledge.objects
+                .filter(
+                    student=request.user,
+                    knowledge_unit=knowledge_unit,
+                )
+                .first()
+            )
+
+            is_due = False
+
+            if progress is None:
+
+                is_due = True
+
+            elif progress.next_review is None:
+
+                is_due = True
+
+            else:
+
+                next_review_date = (
+                    timezone.localtime(
+                        progress.next_review
+                    )
+                    .date()
+                )
+
+                if next_review_date <= today:
+
+                    is_due = True
+
+            if not is_due:
+
+                continue
+
+            database_subject = (
+                knowledge_unit.subject
+            )
+
+            if not database_subject:
+
+                continue
+
+            subject_index = (
+                find_subject_index(
+                    database_subject
+                )
+            )
+
+            if subject_index is None:
+
+                continue
+
+            subject_id = (
+                database_subject.id
+            )
+
+            if (
+                subject_id
+                not in
+                comparison_groups
+            ):
+
+                comparison_groups[
+                    subject_id
+                ] = {
+                    "subject":
+                        database_subject,
+
+                    "subject_index":
+                        subject_index,
+
+                    "count":
+                        0,
+                }
+
+            comparison_groups[
+                subject_id
+            ][
+                "count"
+            ] += 1
+
+            due_comparison_total += 1
+
+        due_comparison_subjects = list(
+            comparison_groups.values()
+        )
+
+        # ====================================================
         # NOTES
         # ====================================================
 
@@ -802,80 +932,6 @@ def dashboard(request):
             ] += 1
 
             note_total += 1
-
-        note_subjects = list(
-            note_groups.values()
-        )
-
-        note_groups = {}
-
-        # ----------------------------------------------------
-        # GROUP NOTES BY SUBJECT
-        # ----------------------------------------------------
-
-        for note in notes:
-
-            database_subject = (
-                note.subject
-            )
-
-            if not database_subject:
-
-                continue
-
-            # ------------------------------------------------
-            # SUBJECT INDEX
-            # ------------------------------------------------
-
-            subject_index = (
-                find_subject_index(
-                    database_subject
-                )
-            )
-
-            if subject_index is None:
-
-                continue
-
-            # ------------------------------------------------
-            # GROUP
-            # ------------------------------------------------
-
-            subject_id = (
-                database_subject.id
-            )
-
-            if (
-                subject_id
-                not in
-                note_groups
-            ):
-
-                note_groups[
-                    subject_id
-                ] = {
-
-                    "subject":
-                        database_subject,
-
-                    "subject_index":
-                        subject_index,
-
-                    "count":
-                        0,
-                }
-
-            note_groups[
-                subject_id
-            ][
-                "count"
-            ] += 1
-
-            note_total += 1
-
-        # ----------------------------------------------------
-        # FINAL NOTE SUBJECTS
-        # ----------------------------------------------------
 
         note_subjects = list(
             note_groups.values()
@@ -1103,6 +1159,16 @@ def dashboard(request):
 
             "due_step_total":
                 due_step_total,
+
+            # --------------------------------------------
+            # COMPARISONS
+            # --------------------------------------------
+
+            "due_comparison_subjects":
+                due_comparison_subjects,
+
+            "due_comparison_total":
+                due_comparison_total,
 
             # --------------------------------------------
             # NOTES

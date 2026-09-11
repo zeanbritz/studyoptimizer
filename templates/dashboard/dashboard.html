@@ -784,7 +784,7 @@
                      HAS PLAN ITEMS
                 ============================== -->
 
-                {% elif due_definition_subjects or due_formula_subjects or due_list_subjects or book_summary_subjects or due_step_subjects or note_subjects %}
+                {% elif due_definition_subjects or due_formula_subjects or due_list_subjects or book_summary_subjects or due_step_subjects or due_comparison_subjects or note_subjects %}
 
 
                     <div class="today-plan-columns">
@@ -1244,8 +1244,95 @@
                         {% endif %}
 
                         <!-- =================================
-     NOTES
-================================== -->
+                             COMPARISONS
+                        ================================== -->
+
+                        {% if due_comparison_subjects %}
+
+
+                            <div class="today-plan-column">
+
+
+                                <div class="plan-column-header">
+
+
+                                    <div>
+
+
+                                        <h3>
+                                            Comparisons
+                                        </h3>
+
+
+                                        <p>
+                                            Comparisons scheduled for review.
+                                        </p>
+
+
+                                    </div>
+
+
+                                    <span class="plan-total-count">
+
+                                        {{ due_comparison_total }}
+
+                                    </span>
+
+
+                                </div>
+
+
+                                <div class="plan-subject-list">
+
+
+                                    {% for item in due_comparison_subjects %}
+
+
+                                        <a
+                                            href="{% url 'comparison_review_list' subject_index=item.subject_index %}"
+                                            class="plan-subject-card"
+                                        >
+
+
+                                            <div class="plan-card-content">
+
+
+                                                <span class="plan-card-title">
+
+                                                    {{ item.subject.name }}
+                                                    Comparisons
+
+                                                </span>
+
+
+                                                <span class="plan-card-count">
+
+                                                    {{ item.count }}
+                                                    comparison{{ item.count|pluralize }}
+
+                                                </span>
+
+
+                                            </div>
+
+
+                                        </a>
+
+
+                                    {% endfor %}
+
+
+                                </div>
+
+
+                            </div>
+
+
+                        {% endif %}
+
+                        <!-- =================================
+                             NOTES
+                        ================================== -->
 
 {% if note_subjects %}
 
