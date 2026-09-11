@@ -515,6 +515,54 @@
 
         }
 
+        /* STUDYOPTIMIZER NOTES REVIEW */
+        :root { --ink: #2f3335; --muted: #687278; --page-background: #edf1f3; --surface-border: #d8e0e3; --surface-edge: #c4cfd4; --blue: #278fd3; --blue-dark: #176fa8; --green: #58b82a; --green-dark: #3f8f1d; }
+        body { background: var(--page-background); color: var(--ink); }
+        .page { max-width: 1160px; padding: 30px 40px 56px; }
+
+        .page-header { margin: 0 0 20px; padding: 25px 27px; border: 1px solid #465270; border-bottom: 5px solid #222b45; border-radius: 17px; background: linear-gradient(135deg, #303a5a 0%, #485676 100%); box-shadow: 0 9px 24px rgba(35, 45, 70, 0.12); }
+        .header-content h1 { color: white; font-size: 31px; font-weight: 850; letter-spacing: -0.7px; }
+        .header-content p { color: #d8dfed; font-size: 14px; font-weight: 600; }
+
+        .back-button, .random-review-button { padding: 11px 16px 9px; border: 2px solid; border-bottom-width: 4px; border-radius: 11px; font-size: 13px; font-weight: 850; box-shadow: none; transition: transform 0.15s ease, background 0.15s ease; }
+        .back-button { border-color: #a8d3ec; background: #edf8ff; color: #176f9f; }
+        .random-review-button { border-color: var(--green-dark); background: var(--green); color: white; }
+        .back-button:hover { background: #dff2ff; transform: translateY(-1px); }
+        .random-review-button:hover { background: #65c936; transform: translateY(-1px); }
+        .back-button:active, .random-review-button:active { border-bottom-width: 2px; transform: translateY(2px); }
+
+        .notes-toolbar { display: grid; grid-template-columns: minmax(0, 1fr) minmax(210px, 280px) auto; align-items: end; gap: 14px; margin-bottom: 18px; padding: 17px; border: 1px solid var(--surface-border); border-bottom: 4px solid var(--surface-edge); border-radius: 15px; background: #f8fafb; }
+        .toolbar-field { display: block; min-width: 0; }
+        .toolbar-label { display: block; margin: 0 0 7px 2px; color: #5e686d; font-size: 12px; font-weight: 800; letter-spacing: 0.02em; }
+        .search-wrap, .select-wrap { position: relative; }
+        .control-icon { position: absolute; top: 50%; left: 14px; width: 19px; height: 19px; fill: none; stroke: #78858b; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; transform: translateY(-50%); pointer-events: none; }
+
+        .notes-search, .subject-filter { width: 100%; min-height: 48px; border: 2px solid #d4dce0; border-bottom-width: 4px; border-radius: 11px; background: white; color: var(--ink); font-family: inherit; font-size: 14px; font-weight: 650; outline: none; }
+        .notes-search { padding: 10px 14px 9px 43px; }
+        .subject-filter { padding: 10px 38px 9px 43px; cursor: pointer; }
+        .notes-search:focus, .subject-filter:focus { border-color: #78b8dd; box-shadow: 0 0 0 4px rgba(39, 143, 211, 0.12); }
+
+        .results-count { min-height: 48px; display: flex; align-items: center; justify-content: center; padding: 0 14px; border: 1px solid #c9dfec; border-radius: 11px; background: #edf7fd; color: #276f97; font-size: 13px; font-weight: 850; white-space: nowrap; }
+        .notes-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+
+        .note-card { position: relative; min-height: 128px; overflow: hidden; padding: 20px 108px 20px 21px; border: 1px solid #dddad8; border-top: 3px solid #bd7f70; border-bottom: 4px solid #cfc6c2; border-radius: 15px; background: linear-gradient(145deg, #ffffff 35%, #f8eae6 100%); box-shadow: 0 3px 11px rgba(54, 46, 43, 0.045); isolation: isolate; }
+        .note-card[hidden] { display: none; }
+        .note-card:hover { border-color: #ca998d; background: linear-gradient(145deg, #ffffff 28%, #f6e3de 100%); box-shadow: 0 9px 21px rgba(54, 46, 43, 0.09); transform: translateY(-2px); }
+        .note-card:focus-visible { outline: 3px solid rgba(39, 143, 211, 0.28); outline-offset: 3px; }
+        .note-content { position: relative; z-index: 2; }
+        .note-title { margin-bottom: 10px; color: #34393b; font-size: 17px; font-weight: 850; }
+        .note-subject { padding: 5px 9px; border: 1px solid #c9dfec; border-radius: 8px; background: #edf7fd; color: #276f97; font-size: 12px; font-weight: 800; }
+        .note-meta { color: var(--muted); font-size: 12px; font-weight: 600; }
+
+        .note-card-art { position: absolute; right: -13px; bottom: -20px; z-index: 1; width: 116px; height: 116px; fill: none; stroke: #9c594a; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.55; opacity: 0.09; pointer-events: none; }
+        .filtered-empty { grid-column: 1 / -1; padding: 38px 22px; border: 1px dashed #c9d2d6; border-radius: 14px; background: #f8fafb; color: var(--muted); text-align: center; font-size: 14px; font-weight: 700; }
+        .filtered-empty[hidden] { display: none; }
+        .empty-notes { border: 1px dashed #c9d2d6; border-bottom: 4px solid #d2dadd; border-radius: 16px; background: #f8fafb; }
+
+        @media (max-width: 860px) { .notes-toolbar { grid-template-columns: 1fr 1fr; } .results-count { grid-column: 1 / -1; } .notes-list { grid-template-columns: 1fr; } }
+        @media (max-width: 650px) { .page { padding: 20px 18px 42px; } .page-header { padding: 22px 20px; } .header-content h1 { font-size: 27px; } .notes-toolbar { grid-template-columns: 1fr; padding: 14px; } .results-count { grid-column: auto; } .note-card { min-height: 120px; padding: 18px 87px 18px 17px; } .note-card-art { width: 98px; height: 98px; } }
+        @media (prefers-reduced-motion: reduce) { .note-card, .back-button, .random-review-button { transition: none; } }
+
     </style>
 
 </head>
@@ -574,6 +622,8 @@
                         <a
                             href="{% url 'random_note_review' %}"
                             class="random-review-button"
+                            id="random-review-button"
+                            data-base-url="{% url 'random_note_review' %}"
                         >
                             ↻ Random Review
                         </a>
@@ -588,30 +638,49 @@
 
 
             <!-- =====================================
-                 INFORMATION
-            ====================================== -->
-
-            {% if notes %}
-
-                <div class="review-info">
-
-                    Select any note to begin a global review
-                    from that point, or use Random Review to
-                    start from a randomly selected note.
-
-                    Global review continues through notes from
-                    all subjects until you choose Stop Review.
-
-                </div>
-
-            {% endif %}
-
-
-            <!-- =====================================
                  NOTES
             ====================================== -->
 
             {% if notes %}
+
+
+                <section class="notes-toolbar" aria-label="Find notes to review">
+
+                    <label class="toolbar-field" for="notes-search">
+                        <span class="toolbar-label">Search notes</span>
+                        <span class="search-wrap">
+                            <svg class="control-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="11" cy="11" r="7"></circle>
+                                <path d="m20 20-4-4"></path>
+                            </svg>
+                            <input
+                                type="search"
+                                id="notes-search"
+                                class="notes-search"
+                                placeholder="Search by title, subject, book, or chapter"
+                                autocomplete="off"
+                            >
+                        </span>
+                    </label>
+
+                    <label class="toolbar-field" for="subject-filter">
+                        <span class="toolbar-label">Subject</span>
+                        <span class="select-wrap">
+                            <svg class="control-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M4 5h16v14H4z"></path>
+                                <path d="M8 9h8M8 13h5"></path>
+                            </svg>
+                            <select id="subject-filter" class="subject-filter">
+                                <option value="">All subjects</option>
+                            </select>
+                        </span>
+                    </label>
+
+                    <div class="results-count" id="results-count" aria-live="polite">
+                        {{ notes|length }} note{{ notes|length|pluralize }}
+                    </div>
+
+                </section>
 
 
                 <div class="notes-list">
@@ -623,6 +692,10 @@
                         <a
                             href="{% url 'note_detail' note_id=item.note.id %}?mode=global_review"
                             class="note-card"
+                            data-note-card
+                            data-base-url="{% url 'note_detail' note_id=item.note.id %}?mode=global_review"
+                            data-subject-id="{{ item.subject.id }}"
+                            data-subject-name="{{ item.subject.name|escape }}"
                         >
 
 
@@ -675,15 +748,22 @@
                             </div>
 
 
-                            <span class="note-arrow">
-                                →
-                            </span>
+                            <svg class="note-card-art" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M6 3h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"></path>
+                                <path d="M8 3v18M11 8h5M11 12h4"></path>
+                                <path d="m13 18 7-7 2 2-7 7-3 1Z"></path>
+                            </svg>
 
 
                         </a>
 
 
                     {% endfor %}
+
+
+                    <div class="filtered-empty" id="filtered-empty" hidden>
+                        No notes match your search and subject filter.
+                    </div>
 
 
                 </div>
@@ -718,6 +798,107 @@
 
 
 </div>
+
+
+{% if notes %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const searchInput = document.getElementById("notes-search");
+        const subjectFilter = document.getElementById("subject-filter");
+        const resultsCount = document.getElementById("results-count");
+        const filteredEmpty = document.getElementById("filtered-empty");
+        const randomReviewButton = document.getElementById("random-review-button");
+        const noteCards = Array.from(document.querySelectorAll("[data-note-card]"));
+        const subjects = new Map();
+
+        noteCards.forEach(function (card) {
+            subjects.set(card.dataset.subjectId, card.dataset.subjectName);
+        });
+
+        Array.from(subjects.entries())
+            .sort(function (first, second) {
+                return first[1].localeCompare(second[1], undefined, { sensitivity: "base" });
+            })
+            .forEach(function (subject) {
+                const option = document.createElement("option");
+                option.value = subject[0];
+                option.textContent = subject[1];
+                subjectFilter.appendChild(option);
+            });
+
+        const pageParameters = new URLSearchParams(window.location.search);
+        const requestedSubject = pageParameters.get("subject_id") || "";
+
+        if (requestedSubject && subjects.has(requestedSubject)) {
+            subjectFilter.value = requestedSubject;
+        }
+
+        function updateReviewLinks(selectedSubject) {
+            noteCards.forEach(function (card) {
+                card.href = selectedSubject
+                    ? card.dataset.baseUrl + "&subject_id=" + encodeURIComponent(selectedSubject)
+                    : card.dataset.baseUrl;
+            });
+
+            if (randomReviewButton) {
+                randomReviewButton.href = selectedSubject
+                    ? randomReviewButton.dataset.baseUrl + "?subject_id=" + encodeURIComponent(selectedSubject)
+                    : randomReviewButton.dataset.baseUrl;
+            }
+        }
+
+        function updatePageAddress(selectedSubject) {
+            const parameters = new URLSearchParams(window.location.search);
+
+            if (selectedSubject) {
+                parameters.set("subject_id", selectedSubject);
+            } else {
+                parameters.delete("subject_id");
+            }
+
+            const queryString = parameters.toString();
+            const nextAddress = window.location.pathname + (queryString ? "?" + queryString : "");
+            window.history.replaceState({}, "", nextAddress);
+        }
+
+        function applyFilters(updateAddress) {
+            const searchTerm = searchInput.value.trim().toLocaleLowerCase();
+            const selectedSubject = subjectFilter.value;
+            let visibleCount = 0;
+
+            noteCards.forEach(function (card) {
+                const matchesSubject = !selectedSubject || card.dataset.subjectId === selectedSubject;
+                const matchesSearch = !searchTerm || card.textContent.toLocaleLowerCase().includes(searchTerm);
+                const isVisible = matchesSubject && matchesSearch;
+
+                card.hidden = !isVisible;
+
+                if (isVisible) {
+                    visibleCount += 1;
+                }
+            });
+
+            resultsCount.textContent = visibleCount + " note" + (visibleCount === 1 ? "" : "s");
+            filteredEmpty.hidden = visibleCount !== 0;
+            updateReviewLinks(selectedSubject);
+
+            if (updateAddress) {
+                updatePageAddress(selectedSubject);
+            }
+        }
+
+        searchInput.addEventListener("input", function () {
+            applyFilters(false);
+        });
+
+        subjectFilter.addEventListener("change", function () {
+            applyFilters(true);
+        });
+
+        applyFilters(false);
+    });
+</script>
+{% endif %}
 
 
 <script

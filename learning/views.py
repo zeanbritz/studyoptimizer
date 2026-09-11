@@ -6493,6 +6493,57 @@ def note_detail(
         review_mode = "browse"
 
     # ========================================================
+    # OPTIONAL SUBJECT FILTER FOR GLOBAL NOTE REVIEW
+    # ========================================================
+
+    global_subject_id = None
+
+    if review_mode == "global_review":
+
+        raw_global_subject_id = (
+            request.GET.get("subject_id")
+            or
+            request.POST.get("subject_id")
+        )
+
+        try:
+
+            requested_global_subject_id = int(
+                raw_global_subject_id
+            )
+
+        except (
+            TypeError,
+            ValueError,
+        ):
+
+            requested_global_subject_id = None
+
+        # The note is already restricted to this user. Requiring
+        # the filter to match its subject protects the queue.
+        if requested_global_subject_id == subject.id:
+
+            global_subject_id = (
+                requested_global_subject_id
+            )
+
+    global_review_list_url = reverse(
+        "review_notes"
+    )
+
+    if global_subject_id:
+
+        global_review_list_url = (
+            f"{global_review_list_url}?"
+            + urlencode(
+                {
+                    "subject_id":
+                        global_subject_id,
+                }
+            )
+        )
+
+    # ========================================================
     # SUBJECT INDEX
     # ========================================================
 
@@ -6601,7 +6652,7 @@ def note_detail(
         "global_review"
     ):
 
-        sequence_notes = list(
+        global_notes = (
             Note.objects
             .filter(
                 subject__user=request.user
@@ -6614,6 +6665,18 @@ def note_detail(
                 "created",
                 "id",
             )
+        )
+
+        if global_subject_id:
+
+            global_notes = (
+                global_notes.filter(
+                    subject_id=global_subject_id
+                )
+            )
+
+        sequence_notes = list(
+            global_notes
         )
 
         note_count = len(
@@ -7068,7 +7131,7 @@ def note_detail(
             ):
 
                 return redirect(
-                    "review_notes"
+                    global_review_list_url
                 )
 
             # ------------------------------------------------
@@ -7162,6 +7225,12 @@ def note_detail(
                         )
                         +
                         "?mode=global_review"
+                        +
+                        (
+                            f"&subject_id={global_subject_id}"
+                            if global_subject_id
+                            else ""
+                        )
                     )
 
                     return redirect(
@@ -7169,7 +7238,7 @@ def note_detail(
                     )
 
                 return redirect(
-                    "review_notes"
+                    global_review_list_url
                 )
 
             # =================================================
@@ -7288,6 +7357,9 @@ def note_detail(
                     ==
                     "global_review"
                 ),
+
+            "global_subject_id":
+                global_subject_id,
 
             "is_subject_review":
                 (
@@ -7627,11 +7699,46 @@ def random_note_review(
     request
 ):
 
-    random_note = (
-        Note.objects
-        .filter(
-            subject__user=request.user
+    raw_subject_id = request.GET.get(
+        "subject_id"
+    )
+
+    try:
+
+        selected_subject_id = int(
+            raw_subject_id
         )
+
+    except (
+        TypeError,
+        ValueError,
+    ):
+
+        selected_subject_id = None
+
+    notes_queryset = Note.objects.filter(
+        subject__user=request.user
+    )
+
+    if selected_subject_id:
+
+        subject_exists = Subject.objects.filter(
+            id=selected_subject_id,
+            user=request.user,
+        ).exists()
+
+        if subject_exists:
+
+            notes_queryset = notes_queryset.filter(
+                subject_id=selected_subject_id
+            )
+
+        else:
+
+            selected_subject_id = None
+
+    random_note = (
+        notes_queryset
         .order_by(
             "?"
         )
@@ -7640,9 +7747,36 @@ def random_note_review(
 
     if not random_note:
 
-        return redirect(
+        review_list_url = reverse(
             "review_notes"
         )
+
+        if selected_subject_id:
+
+            review_list_url = (
+                f"{review_list_url}?"
+                + urlencode(
+                    {
+                        "subject_id":
+                            selected_subject_id,
+                    }
+                )
+            )
+
+        return redirect(
+            review_list_url
+        )
+
+    review_parameters = {
+        "mode":
+            "global_review",
+    }
+
+    if selected_subject_id:
+
+        review_parameters[
+            "subject_id"
+        ] = selected_subject_id
 
     review_url = (
         reverse(
@@ -7653,7 +7787,11 @@ def random_note_review(
             },
         )
         +
-        "?mode=global_review"
+        "?"
+        +
+        urlencode(
+            review_parameters
+        )
     )
 
     return redirect(
@@ -8313,6 +8451,116 @@ def comparison_review_list(
         )
 
     # ========================================================
+    # SAVE REVIEW RESULT
+    # ========================================================
+
+    if request.method == "POST":
+
+        comparison_id = (
+            request.POST.get(
+                "comparison_id",
+                ""
+            )
+        )
+
+        rating = (
+            request.POST.get(
+                "rating",
+                ""
+            )
+        )
+
+        comparison = get_object_or_404(
+            Comparison,
+            id=comparison_id,
+            knowledge_unit__subject=subject,
+            knowledge_unit__subject__user=(
+                request.user
+            ),
+        )
+
+        if rating in [
+            "again",
+            "got_it",
+        ]:
+
+            progress, created = (
+                StudentKnowledge.objects
+                .get_or_create(
+                    student=request.user,
+                    knowledge_unit=(
+                        comparison.knowledge_unit
+                    ),
+                )
+            )
+
+            progress.review_count = (
+                progress.review_count
+                +
+                1
+            )
+
+            progress.last_reviewed = (
+                timezone.now()
+            )
+
+            if rating == "got_it":
+
+                progress.correct_count = (
+                    progress.correct_count
+                    +
+                    1
+                )
+
+                progress.mastery_level = min(
+                    6,
+                    (
+                        progress.mastery_level
+                        +
+                        1
+                    ),
+                )
+
+            else:
+
+                progress.incorrect_count = (
+                    progress.incorrect_count
+                    +
+                    1
+                )
+
+                progress.mastery_level = max(
+                    0,
+                    (
+                        progress.mastery_level
+                        -
+                        1
+                    ),
+                )
+
+            interval_days = max(
+                1,
+                get_review_interval(
+                    progress.mastery_level
+                ),
+            )
+
+            progress.next_review = (
+                timezone.now()
+                +
+                timedelta(
+                    days=interval_days
+                )
+            )
+
+            progress.save()
+
+        return redirect(
+            "comparison_review_list",
+            subject_index=subject_index,
+        )
+
+    # ========================================================
     # FIND DUE COMPARISONS
     # ========================================================
 
@@ -8331,6 +8579,10 @@ def comparison_review_list(
         )
         .select_related(
             "knowledge_unit"
+        )
+        .prefetch_related(
+            "columns",
+            "rows__cells",
         )
         .order_by(
             "knowledge_unit__created",
@@ -8380,8 +8632,49 @@ def comparison_review_list(
 
             continue
 
+        columns = list(
+            comparison.columns.all()
+        )
+
+        review_rows = []
+
+        for row in comparison.rows.all():
+
+            cell_lookup = {
+                cell.column_id:
+                    cell.content
+
+                for cell
+                in row.cells.all()
+            }
+
+            review_rows.append(
+                {
+                    "name":
+                        row.name,
+
+                    "cells": [
+                        cell_lookup.get(
+                            column.id,
+                            ""
+                        )
+                        for column
+                        in columns
+                    ],
+                }
+            )
+
         due_comparisons.append(
-            comparison
+            {
+                "comparison":
+                    comparison,
+
+                "columns":
+                    columns,
+
+                "rows":
+                    review_rows,
+            }
         )
 
     # ========================================================
