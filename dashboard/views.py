@@ -4580,6 +4580,77 @@ def definition(
 
 
 # ============================================================
+# REVIEW LIBRARY SUBJECT INDEX
+# ============================================================
+
+def get_review_subject_index(
+    request,
+    subject
+):
+
+    session_subjects = request.session.get(
+        "onboarding_subjects",
+        []
+    )
+
+    # --------------------------------------------------------
+    # MATCH THE DATABASE SUBJECT ID FIRST
+    # --------------------------------------------------------
+
+    for index, subject_data in enumerate(
+        session_subjects
+    ):
+
+        database_id = subject_data.get(
+            "database_id"
+        )
+
+        try:
+
+            database_id = int(
+                database_id
+            )
+
+        except (
+            TypeError,
+            ValueError,
+        ):
+
+            database_id = None
+
+        if database_id == subject.id:
+
+            return index
+
+    # --------------------------------------------------------
+    # FALL BACK TO A CASE-INSENSITIVE NAME MATCH
+    # --------------------------------------------------------
+
+    subject_name = (
+        subject.name
+        .strip()
+        .casefold()
+    )
+
+    for index, subject_data in enumerate(
+        session_subjects
+    ):
+
+        session_subject_name = str(
+            subject_data.get(
+                "name",
+                ""
+            )
+        ).strip().casefold()
+
+        if session_subject_name == subject_name:
+
+            return index
+
+    return 0
+
+
+# ============================================================
 # REVIEW DEFINITIONS
 # ============================================================
 
@@ -4628,6 +4699,12 @@ def review_definitions(request):
 
                     "subject":
                         knowledge_unit.subject,
+
+                    "subject_index":
+                        get_review_subject_index(
+                            request,
+                            knowledge_unit.subject,
+                        ),
                 }
             )
 
@@ -4686,6 +4763,12 @@ def review_formulas(request):
 
                 "subject":
                     formula.knowledge_unit.subject,
+
+                "subject_index":
+                    get_review_subject_index(
+                        request,
+                        formula.knowledge_unit.subject,
+                    ),
 
                 "knowledge_unit":
                     formula.knowledge_unit,
@@ -4748,6 +4831,14 @@ def review_lists(request):
                     .knowledge_unit
                     .subject,
 
+                "subject_index":
+                    get_review_subject_index(
+                        request,
+                        bullet_list
+                        .knowledge_unit
+                        .subject,
+                    ),
+
                 "knowledge_unit":
                     bullet_list
                     .knowledge_unit,
@@ -4809,6 +4900,14 @@ def review_steps(request):
                     step_list
                     .knowledge_unit
                     .subject,
+
+                "subject_index":
+                    get_review_subject_index(
+                        request,
+                        step_list
+                        .knowledge_unit
+                        .subject,
+                    ),
 
                 "knowledge_unit":
                     step_list
@@ -4874,6 +4973,14 @@ def review_comparisons(request):
                     .knowledge_unit
                     .subject,
 
+                "subject_index":
+                    get_review_subject_index(
+                        request,
+                        comparison
+                        .knowledge_unit
+                        .subject,
+                    ),
+
                 "knowledge_unit":
                     comparison.knowledge_unit,
             }
@@ -4935,6 +5042,12 @@ def review_notes(request):
 
                 "subject":
                     note.subject,
+
+                "subject_index":
+                    get_review_subject_index(
+                        request,
+                        note.subject,
+                    ),
             }
         )
 

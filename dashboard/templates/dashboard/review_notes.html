@@ -664,6 +664,8 @@
                             class="review-card"
                             data-review-card
                             data-subject-name="{{ item.subject.name|escape }}"
+                            data-global-url="{% url 'note_detail' note_id=item.note.id %}?mode=global_review"
+                            data-subject-url="{% url 'note_detail' note_id=item.note.id %}?mode=global_review&amp;subject_id={{ item.subject.id }}"
                         >
 
                             <div class="item-content">
@@ -858,6 +860,10 @@
                 cards.forEach(
                     function(card) {
 
+                        card.href = selectedSubject
+                            ? card.dataset.subjectUrl
+                            : card.dataset.globalUrl;
+
                         const matchesSubject =
                             (
                                 !selectedSubject
@@ -965,4 +971,3 @@
 </body>
 
 </html>
-

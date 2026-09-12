@@ -666,6 +666,8 @@
                             class="review-card"
                             data-review-card
                             data-subject-name="{{ item.subject.name|escape }}"
+                            data-global-url="{% url 'practice_comparison_review' comparison_id=item.comparison.id %}?scope=all"
+                            data-subject-url="{% url 'practice_comparison_review' comparison_id=item.comparison.id %}?scope=subject&amp;subject_index={{ item.subject_index }}"
                         >
 
                             <div class="item-content">
@@ -858,6 +860,10 @@
 
                 cards.forEach(
                     function(card) {
+
+                        card.href = selectedSubject
+                            ? card.dataset.subjectUrl
+                            : card.dataset.globalUrl;
 
                         const matchesSubject =
                             (
