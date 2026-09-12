@@ -13,461 +13,944 @@
     >
 
     <title>
-        Review Steps - StudyOptimizer
+        Steps - StudyOptimizer
     </title>
-
 
     <link
         rel="stylesheet"
         href="{% static 'dashboard/css/sidebar.css' %}"
     >
 
-
     <style>
+
+        :root {
+            --ink: #2f3335;
+            --muted: #687278;
+            --page-background: #edf1f3;
+            --surface-border: #d8e0e3;
+            --surface-edge: #c4cfd4;
+            --blue: #278fd3;
+            --green: #58b82a;
+            --green-dark: #3f8f1d;
+            --type-accent: #8b84c4;
+            --type-accent-soft: #eeecf8;
+            --type-icon: #655da5;
+            --type-border-hover: #aaa5d2;
+        }
 
         * {
             box-sizing: border-box;
         }
 
+        [hidden] {
+            display: none !important;
+        }
 
         body {
-
             margin: 0;
-
-            background: #f5f6f8;
-
-            color: #222;
-
+            background: var(--page-background);
+            color: var(--ink);
             font-family:
                 -apple-system,
                 BlinkMacSystemFont,
                 "Segoe UI",
                 Arial,
                 sans-serif;
-
         }
 
+        button,
+        input,
+        select {
+            font: inherit;
+        }
 
         .app {
-
             display: flex;
-
             min-height: 100vh;
-
         }
-
 
         .main {
-
-            flex: 1;
-
             min-width: 0;
-
+            flex: 1;
         }
-
 
         .page {
-
             width: 100%;
-
-            max-width: 1100px;
-
-            padding:
-                35px
-                40px
-                60px;
-
+            max-width: 1160px;
+            margin: 0 auto;
+            padding: 30px 40px 56px;
         }
-
-
-        /* =========================================
-           HEADER
-        ========================================= */
 
         .page-header {
-
             display: flex;
-
-            align-items: flex-start;
-
+            align-items: center;
             justify-content: space-between;
-
             gap: 20px;
-
-            margin-bottom: 30px;
-
+            margin: 0 0 20px;
+            padding: 25px 27px;
+            border: 1px solid #465270;
+            border-bottom: 5px solid #222b45;
+            border-radius: 17px;
+            background:
+                linear-gradient(
+                    135deg,
+                    #303a5a 0%,
+                    #485676 100%
+                );
+            box-shadow:
+                0 9px 24px
+                rgba(35, 45, 70, 0.12);
         }
 
-
-        .page-header h1 {
-
-            margin:
-                0
-                0
-                7px;
-
-            font-size: 30px;
-
+        .header-content {
+            min-width: 0;
         }
 
-
-        .page-header p {
-
-            margin: 0;
-
-            color: #777;
-
-            font-size: 14px;
-
-        }
-
-
-        .back-link {
-
-            display: inline-block;
-
-            padding:
-                9px
-                14px;
-
-            border:
-                1px solid
-                #d8d8d8;
-
-            border-radius: 8px;
-
-            background: white;
-
-            color: #444;
-
-            font-size: 13px;
-
-            font-weight: 600;
-
-            text-decoration: none;
-
-        }
-
-
-        .back-link:hover {
-
-            background: #f3f3f3;
-
-        }
-
-
-        /* =========================================
-           STEP SETS
-        ========================================= */
-
-        .step-list {
-
-            display: flex;
-
-            flex-direction: column;
-
-            gap: 14px;
-
-        }
-
-
-        .step-card {
-
+        .eyebrow {
             display: block;
+            margin-bottom: 7px;
+            color: #aebfdf;
+            font-size: 11px;
+            font-weight: 850;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
 
-            padding:
-                22px
-                24px;
+        .header-content h1 {
+            margin: 0 0 6px;
+            color: #ffffff;
+            font-size: 31px;
+            font-weight: 850;
+            letter-spacing: -0.7px;
+            line-height: 1.15;
+        }
 
-            border:
-                1px solid
-                #e2e3e5;
+        .header-content p {
+            margin: 0;
+            color: #d8dfed;
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.5;
+        }
 
-            border-radius: 12px;
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
 
-            background: white;
-
-            color: inherit;
-
+        .back-button,
+        .random-review-button {
+            min-height: 43px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 9px 16px 7px;
+            border: 2px solid;
+            border-bottom-width: 4px;
+            border-radius: 11px;
+            font-size: 13px;
+            font-weight: 850;
             text-decoration: none;
+            cursor: pointer;
+            box-shadow: none;
+            transition:
+                transform 0.15s ease,
+                background 0.15s ease;
+        }
 
+        .back-button {
+            border-color: #a8d3ec;
+            background: #edf8ff;
+            color: #176f9f;
+        }
+
+        .random-review-button {
+            border-color: var(--green-dark);
+            background: var(--green);
+            color: #ffffff;
+        }
+
+        .back-button:hover {
+            background: #dff2ff;
+            transform: translateY(-1px);
+        }
+
+        .random-review-button:hover:not(:disabled) {
+            background: #65c936;
+            transform: translateY(-1px);
+        }
+
+        .back-button:active,
+        .random-review-button:active:not(:disabled) {
+            border-bottom-width: 2px;
+            transform: translateY(2px);
+        }
+
+        .random-review-button:disabled {
+            border-color: #aeb8bd;
+            background: #c8d0d4;
+            cursor: not-allowed;
+        }
+
+        .review-toolbar {
+            display: grid;
+            grid-template-columns:
+                minmax(0, 1fr)
+                minmax(210px, 280px)
+                auto;
+            align-items: end;
+            gap: 14px;
+            margin-bottom: 18px;
+            padding: 17px;
+            border: 1px solid var(--surface-border);
+            border-bottom: 4px solid var(--surface-edge);
+            border-radius: 15px;
+            background: #f8fafb;
+        }
+
+        .toolbar-field {
+            display: block;
+            min-width: 0;
+        }
+
+        .toolbar-label {
+            display: block;
+            margin: 0 0 7px 2px;
+            color: #5e686d;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+        }
+
+        .search-wrap,
+        .select-wrap {
+            position: relative;
+            display: block;
+        }
+
+        .control-icon {
+            position: absolute;
+            top: 50%;
+            left: 14px;
+            width: 19px;
+            height: 19px;
+            fill: none;
+            stroke: #78858b;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-width: 2;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
+        .review-search,
+        .subject-filter {
+            width: 100%;
+            min-height: 48px;
+            border: 2px solid #d4dce0;
+            border-bottom-width: 4px;
+            border-radius: 11px;
+            background: #ffffff;
+            color: var(--ink);
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 650;
+            outline: none;
+        }
+
+        .review-search {
+            padding: 10px 14px 9px 43px;
+        }
+
+        .subject-filter {
+            padding: 10px 38px 9px 43px;
+            cursor: pointer;
+        }
+
+        .review-search:focus,
+        .subject-filter:focus {
+            border-color: #78b8dd;
+            box-shadow:
+                0 0 0 4px
+                rgba(39, 143, 211, 0.12);
+        }
+
+        .results-count {
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 14px;
+            border: 1px solid #c9dfec;
+            border-radius: 11px;
+            background: #edf7fd;
+            color: #276f97;
+            font-size: 13px;
+            font-weight: 850;
+            white-space: nowrap;
+        }
+
+        .review-list {
+            display: grid;
+            grid-template-columns:
+                repeat(
+                    2,
+                    minmax(0, 1fr)
+                );
+            gap: 14px;
+        }
+
+        .review-card {
+            position: relative;
+            min-width: 0;
+            min-height: 128px;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            padding: 20px 108px 20px 21px;
+            border: 1px solid #dddad8;
+            border-top: 3px solid var(--type-accent);
+            border-bottom: 4px solid #cfc6c2;
+            border-radius: 15px;
+            background:
+                linear-gradient(
+                    145deg,
+                    #ffffff 35%,
+                    var(--type-accent-soft) 100%
+                );
+            color: inherit;
+            text-decoration: none;
+            box-shadow:
+                0 3px 11px
+                rgba(54, 46, 43, 0.045);
+            isolation: isolate;
             transition:
                 border-color 0.15s ease,
-                box-shadow 0.15s ease,
-                transform 0.15s ease;
-
+                background 0.15s ease,
+                transform 0.15s ease,
+                box-shadow 0.15s ease;
         }
 
-
-        .step-card:hover {
-
-            border-color: #cfcfcf;
-
+        .review-card:hover {
+            border-color: var(--type-border-hover);
             box-shadow:
-                0
-                4px
-                12px
-                rgba(
-                    0,
-                    0,
-                    0,
-                    0.06
-                );
-
-            transform:
-                translateY(-2px);
-
+                0 9px 21px
+                rgba(54, 46, 43, 0.09);
+            transform: translateY(-2px);
         }
 
+        .review-card:focus-visible,
+        .back-button:focus-visible,
+        .random-review-button:focus-visible {
+            outline: 3px solid rgba(39, 143, 211, 0.28);
+            outline-offset: 3px;
+        }
 
-        .subject-name {
+        .item-content {
+            position: relative;
+            z-index: 2;
+            min-width: 0;
+        }
 
+        .item-title {
             display: block;
+            margin-bottom: 10px;
+            color: #34393b;
+            font-size: 17px;
+            font-weight: 850;
+            line-height: 1.35;
+            overflow-wrap: anywhere;
+        }
 
-            margin-bottom: 7px;
-
-            color: #777;
-
+        .item-subject {
+            display: inline-block;
+            margin-right: 7px;
+            padding: 5px 9px;
+            border: 1px solid #c9dfec;
+            border-radius: 8px;
+            background: #edf7fd;
+            color: #276f97;
             font-size: 12px;
+            font-weight: 800;
+        }
 
+        .item-meta {
+            display: inline;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+
+        .card-art {
+            position: absolute;
+            right: -13px;
+            bottom: -20px;
+            z-index: 1;
+            width: 116px;
+            height: 116px;
+            fill: none;
+            stroke: var(--type-icon);
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-width: 1.55;
+            opacity: 0.11;
+            pointer-events: none;
+        }
+
+        .filtered-empty {
+            grid-column: 1 / -1;
+            padding: 38px 22px;
+            border: 1px dashed #c9d2d6;
+            border-radius: 14px;
+            background: #f8fafb;
+            color: var(--muted);
+            text-align: center;
+            font-size: 14px;
             font-weight: 700;
-
-            text-transform: uppercase;
-
-            letter-spacing: 0.04em;
-
         }
-
-
-        .step-title {
-
-            margin:
-                0
-                0
-                12px;
-
-            font-size: 20px;
-
-            font-weight: 650;
-
-        }
-
-
-        .review-link {
-
-            color: #222;
-
-            font-size: 13px;
-
-            font-weight: 700;
-
-        }
-
-
-        /* =========================================
-           EMPTY
-        ========================================= */
 
         .empty-state {
-
-            padding:
-                50px
-                25px;
-
-            border:
-                1px solid
-                #e2e3e5;
-
-            border-radius: 12px;
-
-            background: white;
-
+            padding: 55px 30px;
+            border: 1px dashed #c9d2d6;
+            border-bottom: 4px solid #d2dadd;
+            border-radius: 16px;
+            background: #f8fafb;
+            color: #888888;
             text-align: center;
-
         }
-
 
         .empty-state h2 {
-
-            margin:
-                0
-                0
-                8px;
-
-            font-size: 20px;
-
+            margin: 0 0 7px;
+            color: #444444;
+            font-size: 18px;
         }
-
 
         .empty-state p {
-
             margin: 0;
-
-            color: #777;
-
-            font-size: 14px;
-
+            font-size: 13px;
         }
 
-
-        @media (max-width: 700px) {
-
-            .page {
-
-                padding:
-                    25px
-                    20px
-                    45px;
-
+        @media (max-width: 860px) {
+            .review-toolbar {
+                grid-template-columns: 1fr 1fr;
             }
 
+            .results-count {
+                grid-column: 1 / -1;
+            }
+
+            .review-list {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 650px) {
+            .page {
+                padding: 20px 18px 42px;
+            }
 
             .page-header {
-
+                align-items: flex-start;
                 flex-direction: column;
-
+                padding: 22px 20px;
             }
 
+            .header-content h1 {
+                font-size: 27px;
+            }
+
+            .header-actions {
+                width: 100%;
+            }
+
+            .back-button,
+            .random-review-button {
+                flex: 1;
+                text-align: center;
+            }
+
+            .review-toolbar {
+                grid-template-columns: 1fr;
+                padding: 14px;
+            }
+
+            .results-count {
+                grid-column: auto;
+            }
+
+            .review-card {
+                min-height: 120px;
+                padding: 18px 87px 18px 17px;
+            }
+
+            .card-art {
+                width: 98px;
+                height: 98px;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .header-actions {
+                flex-direction: column;
+            }
+
+            .back-button,
+            .random-review-button {
+                width: 100%;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .review-card,
+            .back-button,
+            .random-review-button {
+                transition: none;
+            }
         }
 
     </style>
 
 </head>
 
-
 <body>
-
 
 <div class="app">
 
-
     {% include 'partials/sidebar.html' with active_page='review' %}
-
 
     <main class="main">
 
-
         <div class="page">
-
-
-            <!-- =====================================
-                 HEADER
-            ====================================== -->
 
             <header class="page-header">
 
+                <div class="header-content">
 
-                <div>
-
+                    <span class="eyebrow">
+                        Review library
+                    </span>
 
                     <h1>
                         Steps
                     </h1>
 
-
                     <p>
-
+                        <span id="header-visible-count">
+                            {{ step_count }}
+                        </span>
+                        shown ·
                         {{ step_count }}
-
                         step set{{ step_count|pluralize }}
-
-                        across all of your subjects.
-
+                        total
                     </p>
-
 
                 </div>
 
+                <div class="header-actions">
 
-                <a
-                    href="{% url 'review' %}"
-                    class="back-link"
-                >
-                    ← Review
-                </a>
+                    <a
+                        href="{% url 'review' %}"
+                        class="back-button"
+                    >
+                        ← Back to Review
+                    </a>
 
+                    {% if steps %}
+
+                        <button
+                            type="button"
+                            class="random-review-button"
+                            id="random-review-button"
+                        >
+                            ↻ Random Review
+                        </button>
+
+                    {% endif %}
+
+                </div>
 
             </header>
 
-
-            <!-- =====================================
-                 STEP SETS
-            ====================================== -->
-
             {% if steps %}
 
+                <section
+                    class="review-toolbar"
+                    aria-label="Find steps to review"
+                >
 
-                <div class="step-list">
+                    <label
+                        class="toolbar-field"
+                        for="review-search"
+                    >
 
+                        <span class="toolbar-label">
+                            Search steps
+                        </span>
+
+                        <span class="search-wrap">
+
+                            <svg
+                                class="control-icon"
+                                viewBox="0 0 24 24"
+                                aria-hidden="true"
+                            >
+                                <circle cx="11" cy="11" r="7"></circle>
+                                <path d="m20 20-4-4"></path>
+                            </svg>
+
+                            <input
+                                type="search"
+                                id="review-search"
+                                class="review-search"
+                                placeholder="Search by process or subject"
+                                autocomplete="off"
+                            >
+
+                        </span>
+
+                    </label>
+
+                    <label
+                        class="toolbar-field"
+                        for="subject-filter"
+                    >
+
+                        <span class="toolbar-label">
+                            Subject
+                        </span>
+
+                        <span class="select-wrap">
+
+                            <svg
+                                class="control-icon"
+                                viewBox="0 0 24 24"
+                                aria-hidden="true"
+                            >
+                                <path d="M4 5h16v14H4z"></path>
+                                <path d="M8 9h8M8 13h5"></path>
+                            </svg>
+
+                            <select
+                                id="subject-filter"
+                                class="subject-filter"
+                            >
+                                <option value="">
+                                    All subjects
+                                </option>
+                            </select>
+
+                        </span>
+
+                    </label>
+
+                    <div
+                        class="results-count"
+                        id="results-count"
+                        aria-live="polite"
+                    >
+                        {{ step_count }}
+                        step set{{ step_count|pluralize }}
+                    </div>
+
+                </section>
+
+                <div class="review-list">
 
                     {% for item in steps %}
 
-
                         <a
                             href="{% url 'practice_step_review' step_list_id=item.step_list.id %}?scope=all"
-                            class="step-card"
+                            class="review-card"
+                            data-review-card
+                            data-subject-name="{{ item.subject.name|escape }}"
                         >
 
+                            <div class="item-content">
 
-                            <span class="subject-name">
-                                {{ item.subject.name }}
-                            </span>
+                                <span class="item-title">
+                                    {{ item.step_list.question }}
+                                </span>
+
+                                <span class="item-subject">
+                                    {{ item.subject.name }}
+                                </span>
 
 
-                            <h2 class="step-title">
-                                {{ item.step_list.question }}
-                            </h2>
+                            </div>
 
-
-                            <span class="review-link">
-                                Review steps →
-                            </span>
-
+                            <svg class="card-art" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M3 20h5v-5h5v-5h5V5h3"></path>
+                                <circle cx="5.5" cy="17.5" r="1"></circle>
+                                <circle cx="10.5" cy="12.5" r="1"></circle>
+                                <circle cx="15.5" cy="7.5" r="1"></circle>
+                            </svg>
 
                         </a>
 
-
                     {% endfor %}
 
+                    <div
+                        class="filtered-empty"
+                        id="filtered-empty"
+                        hidden
+                    >
+                        No steps match your search and subject filter.
+                    </div>
 
                 </div>
 
-
             {% else %}
-
 
                 <div class="empty-state">
 
-
                     <h2>
-                        No steps yet
+                        No Steps Yet
                     </h2>
-
 
                     <p>
                         Step sets you create will appear here.
                     </p>
 
-
                 </div>
-
 
             {% endif %}
 
-
         </div>
-
 
     </main>
 
-
 </div>
 
+{% if steps %}
+
+<script>
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function() {
+
+            const searchInput =
+                document.getElementById(
+                    "review-search"
+                );
+
+            const subjectFilter =
+                document.getElementById(
+                    "subject-filter"
+                );
+
+            const resultsCount =
+                document.getElementById(
+                    "results-count"
+                );
+
+            const headerVisibleCount =
+                document.getElementById(
+                    "header-visible-count"
+                );
+
+            const filteredEmpty =
+                document.getElementById(
+                    "filtered-empty"
+                );
+
+            const randomReviewButton =
+                document.getElementById(
+                    "random-review-button"
+                );
+
+            const cards = Array.from(
+                document.querySelectorAll(
+                    "[data-review-card]"
+                )
+            );
+
+            const subjects = Array.from(
+                new Set(
+                    cards.map(
+                        function(card) {
+                            return (
+                                card
+                                .dataset
+                                .subjectName
+                            );
+                        }
+                    )
+                )
+            ).sort(
+                function(first, second) {
+                    return first.localeCompare(
+                        second,
+                        undefined,
+                        {
+                            sensitivity: "base"
+                        }
+                    );
+                }
+            );
+
+            subjects.forEach(
+                function(subject) {
+
+                    const option =
+                        document.createElement(
+                            "option"
+                        );
+
+                    option.value = subject;
+                    option.textContent = subject;
+
+                    subjectFilter.appendChild(
+                        option
+                    );
+
+                }
+            );
+
+            function visibleCards() {
+                return cards.filter(
+                    function(card) {
+                        return !card.hidden;
+                    }
+                );
+            }
+
+            function countLabel(count) {
+                return (
+                    count
+                    +
+                    " "
+                    +
+                    (
+                        count === 1
+                        ? "step set"
+                        : "step sets"
+                    )
+                );
+            }
+
+            function applyFilters() {
+
+                const searchTerm =
+                    searchInput
+                    .value
+                    .trim()
+                    .toLocaleLowerCase();
+
+                const selectedSubject =
+                    subjectFilter.value;
+
+                let visibleTotal = 0;
+
+                cards.forEach(
+                    function(card) {
+
+                        const matchesSubject =
+                            (
+                                !selectedSubject
+                                ||
+                                card
+                                .dataset
+                                .subjectName
+                                ===
+                                selectedSubject
+                            );
+
+                        const matchesSearch =
+                            (
+                                !searchTerm
+                                ||
+                                card
+                                .textContent
+                                .toLocaleLowerCase()
+                                .includes(
+                                    searchTerm
+                                )
+                            );
+
+                        const isVisible =
+                            matchesSubject
+                            &&
+                            matchesSearch;
+
+                        card.hidden = !isVisible;
+
+                        if (isVisible) {
+                            visibleTotal += 1;
+                        }
+
+                    }
+                );
+
+                resultsCount.textContent =
+                    countLabel(
+                        visibleTotal
+                    );
+
+                headerVisibleCount.textContent =
+                    String(
+                        visibleTotal
+                    );
+
+                filteredEmpty.hidden =
+                    visibleTotal !== 0;
+
+                randomReviewButton.disabled =
+                    visibleTotal === 0;
+
+            }
+
+            searchInput.addEventListener(
+                "input",
+                applyFilters
+            );
+
+            subjectFilter.addEventListener(
+                "change",
+                applyFilters
+            );
+
+            randomReviewButton.addEventListener(
+                "click",
+                function() {
+
+                    const availableCards =
+                        visibleCards();
+
+                    if (!availableCards.length) {
+                        return;
+                    }
+
+                    const randomIndex =
+                        Math.floor(
+                            Math.random()
+                            *
+                            availableCards.length
+                        );
+
+                    window.location.href =
+                        availableCards[
+                            randomIndex
+                        ].href;
+
+                }
+            );
+
+            applyFilters();
+
+        }
+    );
+
+</script>
+
+{% endif %}
 
 <script
     src="{% static 'dashboard/js/sidebar.js' %}"
 ></script>
-
 
 </body>
 

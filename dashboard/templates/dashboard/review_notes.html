@@ -1,7 +1,6 @@
 {% load static %}
 
 <!DOCTYPE html>
-
 <html lang="en">
 
 <head>
@@ -17,597 +16,538 @@
         Notes - StudyOptimizer
     </title>
 
-
     <link
         rel="stylesheet"
         href="{% static 'dashboard/css/sidebar.css' %}"
     >
 
-
     <style>
+
+        :root {
+            --ink: #2f3335;
+            --muted: #687278;
+            --page-background: #edf1f3;
+            --surface-border: #d8e0e3;
+            --surface-edge: #c4cfd4;
+            --blue: #278fd3;
+            --green: #58b82a;
+            --green-dark: #3f8f1d;
+            --type-accent: #bd7f70;
+            --type-accent-soft: #f8eae6;
+        }
 
         * {
             box-sizing: border-box;
         }
 
+        [hidden] {
+            display: none !important;
+        }
 
         body {
-
             margin: 0;
-
-            background: #f5f6f8;
-
-            color: #222;
-
+            background: var(--page-background);
+            color: var(--ink);
             font-family:
                 -apple-system,
                 BlinkMacSystemFont,
                 "Segoe UI",
                 Arial,
                 sans-serif;
-
         }
 
+        button,
+        input,
+        select {
+            font: inherit;
+        }
 
         .app {
-
             display: flex;
-
             min-height: 100vh;
-
         }
-
 
         .main {
-
-            flex: 1;
-
             min-width: 0;
-
+            flex: 1;
         }
-
 
         .page {
-
             width: 100%;
-
-            max-width: 1100px;
-
+            max-width: 1160px;
             margin: 0 auto;
-
-            padding:
-                35px
-                40px
-                60px;
-
+            padding: 30px 40px 56px;
         }
-
-
-        /* =========================================
-           HEADER
-        ========================================= */
 
         .page-header {
-
             display: flex;
-
             align-items: center;
-
             justify-content: space-between;
-
             gap: 20px;
-
-            margin-bottom: 28px;
-
+            margin: 0 0 20px;
+            padding: 25px 27px;
+            border: 1px solid #465270;
+            border-bottom: 5px solid #222b45;
+            border-radius: 17px;
+            background:
+                linear-gradient(
+                    135deg,
+                    #303a5a 0%,
+                    #485676 100%
+                );
+            box-shadow:
+                0 9px 24px
+                rgba(35, 45, 70, 0.12);
         }
 
+        .header-content {
+            min-width: 0;
+        }
+
+        .eyebrow {
+            display: block;
+            margin-bottom: 7px;
+            color: #aebfdf;
+            font-size: 11px;
+            font-weight: 850;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
 
         .header-content h1 {
-
-            margin:
-                0
-                0
-                5px;
-
-            font-size: 30px;
-
-            letter-spacing: -0.5px;
-
+            margin: 0 0 6px;
+            color: #ffffff;
+            font-size: 31px;
+            font-weight: 850;
+            letter-spacing: -0.7px;
+            line-height: 1.15;
         }
-
 
         .header-content p {
-
             margin: 0;
-
-            color: #777;
-
-            font-size: 13px;
-
+            color: #d8dfed;
+            font-size: 14px;
+            font-weight: 600;
             line-height: 1.5;
-
         }
-
 
         .header-actions {
-
             display: flex;
-
             align-items: center;
-
             gap: 10px;
-
             flex-shrink: 0;
-
         }
 
+        .back-button,
+        .random-review-button {
+            min-height: 43px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 9px 16px 7px;
+            border: 2px solid;
+            border-bottom-width: 4px;
+            border-radius: 11px;
+            font-size: 13px;
+            font-weight: 850;
+            text-decoration: none;
+            cursor: pointer;
+            box-shadow: none;
+            transition:
+                transform 0.15s ease,
+                background 0.15s ease;
+        }
 
         .back-button {
-
-            padding:
-                10px
-                16px;
-
-            border:
-                1px solid
-                #d8d8d8;
-
-            border-radius: 8px;
-
-            background: white;
-
-            color: #444;
-
-            text-decoration: none;
-
-            font-size: 13px;
-
-            font-weight: 700;
-
+            border-color: #a8d3ec;
+            background: #edf8ff;
+            color: #176f9f;
         }
-
-
-        .back-button:hover {
-
-            background: #f0f0f0;
-
-        }
-
-
-        /* =========================================
-           RANDOM REVIEW
-        ========================================= */
 
         .random-review-button {
-
-            padding:
-                10px
-                17px;
-
-            border:
-                1px solid
-                #278b48;
-
-            border-radius: 8px;
-
-            background: #2fa856;
-
-            color: white;
-
-            text-decoration: none;
-
-            font-size: 13px;
-
-            font-weight: 700;
-
-            box-shadow:
-                0
-                2px
-                6px
-                rgba(
-                    47,
-                    168,
-                    86,
-                    0.15
-                );
-
+            border-color: var(--green-dark);
+            background: var(--green);
+            color: #ffffff;
         }
 
-
-        .random-review-button:hover {
-
-            background: #278f4a;
-
+        .back-button:hover {
+            background: #dff2ff;
+            transform: translateY(-1px);
         }
 
+        .random-review-button:hover:not(:disabled) {
+            background: #65c936;
+            transform: translateY(-1px);
+        }
 
-        /* =========================================
-           INFORMATION
-        ========================================= */
+        .back-button:active,
+        .random-review-button:active:not(:disabled) {
+            border-bottom-width: 2px;
+            transform: translateY(2px);
+        }
 
-        .review-info {
+        .random-review-button:disabled {
+            border-color: #aeb8bd;
+            background: #c8d0d4;
+            cursor: not-allowed;
+        }
 
+        .review-toolbar {
+            display: grid;
+            grid-template-columns:
+                minmax(0, 1fr)
+                minmax(210px, 280px)
+                auto;
+            align-items: end;
+            gap: 14px;
             margin-bottom: 18px;
+            padding: 17px;
+            border: 1px solid var(--surface-border);
+            border-bottom: 4px solid var(--surface-edge);
+            border-radius: 15px;
+            background: #f8fafb;
+        }
 
-            padding:
-                15px
-                18px;
+        .toolbar-field {
+            display: block;
+            min-width: 0;
+        }
 
-            border:
-                1px solid
-                #e1e3e5;
+        .toolbar-label {
+            display: block;
+            margin: 0 0 7px 2px;
+            color: #5e686d;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+        }
 
+        .search-wrap,
+        .select-wrap {
+            position: relative;
+            display: block;
+        }
+
+        .control-icon {
+            position: absolute;
+            top: 50%;
+            left: 14px;
+            width: 19px;
+            height: 19px;
+            fill: none;
+            stroke: #78858b;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-width: 2;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
+        .review-search,
+        .subject-filter {
+            width: 100%;
+            min-height: 48px;
+            border: 2px solid #d4dce0;
+            border-bottom-width: 4px;
             border-radius: 11px;
-
-            background: white;
-
-            color: #666;
-
-            font-size: 13px;
-
-            line-height: 1.6;
-
+            background: #ffffff;
+            color: var(--ink);
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 650;
+            outline: none;
         }
 
-
-        /* =========================================
-           NOTE LIST
-        ========================================= */
-
-        .notes-list {
-
-            display: flex;
-
-            flex-direction: column;
-
-            gap: 11px;
-
+        .review-search {
+            padding: 10px 14px 9px 43px;
         }
 
+        .subject-filter {
+            padding: 10px 38px 9px 43px;
+            cursor: pointer;
+        }
 
-        .note-card {
+        .review-search:focus,
+        .subject-filter:focus {
+            border-color: #78b8dd;
+            box-shadow:
+                0 0 0 4px
+                rgba(39, 143, 211, 0.12);
+        }
 
+        .results-count {
+            min-height: 48px;
             display: flex;
-
             align-items: center;
-
-            justify-content: space-between;
-
-            gap: 20px;
-
-            padding:
-                19px
-                21px;
-
-            border:
-                1px solid
-                #e0e2e4;
-
+            justify-content: center;
+            padding: 0 14px;
+            border: 1px solid #c9dfec;
             border-radius: 11px;
+            background: #edf7fd;
+            color: #276f97;
+            font-size: 13px;
+            font-weight: 850;
+            white-space: nowrap;
+        }
 
-            background: white;
+        .review-list {
+            display: grid;
+            grid-template-columns:
+                repeat(
+                    2,
+                    minmax(0, 1fr)
+                );
+            gap: 14px;
+        }
 
+        .review-card {
+            position: relative;
+            min-width: 0;
+            min-height: 128px;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            padding: 20px 108px 20px 21px;
+            border: 1px solid #dddad8;
+            border-top: 3px solid var(--type-accent);
+            border-bottom: 4px solid #cfc6c2;
+            border-radius: 15px;
+            background:
+                linear-gradient(
+                    145deg,
+                    #ffffff 35%,
+                    var(--type-accent-soft) 100%
+                );
             color: inherit;
-
             text-decoration: none;
-
+            box-shadow:
+                0 3px 11px
+                rgba(54, 46, 43, 0.045);
+            isolation: isolate;
             transition:
                 border-color 0.15s ease,
                 background 0.15s ease,
                 transform 0.15s ease,
                 box-shadow 0.15s ease;
-
         }
 
-
-        .note-card:hover {
-
-            border-color: #c7c7c7;
-
-            background: #fafafa;
-
-            transform:
-                translateY(
-                    -1px
-                );
-
+        .review-card:hover {
+            border-color: var(--type-accent);
             box-shadow:
-                0
-                4px
-                14px
-                rgba(
-                    0,
-                    0,
-                    0,
-                    0.04
-                );
-
+                0 9px 21px
+                rgba(54, 46, 43, 0.09);
+            transform: translateY(-2px);
         }
 
+        .review-card:focus-visible,
+        .back-button:focus-visible,
+        .random-review-button:focus-visible {
+            outline: 3px solid rgba(39, 143, 211, 0.28);
+            outline-offset: 3px;
+        }
 
-        .note-content {
-
-            flex: 1;
-
+        .item-content {
+            position: relative;
+            z-index: 2;
             min-width: 0;
-
         }
 
-
-        .note-title {
-
+        .item-title {
             display: block;
-
-            margin-bottom: 7px;
-
-            color: #222;
-
-            font-size: 16px;
-
-            font-weight: 750;
-
+            margin-bottom: 10px;
+            color: #34393b;
+            font-size: 17px;
+            font-weight: 850;
             line-height: 1.35;
-
+            overflow-wrap: anywhere;
         }
 
-
-        .note-subject {
-
+        .item-subject {
             display: inline-block;
-
             margin-right: 7px;
-
-            padding:
-                5px
-                8px;
-
-            border-radius: 6px;
-
-            background: #f0f1f2;
-
-            color: #555;
-
-            font-size: 11px;
-
-            font-weight: 700;
-
-        }
-
-
-        .note-meta {
-
-            display: inline;
-
-            color: #888;
-
+            padding: 5px 9px;
+            border: 1px solid #c9dfec;
+            border-radius: 8px;
+            background: #edf7fd;
+            color: #276f97;
             font-size: 12px;
-
+            font-weight: 800;
         }
 
-
-        .note-arrow {
-
-            flex-shrink: 0;
-
-            color: #777;
-
-            font-size: 21px;
-
+        .item-meta {
+            display: inline;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 1.5;
         }
 
+        .card-art {
+            position: absolute;
+            right: -13px;
+            bottom: -20px;
+            z-index: 1;
+            width: 116px;
+            height: 116px;
+            fill: none;
+            stroke: var(--type-accent);
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-width: 1.55;
+            opacity: 0.11;
+            pointer-events: none;
+        }
 
-        /* =========================================
-           EMPTY
-        ========================================= */
-
-        .empty-notes {
-
-            padding:
-                55px
-                30px;
-
-            border:
-                1px dashed
-                #d4d4d4;
-
-            border-radius: 12px;
-
-            background: white;
-
-            color: #888;
-
+        .filtered-empty {
+            grid-column: 1 / -1;
+            padding: 38px 22px;
+            border: 1px dashed #c9d2d6;
+            border-radius: 14px;
+            background: #f8fafb;
+            color: var(--muted);
             text-align: center;
-
+            font-size: 14px;
+            font-weight: 700;
         }
 
+        .empty-state {
+            padding: 55px 30px;
+            border: 1px dashed #c9d2d6;
+            border-bottom: 4px solid #d2dadd;
+            border-radius: 16px;
+            background: #f8fafb;
+            color: #888888;
+            text-align: center;
+        }
 
-        .empty-notes h2 {
-
-            margin:
-                0
-                0
-                7px;
-
-            color: #444;
-
+        .empty-state h2 {
+            margin: 0 0 7px;
+            color: #444444;
             font-size: 18px;
-
         }
 
-
-        .empty-notes p {
-
+        .empty-state p {
             margin: 0;
-
             font-size: 13px;
-
         }
 
-
-        /* =========================================
-           MOBILE
-        ========================================= */
-
-        @media (max-width: 750px) {
-
-            .page {
-
-                padding:
-                    25px
-                    18px
-                    45px;
-
+        @media (max-width: 860px) {
+            .review-toolbar {
+                grid-template-columns: 1fr 1fr;
             }
 
+            .results-count {
+                grid-column: 1 / -1;
+            }
+
+            .review-list {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 650px) {
+            .page {
+                padding: 20px 18px 42px;
+            }
 
             .page-header {
-
                 align-items: flex-start;
-
                 flex-direction: column;
-
+                padding: 22px 20px;
             }
 
+            .header-content h1 {
+                font-size: 27px;
+            }
 
             .header-actions {
-
                 width: 100%;
-
             }
-
 
             .back-button,
             .random-review-button {
-
                 flex: 1;
-
                 text-align: center;
-
             }
 
-
-            .note-card {
-
-                padding:
-                    17px
-                    16px;
-
+            .review-toolbar {
+                grid-template-columns: 1fr;
+                padding: 14px;
             }
 
+            .results-count {
+                grid-column: auto;
+            }
+
+            .review-card {
+                min-height: 120px;
+                padding: 18px 87px 18px 17px;
+            }
+
+            .card-art {
+                width: 98px;
+                height: 98px;
+            }
         }
-
 
         @media (max-width: 500px) {
-
             .header-actions {
-
                 flex-direction: column;
-
             }
-
 
             .back-button,
             .random-review-button {
-
                 width: 100%;
-
             }
-
         }
 
-        /* STUDYOPTIMIZER NOTES REVIEW */
-        :root { --ink: #2f3335; --muted: #687278; --page-background: #edf1f3; --surface-border: #d8e0e3; --surface-edge: #c4cfd4; --blue: #278fd3; --blue-dark: #176fa8; --green: #58b82a; --green-dark: #3f8f1d; }
-        body { background: var(--page-background); color: var(--ink); }
-        .page { max-width: 1160px; padding: 30px 40px 56px; }
-
-        .page-header { margin: 0 0 20px; padding: 25px 27px; border: 1px solid #465270; border-bottom: 5px solid #222b45; border-radius: 17px; background: linear-gradient(135deg, #303a5a 0%, #485676 100%); box-shadow: 0 9px 24px rgba(35, 45, 70, 0.12); }
-        .header-content h1 { color: white; font-size: 31px; font-weight: 850; letter-spacing: -0.7px; }
-        .header-content p { color: #d8dfed; font-size: 14px; font-weight: 600; }
-
-        .back-button, .random-review-button { padding: 11px 16px 9px; border: 2px solid; border-bottom-width: 4px; border-radius: 11px; font-size: 13px; font-weight: 850; box-shadow: none; transition: transform 0.15s ease, background 0.15s ease; }
-        .back-button { border-color: #a8d3ec; background: #edf8ff; color: #176f9f; }
-        .random-review-button { border-color: var(--green-dark); background: var(--green); color: white; }
-        .back-button:hover { background: #dff2ff; transform: translateY(-1px); }
-        .random-review-button:hover { background: #65c936; transform: translateY(-1px); }
-        .back-button:active, .random-review-button:active { border-bottom-width: 2px; transform: translateY(2px); }
-
-        .notes-toolbar { display: grid; grid-template-columns: minmax(0, 1fr) minmax(210px, 280px) auto; align-items: end; gap: 14px; margin-bottom: 18px; padding: 17px; border: 1px solid var(--surface-border); border-bottom: 4px solid var(--surface-edge); border-radius: 15px; background: #f8fafb; }
-        .toolbar-field { display: block; min-width: 0; }
-        .toolbar-label { display: block; margin: 0 0 7px 2px; color: #5e686d; font-size: 12px; font-weight: 800; letter-spacing: 0.02em; }
-        .search-wrap, .select-wrap { position: relative; }
-        .control-icon { position: absolute; top: 50%; left: 14px; width: 19px; height: 19px; fill: none; stroke: #78858b; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; transform: translateY(-50%); pointer-events: none; }
-
-        .notes-search, .subject-filter { width: 100%; min-height: 48px; border: 2px solid #d4dce0; border-bottom-width: 4px; border-radius: 11px; background: white; color: var(--ink); font-family: inherit; font-size: 14px; font-weight: 650; outline: none; }
-        .notes-search { padding: 10px 14px 9px 43px; }
-        .subject-filter { padding: 10px 38px 9px 43px; cursor: pointer; }
-        .notes-search:focus, .subject-filter:focus { border-color: #78b8dd; box-shadow: 0 0 0 4px rgba(39, 143, 211, 0.12); }
-
-        .results-count { min-height: 48px; display: flex; align-items: center; justify-content: center; padding: 0 14px; border: 1px solid #c9dfec; border-radius: 11px; background: #edf7fd; color: #276f97; font-size: 13px; font-weight: 850; white-space: nowrap; }
-        .notes-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
-
-        .note-card { position: relative; min-height: 128px; overflow: hidden; padding: 20px 108px 20px 21px; border: 1px solid #dddad8; border-top: 3px solid #bd7f70; border-bottom: 4px solid #cfc6c2; border-radius: 15px; background: linear-gradient(145deg, #ffffff 35%, #f8eae6 100%); box-shadow: 0 3px 11px rgba(54, 46, 43, 0.045); isolation: isolate; }
-        .note-card[hidden] { display: none; }
-        .note-card:hover { border-color: #ca998d; background: linear-gradient(145deg, #ffffff 28%, #f6e3de 100%); box-shadow: 0 9px 21px rgba(54, 46, 43, 0.09); transform: translateY(-2px); }
-        .note-card:focus-visible { outline: 3px solid rgba(39, 143, 211, 0.28); outline-offset: 3px; }
-        .note-content { position: relative; z-index: 2; }
-        .note-title { margin-bottom: 10px; color: #34393b; font-size: 17px; font-weight: 850; }
-        .note-subject { padding: 5px 9px; border: 1px solid #c9dfec; border-radius: 8px; background: #edf7fd; color: #276f97; font-size: 12px; font-weight: 800; }
-        .note-meta { color: var(--muted); font-size: 12px; font-weight: 600; }
-
-        .note-card-art { position: absolute; right: -13px; bottom: -20px; z-index: 1; width: 116px; height: 116px; fill: none; stroke: #9c594a; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.55; opacity: 0.09; pointer-events: none; }
-        .filtered-empty { grid-column: 1 / -1; padding: 38px 22px; border: 1px dashed #c9d2d6; border-radius: 14px; background: #f8fafb; color: var(--muted); text-align: center; font-size: 14px; font-weight: 700; }
-        .filtered-empty[hidden] { display: none; }
-        .empty-notes { border: 1px dashed #c9d2d6; border-bottom: 4px solid #d2dadd; border-radius: 16px; background: #f8fafb; }
-
-        @media (max-width: 860px) { .notes-toolbar { grid-template-columns: 1fr 1fr; } .results-count { grid-column: 1 / -1; } .notes-list { grid-template-columns: 1fr; } }
-        @media (max-width: 650px) { .page { padding: 20px 18px 42px; } .page-header { padding: 22px 20px; } .header-content h1 { font-size: 27px; } .notes-toolbar { grid-template-columns: 1fr; padding: 14px; } .results-count { grid-column: auto; } .note-card { min-height: 120px; padding: 18px 87px 18px 17px; } .note-card-art { width: 98px; height: 98px; } }
-        @media (prefers-reduced-motion: reduce) { .note-card, .back-button, .random-review-button { transition: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .review-card,
+            .back-button,
+            .random-review-button {
+                transition: none;
+            }
+        }
 
     </style>
 
 </head>
 
-
 <body>
-
 
 <div class="app">
 
-
     {% include 'partials/sidebar.html' with active_page='review' %}
-
 
     <main class="main">
 
-
         <div class="page">
-
-
-            <!-- =====================================
-                 HEADER
-            ====================================== -->
 
             <header class="page-header">
 
-
                 <div class="header-content">
 
+                    <span class="eyebrow">
+                        Review library
+                    </span>
 
                     <h1>
                         Notes
                     </h1>
 
-
                     <p>
-                        Study notes from all of your subjects.
+                        <span id="header-visible-count">
+                            {{ note_count }}
+                        </span>
+                        shown ·
+                        {{ note_count }}
+                        note{{ note_count|pluralize }}
+                        total
                     </p>
-
 
                 </div>
 
-
                 <div class="header-actions">
-
 
                     <a
                         href="{% url 'review' %}"
@@ -616,296 +556,413 @@
                         ← Back to Review
                     </a>
 
-
                     {% if notes %}
 
-                        <a
-                            href="{% url 'random_note_review' %}"
+                        <button
+                            type="button"
                             class="random-review-button"
                             id="random-review-button"
-                            data-base-url="{% url 'random_note_review' %}"
                         >
                             ↻ Random Review
-                        </a>
+                        </button>
 
                     {% endif %}
 
-
                 </div>
-
 
             </header>
 
-
-            <!-- =====================================
-                 NOTES
-            ====================================== -->
-
             {% if notes %}
 
+                <section
+                    class="review-toolbar"
+                    aria-label="Find notes to review"
+                >
 
-                <section class="notes-toolbar" aria-label="Find notes to review">
+                    <label
+                        class="toolbar-field"
+                        for="review-search"
+                    >
 
-                    <label class="toolbar-field" for="notes-search">
-                        <span class="toolbar-label">Search notes</span>
+                        <span class="toolbar-label">
+                            Search notes
+                        </span>
+
                         <span class="search-wrap">
-                            <svg class="control-icon" viewBox="0 0 24 24" aria-hidden="true">
+
+                            <svg
+                                class="control-icon"
+                                viewBox="0 0 24 24"
+                                aria-hidden="true"
+                            >
                                 <circle cx="11" cy="11" r="7"></circle>
                                 <path d="m20 20-4-4"></path>
                             </svg>
+
                             <input
                                 type="search"
-                                id="notes-search"
-                                class="notes-search"
+                                id="review-search"
+                                class="review-search"
                                 placeholder="Search by title, subject, book, or chapter"
                                 autocomplete="off"
                             >
+
                         </span>
+
                     </label>
 
-                    <label class="toolbar-field" for="subject-filter">
-                        <span class="toolbar-label">Subject</span>
+                    <label
+                        class="toolbar-field"
+                        for="subject-filter"
+                    >
+
+                        <span class="toolbar-label">
+                            Subject
+                        </span>
+
                         <span class="select-wrap">
-                            <svg class="control-icon" viewBox="0 0 24 24" aria-hidden="true">
+
+                            <svg
+                                class="control-icon"
+                                viewBox="0 0 24 24"
+                                aria-hidden="true"
+                            >
                                 <path d="M4 5h16v14H4z"></path>
                                 <path d="M8 9h8M8 13h5"></path>
                             </svg>
-                            <select id="subject-filter" class="subject-filter">
-                                <option value="">All subjects</option>
+
+                            <select
+                                id="subject-filter"
+                                class="subject-filter"
+                            >
+                                <option value="">
+                                    All subjects
+                                </option>
                             </select>
+
                         </span>
+
                     </label>
 
-                    <div class="results-count" id="results-count" aria-live="polite">
-                        {{ notes|length }} note{{ notes|length|pluralize }}
+                    <div
+                        class="results-count"
+                        id="results-count"
+                        aria-live="polite"
+                    >
+                        {{ note_count }}
+                        note{{ note_count|pluralize }}
                     </div>
 
                 </section>
 
-
-                <div class="notes-list">
-
+                <div class="review-list">
 
                     {% for item in notes %}
 
-
                         <a
                             href="{% url 'note_detail' note_id=item.note.id %}?mode=global_review"
-                            class="note-card"
-                            data-note-card
-                            data-base-url="{% url 'note_detail' note_id=item.note.id %}?mode=global_review"
-                            data-subject-id="{{ item.subject.id }}"
+                            class="review-card"
+                            data-review-card
                             data-subject-name="{{ item.subject.name|escape }}"
                         >
 
+                            <div class="item-content">
 
-                            <div class="note-content">
-
-
-                                <span class="note-title">
+                                <span class="item-title">
                                     {{ item.note.title }}
                                 </span>
 
-
-                                <span class="note-subject">
+                                <span class="item-subject">
                                     {{ item.subject.name }}
                                 </span>
 
-
                                 {% if item.note.book_name or item.note.chapter %}
-
-
-                                    <span class="note-meta">
-
-
+                                    <span class="item-meta">
                                         {% if item.note.book_name %}
-
                                             {{ item.note.book_name }}
-
                                         {% endif %}
-
-
                                         {% if item.note.book_name and item.note.chapter %}
-
                                             ·
-
                                         {% endif %}
-
-
                                         {% if item.note.chapter %}
-
                                             {{ item.note.chapter }}
-
                                         {% endif %}
-
-
                                     </span>
-
-
                                 {% endif %}
-
 
                             </div>
 
-
-                            <svg class="note-card-art" viewBox="0 0 24 24" aria-hidden="true">
+                            <svg class="card-art" viewBox="0 0 24 24" aria-hidden="true">
                                 <path d="M6 3h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"></path>
                                 <path d="M8 3v18M11 8h5M11 12h4"></path>
                                 <path d="m13 18 7-7 2 2-7 7-3 1Z"></path>
                             </svg>
 
-
                         </a>
-
 
                     {% endfor %}
 
-
-                    <div class="filtered-empty" id="filtered-empty" hidden>
+                    <div
+                        class="filtered-empty"
+                        id="filtered-empty"
+                        hidden
+                    >
                         No notes match your search and subject filter.
                     </div>
 
-
                 </div>
-
 
             {% else %}
 
-
-                <div class="empty-notes">
-
+                <div class="empty-state">
 
                     <h2>
                         No Notes Yet
                     </h2>
 
-
                     <p>
-                        Notes you create for your subjects will appear here.
+                        Notes you create will appear here.
                     </p>
-
 
                 </div>
 
-
             {% endif %}
-
 
         </div>
 
-
     </main>
-
 
 </div>
 
-
 {% if notes %}
+
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const searchInput = document.getElementById("notes-search");
-        const subjectFilter = document.getElementById("subject-filter");
-        const resultsCount = document.getElementById("results-count");
-        const filteredEmpty = document.getElementById("filtered-empty");
-        const randomReviewButton = document.getElementById("random-review-button");
-        const noteCards = Array.from(document.querySelectorAll("[data-note-card]"));
-        const subjects = new Map();
 
-        noteCards.forEach(function (card) {
-            subjects.set(card.dataset.subjectId, card.dataset.subjectName);
-        });
+    document.addEventListener(
+        "DOMContentLoaded",
+        function() {
 
-        Array.from(subjects.entries())
-            .sort(function (first, second) {
-                return first[1].localeCompare(second[1], undefined, { sensitivity: "base" });
-            })
-            .forEach(function (subject) {
-                const option = document.createElement("option");
-                option.value = subject[0];
-                option.textContent = subject[1];
-                subjectFilter.appendChild(option);
-            });
+            const searchInput =
+                document.getElementById(
+                    "review-search"
+                );
 
-        const pageParameters = new URLSearchParams(window.location.search);
-        const requestedSubject = pageParameters.get("subject_id") || "";
+            const subjectFilter =
+                document.getElementById(
+                    "subject-filter"
+                );
 
-        if (requestedSubject && subjects.has(requestedSubject)) {
-            subjectFilter.value = requestedSubject;
-        }
+            const resultsCount =
+                document.getElementById(
+                    "results-count"
+                );
 
-        function updateReviewLinks(selectedSubject) {
-            noteCards.forEach(function (card) {
-                card.href = selectedSubject
-                    ? card.dataset.baseUrl + "&subject_id=" + encodeURIComponent(selectedSubject)
-                    : card.dataset.baseUrl;
-            });
+            const headerVisibleCount =
+                document.getElementById(
+                    "header-visible-count"
+                );
 
-            if (randomReviewButton) {
-                randomReviewButton.href = selectedSubject
-                    ? randomReviewButton.dataset.baseUrl + "?subject_id=" + encodeURIComponent(selectedSubject)
-                    : randomReviewButton.dataset.baseUrl;
-            }
-        }
+            const filteredEmpty =
+                document.getElementById(
+                    "filtered-empty"
+                );
 
-        function updatePageAddress(selectedSubject) {
-            const parameters = new URLSearchParams(window.location.search);
+            const randomReviewButton =
+                document.getElementById(
+                    "random-review-button"
+                );
 
-            if (selectedSubject) {
-                parameters.set("subject_id", selectedSubject);
-            } else {
-                parameters.delete("subject_id");
-            }
+            const cards = Array.from(
+                document.querySelectorAll(
+                    "[data-review-card]"
+                )
+            );
 
-            const queryString = parameters.toString();
-            const nextAddress = window.location.pathname + (queryString ? "?" + queryString : "");
-            window.history.replaceState({}, "", nextAddress);
-        }
-
-        function applyFilters(updateAddress) {
-            const searchTerm = searchInput.value.trim().toLocaleLowerCase();
-            const selectedSubject = subjectFilter.value;
-            let visibleCount = 0;
-
-            noteCards.forEach(function (card) {
-                const matchesSubject = !selectedSubject || card.dataset.subjectId === selectedSubject;
-                const matchesSearch = !searchTerm || card.textContent.toLocaleLowerCase().includes(searchTerm);
-                const isVisible = matchesSubject && matchesSearch;
-
-                card.hidden = !isVisible;
-
-                if (isVisible) {
-                    visibleCount += 1;
+            const subjects = Array.from(
+                new Set(
+                    cards.map(
+                        function(card) {
+                            return (
+                                card
+                                .dataset
+                                .subjectName
+                            );
+                        }
+                    )
+                )
+            ).sort(
+                function(first, second) {
+                    return first.localeCompare(
+                        second,
+                        undefined,
+                        {
+                            sensitivity: "base"
+                        }
+                    );
                 }
-            });
+            );
 
-            resultsCount.textContent = visibleCount + " note" + (visibleCount === 1 ? "" : "s");
-            filteredEmpty.hidden = visibleCount !== 0;
-            updateReviewLinks(selectedSubject);
+            subjects.forEach(
+                function(subject) {
 
-            if (updateAddress) {
-                updatePageAddress(selectedSubject);
+                    const option =
+                        document.createElement(
+                            "option"
+                        );
+
+                    option.value = subject;
+                    option.textContent = subject;
+
+                    subjectFilter.appendChild(
+                        option
+                    );
+
+                }
+            );
+
+            function visibleCards() {
+                return cards.filter(
+                    function(card) {
+                        return !card.hidden;
+                    }
+                );
             }
+
+            function countLabel(count) {
+                return (
+                    count
+                    +
+                    " "
+                    +
+                    (
+                        count === 1
+                        ? "note"
+                        : "notes"
+                    )
+                );
+            }
+
+            function applyFilters() {
+
+                const searchTerm =
+                    searchInput
+                    .value
+                    .trim()
+                    .toLocaleLowerCase();
+
+                const selectedSubject =
+                    subjectFilter.value;
+
+                let visibleTotal = 0;
+
+                cards.forEach(
+                    function(card) {
+
+                        const matchesSubject =
+                            (
+                                !selectedSubject
+                                ||
+                                card
+                                .dataset
+                                .subjectName
+                                ===
+                                selectedSubject
+                            );
+
+                        const matchesSearch =
+                            (
+                                !searchTerm
+                                ||
+                                card
+                                .textContent
+                                .toLocaleLowerCase()
+                                .includes(
+                                    searchTerm
+                                )
+                            );
+
+                        const isVisible =
+                            matchesSubject
+                            &&
+                            matchesSearch;
+
+                        card.hidden = !isVisible;
+
+                        if (isVisible) {
+                            visibleTotal += 1;
+                        }
+
+                    }
+                );
+
+                resultsCount.textContent =
+                    countLabel(
+                        visibleTotal
+                    );
+
+                headerVisibleCount.textContent =
+                    String(
+                        visibleTotal
+                    );
+
+                filteredEmpty.hidden =
+                    visibleTotal !== 0;
+
+                randomReviewButton.disabled =
+                    visibleTotal === 0;
+
+            }
+
+            searchInput.addEventListener(
+                "input",
+                applyFilters
+            );
+
+            subjectFilter.addEventListener(
+                "change",
+                applyFilters
+            );
+
+            randomReviewButton.addEventListener(
+                "click",
+                function() {
+
+                    const availableCards =
+                        visibleCards();
+
+                    if (!availableCards.length) {
+                        return;
+                    }
+
+                    const randomIndex =
+                        Math.floor(
+                            Math.random()
+                            *
+                            availableCards.length
+                        );
+
+                    window.location.href =
+                        availableCards[
+                            randomIndex
+                        ].href;
+
+                }
+            );
+
+            applyFilters();
+
         }
+    );
 
-        searchInput.addEventListener("input", function () {
-            applyFilters(false);
-        });
-
-        subjectFilter.addEventListener("change", function () {
-            applyFilters(true);
-        });
-
-        applyFilters(false);
-    });
 </script>
-{% endif %}
 
+{% endif %}
 
 <script
     src="{% static 'dashboard/js/sidebar.js' %}"
 ></script>
 
-
 </body>
 
 </html>
+
