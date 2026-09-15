@@ -1656,6 +1656,1483 @@
 
     </style>
 
+    <style>
+        :root {
+            --ink: #2f3335;
+            --muted: #687278;
+            --page-background: #edf1f3;
+            --surface: #f8fafb;
+            --surface-border: #d8e0e3;
+            --surface-edge: #c4cfd4;
+            --navy: #303a5a;
+            --navy-dark: #222b45;
+            --blue: #278fd3;
+            --blue-dark: #176f9f;
+            --green: #58b82a;
+            --green-dark: #3f8f1d;
+            --purple: #8b84c4;
+            --purple-dark: #655da5;
+            --gold: #c19f4d;
+            --gold-dark: #987516;
+            --teal: #568f91;
+            --teal-dark: #3e7779;
+            --rose: #bd7f70;
+            --rose-dark: #8f584b;
+            --danger: #d65454;
+            --danger-dark: #a93636;
+        }
+
+        [hidden] {
+            display: none !important;
+        }
+
+        body {
+            background: var(--page-background);
+            color: var(--ink);
+        }
+
+        button,
+        input,
+        select {
+            font: inherit;
+        }
+
+        button,
+        a,
+        select,
+        input[type="range"] {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .page {
+            width: 100%;
+            max-width: 1160px;
+            min-height: 100vh;
+            margin: 0 auto;
+            padding: 30px 40px 56px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            margin: 0 0 20px;
+            padding: 25px 27px;
+            border: 1px solid #465270;
+            border-bottom: 5px solid var(--navy-dark);
+            border-radius: 17px;
+            background: linear-gradient(135deg, var(--navy) 0%, #485676 100%);
+            box-shadow: 0 9px 24px rgba(35, 45, 70, 0.12);
+        }
+
+        .subject-title {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0;
+            min-width: 0;
+        }
+
+        .subject-title p {
+            order: -1;
+            margin: 0 0 7px;
+            color: #aebfdf;
+            font-size: 11px;
+            font-weight: 850;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .subject-selector-wrapper {
+            position: relative;
+            display: inline-block;
+            max-width: 100%;
+        }
+
+        .subject-selector {
+            width: auto;
+            max-width: min(680px, 100%);
+            min-width: 250px;
+            padding: 7px 44px 8px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            border-bottom: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 11px;
+            background: rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+            font-size: 31px;
+            font-weight: 850;
+            letter-spacing: -0.7px;
+            line-height: 1.15;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .subject-selector-wrapper::after {
+            right: 13px;
+            color: #d8dfed;
+            font-size: 21px;
+        }
+
+        .subject-selector:hover {
+            border-color: rgba(255, 255, 255, 0.34);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .subject-selector option {
+            background: #ffffff;
+            color: var(--ink);
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .subject-selector:focus-visible {
+            outline: 3px solid rgba(174, 191, 223, 0.45);
+            outline-offset: 5px;
+            border-radius: 6px;
+        }
+
+        .subject-information,
+        .workspace-box {
+            border: 1px solid var(--surface-border);
+            border-bottom: 4px solid var(--surface-edge);
+            border-radius: 15px;
+            background: var(--surface);
+            box-shadow: none;
+        }
+
+        .subject-information {
+            margin-bottom: 18px;
+            padding: 21px;
+            border-top: 3px solid var(--purple);
+            background: linear-gradient(145deg, #ffffff 35%, #f2f0fa 100%);
+        }
+
+        .subject-card-controls {
+            top: 17px;
+            right: 17px;
+            gap: 8px;
+        }
+
+        .subject-control-button,
+        .textbook-action-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            border: 2px solid #c9dfec;
+            border-bottom-width: 4px;
+            border-radius: 10px;
+            background: #edf7fd;
+            color: #276f97;
+            font-weight: 850;
+            cursor: pointer;
+            transition: background 0.15s ease, transform 0.15s ease;
+        }
+
+        .subject-control-button {
+            width: 39px;
+            height: 39px;
+        }
+
+        .subject-control-button:hover,
+        .textbook-action-button:hover {
+            border-color: #a8d3ec;
+            background: #dff2ff;
+            transform: translateY(-1px);
+        }
+
+        .subject-control-button:active,
+        .textbook-action-button:active {
+            border-bottom-width: 2px;
+            transform: translateY(2px);
+        }
+
+        .subject-information-display {
+            padding-right: 96px;
+        }
+
+        .information-display-grid,
+        .information-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 2fr) repeat(2, minmax(150px, 1fr));
+            gap: 12px;
+        }
+
+        .display-field {
+            min-width: 0;
+            padding: 14px;
+            border: 1px solid #dedbea;
+            border-radius: 11px;
+            background: rgba(255, 255, 255, 0.84);
+        }
+
+        .display-label,
+        .field label,
+        .modal-field label {
+            display: block;
+            margin-bottom: 6px;
+            color: #687278;
+            font-size: 10px;
+            font-weight: 850;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .display-value {
+            display: block;
+            color: #34393b;
+            font-size: 15px;
+            font-weight: 900;
+            line-height: 1.35;
+            overflow-wrap: anywhere;
+        }
+
+        .subject-name-display {
+            color: var(--purple-dark);
+            font-size: 17px;
+        }
+
+        .display-empty {
+            color: #99a2a7;
+            font-style: normal;
+            font-weight: 700;
+        }
+
+        .subject-extra-content {
+            padding-top: 18px;
+        }
+
+        .study-materials {
+            margin-top: 0;
+            padding: 18px;
+            border: 1px solid #dce2e4;
+            border-bottom: 4px solid #cdd4d7;
+            border-radius: 14px;
+            background: #ffffff;
+        }
+
+        .materials-header,
+        .revision-slider-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .materials-header {
+            margin-bottom: 14px;
+        }
+
+        .materials-header h3,
+        .revision-slider-header h3 {
+            margin: 0 0 4px;
+            color: #34393b;
+            font-size: 16px;
+            font-weight: 900;
+        }
+
+        .materials-header p,
+        .revision-slider-header p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 650;
+            line-height: 1.45;
+        }
+
+        .add-textbook-button,
+        .save-button,
+        .cancel-edit-button,
+        .reset-reviews-button,
+        .delete-subject-button,
+        .modal-save-button,
+        .modal-cancel-button,
+        .confirm-delete-button {
+            min-height: 41px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 14px 7px;
+            border: 2px solid;
+            border-bottom-width: 4px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 850;
+            cursor: pointer;
+            transition: background 0.15s ease, transform 0.15s ease;
+        }
+
+        .add-textbook-button,
+        .save-button,
+        .modal-save-button {
+            border-color: var(--green-dark);
+            background: var(--green);
+            color: #ffffff;
+        }
+
+        .add-textbook-button:hover,
+        .save-button:hover,
+        .modal-save-button:hover {
+            background: #65c936;
+        }
+
+        .add-textbook-button:disabled {
+            border-color: #aeb8bd;
+            background: #c8d0d4;
+            color: #ffffff;
+            cursor: not-allowed;
+        }
+
+        .cancel-edit-button,
+        .modal-cancel-button {
+            border-color: #cbd4d8;
+            background: #ffffff;
+            color: #5f696e;
+        }
+
+        .cancel-edit-button:hover,
+        .modal-cancel-button:hover {
+            background: #f1f4f5;
+        }
+
+        .add-textbook-button:active,
+        .save-button:active,
+        .cancel-edit-button:active,
+        .reset-reviews-button:active,
+        .delete-subject-button:active,
+        .modal-save-button:active,
+        .modal-cancel-button:active,
+        .confirm-delete-button:active {
+            border-bottom-width: 2px;
+            transform: translateY(2px);
+        }
+
+        .textbook-list {
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-start;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .textbook-book {
+            position: relative;
+            width: 142px;
+            height: 100px;
+            flex: 0 0 auto;
+            overflow: visible;
+            perspective: 800px;
+            cursor: pointer;
+            outline: none;
+            transition: width 0.42s ease, filter 0.18s ease;
+        }
+
+        .textbook-book:hover {
+            filter: brightness(1.025);
+        }
+
+        .textbook-book.open {
+            width: 278px;
+        }
+
+        .book-cover {
+            position: absolute;
+            inset: 0 auto 0 0;
+            z-index: 3;
+            width: 142px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            padding: 14px 14px 14px 20px;
+            border: 1px solid #624532;
+            border-left: 8px solid #5a3d2c;
+            border-bottom: 5px solid #523724;
+            border-radius: 5px 11px 11px 5px;
+            background: linear-gradient(145deg, #8f674b 0%, #745039 100%);
+            box-shadow: 0 6px 13px rgba(72, 48, 32, 0.16);
+            color: #fffaf4;
+            transform-origin: left center;
+            backface-visibility: hidden;
+            transition: transform 0.42s ease, opacity 0.24s ease, box-shadow 0.18s ease;
+        }
+
+        .book-cover::before,
+        .book-cover::after {
+            content: "";
+            position: absolute;
+            left: 11px;
+            right: 7px;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.13);
+        }
+
+        .book-cover::before {
+            top: 8px;
+        }
+
+        .book-cover::after {
+            bottom: 8px;
+        }
+
+        .book-cover-title {
+            position: relative;
+            z-index: 1;
+            display: -webkit-box;
+            overflow: hidden;
+            font-size: 12px;
+            font-weight: 850;
+            line-height: 1.35;
+            text-align: center;
+            overflow-wrap: anywhere;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 3;
+            line-clamp: 3;
+        }
+
+        .book-pages {
+            position: absolute;
+            inset: 0 auto 0 0;
+            z-index: 1;
+            width: 278px;
+            height: 100px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            opacity: 0;
+            transform: scaleX(0.51);
+            transform-origin: left center;
+            pointer-events: none;
+            transition: transform 0.42s ease, opacity 0.2s ease;
+        }
+
+        .textbook-book.open .book-cover {
+            opacity: 0;
+            transform: rotateY(-92deg);
+            pointer-events: none;
+        }
+
+        .textbook-book.open .book-pages {
+            opacity: 1;
+            transform: scaleX(1);
+            pointer-events: auto;
+        }
+
+        .book-page {
+            position: relative;
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+            border: 1px solid #dfd4c7;
+            background: #fffdf7;
+            box-shadow: 0 5px 12px rgba(72, 48, 32, 0.1);
+        }
+
+        .book-page::after {
+            content: "";
+            position: absolute;
+            inset: 15px 14px;
+            background: repeating-linear-gradient(
+                to bottom,
+                transparent 0,
+                transparent 8px,
+                rgba(130, 105, 84, 0.1) 8px,
+                rgba(130, 105, 84, 0.1) 9px
+            );
+            pointer-events: none;
+        }
+
+        .book-page-left {
+            border-radius: 11px 2px 2px 11px;
+        }
+
+        .book-page-right {
+            border-left: 0;
+            border-radius: 2px 11px 11px 2px;
+            box-shadow:
+                inset 7px 0 11px rgba(91, 66, 46, 0.07),
+                0 5px 12px rgba(72, 48, 32, 0.1);
+        }
+
+        .book-page-action {
+            position: relative;
+            z-index: 2;
+            width: 38px;
+            height: 38px;
+            display: grid;
+            place-items: center;
+            padding: 0;
+            border: 2px solid #c9dfec;
+            border-bottom-width: 4px;
+            border-radius: 10px;
+            background: #edf7fd;
+            color: #276f97;
+            cursor: pointer;
+            transition: background 0.15s ease, transform 0.15s ease;
+        }
+
+        .book-page-action svg {
+            width: 18px;
+            height: 18px;
+            fill: none;
+            stroke: currentColor;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-width: 2;
+        }
+
+        .book-page-action:hover {
+            background: #dff2ff;
+            transform: translateY(-1px);
+        }
+
+        .book-page-action.delete {
+            border-color: #e2b3b3;
+            background: #fff0f0;
+            color: var(--danger-dark);
+        }
+
+        .book-page-action.delete:hover {
+            background: #ffe1e1;
+        }
+
+        .book-page-action:active {
+            border-bottom-width: 2px;
+            transform: translateY(2px);
+        }
+
+        .textbook-book:focus-visible .book-cover,
+        .textbook-book:focus-visible .book-pages {
+            outline: 3px solid rgba(39, 143, 211, 0.28);
+            outline-offset: 3px;
+        }
+
+        .textbook-card {
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px;
+            border: 1px solid #dce3e6;
+            border-left: 4px solid #a87550;
+            border-radius: 10px;
+            background: #fbf8f5;
+        }
+
+        .textbook-card-content {
+            min-width: 0;
+        }
+
+        .textbook-name {
+            display: block;
+            overflow: hidden;
+            margin-bottom: 4px;
+            color: #49382c;
+            font-size: 13px;
+            font-weight: 850;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .textbook-pages {
+            color: #846c5b;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .textbook-card-actions {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .textbook-delete-form {
+            margin: 0;
+        }
+
+        .textbook-action-button {
+            width: 34px;
+            height: 34px;
+            font-size: 13px;
+        }
+
+        .textbook-delete-button {
+            border-color: #e2b3b3;
+            background: #fff0f0;
+            color: var(--danger-dark);
+        }
+
+        .textbook-delete-button:hover {
+            border-color: #dc9c9c;
+            background: #ffe4e4;
+        }
+
+        .empty-textbooks {
+            padding: 25px 16px;
+            border: 1px dashed #c9d2d6;
+            border-radius: 10px;
+            background: #f8fafb;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .textbook-total {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 12px;
+            padding: 9px 11px;
+            border: 1px solid #e1d3c9;
+            border-radius: 9px;
+            background: #f7f0eb;
+            color: #846c5b;
+            font-size: 11px;
+            font-weight: 750;
+        }
+
+        .textbook-total strong {
+            color: #6e4b35;
+            font-size: 14px;
+            font-weight: 900;
+        }
+
+        .revision-slider-section {
+            margin-top: 17px;
+            padding-top: 17px;
+            border-top: 1px solid #e3e8ea;
+        }
+
+        .revision-live-value {
+            flex-shrink: 0;
+            padding: 6px 9px;
+            border: 1px solid #cde5c3;
+            border-radius: 8px;
+            background: #ebf6e7;
+            color: var(--green-dark);
+            font-size: 11px;
+            font-weight: 900;
+            white-space: nowrap;
+        }
+
+        .revision-timeline-labels {
+            margin-top: 16px;
+            color: #7a858a;
+            font-size: 9px;
+            font-weight: 850;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .revision-slider-wrapper {
+            padding: 3px 2px;
+        }
+
+        .revision-slider {
+            height: 12px;
+            border: 1px solid #d5dde0;
+            border-radius: 99px;
+            background: linear-gradient(
+                to left,
+                var(--green) 0%,
+                var(--green) var(--revision-fill),
+                #e5eaec var(--revision-fill),
+                #e5eaec 100%
+            );
+            box-shadow: inset 0 2px 3px rgba(47, 51, 53, 0.08);
+        }
+
+        .revision-slider::-webkit-slider-thumb {
+            width: 25px;
+            height: 25px;
+            border: 2px solid var(--green-dark);
+            border-bottom-width: 4px;
+            background: #ffffff;
+            box-shadow: none;
+        }
+
+        .revision-slider::-moz-range-thumb {
+            width: 23px;
+            height: 23px;
+            border: 2px solid var(--green-dark);
+            border-radius: 50%;
+            background: #ffffff;
+            box-shadow: none;
+        }
+
+        .revision-slider-details {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 10px;
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: 650;
+            line-height: 1.45;
+        }
+
+        .revision-save-status {
+            min-width: 55px;
+            font-weight: 850;
+            text-align: right;
+        }
+
+        .revision-save-status.saved {
+            color: var(--green-dark);
+        }
+
+        .revision-save-status.error,
+        .revision-slider-error {
+            color: var(--danger-dark);
+        }
+
+        .revision-slider-error {
+            margin-top: 10px;
+            padding: 9px 11px;
+            border: 1px solid #e6b6b6;
+            border-radius: 8px;
+            background: #fff2f2;
+            font-size: 11px;
+            font-weight: 750;
+        }
+
+        .subject-countdown-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .countdown-card {
+            min-width: 0;
+            min-height: 94px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px;
+            border: 1px solid #dce2e4;
+            border-top: 3px solid var(--blue);
+            border-bottom: 4px solid #cdd4d7;
+            border-radius: 11px;
+            background: #ffffff;
+        }
+
+        .countdown-card:nth-child(2) {
+            border-top-color: #a87550;
+            background: #fbf8f5;
+        }
+
+        .countdown-card:nth-child(3) {
+            border-top-color: var(--green);
+            background: #f4faF1;
+        }
+
+        .countdown-info {
+            min-width: 0;
+        }
+
+        .countdown-label {
+            display: block;
+            margin-bottom: 4px;
+            color: #4f595e;
+            font-size: 11px;
+            font-weight: 850;
+        }
+
+        .countdown-description {
+            display: block;
+            color: #879196;
+            font-size: 9px;
+            font-weight: 650;
+            line-height: 1.35;
+        }
+
+        .countdown-value {
+            flex-shrink: 0;
+            color: var(--blue-dark);
+            font-size: 26px;
+            font-weight: 900;
+            letter-spacing: -0.5px;
+        }
+
+        .countdown-card:nth-child(2) .countdown-value {
+            color: #795037;
+        }
+
+        .countdown-card:nth-child(3) .countdown-value {
+            color: var(--green-dark);
+        }
+
+        .subject-edit-form {
+            display: none;
+        }
+
+        .subject-information.editing .subject-information-display {
+            display: none;
+        }
+
+        .subject-information.editing .subject-edit-form {
+            display: block;
+        }
+
+        .field {
+            min-width: 0;
+        }
+
+        .field input,
+        .modal-field input {
+            width: 100%;
+            min-height: 47px;
+            padding: 9px 12px 8px;
+            border: 2px solid #d4dce0;
+            border-bottom-width: 4px;
+            border-radius: 10px;
+            background: #ffffff;
+            color: var(--ink);
+            font-size: 13px;
+            font-weight: 700;
+            outline: none;
+        }
+
+        .field input:focus,
+        .modal-field input:focus {
+            border-color: #78b8dd;
+            box-shadow: 0 0 0 4px rgba(39, 143, 211, 0.12);
+        }
+
+        .information-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 9px;
+            margin-top: 17px;
+            padding-top: 16px;
+            border-top: 1px solid #e0e5e7;
+        }
+
+        .workspace {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            align-items: start;
+            gap: 14px;
+        }
+
+        .workspace-column {
+            min-width: 0;
+        }
+
+        .workspace-box {
+            padding: 20px;
+        }
+
+        .workspace-column:first-child .workspace-box {
+            border-top: 1px solid var(--surface-border);
+        }
+
+        .workspace-column:last-child .workspace-box {
+            border-top: 1px solid var(--surface-border);
+        }
+
+        .workspace-header {
+            margin-bottom: 15px;
+        }
+
+        .workspace-header h2 {
+            margin: 0 0 4px;
+            color: #34393b;
+            font-size: 20px;
+            font-weight: 900;
+            letter-spacing: -0.25px;
+        }
+
+        .workspace-header p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 650;
+        }
+
+        .summary-options,
+        .review-categories {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .summary-option {
+            --item-accent: var(--blue);
+            --item-dark: var(--blue-dark);
+            --item-soft: #eaf5fc;
+            position: relative;
+            min-width: 0;
+            min-height: 116px;
+            display: block;
+            padding: 16px 14px 14px 56px;
+            border: 1px solid #dce2e4;
+            border-top: 3px solid var(--item-accent);
+            border-bottom: 4px solid #cdd4d7;
+            border-radius: 12px;
+            background: linear-gradient(145deg, #ffffff 40%, var(--item-soft) 100%);
+            color: inherit;
+            text-decoration: none;
+            box-shadow: none;
+            transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .summary-option:nth-child(2) {
+            --item-accent: var(--green);
+            --item-dark: var(--green-dark);
+            --item-soft: #ebf6e7;
+        }
+
+        .summary-option:nth-child(3) {
+            --item-accent: var(--gold);
+            --item-dark: var(--gold-dark);
+            --item-soft: #faf3df;
+        }
+
+        .summary-option:nth-child(4) {
+            --item-accent: var(--purple);
+            --item-dark: var(--purple-dark);
+            --item-soft: #eeecf8;
+        }
+
+        .summary-option:nth-child(5) {
+            --item-accent: var(--rose);
+            --item-dark: var(--rose-dark);
+            --item-soft: #f8eae6;
+        }
+
+        .summary-option:nth-child(6) {
+            --item-accent: var(--teal);
+            --item-dark: var(--teal-dark);
+            --item-soft: #e6f1f1;
+        }
+
+        .summary-option::before {
+            content: "Aa";
+            position: absolute;
+            top: 15px;
+            left: 13px;
+            width: 32px;
+            height: 32px;
+            display: grid;
+            place-items: center;
+            border: 1px solid var(--item-accent);
+            border-radius: 9px;
+            background: #ffffff;
+            color: var(--item-dark);
+            font-size: 11px;
+            font-weight: 900;
+        }
+
+        .summary-option:nth-child(2)::before {
+            content: "÷";
+            font-size: 18px;
+        }
+
+        .summary-option:nth-child(3)::before {
+            content: "☷";
+            font-size: 18px;
+        }
+
+        .summary-option:nth-child(4)::before {
+            content: "";
+            background-color: #ffffff;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 19h5v-5h5V9h6' fill='none' stroke='%23655da5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: 22px 22px;
+        }
+
+        .summary-option:nth-child(5)::before {
+            content: "✎";
+            font-size: 17px;
+        }
+
+        .summary-option:nth-child(6)::before {
+            content: "⇄";
+            font-size: 17px;
+        }
+
+        a.summary-option:hover {
+            border-color: var(--item-accent);
+            box-shadow: 0 8px 18px rgba(41, 53, 59, 0.08);
+            transform: translateY(-2px);
+        }
+
+        div.summary-option {
+            opacity: 0.62;
+        }
+
+        .summary-option h3 {
+            margin: 0 0 6px;
+            color: var(--item-dark);
+            font-size: 14px;
+            font-weight: 900;
+        }
+
+        .summary-option p {
+            display: -webkit-box;
+            margin: 0;
+            overflow: hidden;
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: 650;
+            line-height: 1.4;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 3;
+            line-clamp: 3;
+        }
+
+        .delete-subject-button {
+            width: 100%;
+            margin-top: 12px;
+            border-color: #dca1a1;
+            background: #fff0f0;
+            color: var(--danger-dark);
+        }
+
+        .delete-subject-button:hover,
+        .confirm-delete-button:hover {
+            background: #ffe1e1;
+        }
+
+        .reset-reviews-container {
+            margin: -4px 0 13px;
+        }
+
+        .reset-reviews-container form {
+            margin: 0;
+        }
+
+        .reset-reviews-button {
+            width: 100%;
+            border-color: #a8d3ec;
+            background: #edf8ff;
+            color: var(--blue-dark);
+        }
+
+        .reset-reviews-button:hover {
+            background: #dff2ff;
+        }
+
+        .review-category,
+        .pages-review-category {
+            --review-accent: var(--blue);
+            --review-dark: var(--blue-dark);
+            --review-soft: #eaf5fc;
+            position: relative;
+            min-width: 0;
+            min-height: 108px;
+            display: block;
+            padding: 15px 14px 13px 56px;
+            border: 1px solid #dce2e4;
+            border-top: 3px solid var(--review-accent);
+            border-bottom: 4px solid #cdd4d7;
+            border-radius: 12px;
+            background: linear-gradient(145deg, #ffffff 40%, var(--review-soft) 100%);
+            color: inherit;
+            text-decoration: none;
+            box-shadow: none;
+            transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .formula-review-category {
+            --review-accent: var(--green);
+            --review-dark: var(--green-dark);
+            --review-soft: #ebf6e7;
+        }
+
+        .definition-review-category {
+            --review-accent: var(--blue);
+            --review-dark: var(--blue-dark);
+            --review-soft: #eaf5fc;
+        }
+
+        .list-review-category {
+            --review-accent: var(--gold);
+            --review-dark: var(--gold-dark);
+            --review-soft: #faf3df;
+        }
+
+        .step-review-category {
+            --review-accent: var(--purple);
+            --review-dark: var(--purple-dark);
+            --review-soft: #eeecf8;
+        }
+
+        .comparison-review-category {
+            --review-accent: var(--teal);
+            --review-dark: var(--teal-dark);
+            --review-soft: #e6f1f1;
+        }
+
+        .note-review-category {
+            --review-accent: var(--rose);
+            --review-dark: var(--rose-dark);
+            --review-soft: #f8eae6;
+        }
+
+        .review-category::before {
+            content: none;
+        }
+
+        .review-category {
+            padding-left: 14px;
+        }
+
+        .review-category:hover,
+        .pages-review-category:hover {
+            border-color: var(--review-accent);
+            box-shadow: 0 8px 18px rgba(41, 53, 59, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .review-category-header,
+        .pages-review-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 9px;
+        }
+
+        .review-category-title,
+        .pages-review-title {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            min-width: 0;
+        }
+
+        .review-category-title h3,
+        .pages-review-title h3 {
+            margin: 0;
+            color: var(--review-dark);
+            font-size: 13px;
+            font-weight: 900;
+            line-height: 1.3;
+        }
+
+        .review-count,
+        .pages-review-count {
+            min-width: 24px;
+            height: 24px;
+            display: inline-grid;
+            place-items: center;
+            flex-shrink: 0;
+            padding: 0 6px;
+            border: 1px solid var(--review-accent);
+            border-radius: 7px;
+            background: #ffffff;
+            color: var(--review-dark);
+            font-size: 10px;
+            font-weight: 900;
+        }
+
+        .review-category-header > span:last-child,
+        .pages-review-header > span:last-child {
+            display: none;
+        }
+
+        .review-description,
+        .pages-review-description {
+            margin: 7px 0 0;
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: 650;
+            line-height: 1.4;
+        }
+
+        .pages-review-category {
+            --review-accent: #a87550;
+            --review-dark: #795037;
+            --review-soft: #f7f0eb;
+            grid-column: 1 / -1;
+            padding-left: 15px;
+        }
+
+        .pages-review-category::before {
+            content: none;
+        }
+
+        .pages-review-breakdown {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .pages-review-book {
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 7px 8px;
+            border: 1px solid #e1d3c9;
+            border-radius: 7px;
+            background: rgba(255, 255, 255, 0.78);
+        }
+
+        .pages-review-book-name {
+            overflow: hidden;
+            color: #5f4939;
+            font-size: 9px;
+            font-weight: 800;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .pages-review-book-pages {
+            flex-shrink: 0;
+            color: #846c5b;
+            font-size: 9px;
+            font-weight: 750;
+        }
+
+        .pages-review-calculation {
+            margin-top: 9px;
+            padding-top: 8px;
+            border-top: 1px solid #e1d3c9;
+            color: #846c5b;
+            font-size: 9px;
+            font-weight: 650;
+            line-height: 1.45;
+        }
+
+        .empty-review {
+            grid-column: 1 / -1;
+            min-height: 120px;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            border: 1px dashed #c9d2d6;
+            border-radius: 11px;
+            background: #ffffff;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 750;
+            text-align: center;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(28, 34, 49, 0.58);
+            backdrop-filter: blur(3px);
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal {
+            width: 100%;
+            max-width: 460px;
+            padding: 22px;
+            border: 1px solid var(--surface-border);
+            border-top: 3px solid var(--blue);
+            border-bottom: 5px solid var(--surface-edge);
+            border-radius: 15px;
+            background: #ffffff;
+            box-shadow: 0 22px 55px rgba(20, 28, 44, 0.22);
+        }
+
+        #delete-modal .modal {
+            border-top-color: var(--danger);
+        }
+
+        .modal h2 {
+            margin: 0 0 6px;
+            color: #34393b;
+            font-size: 20px;
+            font-weight: 900;
+        }
+
+        .modal-description {
+            margin: 0 0 17px;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 650;
+            line-height: 1.5;
+        }
+
+        .modal-field {
+            margin-bottom: 13px;
+        }
+
+        .modal-error {
+            margin-bottom: 13px;
+            padding: 10px 11px;
+            border: 1px solid #e6b6b6;
+            border-radius: 8px;
+            background: #fff2f2;
+            color: var(--danger-dark);
+            font-size: 11px;
+            font-weight: 750;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 9px;
+            margin-top: 18px;
+            padding-top: 16px;
+            border-top: 1px solid #e0e5e7;
+        }
+
+        .confirm-delete-button {
+            border-color: var(--danger-dark);
+            background: var(--danger);
+            color: #ffffff;
+        }
+
+        .subject-control-button:focus-visible,
+        .add-textbook-button:focus-visible,
+        .textbook-action-button:focus-visible,
+        .revision-slider:focus-visible,
+        .field input:focus-visible,
+        .save-button:focus-visible,
+        .cancel-edit-button:focus-visible,
+        .summary-option:focus-visible,
+        .delete-subject-button:focus-visible,
+        .reset-reviews-button:focus-visible,
+        .review-category:focus-visible,
+        .modal-field input:focus-visible,
+        .modal-save-button:focus-visible,
+        .modal-cancel-button:focus-visible,
+        .confirm-delete-button:focus-visible {
+            outline: 3px solid rgba(39, 143, 211, 0.28);
+            outline-offset: 3px;
+        }
+
+        @media (max-width: 980px) {
+            .information-display-grid,
+            .information-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .display-field:first-child,
+            .information-grid .field:first-child {
+                grid-column: 1 / -1;
+            }
+
+            .workspace {
+                grid-template-columns: 1fr;
+            }
+
+            .textbook-list {
+                justify-content: flex-start;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .page {
+                padding: 20px 18px 42px;
+            }
+
+            .header {
+                padding: 22px 20px;
+            }
+
+            .subject-selector {
+                min-width: 0;
+                font-size: 27px;
+            }
+
+            .subject-information-display {
+                padding-right: 0;
+                padding-top: 50px;
+            }
+
+            .subject-information.minimized .subject-information-display {
+                padding-top: 0;
+                padding-right: 92px;
+            }
+
+            .materials-header,
+            .revision-slider-header,
+            .revision-slider-details {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .subject-countdown-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .countdown-card {
+                min-height: 82px;
+            }
+        }
+
+        @media (max-width: 520px) {
+            .subject-information,
+            .workspace-box {
+                padding: 17px;
+            }
+
+            .information-display-grid,
+            .information-grid,
+            .summary-options,
+            .review-categories,
+            .pages-review-breakdown {
+                grid-template-columns: 1fr;
+            }
+
+            .display-field:first-child,
+            .information-grid .field:first-child,
+            .pages-review-category {
+                grid-column: auto;
+            }
+
+            .information-footer,
+            .modal-actions {
+                flex-direction: column-reverse;
+            }
+
+            .save-button,
+            .cancel-edit-button,
+            .modal-save-button,
+            .modal-cancel-button,
+            .confirm-delete-button {
+                width: 100%;
+            }
+
+            .modal {
+                padding: 18px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .subject-control-button,
+            .textbook-action-button,
+            .add-textbook-button,
+            .save-button,
+            .cancel-edit-button,
+            .summary-option,
+            .delete-subject-button,
+            .reset-reviews-button,
+            .review-category,
+            .modal-save-button,
+            .modal-cancel-button,
+            .confirm-delete-button {
+                transition: none;
+            }
+        }
+    </style>
+
 </head>
 
 
@@ -1731,7 +3208,7 @@
             ========================================= -->
 
             <section
-                class="subject-information"
+                class="subject-information minimized"
                 id="subject-information"
             >
 
@@ -1748,10 +3225,10 @@
                         class="subject-control-button"
                         onclick="toggleSubjectMinimize()"
                         id="subject-minimize-button"
-                        title="Minimize"
-                        aria-label="Minimize subject information"
+                        title="Expand"
+                        aria-label="Expand subject information"
                     >
-                        −
+                        +
                     </button>
 
 
@@ -1924,88 +3401,77 @@
                                     {% for textbook in textbooks %}
 
 
-                                        <div class="textbook-card">
+                                        <div
+                                            class="textbook-book"
+                                            role="button"
+                                            tabindex="0"
+                                            aria-expanded="false"
+                                            aria-label="Open {{ textbook.name }}"
+                                            onclick="toggleTextbookBook(this)"
+                                            onkeydown="handleTextbookBookKey(event, this)"
+                                        >
 
-
-                                            <div class="textbook-card-content">
-
-
-                                                <span class="textbook-name">
+                                            <div class="book-cover">
+                                                <span class="book-cover-title">
                                                     {{ textbook.name }}
                                                 </span>
-
-
-                                                <span class="textbook-pages">
-
-                                                    {{ textbook.page_count }}
-
-                                                    page{{ textbook.page_count|pluralize }}
-
-                                                </span>
-
-
                                             </div>
 
+                                            <div class="book-pages" aria-hidden="true">
 
-                                            <div class="textbook-card-actions">
-
-
-                                                <!-- EDIT -->
-
-                                                <button
-                                                    type="button"
-                                                    class="textbook-action-button"
-                                                    data-textbook-id="{{ textbook.id }}"
-                                                    data-textbook-name="{{ textbook.name|escape }}"
-                                                    data-textbook-pages="{{ textbook.page_count }}"
-                                                    onclick="openEditTextbookModal(this)"
-                                                    title="Edit textbook"
-                                                    aria-label="Edit textbook"
-                                                >
-                                                    ✎
-                                                </button>
-
-
-                                                <!-- DELETE -->
-
-                                                <form
-                                                    method="POST"
-                                                    class="textbook-delete-form"
-                                                    onsubmit="return confirm('Delete this textbook?');"
-                                                >
-
-                                                    {% csrf_token %}
-
-
-                                                    <input
-                                                        type="hidden"
-                                                        name="action"
-                                                        value="delete_textbook"
-                                                    >
-
-
-                                                    <input
-                                                        type="hidden"
-                                                        name="textbook_id"
-                                                        value="{{ textbook.id }}"
-                                                    >
-
-
+                                                <div class="book-page book-page-left">
                                                     <button
-                                                        type="submit"
-                                                        class="textbook-action-button textbook-delete-button"
-                                                        title="Delete textbook"
-                                                        aria-label="Delete textbook"
+                                                        type="button"
+                                                        class="book-page-action"
+                                                        data-textbook-id="{{ textbook.id }}"
+                                                        data-textbook-name="{{ textbook.name|escape }}"
+                                                        data-textbook-pages="{{ textbook.page_count }}"
+                                                        onclick="event.stopPropagation(); openEditTextbookModal(this)"
+                                                        title="Edit textbook"
+                                                        aria-label="Edit {{ textbook.name }}"
                                                     >
-                                                        🗑
+                                                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                                                            <path d="M12 20h9"></path>
+                                                            <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"></path>
+                                                        </svg>
                                                     </button>
+                                                </div>
 
-
-                                                </form>
-
+                                                <div class="book-page book-page-right">
+                                                    <form
+                                                        method="POST"
+                                                        class="textbook-delete-form"
+                                                        onclick="event.stopPropagation()"
+                                                        onsubmit="return confirm('Delete this textbook?');"
+                                                    >
+                                                        {% csrf_token %}
+                                                        <input
+                                                            type="hidden"
+                                                            name="action"
+                                                            value="delete_textbook"
+                                                        >
+                                                        <input
+                                                            type="hidden"
+                                                            name="textbook_id"
+                                                            value="{{ textbook.id }}"
+                                                        >
+                                                        <button
+                                                            type="submit"
+                                                            class="book-page-action delete"
+                                                            title="Delete textbook"
+                                                            aria-label="Delete {{ textbook.name }}"
+                                                        >
+                                                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                                                <path d="M3 6h18"></path>
+                                                                <path d="M8 6V4h8v2"></path>
+                                                                <path d="m19 6-1 14H6L5 6"></path>
+                                                                <path d="M10 10v6M14 10v6"></path>
+                                                            </svg>
+                                                        </button>
+                                                    </form>
+                                                </div>
 
                                             </div>
-
 
                                         </div>
 
@@ -2827,31 +4293,6 @@
             </div>
 
 
-            <div class="pages-review-calculation">
-
-                {{ pages_today_weekday }}
-                occurs
-                {{ pages_today_weekday_count }}
-                more time{{ pages_today_weekday_count|pluralize }}
-                during your remaining learning period.
-
-                Each {{ pages_today_weekday }}
-                has {{ pages_today_study_time }}
-                available,
-
-                giving
-                {{ pages_today_weekday_total_time }}
-                across all remaining
-                {{ pages_today_weekday }}s.
-
-                This represents
-                {{ pages_today_weekday_percentage }}%
-                of your remaining
-                {{ pages_total_learning_time }}
-                of learning time.
-
-            </div>
-
         </a>
 
     {% endif %}
@@ -2865,7 +4306,7 @@
 
         <a
             href="{% url 'formula_review_list' subject_index=subject_index %}"
-            class="review-category"
+            class="review-category formula-review-category"
         >
 
             <div class="review-category-header">
@@ -2905,7 +4346,7 @@
 
         <a
             href="{% url 'definition_review_list' subject_index=subject_index %}"
-            class="review-category"
+            class="review-category definition-review-category"
         >
 
             <div class="review-category-header">
@@ -2945,7 +4386,7 @@
 
         <a
             href="{% url 'list_review_list' subject_index=subject_index %}"
-            class="review-category"
+            class="review-category list-review-category"
         >
 
             <div class="review-category-header">
@@ -2985,7 +4426,7 @@
 
         <a
             href="{% url 'step_review_list' subject_index=subject_index %}"
-            class="review-category"
+            class="review-category step-review-category"
         >
 
             <div class="review-category-header">
@@ -3025,7 +4466,7 @@
 
     <a
         href="{% url 'comparison_review_list' subject_index=subject_index %}"
-        class="review-category"
+        class="review-category comparison-review-category"
     >
 
         <div class="review-category-header">
@@ -3065,7 +4506,7 @@
 
         <a
             href="{% url 'note_list' subject_id=database_subject.id %}?subject_index={{ subject_index }}&mode=subject_review"
-            class="review-category"
+            class="review-category note-review-category"
         >
 
             <div class="review-category-header">
@@ -3461,6 +4902,115 @@
 
 
 <script>
+
+    // =============================================
+    // TEXTBOOK BOOKS
+    // =============================================
+
+    function setTextbookBookOpen(
+        book,
+        isOpen
+    ) {
+
+        book.classList.toggle(
+            "open",
+            isOpen
+        );
+
+        book.setAttribute(
+            "aria-expanded",
+            isOpen
+                ? "true"
+                : "false"
+        );
+
+        book.setAttribute(
+            "aria-label",
+            (
+                isOpen
+                    ? "Close "
+                    : "Open "
+            )
+            +
+            book.querySelector(
+                ".book-cover-title"
+            ).textContent.trim()
+        );
+
+        const pages = book.querySelector(
+            ".book-pages"
+        );
+
+        if (pages) {
+
+            pages.setAttribute(
+                "aria-hidden",
+                isOpen
+                    ? "false"
+                    : "true"
+            );
+
+        }
+
+    }
+
+
+    function toggleTextbookBook(book) {
+
+        const shouldOpen = !book.classList.contains(
+            "open"
+        );
+
+        document.querySelectorAll(
+            ".textbook-book.open"
+        ).forEach(
+            function(openBook) {
+
+                if (openBook !== book) {
+
+                    setTextbookBookOpen(
+                        openBook,
+                        false
+                    );
+
+                }
+
+            }
+        );
+
+        setTextbookBookOpen(
+            book,
+            shouldOpen
+        );
+
+    }
+
+
+    function handleTextbookBookKey(
+        event,
+        book
+    ) {
+
+        if (
+            event.target !== book
+            ||
+            (
+                event.key !== "Enter"
+                &&
+                event.key !== " "
+            )
+        ) {
+            return;
+        }
+
+        event.preventDefault();
+
+        toggleTextbookBook(
+            book
+        );
+
+    }
+
 
     // =============================================
     // REVISION ELEMENTS
