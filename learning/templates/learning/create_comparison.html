@@ -580,6 +580,69 @@
 
     </style>
 
+    <style>
+        :root {
+            --green: #58b82a; --green-dark: #3f8f1d; --green-soft: #eef9e9;
+            --blue: #278fd3; --blue-dark: #176f9f;
+            --ink: #2f3335; --muted: #687278; --border: #d8e0e3;
+            --surface: #fff; --background: #edf1f3;
+        }
+        body { background: var(--background); color: var(--ink); }
+        .page { max-width: 1280px; padding: 30px 40px 56px; }
+        .top-bar {
+            flex-wrap: wrap; gap: 16px; margin-bottom: 18px; padding: 25px 27px;
+            border: 1px solid #465270; border-bottom: 5px solid #222b45;
+            border-radius: 17px; background: linear-gradient(135deg, #303a5a 0%, #485676 100%);
+            box-shadow: 0 9px 24px rgba(35,45,70,.12);
+        }
+        .eyebrow { display: block; margin-bottom: 7px; color: #aebfdf; font-size: 11px; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
+        .page-title h1 { color: #fff; font-size: 31px; font-weight: 850; letter-spacing: -.7px; }
+        .back-button {
+            width: 43px; height: 43px; border: 2px solid #a8d3ec; border-bottom-width: 4px;
+            border-radius: 11px; background: #edf8ff; color: var(--blue-dark);
+            font-size: 22px; box-shadow: none;
+        }
+        .back-button:hover { background: #dff2ff; transform: translateY(-1px); }
+        .subject-pill { border-color: #b8dcaa; background: var(--green-soft); color: var(--green-dark); }
+        .form-card {
+            padding: 22px; border: 1px solid #d8e0e3; border-top: 3px solid #50a8a2;
+            border-bottom: 4px solid #c4cfd4; border-radius: 15px;
+            background: #f8fafb; box-shadow: none;
+        }
+        .field-label { color: #404649; font-size: 12px; font-weight: 850; }
+        .text-input, .select-input, .table-input, .cell-input {
+            border-color: #d5dde0; border-bottom-width: 4px; border-radius: 11px; background: #fff;
+        }
+        .text-input:focus, .select-input:focus, .table-input:focus, .cell-input:focus {
+            border-color: #50a8a2; box-shadow: 0 0 0 3px rgba(80,168,162,.14);
+        }
+        .table-section { margin-top: 22px; padding-top: 19px; border-top: 1px solid #dfe5e7; }
+        .table-toolbar h2 { color: #34393b; font-size: 18px; font-weight: 850; }
+        .action-button { border-bottom-width: 4px; border-radius: 10px; font-size: 12px; font-weight: 850; }
+        .comparison-table-wrapper { border: 1px solid #dce2e5; border-bottom: 3px solid #cfd7da; border-radius: 12px; background: #fff; }
+        .details-grid { margin-top: 22px; padding-top: 19px; border-top: 1px solid #dfe5e7; }
+        .form-footer { margin-top: 23px; padding-top: 19px; border-top: 1px solid #dfe5e7; }
+        .cancel-button, .save-button {
+            min-height: 44px; border-bottom-width: 4px; border-radius: 11px;
+            font-size: 13px; font-weight: 850;
+        }
+        .cancel-button { border-color: #cbd3d7; background: #fff; color: #535b60; }
+        .save-button { border-color: var(--green-dark); background: var(--green); color: #fff; }
+        .save-button:hover { background: #64c735; }
+        .error-message { border: 1px solid #efb1b1; border-left: 5px solid #d65454; border-radius: 10px; background: #fff1f1; color: #a93636; }
+        .back-button:focus-visible, .action-button:focus-visible, .cancel-button:focus-visible,
+        .save-button:focus-visible, .text-input:focus-visible, .select-input:focus-visible,
+        .table-input:focus-visible, .cell-input:focus-visible {
+            outline: 3px solid rgba(39,143,211,.28); outline-offset: 3px;
+        }
+        @media (max-width: 760px) {
+            .page { padding: 20px 18px 42px; }
+            .top-bar { padding: 22px 20px; }
+            .page-title h1 { font-size: 27px; }
+            .form-card { padding: 18px; }
+        }
+        @media (prefers-reduced-motion: reduce) { .back-button { transition: none; } }
+    </style>
 </head>
 
 <body>
@@ -604,6 +667,7 @@
 
                 <div class="page-title">
 
+                    <span class="eyebrow">Comparison editor</span>
                     <h1>
                         Create comparison
                     </h1>
@@ -1473,7 +1537,6 @@
 
 </script>
 
-<script src="{% static 'dashboard/js/sidebar.js' %}"></script>
 
 </body>
 
