@@ -5113,6 +5113,226 @@ def create_steps(
         }
     )
 
+
+# ============================================================
+# EDIT STEPS
+# ============================================================
+
+@login_required
+def edit_steps(request, step_list_id):
+    step_list = get_object_or_404(
+        StepList.objects.select_related(
+            "knowledge_unit__subject"
+        ).prefetch_related("steps"),
+        id=step_list_id,
+        knowledge_unit__subject__user=request.user,
+        knowledge_unit__knowledge_type=(
+            KnowledgeUnit.KnowledgeType.STEPS
+        ),
+    )
+
+    knowledge_unit = step_list.knowledge_unit
+    subject = knowledge_unit.subject
+    subject_index = _resolve_learning_subject_index(
+        request,
+        subject,
+        (
+            request.POST.get("subject_index")
+            or request.GET.get("subject_index")
+        ),
+    )
+
+    textbooks = (
+        SubjectTextbook.objects
+        .filter(subject=subject)
+        .order_by("created", "id")
+    )
+    existing_book = (
+        textbooks.filter(name=step_list.book_name).first()
+        if step_list.book_name else None
+    )
+
+    question = step_list.question
+    selected_book_id = (
+        str(existing_book.id) if existing_book else ""
+    )
+    chapter = step_list.chapter
+    submitted_steps = [
+        {
+            "text": step.text,
+            "description": step.description,
+        }
+        for step in step_list.steps.all()
+    ]
+    error = None
+
+    if request.method == "POST":
+        question = request.POST.get(
+            "question", ""
+        ).strip()
+        selected_book_id = request.POST.get(
+            "book_id", ""
+        ).strip()
+        chapter = request.POST.get(
+            "chapter", ""
+        ).strip()
+
+        step_texts = request.POST.getlist("step_text")
+        step_descriptions = request.POST.getlist(
+            "step_description"
+        )
+
+        submitted_steps = [
+            {
+                "text": (
+                    step_texts[index].strip()
+                    if index < len(step_texts) else ""
+                ),
+                "description": (
+                    step_descriptions[index].strip()
+                    if index < len(step_descriptions) else ""
+                ),
+            }
+            for index in range(max(
+                len(step_texts),
+                len(step_descriptions),
+            ))
+        ]
+        valid_steps = [
+            step for step in submitted_steps if step["text"]
+        ]
+
+        if not question:
+            error = "Enter a name or question for these steps."
+        elif len(question) > 255:
+            error = "The name cannot exceed 255 characters."
+        elif len(chapter) > 255:
+            error = "The chapter cannot exceed 255 characters."
+        elif not valid_steps:
+            error = "Add at least one step."
+        elif any(
+            len(step["text"]) > 255 for step in valid_steps
+        ):
+            error = "Steps cannot exceed 255 characters."
+        elif any(
+            len(step["description"]) > 500
+            for step in valid_steps
+        ):
+            error = "Step descriptions cannot exceed 500 characters."
+
+        selected_book = None
+
+        if error is None and selected_book_id:
+            try:
+                selected_book_pk = int(selected_book_id)
+            except (TypeError, ValueError):
+                selected_book_pk = None
+
+            if selected_book_pk is not None:
+                selected_book = textbooks.filter(
+                    id=selected_book_pk
+                ).first()
+
+            if selected_book is None:
+                error = (
+                    "The selected textbook does not belong "
+                    "to this subject."
+                )
+
+        if error is None:
+            with transaction.atomic():
+                knowledge_unit.title = question
+                knowledge_unit.save(update_fields=["title"])
+
+                step_list.question = question
+                step_list.book_name = (
+                    selected_book.name if selected_book else ""
+                )
+                step_list.chapter = chapter
+                step_list.save(update_fields=[
+                    "question", "book_name", "chapter",
+                ])
+
+                step_list.steps.all().delete()
+                StepItem.objects.bulk_create([
+                    StepItem(
+                        step_list=step_list,
+                        text=step["text"],
+                        description=step["description"],
+                        order=order,
+                    )
+                    for order, step in enumerate(
+                        valid_steps, start=1
+                    )
+                ])
+
+            if subject_index is not None:
+                return redirect(
+                    "step_review_list",
+                    subject_index=subject_index,
+                )
+            return redirect("review")
+
+    if not submitted_steps:
+        submitted_steps = [{
+            "text": "",
+            "description": "",
+        }]
+
+    return render(
+        request,
+        "learning/edit_steps.html",
+        {
+            "step_list": step_list,
+            "subject": subject,
+            "subject_index": subject_index,
+            "textbooks": textbooks,
+            "error": error,
+            "question": question,
+            "selected_book_id": selected_book_id,
+            "chapter": chapter,
+            "submitted_steps": submitted_steps,
+        },
+    )
+
+
+# ============================================================
+# DELETE STEPS
+# ============================================================
+
+@login_required
+def delete_steps(request, step_list_id):
+    step_list = get_object_or_404(
+        StepList.objects.select_related(
+            "knowledge_unit__subject"
+        ),
+        id=step_list_id,
+        knowledge_unit__subject__user=request.user,
+        knowledge_unit__knowledge_type=(
+            KnowledgeUnit.KnowledgeType.STEPS
+        ),
+    )
+
+    subject_index = _resolve_learning_subject_index(
+        request,
+        step_list.knowledge_unit.subject,
+        (
+            request.POST.get("subject_index")
+            or request.GET.get("subject_index")
+        ),
+    )
+
+    if request.method == "POST":
+        # Deleting the owning unit also removes its steps and progress.
+        step_list.knowledge_unit.delete()
+
+    if subject_index is not None:
+        return redirect(
+            "step_review_list",
+            subject_index=subject_index,
+        )
+    return redirect("review")
+
 # ============================================================
 # BOOK SUMMARY
 # ============================================================

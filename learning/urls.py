@@ -146,6 +146,18 @@ urlpatterns = [
         name="step_review_list",
     ),
 
+    path(
+        "steps/<int:step_list_id>/edit/",
+        views.edit_steps,
+        name="edit_steps",
+    ),
+
+    path(
+        "steps/<int:step_list_id>/delete/",
+        views.delete_steps,
+        name="delete_steps",
+    ),
+
     # ========================================================
     # NOTES
     # ========================================================
