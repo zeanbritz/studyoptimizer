@@ -8666,8 +8666,36 @@ def comparison_review_list(
 
         due_comparisons.append(
             {
+                # Keep the ID available at the top level as well as
+                # through ``item.comparison``.  Some versions of the
+                # comparison review template link with ``item.id`` or
+                # ``item.comparison_id``.
+                "id":
+                    comparison.id,
+
+                "comparison_id":
+                    comparison.id,
+
                 "comparison":
                     comparison,
+
+                # Display aliases used by card-based templates that
+                # render ``item.name`` instead of
+                # ``item.comparison.name``.
+                "name":
+                    comparison.name,
+
+                "book_name":
+                    comparison.book_name,
+
+                "chapter":
+                    comparison.chapter,
+
+                "subject":
+                    subject,
+
+                "subject_name":
+                    subject.name,
 
                 "columns":
                     columns,
@@ -8694,7 +8722,17 @@ def comparison_review_list(
             "due_comparisons":
                 due_comparisons,
 
+            # Compatibility aliases for the card-based comparison
+            # template, which names this collection ``comparisons``.
+            "comparisons":
+                due_comparisons,
+
             "due_comparison_count":
+                len(
+                    due_comparisons
+                ),
+
+            "comparison_count":
                 len(
                     due_comparisons
                 ),
