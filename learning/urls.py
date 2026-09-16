@@ -187,6 +187,12 @@ urlpatterns = [
     ),
 
     path(
+        "notes/<int:note_id>/delete/",
+        views.delete_note,
+        name="delete_note",
+    ),
+
+    path(
         "notes/review/random/",
         views.random_note_review,
         name="random_note_review",

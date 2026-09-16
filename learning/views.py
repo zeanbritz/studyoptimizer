@@ -8294,6 +8294,39 @@ def edit_note(
         }
     )
 
+
+# ============================================================
+# DELETE NOTE
+# ============================================================
+
+@login_required
+def delete_note(request, note_id):
+    note = get_object_or_404(
+        Note.objects.select_related("subject"),
+        id=note_id,
+        subject__user=request.user,
+    )
+
+    subject_id = note.subject_id
+    review_mode = (
+        request.POST.get("mode")
+        or request.GET.get("mode")
+    )
+
+    # A link or accidental GET must never delete a note.
+    if request.method == "POST":
+        note.delete()
+
+    list_url = reverse(
+        "note_list",
+        kwargs={"subject_id": subject_id},
+    )
+
+    if review_mode == "subject_review":
+        list_url = f"{list_url}?mode=subject_review"
+
+    return redirect(list_url)
+
 # ============================================================
 # RANDOM GLOBAL NOTE REVIEW
 # ============================================================

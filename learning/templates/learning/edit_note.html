@@ -1,721 +1,418 @@
 {% load static %}
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>
-        Edit {{ note.title }} - StudyOptimizer
-    </title>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit {{ note.title }} - StudyOptimizer</title>
+    <link rel="stylesheet" href="{% static 'dashboard/css/sidebar.css' %}">
 
     <style>
-
-        * {
-            box-sizing: border-box;
+        :root {
+            --ink: #2f3335;
+            --muted: #687278;
+            --page: #edf1f3;
+            --surface-border: #d8e0e3;
+            --surface-edge: #c4cfd4;
+            --navy: #303a5a;
+            --navy-dark: #222b45;
+            --blue-dark: #176f9f;
+            --note: #bd7f70;
+            --note-dark: #9c594a;
+            --note-soft: #f8eae6;
+            --green: #58b82a;
+            --green-dark: #3f8f1d;
+            --danger-dark: #a93636;
         }
 
+        * { box-sizing: border-box; }
 
         body {
-
             margin: 0;
-
-            min-height: 100vh;
-
-            padding:
-                35px
-                20px
-                60px;
-
-            background: #f5f6f8;
-
-            color: #222;
-
-            font-family:
-                -apple-system,
-                BlinkMacSystemFont,
-                "Segoe UI",
-                Arial,
-                sans-serif;
-
+            background: var(--page);
+            color: var(--ink);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
         }
 
+        button, input, select, textarea { font: inherit; }
+        .app { display: flex; min-height: 100vh; }
+        .main { min-width: 0; flex: 1; }
 
         .page {
-
             width: 100%;
-
-            max-width: 900px;
-
+            max-width: 1000px;
             margin: 0 auto;
-
+            padding: 30px 40px 56px;
         }
-
-
-        /* =========================================
-           HEADER
-        ========================================= */
 
         .page-header {
-
             display: flex;
-
-            align-items: flex-start;
-
-            gap: 15px;
-
-            margin-bottom: 25px;
-
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 18px;
+            padding: 25px 27px;
+            border: 1px solid #465270;
+            border-bottom: 5px solid var(--navy-dark);
+            border-radius: 17px;
+            background: linear-gradient(135deg, var(--navy) 0%, #485676 100%);
+            box-shadow: 0 9px 24px rgba(35, 45, 70, 0.12);
         }
 
+        .header-content { min-width: 0; }
+
+        .eyebrow {
+            display: block;
+            margin-bottom: 7px;
+            color: #aebfdf;
+            font-size: 11px;
+            font-weight: 850;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .header-content h1 {
+            margin: 0 0 6px;
+            color: #fff;
+            font-size: 31px;
+            font-weight: 850;
+            letter-spacing: -0.7px;
+            line-height: 1.15;
+        }
+
+        .header-content p {
+            margin: 0;
+            color: #d8dfed;
+            font-size: 14px;
+            font-weight: 600;
+        }
 
         .back-button {
-
-            width: 42px;
-
-            height: 42px;
-
-            flex-shrink: 0;
-
-            display: flex;
-
+            min-height: 43px;
+            display: inline-flex;
             align-items: center;
-
             justify-content: center;
-
-            border:
-                1px solid
-                #dcdcdc;
-
-            border-radius: 9px;
-
-            background: white;
-
-            color: #333;
-
+            flex-shrink: 0;
+            padding: 9px 16px 7px;
+            border: 2px solid #a8d3ec;
+            border-bottom-width: 4px;
+            border-radius: 11px;
+            background: #edf8ff;
+            color: var(--blue-dark);
+            font-size: 13px;
+            font-weight: 850;
             text-decoration: none;
-
-            font-size: 20px;
-
+            transition: background 0.15s ease, transform 0.15s ease;
         }
 
+        .back-button:hover { background: #dff2ff; transform: translateY(-1px); }
+        .back-button:active { border-bottom-width: 2px; transform: translateY(2px); }
 
-        .back-button:hover {
-
-            background: #f0f0f0;
-
+        .editor-card {
+            overflow: hidden;
+            padding: 22px;
+            border: 1px solid var(--surface-border);
+            border-top: 3px solid var(--note);
+            border-bottom: 4px solid var(--surface-edge);
+            border-radius: 15px;
+            background: #f8fafb;
         }
 
-
-        .page-header h1 {
-
-            margin:
-                0
-                0
-                5px;
-
-            font-size: 29px;
-
-        }
-
-
-        .page-header p {
-
-            margin: 0;
-
-            color: #777;
-
-            font-size: 13px;
-
-        }
-
-
-        /* =========================================
-           CARD
-        ========================================= */
-
-        .note-card {
-
-            padding: 30px;
-
-            border:
-                1px solid
-                #e2e2e2;
-
-            border-radius: 14px;
-
-            background: white;
-
-        }
-
-
-        /* =========================================
-           ERROR
-        ========================================= */
-
-        .error-message {
-
-            margin-bottom: 20px;
-
-            padding:
-                12px
-                14px;
-
-            border:
-                1px solid
-                #e4bcbc;
-
-            border-radius: 8px;
-
-            background: #fff4f4;
-
-            color: #963c3c;
-
-            font-size: 13px;
-
-            font-weight: 600;
-
-        }
-
-
-        /* =========================================
-           FIELDS
-        ========================================= */
-
-        .field {
-
+        .card-heading {
             display: flex;
-
-            flex-direction: column;
-
-            gap: 8px;
-
-            margin-bottom: 22px;
-
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 17px;
+            border-bottom: 1px solid #dfe5e7;
         }
 
+        .heading-icon {
+            width: 44px;
+            height: 44px;
+            display: grid;
+            flex: 0 0 44px;
+            place-items: center;
+            border: 1px solid #e3beb5;
+            border-bottom: 3px solid #d2a196;
+            border-radius: 11px;
+            background: var(--note-soft);
+            color: var(--note-dark);
+        }
+
+        .heading-icon svg {
+            width: 25px;
+            height: 25px;
+            fill: none;
+            stroke: currentColor;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-width: 2.1;
+        }
+
+        .card-heading h2 {
+            margin: 0;
+            color: #34393b;
+            font-size: 17px;
+            font-weight: 900;
+        }
+
+        .error-box {
+            margin-bottom: 18px;
+            padding: 13px 15px;
+            border: 1px solid #efb1b1;
+            border-left: 5px solid #d65454;
+            border-radius: 10px;
+            background: #fff1f1;
+            color: var(--danger-dark);
+            font-size: 13px;
+            font-weight: 750;
+        }
+
+        .field { min-width: 0; margin-bottom: 18px; }
 
         .field label {
-
-            color: #444;
-
-            font-size: 13px;
-
-            font-weight: 700;
-
+            display: block;
+            margin-bottom: 7px;
+            color: #404649;
+            font-size: 12px;
+            font-weight: 850;
         }
-
-
-        .field-help {
-
-            margin-top: -3px;
-
-            color: #999;
-
-            font-size: 11px;
-
-        }
-
 
         .field input,
         .field select,
         .field textarea {
-
             width: 100%;
-
-            border:
-                1px solid
-                #d8d8d8;
-
-            border-radius: 9px;
-
-            background: white;
-
-            color: #222;
-
-            font-family: inherit;
-
-            font-size: 15px;
-
+            padding: 10px 12px;
+            border: 2px solid #d5dde0;
+            border-bottom-width: 4px;
+            border-radius: 11px;
+            background: #fff;
+            color: var(--ink);
             outline: none;
-
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
         }
-
 
         .field input,
-        .field select {
-
-            height: 46px;
-
-            padding:
-                0
-                13px;
-
-        }
-
+        .field select { min-height: 47px; }
 
         .field textarea {
-
-            min-height: 380px;
-
-            padding: 15px;
-
+            min-height: 330px;
             resize: vertical;
-
             line-height: 1.6;
-
         }
-
 
         .field input:focus,
         .field select:focus,
         .field textarea:focus {
-
-            border-color: #555;
-
-            box-shadow:
-                0
-                0
-                0
-                3px
-                rgba(
-                    0,
-                    0,
-                    0,
-                    0.04
-                );
-
+            border-color: #d2a196;
+            box-shadow: 0 0 0 3px rgba(189, 127, 112, 0.14);
         }
-
-
-        /* =========================================
-           OPTIONAL DETAILS
-        ========================================= */
 
         .additional-details {
-
-            padding-top: 22px;
-
-            border-top:
-                1px solid
-                #eeeeee;
-
+            margin-top: 20px;
+            border: 1px solid #dce2e5;
+            border-bottom: 3px solid #cfd7da;
+            border-radius: 13px;
+            background: #fff;
         }
 
-
-        .additional-heading {
-
-            margin-bottom: 18px;
-
-        }
-
-
-        .additional-heading h2 {
-
-            margin:
-                0
-                0
-                4px;
-
-            font-size: 17px;
-
-        }
-
-
-        .additional-heading p {
-
-            margin: 0;
-
-            color: #888;
-
-            font-size: 12px;
-
-        }
-
-
-        .details-grid {
-
-            display: grid;
-
-            grid-template-columns:
-                minmax(0, 1fr)
-                minmax(0, 1fr);
-
-            gap: 18px;
-
-        }
-
-
-        /* =========================================
-           ACTIONS
-        ========================================= */
-
-        .actions {
-
+        .additional-details summary {
             display: flex;
-
-            justify-content: flex-end;
-
-            gap: 10px;
-
-            margin-top: 8px;
-
-            padding-top: 22px;
-
-            border-top:
-                1px solid
-                #eeeeee;
-
-        }
-
-
-        .cancel-button {
-
-            min-width: 110px;
-
-            padding:
-                12px
-                18px;
-
-            display: inline-flex;
-
             align-items: center;
-
-            justify-content: center;
-
-            border:
-                1px solid
-                #d8d8d8;
-
-            border-radius: 8px;
-
-            background: white;
-
-            color: #444;
-
-            text-decoration: none;
-
-            font-size: 14px;
-
-            font-weight: 600;
-
-        }
-
-
-        .cancel-button:hover {
-
-            background: #f5f5f5;
-
-        }
-
-
-        .save-button {
-
-            min-width: 140px;
-
-            padding:
-                12px
-                20px;
-
-            border: none;
-
-            border-radius: 8px;
-
-            background: #222;
-
-            color: white;
-
-            font-family: inherit;
-
-            font-size: 14px;
-
-            font-weight: 700;
-
+            justify-content: space-between;
+            gap: 15px;
+            padding: 15px 17px;
+            color: #404649;
+            font-size: 13px;
+            font-weight: 850;
             cursor: pointer;
-
+            list-style: none;
         }
 
+        .additional-details summary::-webkit-details-marker { display: none; }
+        .details-arrow { color: var(--note-dark); font-size: 18px; transition: transform 0.15s ease; }
+        .additional-details[open] .details-arrow { transform: rotate(180deg); }
 
-        .save-button:hover {
-
-            background: #333;
-
+        .details-content {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+            padding: 0 17px 17px;
         }
 
+        .details-content .field { margin-bottom: 0; }
 
-        @media (max-width: 650px) {
+        .form-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 23px;
+            padding-top: 19px;
+            border-top: 1px solid #dfe5e7;
+        }
 
-            .note-card {
+        .cancel-button,
+        .save-button {
+            min-height: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 9px 18px 7px;
+            border: 2px solid;
+            border-bottom-width: 4px;
+            border-radius: 11px;
+            font-size: 13px;
+            font-weight: 850;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.15s ease, transform 0.15s ease;
+        }
 
-                padding: 22px;
+        .cancel-button { border-color: #cbd3d7; background: #fff; color: #535b60; }
+        .cancel-button:hover { background: #f0f3f4; }
+        .save-button { border-color: var(--green-dark); background: var(--green); color: #fff; }
+        .save-button:hover { background: #64c735; transform: translateY(-1px); }
+        .cancel-button:active,
+        .save-button:active { border-bottom-width: 2px; transform: translateY(2px); }
 
-            }
+        .back-button:focus-visible,
+        .field input:focus-visible,
+        .field select:focus-visible,
+        .field textarea:focus-visible,
+        .additional-details summary:focus-visible,
+        .cancel-button:focus-visible,
+        .save-button:focus-visible {
+            outline: 3px solid rgba(39, 143, 211, 0.28);
+            outline-offset: 3px;
+        }
 
+        @media (max-width: 700px) {
+            .page { padding: 20px 18px 42px; }
+            .page-header { align-items: flex-start; flex-direction: column; padding: 22px 20px; }
+            .header-content h1 { font-size: 27px; }
+            .back-button { width: 100%; }
+            .editor-card { padding: 18px; }
+            .details-content { grid-template-columns: 1fr; }
+        }
 
-            .details-grid {
-
-                grid-template-columns:
-                    1fr;
-
-                gap: 0;
-
-            }
-
-
-            .actions {
-
-                flex-direction:
-                    column-reverse;
-
-            }
-
-
+        @media (max-width: 520px) {
+            .form-footer { flex-direction: column-reverse; }
             .cancel-button,
-            .save-button {
-
-                width: 100%;
-
-            }
-
+            .save-button { width: 100%; }
         }
 
+        @media (prefers-reduced-motion: reduce) {
+            .back-button,
+            .field input,
+            .field select,
+            .field textarea,
+            .details-arrow,
+            .cancel-button,
+            .save-button { transition: none; }
+        }
     </style>
-
 </head>
 
-
 <body>
+<div class="app">
+    {% include 'partials/sidebar.html' with active_page='summarize' %}
 
-
-<div class="page">
-
-
-    <header class="page-header">
-
-
-        <a
-            href="{% url 'note_detail' note_id=note.id %}"
-            class="back-button"
-        >
-            ←
-        </a>
-
-
-        <div>
-
-
-            <h1>
-                Edit Note
-            </h1>
-
-
-            <p>
-                {{ subject.name }}
-            </p>
-
-
-        </div>
-
-
-    </header>
-
-
-    <div class="note-card">
-
-
-        {% if error %}
-
-            <div class="error-message">
-                {{ error }}
-            </div>
-
-        {% endif %}
-
-
-        <form method="post">
-
-
-            {% csrf_token %}
-
-
-            <!-- =================================
-                 TITLE
-            ================================== -->
-
-            <div class="field">
-
-
-                <label for="note-title">
-                    Note Name
-                </label>
-
-
-                <input
-                    id="note-title"
-                    type="text"
-                    name="title"
-                    value="{{ title }}"
-                    maxlength="255"
-                    required
-                >
-
-
-            </div>
-
-
-            <!-- =================================
-                 CONTENT
-            ================================== -->
-
-            <div class="field">
-
-
-                <label for="note-content">
-                    Notes
-                </label>
-
-
-                <textarea
-                    id="note-content"
-                    name="content"
-                    required
-                >{{ content }}</textarea>
-
-
-            </div>
-
-
-            <!-- =================================
-                 OPTIONAL DETAILS
-            ================================== -->
-
-            <div class="additional-details">
-
-
-                <div class="additional-heading">
-
-
-                    <h2>
-                        Additional Details
-                    </h2>
-
-
-                    <p>
-                        Optionally link the note to a textbook and chapter.
-                    </p>
-
-
+    <main class="main">
+        <div class="page">
+            <header class="page-header">
+                <div class="header-content">
+                    <span class="eyebrow">Note editor</span>
+                    <h1>Edit Note</h1>
+                    <p>{{ subject.name }}</p>
                 </div>
 
-
-                <div class="details-grid">
-
-
-                    <div class="field">
-
-
-                        <label for="book-name">
-                            Textbook
-                        </label>
-
-
-                        <select
-                            id="book-name"
-                            name="book_name"
-                        >
-
-
-                            <option value="">
-                                No textbook
-                            </option>
-
-
-                            {% for textbook in textbooks %}
-
-                                <option
-                                    value="{{ textbook.name }}"
-                                    {% if selected_book == textbook.name %}
-                                        selected
-                                    {% endif %}
-                                >
-                                    {{ textbook.name }}
-                                </option>
-
-                            {% endfor %}
-
-
-                        </select>
-
-
-                    </div>
-
-
-                    <div class="field">
-
-
-                        <label for="chapter">
-                            Chapter
-                        </label>
-
-
-                        <input
-                            id="chapter"
-                            type="text"
-                            name="chapter"
-                            value="{{ chapter }}"
-                            maxlength="255"
-                            placeholder="e.g. Chapter 6"
-                        >
-
-
-                    </div>
-
-
-                </div>
-
-
-            </div>
-
-
-            <div class="actions">
-
-
-                <a
-                    href="{% url 'note_detail' note_id=note.id %}"
-                    class="cancel-button"
-                >
-                    Cancel
+                <a href="{% url 'note_detail' note_id=note.id %}" class="back-button">
+                    ← Back to Note
                 </a>
+            </header>
 
+            <section class="editor-card">
+                <div class="card-heading">
+                    <span class="heading-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M6 3h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"></path>
+                            <path d="M8 3v18M11 8h5M11 12h4"></path>
+                            <path d="m13 18 7-7 2 2-7 7-3 1Z"></path>
+                        </svg>
+                    </span>
+                    <h2>Note details</h2>
+                </div>
 
-                <button
-                    type="submit"
-                    class="save-button"
-                >
-                    Save Changes
-                </button>
+                <form method="POST">
+                    {% csrf_token %}
 
+                    {% if error %}
+                        <div class="error-box" role="alert">{{ error }}</div>
+                    {% endif %}
 
-            </div>
+                    <div class="field">
+                        <label for="note-title">Note Name</label>
+                        <input
+                            id="note-title"
+                            type="text"
+                            name="title"
+                            value="{{ title }}"
+                            maxlength="255"
+                            autocomplete="off"
+                            required
+                        >
+                    </div>
 
+                    <div class="field">
+                        <label for="note-content">Notes</label>
+                        <textarea id="note-content" name="content" required>{{ content }}</textarea>
+                    </div>
 
-        </form>
+                    <details class="additional-details" {% if selected_book or chapter %}open{% endif %}>
+                        <summary>
+                            <span>Book and chapter</span>
+                            <span class="details-arrow" aria-hidden="true">⌄</span>
+                        </summary>
 
+                        <div class="details-content">
+                            <div class="field">
+                                <label for="book-name">Textbook</label>
+                                <select id="book-name" name="book_name">
+                                    <option value="">No textbook</option>
+                                    {% for textbook in textbooks %}
+                                        <option
+                                            value="{{ textbook.name }}"
+                                            {% if selected_book == textbook.name %}selected{% endif %}
+                                        >{{ textbook.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
 
-    </div>
+                            <div class="field">
+                                <label for="chapter">Chapter</label>
+                                <input
+                                    id="chapter"
+                                    type="text"
+                                    name="chapter"
+                                    value="{{ chapter }}"
+                                    maxlength="255"
+                                    placeholder="e.g. Chapter 6"
+                                >
+                            </div>
+                        </div>
+                    </details>
 
-
+                    <div class="form-footer">
+                        <a href="{% url 'note_detail' note_id=note.id %}" class="cancel-button">Cancel</a>
+                        <button type="submit" class="save-button">Save Changes</button>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </main>
 </div>
 
-
+<script src="{% static 'dashboard/js/sidebar.js' %}"></script>
 </body>
-
 </html>
