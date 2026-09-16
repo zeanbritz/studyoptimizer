@@ -180,4 +180,16 @@ urlpatterns = [
         name="comparison_review_list",
     ),
 
+    path(
+    "comparisons/<int:comparison_id>/edit/",
+    views.edit_comparison,
+    name="edit_comparison",
+    
+    ),
+    path(
+        "comparisons/<int:comparison_id>/delete/",
+        views.delete_comparison,
+        name="delete_comparison",
+    ),
+
 ]

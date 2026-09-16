@@ -1,0 +1,1481 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Edit Comparison
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{% static 'dashboard/css/sidebar.css' %}"
+    >
+
+    <style>
+
+        :root {
+            --green: #58cc02;
+            --green-dark: #46a302;
+            --green-soft: #e9fbdc;
+            --blue: #1cb0f6;
+            --blue-dark: #168fc7;
+            --red: #ff4b4b;
+            --red-soft: #fff0f0;
+            --ink: #3c3c3c;
+            --muted: #777777;
+            --border: #e5e5e5;
+            --surface: #ffffff;
+            --background: #f7f7f5;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--background);
+            color: var(--ink);
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Arial,
+                sans-serif;
+        }
+
+        button,
+        input,
+        select,
+        textarea {
+            font: inherit;
+        }
+
+        button,
+        a {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .page {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 28px 38px 50px;
+        }
+
+        /* =========================================
+           TOP BAR
+        ========================================= */
+
+        .top-bar {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .back-button {
+            width: 42px;
+            height: 42px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            flex-shrink: 0;
+
+            border: 2px solid var(--border);
+            border-radius: 12px;
+
+            background: var(--surface);
+            color: var(--ink);
+
+            font-size: 22px;
+            font-weight: 800;
+            line-height: 1;
+            text-decoration: none;
+
+            box-shadow: 0 3px 0 #d5d5d5;
+
+            transition:
+                transform 0.1s ease,
+                box-shadow 0.1s ease;
+        }
+
+        .back-button:active {
+            transform: translateY(3px);
+            box-shadow: none;
+        }
+
+        .page-title {
+            min-width: 0;
+        }
+
+        .page-title h1 {
+            margin: 0;
+            font-size: 27px;
+            line-height: 1.1;
+            letter-spacing: -0.6px;
+        }
+
+        .subject-pill {
+            display: inline-flex;
+            align-items: center;
+
+            max-width: 280px;
+
+            margin-left: auto;
+            padding: 8px 13px;
+
+            border: 2px solid #cceeb3;
+            border-radius: 999px;
+
+            background: var(--green-soft);
+            color: #398500;
+
+            font-size: 13px;
+            font-weight: 800;
+
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* =========================================
+           FORM
+        ========================================= */
+
+        .form-card {
+            padding: 24px;
+
+            border: 2px solid var(--border);
+            border-radius: 18px;
+
+            background: var(--surface);
+
+            box-shadow: 0 4px 0 #dededb;
+        }
+
+        .error-message {
+            margin-bottom: 20px;
+            padding: 13px 15px;
+
+            border: 2px solid #ffc1c1;
+            border-radius: 12px;
+
+            background: var(--red-soft);
+            color: #be3333;
+
+            font-size: 13px;
+            font-weight: 750;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .field-label {
+            color: var(--ink);
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .text-input,
+        .select-input {
+            width: 100%;
+            height: 47px;
+
+            padding: 0 14px;
+
+            border: 2px solid var(--border);
+            border-radius: 12px;
+
+            background: #ffffff;
+            color: var(--ink);
+
+            font-weight: 650;
+            outline: none;
+
+            transition:
+                border-color 0.15s ease,
+                box-shadow 0.15s ease;
+        }
+
+        .text-input:focus,
+        .select-input:focus,
+        .table-input:focus,
+        .cell-input:focus {
+            border-color: var(--blue);
+            box-shadow:
+                0 0 0 3px
+                rgba(28, 176, 246, 0.14);
+        }
+
+        .comparison-name-field {
+            max-width: 700px;
+            margin-bottom: 24px;
+        }
+
+        /* =========================================
+           TABLE TOOLBAR
+        ========================================= */
+
+        .table-section {
+            padding-top: 22px;
+            border-top: 2px solid #f0f0ee;
+        }
+
+        .table-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            gap: 14px;
+
+            margin-bottom: 15px;
+        }
+
+        .table-toolbar h2 {
+            margin: 0;
+            font-size: 18px;
+            letter-spacing: -0.2px;
+        }
+
+        .table-actions {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .action-button {
+            min-height: 40px;
+
+            padding: 0 14px;
+
+            border: 2px solid var(--border);
+            border-radius: 11px;
+
+            background: #ffffff;
+            color: var(--ink);
+
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+
+            box-shadow: 0 3px 0 #d8d8d5;
+
+            transition:
+                transform 0.1s ease,
+                box-shadow 0.1s ease,
+                background 0.15s ease;
+        }
+
+        .action-button:hover {
+            background: #f7f7f5;
+        }
+
+        .action-button:active {
+            transform: translateY(3px);
+            box-shadow: none;
+        }
+
+        .add-column-button {
+            border-color: #a7dcff;
+            background: #eef9ff;
+            color: #087fba;
+            box-shadow: 0 3px 0 #a7dcf5;
+        }
+
+        /* =========================================
+           COMPARISON TABLE
+        ========================================= */
+
+        .comparison-table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+
+            border: 2px solid var(--border);
+            border-radius: 14px;
+
+            background: #ffffff;
+        }
+
+        .comparison-table {
+            width: 100%;
+            min-width: 760px;
+
+            border-collapse: separate;
+            border-spacing: 0;
+            table-layout: fixed;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 10px;
+
+            border-right: 2px solid #eeeeec;
+            border-bottom: 2px solid #eeeeec;
+
+            vertical-align: top;
+        }
+
+        .comparison-table th:last-child,
+        .comparison-table td:last-child {
+            border-right: none;
+        }
+
+        .comparison-table tbody tr:last-child th,
+        .comparison-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table thead th {
+            background: #f4f4f2;
+        }
+
+        .row-heading {
+            width: 205px;
+            background: #fafaf8;
+        }
+
+        .corner-heading {
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 850;
+            text-align: left;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .header-editor {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .table-input {
+            width: 100%;
+            min-width: 120px;
+            height: 40px;
+
+            padding: 0 11px;
+
+            border: 2px solid #ddddda;
+            border-radius: 10px;
+
+            background: #ffffff;
+            color: var(--ink);
+
+            font-size: 13px;
+            font-weight: 750;
+            outline: none;
+        }
+
+        .row-name-input {
+            font-weight: 650;
+        }
+
+        .cell-input {
+            width: 100%;
+            min-height: 95px;
+
+            padding: 11px;
+
+            border: 2px solid #e2e2df;
+            border-radius: 10px;
+
+            background: #ffffff;
+            color: var(--ink);
+
+            font-size: 13px;
+            font-weight: 550;
+            line-height: 1.45;
+
+            resize: vertical;
+            outline: none;
+        }
+
+        .cell-input::placeholder,
+        .table-input::placeholder,
+        .text-input::placeholder {
+            color: #adadad;
+            font-weight: 550;
+        }
+
+        .delete-button {
+            width: 32px;
+            height: 32px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            flex-shrink: 0;
+
+            padding: 0;
+
+            border: 2px solid #ffc8c8;
+            border-radius: 9px;
+
+            background: var(--red-soft);
+            color: var(--red);
+
+            font-size: 18px;
+            font-weight: 900;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .delete-button:hover {
+            background: #ffe2e2;
+        }
+
+        .delete-button:disabled {
+            border-color: #e7e7e7;
+            background: #f4f4f4;
+            color: #bbbbbb;
+            cursor: not-allowed;
+        }
+
+        /* =========================================
+           OPTIONAL DETAILS
+        ========================================= */
+
+        .details-grid {
+            display: grid;
+
+            grid-template-columns:
+                repeat(
+                    2,
+                    minmax(0, 1fr)
+                );
+
+            gap: 16px;
+
+            margin-top: 22px;
+            padding-top: 22px;
+
+            border-top: 2px solid #f0f0ee;
+        }
+
+        /* =========================================
+           FOOTER
+        ========================================= */
+
+        .form-footer {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+
+            gap: 11px;
+
+            margin-top: 24px;
+            padding-top: 22px;
+
+            border-top: 2px solid #f0f0ee;
+        }
+
+        .cancel-button,
+        .save-button {
+            min-width: 130px;
+            min-height: 46px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            padding: 0 20px;
+
+            border-radius: 12px;
+
+            font-size: 14px;
+            font-weight: 850;
+            text-decoration: none;
+            cursor: pointer;
+
+            transition:
+                transform 0.1s ease,
+                box-shadow 0.1s ease;
+        }
+
+        .cancel-button {
+            border: 2px solid var(--border);
+            background: #ffffff;
+            color: var(--muted);
+            box-shadow: 0 4px 0 #d8d8d5;
+        }
+
+        .save-button {
+            border: 2px solid var(--green);
+            background: var(--green);
+            color: #ffffff;
+            box-shadow: 0 4px 0 var(--green-dark);
+        }
+
+        .cancel-button:active,
+        .save-button:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        @media (max-width: 760px) {
+
+            .page {
+                padding: 20px 16px 40px;
+            }
+
+            .subject-pill {
+                display: none;
+            }
+
+            .form-card {
+                padding: 17px;
+            }
+
+            .table-toolbar {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .table-actions {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-footer {
+                flex-direction: column-reverse;
+            }
+
+            .cancel-button,
+            .save-button {
+                width: 100%;
+            }
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="app">
+
+    {% include 'partials/sidebar.html' with active_page='summarize' %}
+
+    <main class="main">
+
+        <div class="page">
+
+            <div class="top-bar">
+
+                <a
+                    href="{% url 'subject_detail' subject_index=subject_index %}"
+                    class="back-button"
+                    aria-label="Back to subject"
+                >
+                    ←
+                </a>
+
+                <div class="page-title">
+
+                    <h1>
+                        Edit comparison
+                    </h1>
+
+                </div>
+
+                <div class="subject-pill">
+                    {{ subject.name }} · Editing
+                </div>
+
+            </div>
+
+            <form
+                method="POST"
+                class="form-card"
+                id="comparison-form"
+            >
+
+                {% csrf_token %}
+
+                <input
+                    type="hidden"
+                    name="subject_index"
+                    value="{{ subject_index }}"
+                >
+
+                <input
+                    type="hidden"
+                    name="comparison_data"
+                    id="comparison-data"
+                >
+
+                {% if error %}
+
+                    <div class="error-message">
+                        {{ error }}
+                    </div>
+
+                {% endif %}
+
+                <div class="field comparison-name-field">
+
+                    <label
+                        for="comparison-name"
+                        class="field-label"
+                    >
+                        Comparison name
+                    </label>
+
+                    <input
+                        type="text"
+                        name="comparison_name"
+                        id="comparison-name"
+                        class="text-input"
+                        value="{{ comparison_name }}"
+                        maxlength="255"
+                        placeholder="e.g. Assets vs liabilities"
+                        required
+                    >
+
+                </div>
+
+                <section class="table-section">
+
+                    <div class="table-toolbar">
+
+                        <h2>
+                            Comparison
+                        </h2>
+
+                        <div class="table-actions">
+
+                            <button
+                                type="button"
+                                class="action-button"
+                                id="add-row-button"
+                            >
+                                + Row
+                            </button>
+
+                            <button
+                                type="button"
+                                class="action-button add-column-button"
+                                id="add-column-button"
+                            >
+                                + Column
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                    <div
+                        class="comparison-table-wrapper"
+                        id="comparison-table-wrapper"
+                    ></div>
+
+                </section>
+
+                <div class="details-grid">
+
+                    <div class="field">
+
+                        <label
+                            for="book-id"
+                            class="field-label"
+                        >
+                            Textbook · optional
+                        </label>
+
+                        <select
+                            name="book_id"
+                            id="book-id"
+                            class="select-input"
+                        >
+
+                            <option value="">
+                                Select textbook
+                            </option>
+
+                            {% for textbook in textbooks %}
+
+                                <option
+                                    value="{{ textbook.id }}"
+                                    {% if selected_book_id == textbook.id|stringformat:"s" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    {{ textbook.name }}
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+                    <div class="field">
+
+                        <label
+                            for="chapter"
+                            class="field-label"
+                        >
+                            Chapter · optional
+                        </label>
+
+                        <input
+                            type="text"
+                            name="chapter"
+                            id="chapter"
+                            class="text-input"
+                            value="{{ chapter }}"
+                            maxlength="255"
+                            placeholder="Chapter 4"
+                        >
+
+                    </div>
+
+                </div>
+
+                <div class="form-footer">
+
+                    <a
+                        href="{% url 'subject_detail' subject_index=subject_index %}"
+                        class="cancel-button"
+                    >
+                        Cancel
+                    </a>
+
+                    <button
+                        type="submit"
+                        class="save-button"
+                    >
+                        Save Changes
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </main>
+
+</div>
+
+{{ comparison_data|json_script:"initial-comparison-data" }}
+
+<script>
+
+    const MIN_COLUMNS = 2;
+    const MIN_ROWS = 1;
+
+    const form =
+        document.getElementById(
+            "comparison-form"
+        );
+
+    const tableWrapper =
+        document.getElementById(
+            "comparison-table-wrapper"
+        );
+
+    const dataInput =
+        document.getElementById(
+            "comparison-data"
+        );
+
+    const initialDataElement =
+        document.getElementById(
+            "initial-comparison-data"
+        );
+
+    let comparisonState =
+        JSON.parse(
+            initialDataElement.textContent
+        );
+
+    // =============================================
+    // READ CURRENT TABLE
+    // =============================================
+
+    function syncStateFromTable() {
+
+        const columnInputs =
+            tableWrapper.querySelectorAll(
+                "[data-column-name]"
+            );
+
+        comparisonState.columns =
+            Array.from(
+                columnInputs
+            ).map(
+                function(input) {
+
+                    return input.value;
+
+                }
+            );
+
+        const rowElements =
+            tableWrapper.querySelectorAll(
+                "[data-comparison-row]"
+            );
+
+        comparisonState.rows =
+            Array.from(
+                rowElements
+            ).map(
+                function(rowElement) {
+
+                    const rowName =
+                        rowElement.querySelector(
+                            "[data-row-name]"
+                        );
+
+                    const cells =
+                        rowElement.querySelectorAll(
+                            "[data-cell]"
+                        );
+
+                    return {
+                        name:
+                            rowName.value,
+
+                        cells:
+                            Array.from(
+                                cells
+                            ).map(
+                                function(cell) {
+
+                                    return cell.value;
+
+                                }
+                            ),
+                    };
+
+                }
+            );
+
+    }
+
+    // =============================================
+    // TEXT INPUT
+    // =============================================
+
+    function createTableInput(
+        value,
+        placeholder,
+        attribute,
+        required,
+        extraClass
+    ) {
+
+        const input =
+            document.createElement(
+                "input"
+            );
+
+        input.type = "text";
+
+        input.className =
+            (
+                "table-input "
+                +
+                (
+                    extraClass
+                    ||
+                    ""
+                )
+            );
+
+        input.value =
+            value || "";
+
+        input.placeholder =
+            placeholder;
+
+        input.maxLength =
+            255;
+
+        input.required =
+            required;
+
+        input.setAttribute(
+            attribute,
+            ""
+        );
+
+        return input;
+
+    }
+
+    // =============================================
+    // DELETE BUTTON
+    // =============================================
+
+    function createDeleteButton(
+        title,
+        disabled,
+        callback
+    ) {
+
+        const button =
+            document.createElement(
+                "button"
+            );
+
+        button.type =
+            "button";
+
+        button.className =
+            "delete-button";
+
+        button.textContent =
+            "×";
+
+        button.title =
+            title;
+
+        button.setAttribute(
+            "aria-label",
+            title
+        );
+
+        button.disabled =
+            disabled;
+
+        button.addEventListener(
+            "click",
+            callback
+        );
+
+        return button;
+
+    }
+
+    // =============================================
+    // RENDER
+    // =============================================
+
+    function renderTable() {
+
+        tableWrapper.innerHTML =
+            "";
+
+        const table =
+            document.createElement(
+                "table"
+            );
+
+        table.className =
+            "comparison-table";
+
+        const tableHead =
+            document.createElement(
+                "thead"
+            );
+
+        const headerRow =
+            document.createElement(
+                "tr"
+            );
+
+        const corner =
+            document.createElement(
+                "th"
+            );
+
+        corner.className =
+            "row-heading corner-heading";
+
+        corner.textContent =
+            "Rows";
+
+        headerRow.appendChild(
+            corner
+        );
+
+        comparisonState.columns.forEach(
+            function(
+                columnName,
+                columnIndex
+            ) {
+
+                const heading =
+                    document.createElement(
+                        "th"
+                    );
+
+                const editor =
+                    document.createElement(
+                        "div"
+                    );
+
+                editor.className =
+                    "header-editor";
+
+                const input =
+                    createTableInput(
+                        columnName,
+                        (
+                            "Column "
+                            +
+                            (
+                                columnIndex + 1
+                            )
+                        ),
+                        "data-column-name",
+                        true,
+                        ""
+                    );
+
+                input.setAttribute(
+                    "aria-label",
+                    (
+                        "Column "
+                        +
+                        (
+                            columnIndex + 1
+                        )
+                        +
+                        " name"
+                    )
+                );
+
+                const deleteButton =
+                    createDeleteButton(
+                        "Delete column",
+                        (
+                            comparisonState
+                            .columns
+                            .length
+                            <= MIN_COLUMNS
+                        ),
+                        function() {
+
+                            removeColumn(
+                                columnIndex
+                            );
+
+                        }
+                    );
+
+                editor.appendChild(
+                    input
+                );
+
+                editor.appendChild(
+                    deleteButton
+                );
+
+                heading.appendChild(
+                    editor
+                );
+
+                headerRow.appendChild(
+                    heading
+                );
+
+            }
+        );
+
+        tableHead.appendChild(
+            headerRow
+        );
+
+        table.appendChild(
+            tableHead
+        );
+
+        const tableBody =
+            document.createElement(
+                "tbody"
+            );
+
+        comparisonState.rows.forEach(
+            function(
+                row,
+                rowIndex
+            ) {
+
+                const tableRow =
+                    document.createElement(
+                        "tr"
+                    );
+
+                tableRow.setAttribute(
+                    "data-comparison-row",
+                    ""
+                );
+
+                const rowHeading =
+                    document.createElement(
+                        "th"
+                    );
+
+                rowHeading.className =
+                    "row-heading";
+
+                const rowEditor =
+                    document.createElement(
+                        "div"
+                    );
+
+                rowEditor.className =
+                    "header-editor";
+
+                const rowInput =
+                    createTableInput(
+                        row.name,
+                        (
+                            "Row "
+                            +
+                            (
+                                rowIndex + 1
+                            )
+                            +
+                            " · optional"
+                        ),
+                        "data-row-name",
+                        false,
+                        "row-name-input"
+                    );
+
+                rowInput.setAttribute(
+                    "aria-label",
+                    (
+                        "Row "
+                        +
+                        (
+                            rowIndex + 1
+                        )
+                        +
+                        " name"
+                    )
+                );
+
+                const deleteButton =
+                    createDeleteButton(
+                        "Delete row",
+                        (
+                            comparisonState
+                            .rows
+                            .length
+                            <= MIN_ROWS
+                        ),
+                        function() {
+
+                            removeRow(
+                                rowIndex
+                            );
+
+                        }
+                    );
+
+                rowEditor.appendChild(
+                    rowInput
+                );
+
+                rowEditor.appendChild(
+                    deleteButton
+                );
+
+                rowHeading.appendChild(
+                    rowEditor
+                );
+
+                tableRow.appendChild(
+                    rowHeading
+                );
+
+                comparisonState.columns.forEach(
+                    function(
+                        column,
+                        columnIndex
+                    ) {
+
+                        const cell =
+                            document.createElement(
+                                "td"
+                            );
+
+                        const textarea =
+                            document.createElement(
+                                "textarea"
+                            );
+
+                        textarea.className =
+                            "cell-input";
+
+                        textarea.placeholder =
+                            "Add details";
+
+                        textarea.value =
+                            (
+                                row.cells[
+                                    columnIndex
+                                ]
+                                ||
+                                ""
+                            );
+
+                        textarea.setAttribute(
+                            "data-cell",
+                            ""
+                        );
+
+                        textarea.setAttribute(
+                            "aria-label",
+                            (
+                                "Row "
+                                +
+                                (
+                                    rowIndex + 1
+                                )
+                                +
+                                ", column "
+                                +
+                                (
+                                    columnIndex + 1
+                                )
+                            )
+                        );
+
+                        cell.appendChild(
+                            textarea
+                        );
+
+                        tableRow.appendChild(
+                            cell
+                        );
+
+                    }
+                );
+
+                tableBody.appendChild(
+                    tableRow
+                );
+
+            }
+        );
+
+        table.appendChild(
+            tableBody
+        );
+
+        tableWrapper.appendChild(
+            table
+        );
+
+    }
+
+    // =============================================
+    // ADD COLUMN
+    // =============================================
+
+    function addColumn() {
+
+        syncStateFromTable();
+
+        comparisonState.columns.push(
+            ""
+        );
+
+        comparisonState.rows.forEach(
+            function(row) {
+
+                row.cells.push(
+                    ""
+                );
+
+            }
+        );
+
+        renderTable();
+
+    }
+
+    // =============================================
+    // REMOVE COLUMN
+    // =============================================
+
+    function removeColumn(
+        columnIndex
+    ) {
+
+        syncStateFromTable();
+
+        if (
+            comparisonState.columns.length
+            <= MIN_COLUMNS
+        ) {
+
+            return;
+
+        }
+
+        comparisonState.columns.splice(
+            columnIndex,
+            1
+        );
+
+        comparisonState.rows.forEach(
+            function(row) {
+
+                row.cells.splice(
+                    columnIndex,
+                    1
+                );
+
+            }
+        );
+
+        renderTable();
+
+    }
+
+    // =============================================
+    // ADD ROW
+    // =============================================
+
+    function addRow() {
+
+        syncStateFromTable();
+
+        comparisonState.rows.push(
+            {
+                name: "",
+
+                cells:
+                    comparisonState
+                    .columns
+                    .map(
+                        function() {
+
+                            return "";
+
+                        }
+                    ),
+            }
+        );
+
+        renderTable();
+
+    }
+
+    // =============================================
+    // REMOVE ROW
+    // =============================================
+
+    function removeRow(
+        rowIndex
+    ) {
+
+        syncStateFromTable();
+
+        if (
+            comparisonState.rows.length
+            <= MIN_ROWS
+        ) {
+
+            return;
+
+        }
+
+        comparisonState.rows.splice(
+            rowIndex,
+            1
+        );
+
+        renderTable();
+
+    }
+
+    // =============================================
+    // EVENTS
+    // =============================================
+
+    document
+        .getElementById(
+            "add-column-button"
+        )
+        .addEventListener(
+            "click",
+            addColumn
+        );
+
+    document
+        .getElementById(
+            "add-row-button"
+        )
+        .addEventListener(
+            "click",
+            addRow
+        );
+
+    form.addEventListener(
+        "submit",
+        function(event) {
+
+            syncStateFromTable();
+
+            if (
+                comparisonState.columns.length
+                < MIN_COLUMNS
+                ||
+                comparisonState.rows.length
+                < MIN_ROWS
+            ) {
+
+                event.preventDefault();
+
+                return;
+
+            }
+
+            dataInput.value =
+                JSON.stringify(
+                    comparisonState
+                );
+
+        }
+    );
+
+    renderTable();
+
+</script>
+
+<script src="{% static 'dashboard/js/sidebar.js' %}"></script>
+
+</body>
+
+</html>
+

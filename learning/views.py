@@ -8335,6 +8335,388 @@ def create_comparison(
     )
 
 
+# ============================================================
+# EDIT COMPARISON
+# ============================================================
+
+@login_required
+def edit_comparison(
+    request,
+    comparison_id
+):
+
+    comparison = get_object_or_404(
+        Comparison.objects.select_related(
+            "knowledge_unit__subject"
+        ),
+        id=comparison_id,
+        knowledge_unit__subject__user=request.user,
+        knowledge_unit__knowledge_type=(
+            KnowledgeUnit.KnowledgeType.COMPARISON
+        ),
+    )
+
+    knowledge_unit = comparison.knowledge_unit
+    subject = knowledge_unit.subject
+
+    subject_index = (
+        request.POST.get("subject_index")
+        or
+        request.GET.get("subject_index")
+    )
+
+    try:
+        subject_index = int(subject_index)
+    except (TypeError, ValueError):
+        subject_index = 0
+
+    textbooks = (
+        SubjectTextbook.objects
+        .filter(subject=subject)
+        .order_by("created", "id")
+    )
+
+    existing_book = None
+
+    if comparison.book_name:
+        existing_book = (
+            textbooks
+            .filter(name=comparison.book_name)
+            .first()
+        )
+
+    comparison_name = comparison.name
+    selected_book_id = (
+        str(existing_book.id)
+        if existing_book
+        else ""
+    )
+    chapter = comparison.chapter or ""
+    error = None
+
+    columns = list(
+        comparison.columns.all().order_by(
+            "order",
+            "id",
+        )
+    )
+
+    comparison_data = {
+        "columns": [
+            column.name
+            for column in columns
+        ],
+        "rows": [],
+    }
+
+    for row in comparison.rows.all().order_by(
+        "order",
+        "id",
+    ):
+        cell_lookup = {
+            cell.column_id: cell.content
+            for cell in row.cells.all()
+        }
+
+        comparison_data["rows"].append(
+            {
+                "name": row.name,
+                "cells": [
+                    cell_lookup.get(column.id, "")
+                    for column in columns
+                ],
+            }
+        )
+
+    if request.method == "POST":
+        comparison_name = request.POST.get(
+            "comparison_name",
+            "",
+        ).strip()
+        selected_book_id = request.POST.get(
+            "book_id",
+            "",
+        ).strip()
+        chapter = request.POST.get(
+            "chapter",
+            "",
+        ).strip()
+
+        column_names = []
+        normalized_rows = []
+
+        try:
+            submitted_data = json.loads(
+                request.POST.get(
+                    "comparison_data",
+                    "",
+                )
+            )
+
+            if not isinstance(submitted_data, dict):
+                raise ValueError
+
+            submitted_columns = submitted_data.get(
+                "columns",
+                [],
+            )
+            submitted_rows = submitted_data.get(
+                "rows",
+                [],
+            )
+
+            if (
+                not isinstance(submitted_columns, list)
+                or
+                not isinstance(submitted_rows, list)
+            ):
+                raise ValueError
+
+            column_names = [
+                str(column_name).strip()
+                for column_name in submitted_columns
+            ]
+
+            for submitted_row in submitted_rows:
+                if not isinstance(submitted_row, dict):
+                    raise ValueError
+
+                submitted_cells = submitted_row.get(
+                    "cells",
+                    [],
+                )
+
+                if not isinstance(submitted_cells, list):
+                    submitted_cells = []
+
+                normalized_rows.append(
+                    {
+                        "name": str(
+                            submitted_row.get("name", "")
+                        ).strip(),
+                        "cells": [
+                            (
+                                str(submitted_cells[column_index])
+                                .strip()
+                                if column_index < len(submitted_cells)
+                                else ""
+                            )
+                            for column_index in range(
+                                len(column_names)
+                            )
+                        ],
+                    }
+                )
+
+            comparison_data = {
+                "columns": column_names,
+                "rows": normalized_rows,
+            }
+
+        except (TypeError, ValueError, json.JSONDecodeError):
+            error = (
+                "The comparison table could not be read. "
+                "Please try again."
+            )
+
+        if error is None and not comparison_name:
+            error = "Please enter a name for the comparison."
+        elif error is None and len(comparison_name) > 255:
+            error = (
+                "The comparison name cannot be longer "
+                "than 255 characters."
+            )
+        elif error is None and len(column_names) < 2:
+            error = "A comparison must have at least two columns."
+        elif error is None and len(normalized_rows) < 1:
+            error = "A comparison must have at least one row."
+        elif error is None and any(
+            not column_name
+            for column_name in column_names
+        ):
+            error = "Please name every column."
+        elif error is None and any(
+            len(column_name) > 255
+            for column_name in column_names
+        ):
+            error = (
+                "Column names cannot be longer than "
+                "255 characters."
+            )
+        elif error is None and any(
+            len(row["name"]) > 255
+            for row in normalized_rows
+        ):
+            error = (
+                "Row names cannot be longer than "
+                "255 characters."
+            )
+        elif error is None and len(chapter) > 255:
+            error = (
+                "The chapter cannot be longer than "
+                "255 characters."
+            )
+
+        selected_book = None
+
+        if error is None and selected_book_id:
+            try:
+                selected_book_id_integer = int(selected_book_id)
+            except (TypeError, ValueError):
+                selected_book_id_integer = None
+
+            if selected_book_id_integer:
+                selected_book = (
+                    textbooks
+                    .filter(id=selected_book_id_integer)
+                    .first()
+                )
+
+            if not selected_book:
+                error = (
+                    "The selected textbook does not belong "
+                    "to this subject."
+                )
+
+        if error is None:
+            with transaction.atomic():
+                knowledge_unit.title = comparison_name
+                knowledge_unit.estimated_minutes = max(
+                    2,
+                    len(normalized_rows),
+                )
+                knowledge_unit.save(
+                    update_fields=[
+                        "title",
+                        "estimated_minutes",
+                    ]
+                )
+
+                comparison.name = comparison_name
+                comparison.book_name = (
+                    selected_book.name
+                    if selected_book
+                    else ""
+                )
+                comparison.chapter = chapter
+                comparison.save(
+                    update_fields=[
+                        "name",
+                        "book_name",
+                        "chapter",
+                    ]
+                )
+
+                comparison.rows.all().delete()
+                comparison.columns.all().delete()
+
+                saved_columns = []
+
+                for column_order, column_name in enumerate(
+                    column_names,
+                    start=1,
+                ):
+                    saved_columns.append(
+                        ComparisonColumn.objects.create(
+                            comparison=comparison,
+                            name=column_name,
+                            order=column_order,
+                        )
+                    )
+
+                for row_order, row_data in enumerate(
+                    normalized_rows,
+                    start=1,
+                ):
+                    saved_row = ComparisonRow.objects.create(
+                        comparison=comparison,
+                        name=row_data["name"],
+                        order=row_order,
+                    )
+
+                    for column_index, saved_column in enumerate(
+                        saved_columns
+                    ):
+                        ComparisonCell.objects.create(
+                            row=saved_row,
+                            column=saved_column,
+                            content=(
+                                row_data["cells"][column_index]
+                            ),
+                        )
+
+            return redirect(
+                "subject_detail",
+                subject_index=subject_index,
+            )
+
+    return render(
+        request,
+        "learning/edit_comparison.html",
+        {
+            "comparison": comparison,
+            "subject": subject,
+            "subject_index": subject_index,
+            "textbooks": textbooks,
+            "comparison_name": comparison_name,
+            "selected_book_id": selected_book_id,
+            "chapter": chapter,
+            "comparison_data": comparison_data,
+            "error": error,
+        },
+    )
+
+
+# ============================================================
+# DELETE COMPARISON
+# ============================================================
+
+@login_required
+def delete_comparison(
+    request,
+    comparison_id
+):
+
+    comparison = get_object_or_404(
+        Comparison.objects.select_related(
+            "knowledge_unit__subject"
+        ),
+        id=comparison_id,
+        knowledge_unit__subject__user=request.user,
+    )
+
+    raw_subject_index = request.POST.get(
+        "subject_index",
+        "",
+    )
+
+    try:
+        subject_index = int(raw_subject_index)
+    except (TypeError, ValueError):
+        subject_index = None
+
+    if request.method == "POST":
+        # Removing the owning knowledge unit also removes the comparison,
+        # its table data, and its associated review-progress record.
+        comparison.knowledge_unit.delete()
+
+        if subject_index is not None:
+            return redirect(
+                "comparison_review_list",
+                subject_index=subject_index,
+            )
+
+        return redirect("review")
+
+    if subject_index is not None:
+        return redirect(
+            "comparison_review_list",
+            subject_index=subject_index,
+        )
+
+    return redirect("review")
+
+
 
 # ============================================================
 # COMPARISON REVIEW LIST
