@@ -1,378 +1,677 @@
 {% load static %}
-
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>
-        Definitions to Review - StudyOptimizer
-    </title>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Definitions to Review - StudyOptimizer</title>
+    <link rel="stylesheet" href="{% static 'dashboard/css/sidebar.css' %}">
 
     <style>
-
-        * {
-            box-sizing: border-box;
+        :root {
+            --green: #58b82a;
+            --green-dark: #3f8f1d;
+            --green-soft: #eef9e9;
+            --ink: #2f3133;
+            --muted: #747a80;
+            --border: #dfe3e6;
+            --blue: #1f8fe5;
+            --blue-dark: #1472b8;
+            --danger: #df4b4b;
+            --danger-dark: #b93636;
         }
 
+        * { box-sizing: border-box; }
 
         body {
-
             margin: 0;
-
-            background: #f5f6f8;
-
-            color: #222;
-
-            font-family:
-                -apple-system,
-                BlinkMacSystemFont,
-                "Segoe UI",
-                Arial,
-                sans-serif;
-
+            background: #f7f8fa;
+            color: var(--ink);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
         }
 
-
-        .page {
-
-            min-height: 100vh;
-
-            padding:
-                30px
-                40px
-                50px;
-
-        }
-
-
-        .container {
-
-            max-width: 850px;
-
-            margin: 0 auto;
-
-        }
-
-
-        /* =========================================
-           HEADER
-        ========================================= */
+        .app { display: flex; min-height: 100vh; }
+        .main { flex: 1; min-width: 0; }
+        .page { min-height: 100vh; padding: 30px 40px 55px; }
+        .container { width: 100%; max-width: 920px; margin: 0 auto; }
 
         .header {
-
             display: flex;
-
             align-items: center;
-
             gap: 18px;
-
-            margin-bottom: 30px;
-
+            margin-bottom: 24px;
         }
-
 
         .back-button {
-
-            width: 40px;
-
-            height: 40px;
-
-            display: flex;
-
+            width: 48px;
+            height: 48px;
+            display: inline-flex;
             align-items: center;
-
             justify-content: center;
-
-            border:
-                1px solid
-                #dedede;
-
-            border-radius: 9px;
-
-            background: white;
-
-            color: #333;
-
+            flex-shrink: 0;
+            border: 2px solid #9fd0f2;
+            border-bottom: 5px solid #62acd9;
+            border-radius: 12px;
+            background: #e7f5ff;
+            color: #1879b8;
             text-decoration: none;
-
-            font-size: 20px;
-
+            font-size: 0;
+            transition: transform 0.15s ease, border-color 0.15s ease;
         }
 
-
-        .back-button:hover {
-
-            background: #f0f0f0;
-
-        }
-
+        .back-button svg { width: 27px; height: 27px; stroke-width: 3.4; }
+        .back-button:hover { border-color: #76bce8; background: #d9efff; transform: translateY(-1px); }
+        .back-button:active { border-bottom-width: 2px; transform: translateY(2px); }
 
         .header h1 {
-
             margin: 0 0 5px;
-
-            font-size: 30px;
-
+            font-size: 32px;
+            font-weight: 850;
+            letter-spacing: -0.8px;
         }
-
 
         .header p {
-
             margin: 0;
-
-            color: #777;
-
+            color: var(--muted);
             font-size: 14px;
-
+            font-weight: 600;
         }
 
+        .progress-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            margin-bottom: 20px;
+            padding: 18px 20px;
+            border: 2px solid #d9ead0;
+            border-bottom-width: 5px;
+            border-radius: 16px;
+            background: var(--green-soft);
+        }
 
-        /* =========================================
-           REVIEW LIST
-        ========================================= */
+        .progress-label {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--green-dark);
+            font-size: 12px;
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .progress-card strong {
+            display: block;
+            font-size: 18px;
+            font-weight: 850;
+        }
+
+        .progress-badge {
+            min-width: 54px;
+            height: 54px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            border: 2px solid var(--green-dark);
+            border-bottom-width: 5px;
+            border-radius: 15px;
+            background: var(--green);
+            color: white;
+            font-size: 22px;
+            font-weight: 900;
+        }
+
+        .search-wrap {
+            position: relative;
+            display: block;
+            margin-bottom: 20px;
+        }
+
+        .search-icon {
+            position: absolute;
+            top: 50%;
+            left: 16px;
+            color: #8b9196;
+            font-size: 19px;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
+        .search-input {
+            width: 100%;
+            min-height: 50px;
+            padding: 12px 46px;
+            border: 2px solid var(--border);
+            border-bottom-width: 4px;
+            border-radius: 14px;
+            background: white;
+            color: var(--ink);
+            font-size: 15px;
+            font-weight: 650;
+            outline: none;
+        }
+
+        .search-input:focus {
+            border-color: #8bc96a;
+            box-shadow: 0 0 0 4px rgba(88, 184, 42, 0.12);
+        }
 
         .review-list {
-
             display: flex;
-
             flex-direction: column;
-
-            gap: 12px;
-
+            gap: 16px;
         }
-
 
         .review-item {
-
-            display: block;
-
-            padding: 20px;
-
-            background: white;
-
-            border:
-                1px solid
-                #e1e1e1;
-
-            border-radius: 12px;
-
-            text-decoration: none;
-
-            color: inherit;
-
-            transition:
-                background 0.15s ease,
-                border-color 0.15s ease,
-                transform 0.15s ease;
-
-        }
-
-
-        .review-item:hover {
-
-            background: #fafafa;
-
-            border-color: #cfcfcf;
-
-            transform:
-                translateY(-1px);
-
-        }
-
-
-        .review-item-header {
-
             display: flex;
-
             align-items: center;
-
-            justify-content: space-between;
-
-            gap: 15px;
-
+            min-height: 92px;
+            overflow: hidden;
+            border: 2px solid var(--border);
+            border-bottom-width: 5px;
+            border-radius: 17px;
+            background: white;
+            color: inherit;
+            transition: transform 0.15s ease, border-color 0.15s ease;
         }
 
+        .review-item[hidden] { display: none; }
+        .review-item:hover { border-color: #9bd77c; transform: translateY(-2px); }
 
-        .review-item h2 {
-
-            margin: 0;
-
-            font-size: 17px;
-
+        .review-link {
+            display: flex;
+            align-items: center;
+            align-self: stretch;
+            gap: 18px;
+            min-width: 0;
+            flex: 1;
+            padding: 18px 20px;
+            color: inherit;
+            text-decoration: none;
         }
 
+        .definition-number {
+            width: 46px;
+            height: 46px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            border-radius: 13px;
+            background: var(--green-soft);
+            color: var(--green-dark);
+            font-size: 16px;
+            font-weight: 900;
+        }
 
-        .arrow {
+        .review-copy { min-width: 0; flex: 1; }
 
+        .review-copy h2 {
+            margin: 0 0 6px;
+            overflow-wrap: anywhere;
             font-size: 18px;
-
-            color: #777;
-
+            font-weight: 850;
+            letter-spacing: -0.2px;
         }
 
-
-        .review-item p {
-
-            margin:
-                8px
-                0
-                0;
-
-            color: #888;
-
+        .review-copy p {
+            margin: 0;
+            color: var(--muted);
             font-size: 13px;
-
-            line-height: 1.5;
-
+            font-weight: 650;
         }
 
+        .review-actions {
+            width: 64px;
+            align-self: stretch;
+            display: grid;
+            grid-template-rows: 1fr 1fr;
+            flex-shrink: 0;
+            border-left: 2px solid var(--border);
+        }
 
-        /* =========================================
-           EMPTY
-        ========================================= */
+        .edge-action,
+        .edge-action-form,
+        .edge-action-form button {
+            width: 100%;
+            height: 100%;
+        }
+
+        .edge-action {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 0;
+            background: #edf8ff;
+            color: #2182be;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.15s ease, color 0.15s ease;
+        }
+
+        .review-actions > .edge-action:first-child {
+            border-bottom: 2px solid var(--border);
+        }
+
+        .edge-action:hover { background: #d9efff; color: #12689f; }
+        .edge-action svg { width: 23px; height: 23px; stroke-width: 2.6; }
+
+        .edge-action-form { margin: 0; }
+
+        .edge-action-form button {
+            border: 0;
+            background: #fff0f0;
+            color: var(--danger);
+        }
+
+        .edge-action-form button:hover {
+            background: #ffe0e0;
+            color: var(--danger-dark);
+        }
+
+        body.modal-open { overflow: hidden; }
+        .delete-modal[hidden] { display: none; }
+
+        .delete-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: rgba(28, 31, 33, 0.5);
+        }
+
+        .delete-modal-card {
+            width: min(470px, 100%);
+            padding: 28px;
+            border: 2px solid var(--border);
+            border-bottom-width: 5px;
+            border-radius: 17px;
+            background: white;
+            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.22);
+        }
+
+        .delete-modal-icon {
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 17px;
+            border-radius: 14px;
+            background: #fff0f0;
+            color: var(--danger);
+        }
+
+        .delete-modal-icon svg { width: 29px; height: 29px; stroke-width: 2.7; }
+        .delete-modal-card h2 { margin: 0 0 8px; font-size: 23px; font-weight: 850; }
+        .delete-modal-card p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
+        .delete-definition-name { color: var(--ink); font-weight: 850; }
+
+        .delete-modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #eceeef;
+        }
+
+        .modal-button {
+            padding: 11px 17px 9px;
+            border: 2px solid;
+            border-bottom-width: 4px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 850;
+            cursor: pointer;
+        }
+
+        .modal-cancel { border-color: #d7dcdf; background: white; color: #555d62; }
+        .modal-delete { border-color: var(--danger-dark); background: var(--danger); color: white; }
+        .modal-cancel:hover { background: #f4f5f6; }
+        .modal-delete:hover { background: #e75b5b; }
 
         .empty {
-
-            padding: 40px 20px;
-
+            padding: 48px 24px;
+            border: 2px solid var(--border);
+            border-bottom-width: 5px;
+            border-radius: 18px;
             background: white;
-
-            border:
-                1px dashed
-                #d5d5d5;
-
-            border-radius: 12px;
-
             text-align: center;
-
-            color: #888;
-
         }
 
+        .empty-icon {
+            width: 70px;
+            height: 70px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            border: 2px solid #cde6c0;
+            border-radius: 50%;
+            background: var(--green-soft);
+            color: var(--green-dark);
+            font-size: 34px;
+            font-weight: 900;
+        }
 
+        .empty h2 { margin: 0 0 8px; font-size: 23px; font-weight: 850; }
+
+        .empty p {
+            margin: 0 auto 22px;
+            max-width: 440px;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        .subject-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 20px 10px;
+            border: 2px solid var(--blue-dark);
+            border-bottom-width: 5px;
+            border-radius: 12px;
+            background: var(--blue);
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 850;
+        }
+
+        .subject-button:active {
+            border-bottom-width: 2px;
+            transform: translateY(3px);
+        }
+
+        .search-empty {
+            margin-top: 16px;
+            padding: 24px;
+            border: 2px dashed #d3d8dc;
+            border-radius: 14px;
+            background: white;
+            color: var(--muted);
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .search-empty[hidden] { display: none; }
+
+        @media (max-width: 700px) {
+            .page { padding: 22px 18px 42px; }
+            .header { align-items: flex-start; }
+            .header h1 { font-size: 25px; }
+            .progress-card { padding: 16px; }
+            .review-link { gap: 13px; padding: 16px 14px; }
+            .review-actions { width: 58px; }
+            .definition-number { width: 40px; height: 40px; }
+            .delete-modal-actions { flex-direction: column-reverse; }
+            .modal-button { width: 100%; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .back-button,
+            .review-item {
+                transition: none;
+            }
+        }
     </style>
-
 </head>
 
-
 <body>
+<div class="app">
+    {% include 'partials/sidebar.html' with active_page='review' %}
 
-
-<div class="page">
-
-
-    <div class="container">
-
-
-        <!-- =========================================
-             HEADER
-        ========================================= -->
-
-        <header class="header">
-
-
-            <a
-                href="{% url 'subject_detail' subject_index=subject_index %}"
-                class="back-button"
-            >
-                ←
-            </a>
-
-
-            <div>
-
-                <h1>
-                    Definitions to Review
-                </h1>
-
-                <p>
-                    Select a definition to begin your review.
-                </p>
-
-            </div>
-
-
-        </header>
-
-
-        <!-- =========================================
-             DEFINITIONS
-        ========================================= -->
-
-        {% if definitions %}
-
-
-            <div class="review-list">
-
-
-                {% for definition in definitions %}
-
-
+    <main class="main">
+        <div class="page">
+            <div class="container">
+                <header class="header">
                     <a
-                        href="{% url 'practice_definition_review' definition_id=definition.id %}?review_scope=subject&subject_index={{ subject_index }}"
-                        class="review-item"
+                        href="{% url 'subject_detail' subject_index=subject_index %}"
+                        class="back-button"
+                        aria-label="Back to subject"
                     >
-
-
-                        <div class="review-item-header">
-
-
-                            <h2>
-                                {{ definition.term }}
-                            </h2>
-
-
-                            <span class="arrow">
-                                →
-                            </span>
-
-
-                        </div>
-
-
-                        <p>
-                            Definition · Review now
-                        </p>
-
-
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                            <path d="M19 12H5"></path>
+                            <path d="m11 18-6-6 6-6"></path>
+                        </svg>
                     </a>
 
+                    <div>
+                        <h1>Definition Review</h1>
+                        <p>{{ subject.name }} · Complete the definitions due today.</p>
+                    </div>
+                </header>
 
-                {% endfor %}
+                {% if definitions %}
+                    <section class="progress-card" aria-label="Review total">
+                        <div>
+                            <span class="progress-label">Daily review</span>
+                            <strong>
+                                {{ due_definition_count }}
+                                definition{{ due_definition_count|pluralize }} ready
+                            </strong>
+                        </div>
+                        <span class="progress-badge">{{ due_definition_count }}</span>
+                    </section>
 
+                    <label class="search-wrap">
+                        <span class="search-icon" aria-hidden="true">⌕</span>
+                        <input
+                            type="search"
+                            class="search-input"
+                            id="review-search"
+                            placeholder="Search definitions..."
+                            autocomplete="off"
+                        >
+                    </label>
 
+                    <div class="review-list" id="review-list">
+                        {% for definition in definitions %}
+                            <article
+                                class="review-item"
+                                data-review-item
+                            >
+                                <a
+                                    href="{% url 'practice_definition_review' definition_id=definition.id %}?review_scope=subject&amp;subject_index={{ subject_index }}"
+                                    class="review-link"
+                                >
+                                    <span class="definition-number">{{ forloop.counter }}</span>
+
+                                    <div class="review-copy">
+                                        <h2>{{ definition.term }}</h2>
+                                        <p>
+                                            Definition · Due today
+                                        </p>
+                                    </div>
+                                </a>
+
+                                <div class="review-actions">
+                                    <a
+                                        href="{% url 'edit_definition' definition_id=definition.id %}?subject_index={{ subject_index }}"
+                                        class="edge-action"
+                                        aria-label="Edit {{ definition.term }}"
+                                        title="Edit definition"
+                                    >
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                                            <path d="M12 20h9"></path>
+                                            <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"></path>
+                                        </svg>
+                                    </a>
+
+                                    <form
+                                        method="POST"
+                                        action="{% url 'delete_definition' definition_id=definition.id %}"
+                                        class="edge-action-form"
+                                        data-delete-form
+                                        data-definition-name="{{ definition.term|escape }}"
+                                    >
+                                        {% csrf_token %}
+                                        <input type="hidden" name="subject_index" value="{{ subject_index }}">
+
+                                        <button
+                                            type="submit"
+                                            class="edge-action"
+                                            aria-label="Delete {{ definition.term }}"
+                                            title="Delete definition"
+                                        >
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                                                <path d="M3 6h18"></path>
+                                                <path d="M8 6V4h8v2"></path>
+                                                <path d="m19 6-1 14H6L5 6"></path>
+                                                <path d="M10 10v6M14 10v6"></path>
+                                            </svg>
+                                        </button>
+                                    </form>
+                                </div>
+                            </article>
+                        {% endfor %}
+                    </div>
+
+                    <div class="search-empty" id="search-empty" hidden>
+                        No due definitions match that search.
+                    </div>
+                {% else %}
+                    <section class="empty">
+                        <div class="empty-icon" aria-hidden="true">✓</div>
+                        <h2>Daily review complete!</h2>
+                        <p>
+                            You have reviewed every definition due today. Your next
+                            daily review becomes available from midnight.
+                        </p>
+                        <a
+                            href="{% url 'subject_detail' subject_index=subject_index %}"
+                            class="subject-button"
+                        >Finish Review</a>
+                    </section>
+                {% endif %}
             </div>
-
-
-        {% else %}
-
-
-            <div class="empty">
-
-                No definitions are due for review today.
-
-            </div>
-
-
-        {% endif %}
-
-
-    </div>
-
-
+        </div>
+    </main>
 </div>
 
+<div
+    class="delete-modal"
+    id="delete-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="delete-modal-title"
+    hidden
+>
+    <div class="delete-modal-card">
+        <div class="delete-modal-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M3 6h18"></path>
+                <path d="M8 6V4h8v2"></path>
+                <path d="m19 6-1 14H6L5 6"></path>
+                <path d="M10 10v6M14 10v6"></path>
+            </svg>
+        </div>
 
+        <h2 id="delete-modal-title">Delete this definition?</h2>
+        <p>
+            Are you sure you want to permanently delete
+            <span class="delete-definition-name" id="delete-definition-name"></span>?
+            This cannot be undone.
+        </p>
+
+        <div class="delete-modal-actions">
+            <button type="button" class="modal-button modal-cancel" id="delete-modal-cancel">
+                Keep Definition
+            </button>
+            <button type="button" class="modal-button modal-delete" id="delete-modal-confirm">
+                Delete Definition
+            </button>
+        </div>
+    </div>
+</div>
+
+{% if definitions %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const searchInput = document.getElementById("review-search");
+        const reviewItems = Array.from(
+            document.querySelectorAll("[data-review-item]")
+        );
+        const searchEmpty = document.getElementById("search-empty");
+        const deleteModal = document.getElementById("delete-modal");
+        const deleteDefinitionName = document.getElementById("delete-definition-name");
+        const deleteModalCancel = document.getElementById("delete-modal-cancel");
+        const deleteModalConfirm = document.getElementById("delete-modal-confirm");
+        let pendingDeleteForm = null;
+        let previousFocus = null;
+
+        searchInput.addEventListener("input", function () {
+            const query = searchInput.value.trim().toLocaleLowerCase();
+            let visibleCount = 0;
+
+            reviewItems.forEach(function (item) {
+                const matches = item.textContent
+                    .toLocaleLowerCase()
+                    .includes(query);
+
+                item.hidden = !matches;
+
+                if (matches) {
+                    visibleCount += 1;
+                }
+            });
+
+            searchEmpty.hidden = visibleCount !== 0;
+        });
+
+        function closeDeleteModal() {
+            deleteModal.hidden = true;
+            document.body.classList.remove("modal-open");
+            pendingDeleteForm = null;
+
+            if (previousFocus) {
+                previousFocus.focus();
+            }
+        }
+
+        document.querySelectorAll("[data-delete-form]").forEach(function (form) {
+            form.addEventListener("submit", function (event) {
+                event.preventDefault();
+                pendingDeleteForm = form;
+                previousFocus = document.activeElement;
+                deleteDefinitionName.textContent = (
+                    form.dataset.definitionName || "this definition"
+                );
+                deleteModal.hidden = false;
+                document.body.classList.add("modal-open");
+                deleteModalCancel.focus();
+            });
+        });
+
+        deleteModalCancel.addEventListener("click", closeDeleteModal);
+
+        deleteModalConfirm.addEventListener("click", function () {
+            if (pendingDeleteForm) {
+                pendingDeleteForm.submit();
+            }
+        });
+
+        deleteModal.addEventListener("click", function (event) {
+            if (event.target === deleteModal) {
+                closeDeleteModal();
+            }
+        });
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape" && !deleteModal.hidden) {
+                closeDeleteModal();
+            }
+        });
+    });
+</script>
+{% endif %}
+
+<script src="{% static 'dashboard/js/sidebar.js' %}"></script>
 </body>
-
 </html>
+

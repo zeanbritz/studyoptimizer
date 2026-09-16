@@ -4026,6 +4026,16 @@ def delete_definition(
 
     subject = definition.knowledge_unit.subject
 
+    raw_subject_index = request.POST.get(
+        "subject_index",
+        "",
+    )
+
+    try:
+        subject_index = int(raw_subject_index)
+    except (TypeError, ValueError):
+        subject_index = None
+
     # ========================================================
     # ONLY DELETE THROUGH POST
     # ========================================================
@@ -4041,6 +4051,13 @@ def delete_definition(
         # Definition belongs to it.
 
         knowledge_unit.delete()
+
+        if subject_index is not None:
+
+            return redirect(
+                "definition_review_list",
+                subject_index=subject_index,
+            )
 
         return redirect(
             "definition_list",
