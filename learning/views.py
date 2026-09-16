@@ -5758,6 +5758,20 @@ def create_list(
                 "for the list."
             )
 
+        elif len(list_name) > 255:
+
+            error = (
+                "The list name cannot be longer than "
+                "255 characters."
+            )
+
+        elif len(chapter) > 255:
+
+            error = (
+                "The chapter cannot be longer than "
+                "255 characters."
+            )
+
         # ====================================================
         # VALIDATE BOOK
         # ====================================================
@@ -5812,6 +5826,34 @@ def create_list(
             error = (
                 "Add at least one item "
                 "to the list."
+            )
+
+        if (
+            error is None
+            and
+            any(
+                len(item["text"]) > 255
+                for item in valid_items
+            )
+        ):
+
+            error = (
+                "List items cannot be longer than "
+                "255 characters."
+            )
+
+        if (
+            error is None
+            and
+            any(
+                len(item["description"]) > 500
+                for item in valid_items
+            )
+        ):
+
+            error = (
+                "Item descriptions cannot be longer than "
+                "500 characters."
             )
 
         # ====================================================
@@ -5968,6 +6010,331 @@ def create_list(
                 variable_suggestions,
         }
     )
+
+
+# ============================================================
+# RESOLVE A SUBJECT'S SESSION INDEX
+# ============================================================
+
+def _resolve_learning_subject_index(
+    request,
+    subject,
+    raw_subject_index=None,
+):
+
+    subjects = request.session.get(
+        "onboarding_subjects",
+        [],
+    )
+
+    def matches_subject(subject_data):
+
+        database_id = subject_data.get(
+            "database_id"
+        )
+
+        try:
+            if int(database_id) == subject.id:
+                return True
+        except (TypeError, ValueError):
+            pass
+
+        return (
+            subject_data.get("name", "").strip()
+            == subject.name.strip()
+        )
+
+    try:
+        supplied_index = int(raw_subject_index)
+    except (TypeError, ValueError):
+        supplied_index = None
+
+    if (
+        supplied_index is not None
+        and 0 <= supplied_index < len(subjects)
+        and matches_subject(subjects[supplied_index])
+    ):
+        return supplied_index
+
+    for index, subject_data in enumerate(subjects):
+        if matches_subject(subject_data):
+            return index
+
+    return None
+
+
+# ============================================================
+# EDIT LIST
+# ============================================================
+
+@login_required
+def edit_list(
+    request,
+    list_id,
+):
+
+    bullet_list = get_object_or_404(
+        BulletList.objects
+        .select_related(
+            "knowledge_unit",
+            "knowledge_unit__subject",
+        )
+        .prefetch_related("items"),
+        id=list_id,
+        knowledge_unit__subject__user=request.user,
+        knowledge_unit__knowledge_type=(
+            KnowledgeUnit.KnowledgeType.BULLET_LIST
+        ),
+    )
+
+    knowledge_unit = bullet_list.knowledge_unit
+    subject = knowledge_unit.subject
+
+    raw_subject_index = (
+        request.POST.get("subject_index")
+        or request.GET.get("subject_index")
+    )
+
+    subject_index = _resolve_learning_subject_index(
+        request,
+        subject,
+        raw_subject_index,
+    )
+
+    textbooks = (
+        SubjectTextbook.objects
+        .filter(subject=subject)
+        .order_by("created", "id")
+    )
+
+    list_name = bullet_list.question
+    selected_book = bullet_list.book_name
+    chapter = bullet_list.chapter
+    submitted_items = [
+        {
+            "text": item.text,
+            "description": item.description,
+        }
+        for item in bullet_list.items.all()
+    ]
+    error = None
+
+    if request.method == "POST":
+
+        list_name = request.POST.get(
+            "list_name",
+            "",
+        ).strip()
+
+        selected_book = request.POST.get(
+            "book_name",
+            "",
+        ).strip()
+
+        chapter = request.POST.get(
+            "chapter",
+            "",
+        ).strip()
+
+        item_texts = request.POST.getlist(
+            "item_text"
+        )
+
+        item_descriptions = request.POST.getlist(
+            "item_description"
+        )
+
+        submitted_items = []
+
+        for index, item_text in enumerate(item_texts):
+
+            item_description = (
+                item_descriptions[index].strip()
+                if index < len(item_descriptions)
+                else ""
+            )
+
+            submitted_items.append(
+                {
+                    "text": item_text.strip(),
+                    "description": item_description,
+                }
+            )
+
+        valid_items = [
+            item
+            for item in submitted_items
+            if item["text"]
+        ]
+
+        if not list_name:
+            error = (
+                "Enter a name or description for the list."
+            )
+        elif len(list_name) > 255:
+            error = (
+                "The list name cannot be longer than "
+                "255 characters."
+            )
+        elif len(chapter) > 255:
+            error = (
+                "The chapter cannot be longer than "
+                "255 characters."
+            )
+        elif not valid_items:
+            error = (
+                "Add at least one item to the list."
+            )
+        elif any(
+            len(item["text"]) > 255
+            for item in valid_items
+        ):
+            error = (
+                "List items cannot be longer than "
+                "255 characters."
+            )
+        elif any(
+            len(item["description"]) > 500
+            for item in valid_items
+        ):
+            error = (
+                "Item descriptions cannot be longer than "
+                "500 characters."
+            )
+
+        if error is None and selected_book:
+
+            valid_book = textbooks.filter(
+                name=selected_book
+            ).exists()
+
+            if not valid_book:
+                error = (
+                    "The selected textbook does not belong "
+                    "to this subject."
+                )
+
+        if error is None:
+
+            with transaction.atomic():
+
+                knowledge_unit.title = list_name
+                knowledge_unit.estimated_minutes = max(
+                    2,
+                    len(valid_items),
+                )
+                knowledge_unit.save(
+                    update_fields=[
+                        "title",
+                        "estimated_minutes",
+                    ]
+                )
+
+                bullet_list.question = list_name
+                bullet_list.book_name = selected_book
+                bullet_list.chapter = chapter
+                bullet_list.save(
+                    update_fields=[
+                        "question",
+                        "book_name",
+                        "chapter",
+                    ]
+                )
+
+                bullet_list.items.all().delete()
+
+                BulletItem.objects.bulk_create(
+                    [
+                        BulletItem(
+                            bullet_list=bullet_list,
+                            text=item["text"],
+                            description=item["description"],
+                            order=order,
+                        )
+                        for order, item in enumerate(
+                            valid_items,
+                            start=1,
+                        )
+                    ]
+                )
+
+            if subject_index is not None:
+                return redirect(
+                    "list_review_list",
+                    subject_index=subject_index,
+                )
+
+            return redirect("goals")
+
+    if not submitted_items:
+        submitted_items = [
+            {
+                "text": "",
+                "description": "",
+            }
+        ]
+
+    return render(
+        request,
+        "learning/edit_list.html",
+        {
+            "bullet_list": bullet_list,
+            "subject": subject,
+            "subject_index": subject_index,
+            "textbooks": textbooks,
+            "list_name": list_name,
+            "selected_book": selected_book,
+            "chapter": chapter,
+            "submitted_items": submitted_items,
+            "error": error,
+        },
+    )
+
+
+# ============================================================
+# DELETE LIST
+# ============================================================
+
+@login_required
+def delete_list(
+    request,
+    list_id,
+):
+
+    bullet_list = get_object_or_404(
+        BulletList.objects.select_related(
+            "knowledge_unit__subject"
+        ),
+        id=list_id,
+        knowledge_unit__subject__user=request.user,
+        knowledge_unit__knowledge_type=(
+            KnowledgeUnit.KnowledgeType.BULLET_LIST
+        ),
+    )
+
+    subject = bullet_list.knowledge_unit.subject
+
+    raw_subject_index = (
+        request.POST.get("subject_index")
+        or request.GET.get("subject_index")
+    )
+
+    subject_index = _resolve_learning_subject_index(
+        request,
+        subject,
+        raw_subject_index,
+    )
+
+    if request.method == "POST":
+        bullet_list.knowledge_unit.delete()
+
+    if subject_index is not None:
+        return redirect(
+            "list_review_list",
+            subject_index=subject_index,
+        )
+
+    return redirect("review")
 
 # ============================================================
 # CREATE NOTE

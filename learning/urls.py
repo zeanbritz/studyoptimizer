@@ -123,6 +123,18 @@ urlpatterns = [
     ),
 
     path(
+        "lists/<int:list_id>/edit/",
+        views.edit_list,
+        name="edit_list",
+    ),
+
+    path(
+        "lists/<int:list_id>/delete/",
+        views.delete_list,
+        name="delete_list",
+    ),
+
+    path(
         "subjects/<int:subject_id>/steps/create/",
         views.create_steps,
         name="create_steps",

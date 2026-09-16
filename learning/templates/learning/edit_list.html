@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create List - StudyOptimizer</title>
+    <title>Edit List - StudyOptimizer</title>
     <link rel="stylesheet" href="{% static 'dashboard/css/sidebar.css' %}">
 
     <style>
@@ -528,18 +528,18 @@
         <div class="page">
             <header class="page-header">
                 <div class="header-content">
-                    <span class="eyebrow">List builder</span>
-                    <h1>Create List</h1>
+                    <span class="eyebrow">List editor</span>
+                    <h1>Edit List</h1>
                     <p>{{ subject.name }}</p>
                 </div>
 
                 {% if subject_index != None %}
                     <a
-                        href="{% url 'subject_detail' subject_index=subject_index %}"
+                        href="{% url 'list_review_list' subject_index=subject_index %}"
                         class="back-button"
-                    >← Back to Subject</a>
+                    >← Back to Lists</a>
                 {% else %}
-                    <a href="{% url 'goals' %}" class="back-button">← Back</a>
+                    <a href="{% url 'review' %}" class="back-button">← Back</a>
                 {% endif %}
             </header>
 
@@ -557,7 +557,7 @@
                     </span>
                     <div>
                         <h2>List details</h2>
-                        <p>Add the list name and its items.</p>
+                        <p>Update the list name and its items.</p>
                     </div>
                 </div>
 
@@ -676,14 +676,14 @@
                     <div class="form-footer">
                         {% if subject_index != None %}
                             <a
-                                href="{% url 'subject_detail' subject_index=subject_index %}"
+                                href="{% url 'list_review_list' subject_index=subject_index %}"
                                 class="cancel-button"
                             >Cancel</a>
                         {% else %}
-                            <a href="{% url 'goals' %}" class="cancel-button">Cancel</a>
+                            <a href="{% url 'review' %}" class="cancel-button">Cancel</a>
                         {% endif %}
 
-                        <button type="submit" class="save-button">Save List</button>
+                        <button type="submit" class="save-button">Save Changes</button>
                     </div>
                 </form>
             </section>
