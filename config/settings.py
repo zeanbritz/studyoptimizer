@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "exams",
     "planner",
     "practice",
+    "landing",
 ]
 
 MIDDLEWARE = [
