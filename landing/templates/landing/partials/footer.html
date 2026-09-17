@@ -1,0 +1,34 @@
+<footer class="landing-footer" role="contentinfo">
+    <div class="landing-footer__inner">
+        <div class="landing-footer__brand">
+            <a href="{% url 'landing' %}" class="landing-footer__logo">StudyOptimizer</a>
+            <p>A calmer place to plan, learn, and review.</p>
+        </div>
+
+        <nav class="landing-footer__links" aria-label="Footer navigation">
+            <div>
+                <h2>Explore</h2>
+                <a href="{% url 'landing' %}">Home</a>
+                <a href="{% url 'pricing' %}">Pricing</a>
+            </div>
+
+            <div>
+                <h2>Legal</h2>
+                <a href="{% url 'privacy_policy' %}">Privacy policy</a>
+                <a href="{% url 'terms_of_use' %}">Terms of use</a>
+                <a href="{% url 'cookie_policy' %}">Cookie policy</a>
+                <a href="{% url 'billing_policy' %}">Billing &amp; refunds</a>
+            </div>
+
+            <div>
+                <h2>Support</h2>
+                <a href="{% url 'contact' %}">Contact us</a>
+            </div>
+        </nav>
+    </div>
+
+    <div class="landing-footer__bottom">
+        <span>© {% now "Y" %} StudyOptimizer</span>
+        <span>South Africa</span>
+    </div>
+</footer>

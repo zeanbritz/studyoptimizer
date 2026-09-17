@@ -1,0 +1,23 @@
+{% extends 'landing/page_base.html' %}
+
+{% block page_title %}Billing and refunds — StudyOptimizer{% endblock %}
+{% block eyebrow %}Legal{% endblock %}
+{% block heading %}Billing &amp; refunds{% endblock %}
+{% block intro %}Current plan information and the status of subscriptions.{% endblock %}
+
+{% block content %}
+<div class="draft-notice">
+    Subscriptions are not active yet. This is not a final cancellation or refund policy. Complete and review it before accepting any payment.
+</div>
+
+<h2>Displayed plans</h2>
+<p>The <a href="{% url 'pricing' %}">pricing page</a> shows R99 per month and R1,188 per year. The yearly figure is twelve monthly payments added together; no annual discount is currently stated.</p>
+
+<h2>Current payment status</h2>
+<p>Registration does not choose a paid plan or collect payment. No subscription starts merely by creating an account through the current website.</p>
+
+<h2>Before subscriptions launch</h2>
+<p>The final checkout and policy must clearly explain the full payable price, any applicable taxes, the payment method, renewal timing, how to cancel, when access ends, how refunds are handled, and how to contact the operator about a charge. These terms must be checked against applicable South African consumer law before billing is enabled.</p>
+
+<p>The <a href="{% url 'contact' %}">contact page</a> will hold the support details once they are available.</p>
+{% endblock %}

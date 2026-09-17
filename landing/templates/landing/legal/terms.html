@@ -1,0 +1,30 @@
+{% extends 'landing/page_base.html' %}
+
+{% block page_title %}Terms of use — StudyOptimizer{% endblock %}
+{% block eyebrow %}Legal{% endblock %}
+{% block heading %}Terms of use{% endblock %}
+{% block intro %}The basic rules for using StudyOptimizer.{% endblock %}
+
+{% block content %}
+<div class="draft-notice">
+    Draft for review before launch. Add the operator's legal identity, final age rules, account-closure process, dispute process, and effective date before relying on these terms.
+</div>
+
+<h2>The service</h2>
+<p>StudyOptimizer helps users organize study material and review it. The tools support learning but do not guarantee grades, exam results, or admission outcomes.</p>
+
+<h2>Your account</h2>
+<p>Keep your account credentials private and provide accurate registration information. The process for recovering or closing an account should be finalized and linked here.</p>
+
+<h2>Your study material</h2>
+<p>You are responsible for material you add to the service and for respecting other people's rights. Do not upload unlawful content or material you do not have permission to use. The final terms should state precisely what rights StudyOptimizer needs to store, display, and process your material to provide the service.</p>
+
+<h2>Availability and changes</h2>
+<p>Features may change while the service is being developed. Any commitments about uptime, backups, notice of changes, or account suspension must be decided and added before publication.</p>
+
+<h2>Plans and payments</h2>
+<p>The <a href="{% url 'pricing' %}">pricing page</a> currently displays proposed monthly and yearly prices. The website does not yet select subscriptions or collect payment. The <a href="{% url 'billing_policy' %}">billing and refunds page</a> explains which subscription terms still need to be completed before checkout goes live.</p>
+
+<h2>Applicable law</h2>
+<p>StudyOptimizer is operated from South Africa. Any final governing-law and dispute-resolution terms should be checked against applicable South African consumer and privacy law before publication.</p>
+{% endblock %}

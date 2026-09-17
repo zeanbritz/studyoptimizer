@@ -1,0 +1,30 @@
+{% extends 'landing/page_base.html' %}
+
+{% block page_title %}Cookie policy — StudyOptimizer{% endblock %}
+{% block eyebrow %}Legal{% endblock %}
+{% block heading %}Cookie policy{% endblock %}
+{% block intro %}A plain-language explanation of the website's essential cookies.{% endblock %}
+
+{% block content %}
+<div class="draft-notice">
+    Draft for review before launch. Check the cookies actually set in production, including any analytics, hosting, or payment tools, before publishing a final list.
+</div>
+
+<h2>What cookies do</h2>
+<p>Cookies are small pieces of information stored by your browser. The current Django application uses session and cross-site request forgery (CSRF) protection mechanisms to help users stay signed in and protect forms.</p>
+
+<h2>Essential cookies</h2>
+<ul>
+    <li><strong>Session cookie:</strong> helps the website remember your signed-in session.</li>
+    <li><strong>CSRF cookie:</strong> helps protect form submissions from unauthorized requests.</li>
+</ul>
+<p>The actual cookie names, durations, and production settings should be verified before this policy is finalized.</p>
+
+<h2>Optional cookies</h2>
+<p>No analytics or advertising tools were identified in the reviewed project code. This does not verify what a future hosting or payment setup may add. If optional cookies are introduced, update this page and add any controls or consent process that is required.</p>
+
+<h2>Your browser controls</h2>
+<p>You can remove or block cookies through your browser settings. Blocking essential cookies may prevent login or forms from working correctly.</p>
+
+<p>For information about related personal-data handling, read the <a href="{% url 'privacy_policy' %}">privacy policy</a>.</p>
+{% endblock %}

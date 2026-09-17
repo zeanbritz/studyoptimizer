@@ -1,9 +1,11 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StudyOptimizer — Study with a plan</title>
+    <link rel="stylesheet" href="{% static 'landing/css/footer.css' %}">
 
     <style>
         :root {
@@ -335,14 +337,6 @@
             --feature-background: #f8eae6;
         }
 
-        .site-footer {
-            padding: 30px 0 38px;
-            color: var(--muted);
-            font-size: 12px;
-            font-weight: 700;
-            text-align: center;
-        }
-
         a:focus-visible {
             outline: 3px solid rgba(39, 143, 211, 0.35);
             outline-offset: 3px;
@@ -516,9 +510,7 @@
             </section>
         </main>
 
-        <footer class="site-footer">
-            StudyOptimizer · Make every study day count.
-        </footer>
+        {% include 'landing/partials/footer.html' %}
     </div>
 </body>
 </html>
