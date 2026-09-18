@@ -10,7 +10,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Goals - StudyOptimizer</title>
+    <title>Subjects - StudyOptimizer</title>
 
     <link
         rel="stylesheet"
@@ -430,8 +430,7 @@
             stroke-width: 2;
         }
 
-        .panel-header h2,
-        .subjects-header h2 {
+        .panel-header h2 {
             margin: 0 0 4px;
             color: #34393b;
             font-size: 19px;
@@ -439,8 +438,7 @@
             letter-spacing: -0.2px;
         }
 
-        .panel-header p,
-        .subjects-header p {
+        .panel-header p {
             margin: 0;
             color: var(--muted);
             font-size: 12px;
@@ -577,28 +575,14 @@
         }
 
         .subjects-panel {
-            margin-bottom: 0;
-            border-top: 3px solid var(--blue);
+            margin-bottom: 18px;
+            border-top: 3px solid var(--purple);
         }
 
-        .subjects-header {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 16px;
-            margin-bottom: 17px;
-        }
-
-        .subject-count {
-            flex-shrink: 0;
-            padding: 7px 10px;
-            border: 1px solid #c9dfec;
-            border-radius: 9px;
-            background: #edf7fd;
-            color: #276f97;
-            font-size: 12px;
-            font-weight: 850;
-            white-space: nowrap;
+        .subjects-panel .subjects {
+            margin-top: 18px;
+            padding-top: 18px;
+            border-top: 1px solid #e3e1ed;
         }
 
         .subjects {
@@ -660,7 +644,7 @@
         .subject-top {
             display: flex;
             align-items: flex-start;
-            justify-content: space-between;
+            justify-content: flex-start;
             gap: 12px;
         }
 
@@ -686,17 +670,10 @@
             stroke-width: 2;
         }
 
-        .subject-arrow {
-            color: var(--subject-dark);
-            font-size: 19px;
-            font-weight: 900;
-            line-height: 1;
-        }
-
         .subject-name {
             margin: 12px 0 16px;
             color: #34393b;
-            font-size: 17px;
+            font-size: 19px;
             font-weight: 900;
             line-height: 1.3;
             overflow-wrap: anywhere;
@@ -713,18 +690,19 @@
         }
 
         .subject-info span {
-            padding: 5px 8px;
+            padding: 7px 10px;
             border: 1px solid #dce3e6;
             border-radius: 7px;
             background: rgba(255, 255, 255, 0.78);
             color: var(--muted);
-            font-size: 10px;
+            font-size: 12px;
             font-weight: 750;
         }
 
         .subject-info strong {
             color: var(--subject-dark);
             font-weight: 900;
+            font-size: 13px;
         }
 
         .add-subject-form {
@@ -872,9 +850,6 @@
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
 
-            .subjects-header {
-                align-items: flex-start;
-            }
         }
 
         @media (max-width: 390px) {
@@ -917,108 +892,17 @@
             <header class="page-header">
                 <div class="header-content">
                     <span class="eyebrow">Study setup</span>
-                    <h1>Goals</h1>
-                    <p>Set your targets, study availability, and subjects.</p>
+                    <h1>Subjects</h1>
+                    <p>Manage your subjects and study settings.</p>
                 </div>
 
                 <div class="header-art" aria-hidden="true">
                     <svg viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="8"></circle>
-                        <circle cx="12" cy="12" r="4"></circle>
-                        <path d="m12 12 7-7"></path>
-                        <path d="M16 5h3v3"></path>
+                        <path d="M12 6c-2.7-2-5.6-2.4-9-1.5v14c3.4-.9 6.3-.5 9 1.5 2.7-2 5.6-2.4 9-1.5v-14c-3.4-.9-6.3-.5-9 1.5Z"></path>
+                        <path d="M12 6v14"></path>
                     </svg>
                 </div>
             </header>
-
-            <section
-                class="panel profile-card"
-                id="profile-card"
-                aria-label="Academic target"
-            >
-                <button
-                    type="button"
-                    class="profile-edit-button"
-                    onclick="openProfileEditor()"
-                    title="Edit academic target"
-                    aria-label="Edit academic target"
-                >
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M12 20h9"></path>
-                        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"></path>
-                    </svg>
-                </button>
-
-                <div class="profile-display">
-                    <span class="profile-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24">
-                            <path d="m3 9 9-5 9 5-9 5Z"></path>
-                            <path d="M7 12v5c3 2 7 2 10 0v-5"></path>
-                            <path d="M21 9v6"></path>
-                        </svg>
-                    </span>
-
-                    <div class="profile-copy">
-                        <span class="profile-label">Academic target</span>
-                        <h2 class="degree-title">
-                            {{ profile.workspace_name|default:"My Degree" }}
-                        </h2>
-                        <p class="overall-target">
-                            Overall target
-                            <span class="target-badge">{{ profile.target_grade }}%</span>
-                        </p>
-                    </div>
-                </div>
-
-                <form method="POST" class="profile-edit-form">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="update_profile">
-
-                    <div class="profile-fields">
-                        <label class="field degree-field" for="workspace-name">
-                            <span class="field-label">Degree / qualification</span>
-                            <input
-                                id="workspace-name"
-                                class="text-input"
-                                type="text"
-                                name="workspace_name"
-                                value="{{ profile.workspace_name }}"
-                                required
-                            >
-                        </label>
-
-                        <label class="field" for="overall-target">
-                            <span class="field-label">Overall target %</span>
-                            <input
-                                id="overall-target"
-                                class="text-input"
-                                type="number"
-                                name="target_grade"
-                                value="{{ profile.target_grade }}"
-                                min="0"
-                                max="100"
-                                required
-                            >
-                        </label>
-                    </div>
-
-                    <div class="profile-actions">
-                        <button
-                            type="button"
-                            class="action-button cancel-button"
-                            onclick="closeProfileEditor()"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            class="action-button save-button"
-                        >
-                            Save Changes
-                        </button>
-                    </div>
-                </form>
-            </section>
 
             <section class="panel availability-card">
                 <div class="panel-header">
@@ -1220,21 +1104,98 @@
                 </form>
             </section>
 
-            <section class="panel subjects-panel">
-                <div class="subjects-header">
-                    <div>
-                        <h2>Subjects</h2>
-                        <p>Open a subject to manage its learning goals.</p>
-                    </div>
-                    <span class="subject-count">
-                        {{ subjects|length }} subject{{ subjects|length|pluralize }}
+            <section
+                class="panel subjects-panel profile-card"
+                id="profile-card"
+                aria-label="Academic target and subjects"
+            >
+                <button
+                    type="button"
+                    class="profile-edit-button"
+                    onclick="openProfileEditor()"
+                    title="Edit academic target"
+                    aria-label="Edit academic target"
+                >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 20h9"></path>
+                        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"></path>
+                    </svg>
+                </button>
+
+                <div class="profile-display">
+                    <span class="profile-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <path d="m3 9 9-5 9 5-9 5Z"></path>
+                            <path d="M7 12v5c3 2 7 2 10 0v-5"></path>
+                            <path d="M21 9v6"></path>
+                        </svg>
                     </span>
+
+                    <div class="profile-copy">
+                        <span class="profile-label">Academic target</span>
+                        <h2 class="degree-title">
+                            {{ profile.workspace_name|default:"My Degree" }}
+                        </h2>
+                        <p class="overall-target">
+                            Overall target
+                            <span class="target-badge">{{ profile.target_grade }}%</span>
+                        </p>
+                    </div>
                 </div>
+
+                <form method="POST" class="profile-edit-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_profile">
+
+                    <div class="profile-fields">
+                        <label class="field degree-field" for="workspace-name">
+                            <span class="field-label">Degree / qualification</span>
+                            <input
+                                id="workspace-name"
+                                class="text-input"
+                                type="text"
+                                name="workspace_name"
+                                value="{{ profile.workspace_name }}"
+                                required
+                            >
+                        </label>
+
+                        <label class="field" for="overall-target">
+                            <span class="field-label">Overall target %</span>
+                            <input
+                                id="overall-target"
+                                class="text-input"
+                                type="number"
+                                name="target_grade"
+                                value="{{ profile.target_grade }}"
+                                min="0"
+                                max="100"
+                                required
+                            >
+                        </label>
+                    </div>
+
+                    <div class="profile-actions">
+                        <button
+                            type="button"
+                            class="action-button cancel-button"
+                            onclick="closeProfileEditor()"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            class="action-button save-button"
+                        >
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
 
                 <div class="subjects">
                     {% for subject in subjects %}
                         <a
-                            href="{% url 'subject_detail' subject_index=forloop.counter0 %}"
+                            href="{% url 'subject_detail' subject_index=subject.subject_index %}"
                             class="subject"
                         >
                             <div>
@@ -1245,7 +1206,6 @@
                                             <path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13a1 1 0 0 0-1 1v17a3 3 0 0 1 3-3h5Z"></path>
                                         </svg>
                                     </span>
-                                    <span class="subject-arrow" aria-hidden="true">→</span>
                                 </div>
 
                                 <div class="subject-name">

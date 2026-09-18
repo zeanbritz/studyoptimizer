@@ -1,63 +1,69 @@
-<aside
-    id="sidebar"
-    class="sidebar"
->
-
+<aside id="sidebar" class="sidebar">
     <div class="sidebar-top">
-
-        <div class="logo">
-            StudyOptimizer
-        </div>
-
+        <div class="logo">StudyOptimizer</div>
     </div>
 
-
-    <nav class="nav">
-
+    <nav class="nav" aria-label="Main navigation">
         <a
             href="{% url 'dashboard' %}"
             class="nav-link {% if active_page == 'dashboard' %}active{% endif %}"
+            {% if active_page == 'dashboard' %}aria-current="page"{% endif %}
         >
-            <span class="nav-icon">▦</span>
+            <span class="nav-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+                    <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+                    <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+                    <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+                    <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+                </svg>
+            </span>
             <span class="nav-text">Dashboard</span>
         </a>
 
-
         <a
-            href="/planner/"
-            class="nav-link {% if active_page == 'planner' %}active{% endif %}"
+            href="{% url 'goals' %}"
+            class="nav-link {% if active_page == 'summarize' or active_page == 'subjects' or active_page == 'goals' %}active{% endif %}"
+            {% if active_page == 'summarize' or active_page == 'subjects' or active_page == 'goals' %}aria-current="page"{% endif %}
         >
-            <span class="nav-icon">◷</span>
-            <span class="nav-text">Planner</span>
+            <span class="nav-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+                    <path d="M12 6c-2.7-2-5.6-2.4-9-1.5v14c3.4-.9 6.3-.5 9 1.5 2.7-2 5.6-2.4 9-1.5v-14c-3.4-.9-6.3-.5-9 1.5Z"></path>
+                    <path d="M12 6v14"></path>
+                </svg>
+            </span>
+            <span class="nav-text">Subjects</span>
         </a>
-
 
         <a
             href="{% url 'review' %}"
             class="nav-link {% if active_page == 'review' %}active{% endif %}"
+            {% if active_page == 'review' %}aria-current="page"{% endif %}
         >
-            <span class="nav-icon">↻</span>
+            <span class="nav-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+                    <path d="M20 11a8 8 0 0 0-14.8-4"></path>
+                    <path d="M4 4v4h4"></path>
+                    <path d="M4 13a8 8 0 0 0 14.8 4"></path>
+                    <path d="M20 20v-4h-4"></path>
+                </svg>
+            </span>
             <span class="nav-text">Review</span>
         </a>
-
-
-        <a
-            href="{% url 'goals' %}"
-            class="nav-link {% if active_page == 'summarize' %}active{% endif %}"
-        >
-            <span class="nav-icon">≡</span>
-            <span class="nav-text">Summarize</span>
-        </a>
-
 
         <a
             href="{% url 'progress' %}"
             class="nav-link {% if active_page == 'progress' %}active{% endif %}"
+            {% if active_page == 'progress' %}aria-current="page"{% endif %}
         >
-            <span class="nav-icon">↗</span>
+            <span class="nav-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+                    <path d="M3 21h18"></path>
+                    <path d="M5 18v-5"></path>
+                    <path d="M11 18V9"></path>
+                    <path d="M17 18V5"></path>
+                </svg>
+            </span>
             <span class="nav-text">Progress</span>
         </a>
-
     </nav>
-
 </aside>

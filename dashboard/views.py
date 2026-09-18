@@ -1945,11 +1945,14 @@ def goals(request):
 
     display_subjects = []
 
-    for subject in subjects:
+    for subject_index, subject in enumerate(subjects):
 
         subject_data = dict(
             subject
         )
+
+        # Keep the original session position for subject_detail URLs.
+        subject_data["subject_index"] = subject_index
 
         exam_date = (
             subject_data.get(
@@ -1958,6 +1961,7 @@ def goals(request):
         )
 
         days_until_exam = None
+        parsed_exam_date = None
 
         if exam_date:
 
@@ -2011,9 +2015,22 @@ def goals(request):
             "days_until_exam"
         ] = days_until_exam
 
+        if parsed_exam_date is None:
+            # Subjects without a usable date come last.
+            sort_group, sort_date = 2, 0
+        elif parsed_exam_date >= today:
+            # Upcoming exams: soonest first.
+            sort_group, sort_date = 0, parsed_exam_date.toordinal()
+        else:
+            # Finished exams follow upcoming ones, most recent first.
+            sort_group, sort_date = 1, -parsed_exam_date.toordinal()
+
         display_subjects.append(
-            subject_data
+            (sort_group, sort_date, subject_index, subject_data)
         )
+
+    display_subjects.sort(key=lambda item: item[:3])
+    display_subjects = [item[3] for item in display_subjects]
 
     return render(
         request,
