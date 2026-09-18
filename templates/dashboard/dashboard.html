@@ -321,13 +321,13 @@
             background: linear-gradient(120deg, #eaf6fd, #f4fafe);
         }
 
-        .today-plan-header h2 { margin: 0 0 5px; color: #24698f; font-size: 23px; }
+        .today-plan-header h2 { margin: 0; color: #24698f; font-size: 30px; line-height: 1.15; }
         .today-plan-header p { margin: 0; color: #5f7f90; font-size: 13px; font-weight: 600; }
         .today-plan-columns { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 15px; }
 
         .today-plan-column { min-width: 0; padding: 18px; border: 1px solid #dfe5e2; border-bottom: 4px solid #d2dad6; border-radius: 14px; background: white; }
         .plan-column-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
-        .plan-column-header h3 { margin: 0 0 4px; font-size: 16px; font-weight: 800; }
+        .plan-column-header h3 { margin: 0 0 4px; font-size: 20px; font-weight: 800; }
         .plan-column-header p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
 
         .plan-total-count {
@@ -362,9 +362,9 @@
 
         .plan-subject-card:hover { border-color: #acd496; transform: translateY(-1px); }
         .plan-subject-card:active { border-bottom-width: 1px; transform: translateY(2px); }
-        .plan-card-content { display: flex; flex-direction: column; gap: 4px; }
-        .plan-card-title { color: #3c4240; font-size: 13px; font-weight: 750; line-height: 1.35; }
-        .plan-card-count { color: var(--muted); font-size: 12px; font-weight: 600; }
+        .plan-card-content { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .plan-card-title { min-width: 0; color: #30383b !important; font-size: 16px; font-weight: 850; line-height: 1.3; overflow-wrap: anywhere; }
+        .plan-card-count { flex: 0 0 auto; min-width: 27px; display: inline-flex; align-items: center; justify-content: center; margin-top: 0; padding: 4px 8px; border-radius: 8px; background: var(--plan-count-bg, #eef2f3); color: var(--plan-dark, #46555c) !important; font-size: 13px; font-weight: 900; }
 
         .empty-plan { min-height: 112px; display: flex; align-items: center; justify-content: center; padding: 22px; border: 1px dashed #cfd8d3; border-radius: 13px; background: #fbfcfb; color: var(--muted); text-align: center; }
         .empty-plan p { margin: 0; font-size: 14px; font-weight: 650; }
@@ -458,7 +458,8 @@
         }
 
         .today-plan .plan-column-header h3 {
-            font-size: 15px !important;
+            font-size: 20px !important;
+            line-height: 1.2;
         }
 
         .today-plan .plan-column-header p {
@@ -476,11 +477,39 @@
         }
 
         .today-plan .plan-subject-card {
+            position: relative;
             min-height: 0 !important;
-            padding: 10px 11px !important;
+            padding: 12px 52px 12px 13px !important;
             background: #ffffff !important;
             background-color: #ffffff !important;
             background-image: none !important;
+        }
+
+        .today-plan .plan-card-content {
+            display: block;
+        }
+
+        .today-plan .plan-card-title {
+            font-size: 16px !important;
+        }
+
+        .today-plan .plan-card-count {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+        }
+
+        .today-plan .plan-subject-list {
+            overflow-y: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            padding-right: 0;
+        }
+
+        .today-plan .plan-subject-list::-webkit-scrollbar {
+            display: none;
+            width: 0;
+            height: 0;
         }
 
         @media (max-width: 1120px) {
@@ -549,6 +578,9 @@
 
         .today-plan .today-plan-header h2 {
             color: #ffffff !important;
+            font-size: 30px !important;
+            font-weight: 900 !important;
+            letter-spacing: -0.6px;
         }
 
         .today-plan .today-plan-header p {
@@ -556,42 +588,81 @@
         }
 
         .today-plan .today-plan-column {
+            position: relative;
+            overflow: hidden;
+            isolation: isolate;
             box-shadow: 0 3px 10px rgba(45, 61, 69, 0.035);
+            border-top: 4px solid var(--plan-accent, #aebbc1) !important;
+            background: linear-gradient(145deg, #ffffff 25%, var(--plan-soft, #fafbfb) 100%) !important;
+            background-color: var(--plan-soft, #fafbfb) !important;
         }
 
-        .today-plan .today-plan-column:nth-child(4n + 1) {
-            border-top: 3px solid #76acd0 !important;
-            background: #f2f7fa !important;
-            background-color: #f2f7fa !important;
+        .today-plan .plan-definitions { --plan-accent: #5f9fc7; --plan-soft: #e8f3f9; --plan-dark: #226f9c; --plan-count-bg: #f5fafe; --plan-button-bg: rgba(214, 233, 244, 0.42); --plan-button-hover: rgba(214, 233, 244, 0.62); --plan-button-border: rgba(95, 159, 199, 0.32); }
+        .today-plan .plan-formulas { --plan-accent: #77ae5d; --plan-soft: #ebf5e7; --plan-dark: #4d8734; --plan-count-bg: #f5fbf2; --plan-button-bg: rgba(219, 236, 211, 0.42); --plan-button-hover: rgba(219, 236, 211, 0.62); --plan-button-border: rgba(119, 174, 93, 0.32); }
+        .today-plan .plan-lists { --plan-accent: #c19f4d; --plan-soft: #faf3df; --plan-dark: #987516; --plan-count-bg: #fffaf0; --plan-button-bg: rgba(244, 231, 191, 0.42); --plan-button-hover: rgba(244, 231, 191, 0.62); --plan-button-border: rgba(193, 159, 77, 0.32); }
+        .today-plan .plan-books { --plan-accent: #a57552; --plan-soft: #f5e9df; --plan-dark: #805333; --plan-count-bg: #fcf6f0; --plan-button-bg: rgba(236, 215, 196, 0.42); --plan-button-hover: rgba(236, 215, 196, 0.62); --plan-button-border: rgba(165, 117, 82, 0.32); }
+        .today-plan .plan-steps { --plan-accent: #8b84c4; --plan-soft: #eeecf8; --plan-dark: #655da5; --plan-count-bg: #f7f6fd; --plan-button-bg: rgba(226, 222, 243, 0.42); --plan-button-hover: rgba(226, 222, 243, 0.62); --plan-button-border: rgba(139, 132, 196, 0.32); }
+        .today-plan .plan-comparisons { --plan-accent: #568f91; --plan-soft: #e6f1f1; --plan-dark: #3e7779; --plan-count-bg: #f4fafa; --plan-button-bg: rgba(211, 231, 231, 0.42); --plan-button-hover: rgba(211, 231, 231, 0.62); --plan-button-border: rgba(86, 143, 145, 0.32); }
+        .today-plan .plan-notes { --plan-accent: #bd7f70; --plan-soft: #f8eae6; --plan-dark: #9c594a; --plan-count-bg: #fdf6f4; --plan-button-bg: rgba(238, 216, 209, 0.42); --plan-button-hover: rgba(238, 216, 209, 0.62); --plan-button-border: rgba(189, 127, 112, 0.32); }
+
+        .today-plan .plan-bg-icon {
+            position: absolute;
+            right: -12px;
+            bottom: -16px;
+            z-index: 0;
+            width: 112px;
+            height: 112px;
+            fill: none;
+            stroke: currentColor;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-width: 1.55;
+            color: var(--plan-dark, #46555c);
+            opacity: 0.07;
+            pointer-events: none;
         }
 
-        .today-plan .today-plan-column:nth-child(4n + 2) {
-            border-top: 3px solid #83b76b !important;
-            background: #f3f8f1 !important;
-            background-color: #f3f8f1 !important;
+        .today-plan .plan-bg-icon text {
+            fill: currentColor;
+            stroke: none;
+            font-family: "Segoe UI Symbol", "Segoe UI", sans-serif;
+            font-weight: 700;
         }
 
-        .today-plan .today-plan-column:nth-child(4n + 3) {
-            border-top: 3px solid #c6a85b !important;
-            background: #faf7ef !important;
-            background-color: #faf7ef !important;
+        .today-plan .plan-formulas .plan-bg-icon {
+            width: 126px;
+            height: 126px;
+            opacity: 0.09;
         }
 
-        .today-plan .today-plan-column:nth-child(4n + 4) {
-            border-top: 3px solid #9993c5 !important;
-            background: #f6f4fa !important;
-            background-color: #f6f4fa !important;
+        .today-plan .plan-column-header,
+        .today-plan .plan-subject-list {
+            position: relative;
+            z-index: 1;
+        }
+
+        .today-plan .plan-column-header h3 {
+            color: var(--plan-dark, var(--ink)) !important;
+            font-size: 20px !important;
+        }
+
+        .today-plan .plan-total-count {
+            border-color: var(--plan-accent, #c9e0ee) !important;
+            background: var(--plan-count-bg, #edf7fd) !important;
+            color: var(--plan-dark, #226f9c) !important;
         }
 
         .today-plan .plan-subject-card {
-            border-color: #d8e0e3 !important;
-            border-bottom-color: #c7d1d6 !important;
+            border-color: var(--plan-button-border, #d8e0e3) !important;
+            border-bottom-color: var(--plan-button-border, #c7d1d6) !important;
+            background: var(--plan-button-bg, #edf2f4) !important;
+            background-color: var(--plan-button-bg, #edf2f4) !important;
             box-shadow: 0 1px 3px rgba(42, 54, 60, 0.035);
         }
 
         .today-plan .plan-subject-card:hover {
-            border-color: #7eafca !important;
-            background: #ffffff !important;
+            border-color: var(--plan-button-border, #7eafca) !important;
+            background: var(--plan-button-hover, #e7f0f4) !important;
             box-shadow: 0 5px 13px rgba(42, 67, 81, 0.08);
         }
 
@@ -749,9 +820,6 @@
                             Today's Plan
                         </h2>
 
-                        <p>
-                            Continue with the learning activities ready for you.
-                        </p>
 
                     </div>
 
@@ -797,7 +865,13 @@
                         {% if due_definition_subjects %}
 
 
-                            <div class="today-plan-column">
+                            <div class="today-plan-column plan-definitions">
+
+                                <svg class="plan-bg-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                    <path d="M3 5.5A3.5 3.5 0 0 1 6.5 2H11v17H6.5A3.5 3.5 0 0 0 3 22Z"></path>
+                                    <path d="M21 5.5A3.5 3.5 0 0 0 17.5 2H13v17h4.5A3.5 3.5 0 0 1 21 22Z"></path>
+                                    <path d="M6.5 7.5h2M6.5 11h2"></path>
+                                </svg>
 
 
                                 <div class="plan-column-header">
@@ -811,9 +885,6 @@
                                         </h3>
 
 
-                                        <p>
-                                            Definitions scheduled for review.
-                                        </p>
 
 
                                     </div>
@@ -847,7 +918,6 @@
                                                 <span class="plan-card-title">
 
                                                     {{ item.subject.name }}
-                                                    Definitions
 
                                                 </span>
 
@@ -855,7 +925,6 @@
                                                 <span class="plan-card-count">
 
                                                     {{ item.count }}
-                                                    definition{{ item.count|pluralize }}
 
                                                 </span>
 
@@ -885,7 +954,14 @@
                         {% if due_formula_subjects %}
 
 
-                            <div class="today-plan-column">
+                            <div class="today-plan-column plan-formulas">
+
+                                <svg class="plan-bg-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                    <text x="2" y="10" font-size="10">+</text>
+                                    <text x="13" y="10" font-size="10">−</text>
+                                    <text x="2" y="22" font-size="10">×</text>
+                                    <text x="13" y="22" font-size="10">÷</text>
+                                </svg>
 
 
                                 <div class="plan-column-header">
@@ -899,9 +975,6 @@
                                         </h3>
 
 
-                                        <p>
-                                            Formulas scheduled for review.
-                                        </p>
 
 
                                     </div>
@@ -935,7 +1008,6 @@
                                                 <span class="plan-card-title">
 
                                                     {{ item.subject.name }}
-                                                    Formulas
 
                                                 </span>
 
@@ -943,7 +1015,6 @@
                                                 <span class="plan-card-count">
 
                                                     {{ item.count }}
-                                                    formula{{ item.count|pluralize }}
 
                                                 </span>
 
@@ -973,7 +1044,12 @@
                         {% if due_list_subjects %}
 
 
-                            <div class="today-plan-column">
+                            <div class="today-plan-column plan-lists">
+
+                                <svg class="plan-bg-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                    <rect x="3" y="3" width="18" height="18" rx="3"></rect>
+                                    <path d="m6.5 8 1.3 1.3L10 7M12.5 8.5h5M6.5 14l1.3 1.3L10 13M12.5 14.5h5"></path>
+                                </svg>
 
 
                                 <div class="plan-column-header">
@@ -987,9 +1063,6 @@
                                         </h3>
 
 
-                                        <p>
-                                            Lists scheduled for review.
-                                        </p>
 
 
                                     </div>
@@ -1023,7 +1096,6 @@
                                                 <span class="plan-card-title">
 
                                                     {{ item.subject.name }}
-                                                    Lists
 
                                                 </span>
 
@@ -1031,7 +1103,6 @@
                                                 <span class="plan-card-count">
 
                                                     {{ item.count }}
-                                                    list{{ item.count|pluralize }}
 
                                                 </span>
 
@@ -1061,7 +1132,13 @@
                         {% if book_summary_subjects %}
 
 
-                            <div class="today-plan-column">
+                            <div class="today-plan-column plan-books">
+
+                                <svg class="plan-bg-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                    <path d="M6 2.5h12a2 2 0 0 1 2 2V21H6a3 3 0 0 1-3-3V5.5a3 3 0 0 1 3-3Z"></path>
+                                    <path d="M3 18a3 3 0 0 1 3-3h14M8 2.5V15M11 7h6M11 10h4"></path>
+                                    <path d="M15 2.5v5l-2-1.4-2 1.4v-5"></path>
+                                </svg>
 
 
                                 <div class="plan-column-header">
@@ -1075,9 +1152,6 @@
                                         </h3>
 
 
-                                        <p>
-                                            Open your textbook summarization plan.
-                                        </p>
 
 
                                     </div>
@@ -1111,7 +1185,6 @@
                                                 <span class="plan-card-title">
 
                                                     {{ item.subject.name }}
-                                                    Pages to Summarize
 
                                                 </span>
 
@@ -1119,16 +1192,7 @@
                                                 <span class="plan-card-count">
 
 
-                                                    {% if item.count == 0 %}
-
-                                                        No textbooks added
-
-                                                    {% else %}
-
-                                                        {{ item.count }}
-                                                        textbook{{ item.count|pluralize }}
-
-                                                    {% endif %}
+                                                    {{ item.count }}
 
 
                                                 </span>
@@ -1163,7 +1227,14 @@
                         {% if due_step_subjects %}
 
 
-                            <div class="today-plan-column steps-plan-column">
+                            <div class="today-plan-column steps-plan-column plan-steps">
+
+                                <svg class="plan-bg-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                    <path d="M3 20h5v-5h5v-5h5V5h3"></path>
+                                    <circle cx="5.5" cy="17.5" r="1"></circle>
+                                    <circle cx="10.5" cy="12.5" r="1"></circle>
+                                    <circle cx="15.5" cy="7.5" r="1"></circle>
+                                </svg>
 
 
                                 <div class="plan-column-header">
@@ -1177,9 +1248,6 @@
                                         </h3>
 
 
-                                        <p>
-                                            Steps scheduled for review.
-                                        </p>
 
 
                                     </div>
@@ -1213,7 +1281,6 @@
                                                 <span class="plan-card-title">
 
                                                     {{ item.subject.name }}
-                                                    Steps
 
                                                 </span>
 
@@ -1221,7 +1288,6 @@
                                                 <span class="plan-card-count">
 
                                                     {{ item.count }}
-                                                    step set{{ item.count|pluralize }}
 
                                                 </span>
 
@@ -1250,7 +1316,12 @@
                         {% if due_comparison_subjects %}
 
 
-                            <div class="today-plan-column">
+                            <div class="today-plan-column plan-comparisons">
+
+                                <svg class="plan-bg-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                    <path d="M12 3v18M5 6h14M6 6l-3 7h6L6 6ZM18 6l-3 7h6l-3-7Z"></path>
+                                    <path d="M8 21h8"></path>
+                                </svg>
 
 
                                 <div class="plan-column-header">
@@ -1264,9 +1335,6 @@
                                         </h3>
 
 
-                                        <p>
-                                            Comparisons scheduled for review.
-                                        </p>
 
 
                                     </div>
@@ -1300,7 +1368,6 @@
                                                 <span class="plan-card-title">
 
                                                     {{ item.subject.name }}
-                                                    Comparisons
 
                                                 </span>
 
@@ -1308,7 +1375,6 @@
                                                 <span class="plan-card-count">
 
                                                     {{ item.count }}
-                                                    comparison{{ item.count|pluralize }}
 
                                                 </span>
 
@@ -1337,7 +1403,13 @@
 {% if note_subjects %}
 
 
-    <div class="today-plan-column">
+    <div class="today-plan-column plan-notes">
+
+        <svg class="plan-bg-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M6 3h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"></path>
+            <path d="M8 3v18M11 8h5M11 12h4"></path>
+            <path d="m13 18 7-7 2 2-7 7-3 1Z"></path>
+        </svg>
 
 
         <div class="plan-column-header">
@@ -1351,9 +1423,6 @@
                 </h3>
 
 
-                <p>
-                    Saved notes available to study.
-                </p>
 
 
             </div>
@@ -1387,7 +1456,6 @@
                         <span class="plan-card-title">
 
                             {{ item.subject.name }}
-                            Notes
 
                         </span>
 
@@ -1395,7 +1463,6 @@
                         <span class="plan-card-count">
 
                             {{ item.count }}
-                            note{{ item.count|pluralize }}
 
                         </span>
 
