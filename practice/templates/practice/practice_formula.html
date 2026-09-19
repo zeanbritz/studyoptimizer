@@ -1968,6 +1968,554 @@
 
         }
 
+        /* =========================================
+           STUDYOPTIMIZER PRACTICE THEME
+        ========================================= */
+
+        :root {
+            --ink: #2f373b;
+            --muted: #68757b;
+            --page-background: #edf1f3;
+            --surface: #ffffff;
+            --surface-border: #d8e0e3;
+            --surface-edge: #c4cfd4;
+            --navy: #303a5a;
+            --navy-light: #485676;
+            --navy-dark: #222b45;
+            --formula: #77ae5d;
+            --formula-dark: #4d8734;
+            --formula-soft: #ebf5e7;
+            --blue: #278fd3;
+            --blue-dark: #176f9f;
+            --danger: #d65454;
+            --danger-dark: #a93636;
+            --danger-soft: #fff2f2;
+        }
+
+        body {
+            background: var(--page-background);
+            color: var(--ink);
+        }
+
+        .page {
+            width: 100%;
+            min-height: 100vh;
+            padding: 30px 40px 56px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: 0;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+        }
+
+        .header {
+            position: relative;
+            min-height: 128px;
+            align-items: center;
+            overflow: hidden;
+            margin-bottom: 17px;
+            padding: 25px 27px;
+            border: 1px solid #465270;
+            border-bottom: 5px solid var(--navy-dark);
+            border-radius: 17px;
+            background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+            box-shadow: 0 9px 24px rgba(35, 45, 70, 0.12);
+        }
+
+        .header::after {
+            position: absolute;
+            right: 112px;
+            bottom: -34px;
+            color: rgba(255, 255, 255, 0.085);
+            content: "ƒx";
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 128px;
+            font-weight: 800;
+            line-height: 1;
+            pointer-events: none;
+            transform: rotate(-7deg);
+        }
+
+        .header-copy,
+        .exit-review-button {
+            position: relative;
+            z-index: 1;
+        }
+
+        .header h1 {
+            max-width: 720px;
+            margin: 0 0 7px;
+            color: #ffffff;
+            font-size: 31px;
+            font-weight: 850;
+            letter-spacing: -0.7px;
+            line-height: 1.15;
+            overflow-wrap: anywhere;
+        }
+
+        .header p {
+            color: #d8dfed;
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+
+        .exit-review-button {
+            min-height: 44px;
+            padding: 10px 16px 8px;
+            border: 2px solid rgba(255, 255, 255, 0.42);
+            border-bottom-width: 4px;
+            border-radius: 11px;
+            background: rgba(255, 255, 255, 0.12);
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 850;
+            backdrop-filter: blur(4px);
+            transition: background 0.15s ease, transform 0.15s ease;
+        }
+
+        .exit-review-button:hover {
+            border-color: rgba(255, 255, 255, 0.62);
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .exit-review-button:active {
+            border-bottom-width: 2px;
+            transform: translateY(2px);
+        }
+
+        .progress {
+            width: fit-content;
+            margin: 0 0 17px;
+            padding: 8px 11px;
+            border: 1px solid #cde5c3;
+            border-radius: 9px;
+            background: var(--formula-soft);
+            color: var(--formula-dark);
+            font-size: 12px;
+            font-weight: 850;
+        }
+
+        .formula-box {
+            position: relative;
+            margin-bottom: 18px;
+            padding: 46px 36px;
+            border: 1px solid var(--surface-border);
+            border-top: 4px solid var(--formula);
+            border-bottom: 4px solid var(--surface-edge);
+            border-radius: 16px;
+            background: linear-gradient(145deg, #ffffff 32%, var(--formula-soft) 100%);
+            box-shadow: 0 4px 14px rgba(39, 56, 65, 0.055);
+            scrollbar-width: thin;
+            scrollbar-color: #b9c8ce transparent;
+        }
+
+        .formula {
+            min-height: 120px;
+            color: #25302a;
+            font-size: 36px;
+            font-weight: 750;
+            letter-spacing: -0.4px;
+        }
+
+        .fraction-top {
+            border-bottom-color: #33423a;
+        }
+
+        .answer-input {
+            padding: 10px 12px 8px;
+            border: 2px solid #b8c6bb;
+            border-bottom-width: 4px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.94);
+            color: #25302a;
+            font-weight: 800;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+        }
+
+        .answer-input:hover:not([readonly]) {
+            border-color: #91ad86;
+        }
+
+        .answer-input:focus {
+            border-color: var(--formula);
+            box-shadow: 0 0 0 4px rgba(119, 174, 93, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .answer-input--review,
+        .answer-input--review:focus {
+            background: #ffffff;
+            transform: none;
+        }
+
+        .answer-input--correct,
+        .answer-input--correct:focus {
+            border-color: #76ad60;
+            background: #f1f9ed;
+            color: #3f792b;
+        }
+
+        .answer-input--wrong,
+        .answer-input--wrong:focus {
+            border-color: #d56a6a;
+            background: #fff3f3;
+            color: var(--danger-dark);
+        }
+
+        .review-symbol-panel {
+            margin-bottom: 17px;
+            padding: 16px;
+            border: 1px solid #d8e0e3;
+            border-bottom: 3px solid #c6d0d4;
+            border-radius: 13px;
+            background: #f8fafb;
+            box-shadow: 0 2px 8px rgba(39, 56, 65, 0.035);
+        }
+
+        .review-symbol-panel.collapsed {
+            padding: 12px 15px;
+        }
+
+        .review-symbol-title {
+            color: #394449;
+            font-size: 14px;
+            font-weight: 850;
+        }
+
+        .review-symbol-help {
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .symbol-minimize-button {
+            padding: 7px 11px 6px;
+            border: 2px solid #cbd5d9;
+            border-bottom-width: 3px;
+            border-radius: 9px;
+            background: #ffffff;
+            color: #4c5a60;
+            font-weight: 800;
+        }
+
+        .symbol-minimize-button:hover {
+            border-color: #aebcc2;
+            background: #f1f5f6;
+        }
+
+        .review-symbol-choice {
+            border: 1px solid #d2dcdf;
+            border-bottom: 3px solid #c0ccd0;
+            border-radius: 8px;
+            background: #ffffff;
+            color: #354147;
+            font-weight: 750;
+            transition: background 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
+        }
+
+        .review-symbol-choice:hover {
+            border-color: #9dc58a;
+            background: #f1f8ed;
+            color: var(--formula-dark);
+            transform: translateY(-1px);
+        }
+
+        .review-symbol-choice:active {
+            border-bottom-width: 1px;
+            transform: translateY(2px);
+        }
+
+        .submit-button,
+        .continue-button,
+        .next-button {
+            min-height: 50px;
+            padding: 12px 18px 10px;
+            border: 2px solid var(--formula-dark);
+            border-bottom-width: 5px;
+            border-radius: 12px;
+            background: var(--formula);
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: 850;
+            transition: background 0.15s ease, transform 0.15s ease;
+        }
+
+        .submit-button:hover,
+        .continue-button:hover,
+        .next-button:hover {
+            background: #68bd42;
+            transform: translateY(-1px);
+        }
+
+        .submit-button:active,
+        .continue-button:active,
+        .next-button:active {
+            border-bottom-width: 2px;
+            transform: translateY(2px);
+        }
+
+        .formula-details-link,
+        .finish-review-button {
+            min-height: 48px;
+            border: 2px solid #c8d4d9;
+            border-bottom-width: 4px;
+            border-radius: 11px;
+            background: #ffffff;
+            color: #405159;
+            font-size: 14px;
+            font-weight: 800;
+            transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+        }
+
+        .formula-details-link:hover,
+        .finish-review-button:hover {
+            border-color: #9fbbc9;
+            background: #f3f8fa;
+            color: var(--blue-dark);
+            transform: translateY(-1px);
+        }
+
+        .matching-heading {
+            margin: 17px 0 13px;
+            padding: 17px 19px;
+            border: 1px solid #cde5c3;
+            border-left: 5px solid var(--formula);
+            border-radius: 12px;
+            background: #f3f9f0;
+        }
+
+        .matching-heading h2 {
+            margin: 0 0 4px;
+            color: #35493b;
+            font-size: 20px;
+            font-weight: 900;
+            letter-spacing: -0.25px;
+        }
+
+        .matching-heading p {
+            color: #65736a;
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 1.45;
+        }
+
+        .description-inline-target {
+            border: 2px dashed #92af86;
+            border-bottom-style: solid;
+            border-bottom-width: 4px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .description-inline-target.drag-over {
+            border-color: var(--formula);
+            background: #f0f8ec;
+            box-shadow: 0 0 0 4px rgba(119, 174, 93, 0.14);
+        }
+
+        .description-card-area {
+            margin-top: 17px;
+            padding: 19px;
+            border: 1px solid #d8e0e3;
+            border-bottom: 4px solid #c4cfd4;
+            border-radius: 14px;
+            background: #f8fafb;
+        }
+
+        .description-card-area-header,
+        .correct-match-list-title {
+            color: #3f4c51;
+            font-size: 13px;
+            font-weight: 850;
+        }
+
+        .description-card {
+            border: 1px solid #cdd9cd;
+            border-bottom: 3px solid #b8cbb2;
+            border-radius: 10px;
+            background: #ffffff;
+            color: #3d4941;
+            font-weight: 650;
+        }
+
+        .description-card:hover {
+            border-color: #91b781;
+            box-shadow: 0 6px 14px rgba(68, 96, 57, 0.1);
+        }
+
+        .description-match-result,
+        .correct-match-list {
+            border-radius: 11px;
+        }
+
+        .wrong-answer-box {
+            margin-top: 18px;
+            padding: 6px 18px;
+            border: 1px solid #e5b2b2;
+            border-bottom: 4px solid #d99595;
+            border-radius: 13px;
+            background: var(--danger-soft);
+            box-shadow: 0 3px 10px rgba(117, 47, 47, 0.05);
+        }
+
+        .wrong-answer-title {
+            padding: 14px 18px;
+            color: var(--danger-dark);
+            font-size: 15px;
+            font-weight: 850;
+        }
+
+        .feedback-label {
+            color: #7a6868;
+            font-size: 11px;
+            font-weight: 850;
+        }
+
+        .student-answer,
+        .expected-answer {
+            font-size: 18px;
+            font-weight: 850;
+        }
+
+        .acceptable-answer-button {
+            border: 2px solid #d7a0a0;
+            border-bottom-width: 3px;
+            border-radius: 9px;
+            font-weight: 800;
+        }
+
+        .result {
+            background: rgba(28, 36, 40, 0.48);
+            backdrop-filter: blur(3px);
+        }
+
+        .result-card {
+            width: min(580px, 92vw);
+            padding: 39px 32px;
+            border-bottom-width: 6px;
+            border-radius: 18px;
+            box-shadow: 0 24px 75px rgba(20, 30, 35, 0.28);
+        }
+
+        .result--correct .result-card {
+            border-color: #78b787;
+            background: #f3fbf4;
+            color: #246b37;
+        }
+
+        .result--incorrect .result-card {
+            border-color: #dc8f8f;
+            background: #fff6f6;
+            color: var(--danger-dark);
+        }
+
+        .acceptable-answer-modal {
+            background: rgba(28, 36, 40, 0.48);
+            backdrop-filter: blur(3px);
+        }
+
+        .acceptable-answer-modal-card {
+            border: 1px solid #d8e0e3;
+            border-bottom: 5px solid #c4cfd4;
+            border-radius: 15px;
+            box-shadow: 0 24px 70px rgba(27, 40, 47, 0.25);
+        }
+
+        .acceptable-answer-modal-card h2 {
+            color: var(--ink);
+            font-weight: 900;
+            letter-spacing: -0.3px;
+        }
+
+        .modal-cancel-button,
+        .modal-confirm-button {
+            min-height: 43px;
+            border: 2px solid;
+            border-bottom-width: 4px;
+            border-radius: 10px;
+            font-weight: 850;
+        }
+
+        .modal-cancel-button {
+            border-color: #cbd4d8;
+            background: #ffffff;
+            color: #566268;
+        }
+
+        .modal-confirm-button {
+            border-color: var(--formula-dark);
+            background: var(--formula);
+            color: #ffffff;
+        }
+
+        .modal-confirm-button:hover {
+            background: #68bd42;
+        }
+
+        .header a:focus-visible,
+        button:focus-visible,
+        .formula-details-link:focus-visible,
+        .finish-review-button:focus-visible,
+        .description-card:focus-visible {
+            outline: 3px solid rgba(39, 143, 211, 0.3);
+            outline-offset: 3px;
+        }
+
+        @media (max-width: 700px) {
+            .page {
+                padding: 20px 18px 42px;
+            }
+
+            .header {
+                min-height: 0;
+                padding: 22px 20px;
+            }
+
+            .header::after {
+                right: -10px;
+                font-size: 105px;
+            }
+
+            .header h1 {
+                font-size: 27px;
+            }
+
+            .exit-review-button {
+                width: auto;
+                align-self: flex-start;
+            }
+
+            .formula-box {
+                padding: 32px 17px;
+            }
+
+            .formula {
+                min-height: 100px;
+                font-size: 27px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .exit-review-button,
+            .answer-input,
+            .review-symbol-choice,
+            .submit-button,
+            .continue-button,
+            .next-button,
+            .formula-details-link,
+            .finish-review-button,
+            .description-card {
+                transition: none;
+            }
+        }
+
     </style>
 
 </head>
@@ -1979,7 +2527,7 @@
 <div class="app">
 
 
-    {% include 'partials/sidebar.html' with active_page='summarize' %}
+    {% include 'partials/sidebar.html' with active_page='review' %}
 
 
     <main class="main">

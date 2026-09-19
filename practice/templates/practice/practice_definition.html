@@ -568,6 +568,447 @@
             .header h1 { font-size: 26px; }
             .definition-question { padding: 19px; }
         }
+
+        /* =========================================
+           STUDYOPTIMIZER DEFINITION PRACTICE THEME
+        ========================================= */
+
+        :root {
+            --page-background: #edf1f3;
+            --surface: #ffffff;
+            --surface-border: #d8e0e3;
+            --surface-edge: #c4cfd4;
+            --navy: #303a5a;
+            --navy-light: #485676;
+            --navy-dark: #222b45;
+            --definition: #5f9fc7;
+            --definition-dark: #226f9c;
+            --definition-soft: #e8f3f9;
+            --definition-hover: #91bcd5;
+            --success: #58b82a;
+            --success-dark: #3f8f1d;
+            --success-soft: #eef9e9;
+            --danger: #d65454;
+            --danger-dark: #a93636;
+            --danger-soft: #fff2f2;
+        }
+
+        body {
+            background: var(--page-background);
+            color: #2f373b;
+        }
+
+        .page {
+            width: 100%;
+            min-height: 100vh;
+            padding: 30px 40px 56px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 920px;
+            margin: 0 auto;
+            padding: 0;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+        }
+
+        .header {
+            position: relative;
+            min-height: 128px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            overflow: hidden;
+            margin-bottom: 17px;
+            padding: 25px 27px;
+            border: 1px solid #465270;
+            border-bottom: 5px solid var(--navy-dark);
+            border-radius: 17px;
+            background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+            box-shadow: 0 9px 24px rgba(35, 45, 70, 0.12);
+        }
+
+        .header::after {
+            position: absolute;
+            right: 118px;
+            bottom: -38px;
+            color: rgba(255, 255, 255, 0.075);
+            content: "Aa";
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 132px;
+            font-weight: 800;
+            line-height: 1;
+            pointer-events: none;
+            transform: rotate(-7deg);
+        }
+
+        .header-copy,
+        .exit-review-button {
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-copy {
+            min-width: 0;
+        }
+
+        .header h1 {
+            margin: 0 0 7px;
+            color: #ffffff;
+            font-size: 31px;
+            font-weight: 850;
+            letter-spacing: -0.7px;
+            line-height: 1.15;
+        }
+
+        .header p {
+            margin: 0;
+            color: #d8dfed;
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+
+        .exit-review-button {
+            min-height: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+            padding: 10px 16px 8px;
+            border: 2px solid rgba(255, 255, 255, 0.42);
+            border-bottom-width: 4px;
+            border-radius: 11px;
+            background: rgba(255, 255, 255, 0.12);
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 850;
+            text-decoration: none;
+            backdrop-filter: blur(4px);
+            transition: background 0.15s ease, transform 0.15s ease;
+        }
+
+        .exit-review-button:hover {
+            border-color: rgba(255, 255, 255, 0.62);
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .exit-review-button:active {
+            border-bottom-width: 2px;
+            transform: translateY(2px);
+        }
+
+        .mastery {
+            margin-bottom: 17px;
+            padding: 13px 16px;
+            border: 1px solid #cde5c3;
+            border-bottom: 3px solid #b9d5ad;
+            border-radius: 12px;
+            background: var(--success-soft);
+            box-shadow: 0 2px 8px rgba(55, 91, 40, 0.035);
+        }
+
+        .mastery-label,
+        .mastery-value {
+            color: var(--success-dark);
+            font-size: 13px;
+            font-weight: 900;
+        }
+
+        .term {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 22px;
+            margin-bottom: 17px;
+            padding: 22px;
+            border: 1px solid #bdd9e9;
+            border-top: 4px solid var(--definition);
+            border-bottom: 4px solid #9fc4d9;
+            border-radius: 16px;
+            background: linear-gradient(145deg, #ffffff 28%, var(--definition-soft) 100%);
+            color: var(--definition-dark);
+            box-shadow: 0 4px 14px rgba(39, 85, 111, 0.06);
+        }
+
+        .term::before,
+        .term::after {
+            display: none;
+            content: none;
+        }
+
+        .term-copy {
+            min-width: 0;
+        }
+
+        .term-label {
+            display: block;
+            margin-bottom: 7px;
+            color: #60879d;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .term-name {
+            color: var(--definition-dark);
+            font-size: 27px;
+            font-weight: 900;
+            letter-spacing: -0.45px;
+            line-height: 1.25;
+            overflow-wrap: anywhere;
+        }
+
+        .term-mastery {
+            min-width: 82px;
+            display: flex;
+            flex: 0 0 auto;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            padding: 9px 12px;
+            border: 1px solid #cde5c3;
+            border-bottom: 3px solid #b9d5ad;
+            border-radius: 10px;
+            background: rgba(238, 249, 233, 0.92);
+            color: var(--success-dark);
+        }
+
+        .term-mastery span {
+            font-size: 9px;
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .term-mastery strong {
+            font-size: 16px;
+            font-weight: 900;
+        }
+
+        .definition-question {
+            margin-bottom: 17px;
+            padding: 24px;
+            border: 1px solid var(--surface-border);
+            border-bottom: 4px solid var(--surface-edge);
+            border-radius: 16px;
+            background: var(--surface);
+            color: #394449;
+            font-size: 17px;
+            font-weight: 650;
+            line-height: 1.75;
+            box-shadow: 0 4px 14px rgba(39, 56, 65, 0.045);
+        }
+
+        .definition-question strong {
+            color: var(--definition-dark);
+            font-weight: 900;
+        }
+
+        .missing-input {
+            min-height: 112px;
+            margin-top: 15px;
+            padding: 13px 14px 11px;
+            border: 2px solid #c5d2d8;
+            border-bottom-width: 4px;
+            border-radius: 11px;
+            background: #f9fbfc;
+            color: #2f393e;
+            font-size: 16px;
+            font-weight: 650;
+            line-height: 1.55;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+        }
+
+        .missing-input:hover {
+            border-color: #9fbdcd;
+            background: #ffffff;
+        }
+
+        .missing-input:focus {
+            border-color: var(--definition);
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(95, 159, 199, 0.15);
+        }
+
+        .submit-button,
+        .next-button {
+            min-height: 50px;
+            padding: 12px 18px 10px;
+            border: 2px solid var(--definition-dark);
+            border-bottom-width: 5px;
+            border-radius: 12px;
+            background: var(--definition);
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: 850;
+            transition: background 0.15s ease, transform 0.15s ease;
+        }
+
+        .submit-button:hover,
+        .next-button:hover {
+            background: #70acd0;
+            transform: translateY(-1px);
+        }
+
+        .submit-button:active,
+        .next-button:active {
+            border-bottom-width: 2px;
+            transform: translateY(2px);
+        }
+
+        .result {
+            margin-top: 17px;
+            padding: 19px;
+            border: 1px solid;
+            border-bottom-width: 4px;
+            border-radius: 14px;
+            box-shadow: 0 3px 11px rgba(39, 56, 65, 0.045);
+        }
+
+        .result.correct {
+            border-color: #a9d194;
+            border-bottom-color: #86b66f;
+            background: var(--success-soft);
+            color: #2f7018;
+        }
+
+        .result.incorrect {
+            border-color: #e7aeae;
+            border-bottom-color: #d78989;
+            background: var(--danger-soft);
+            color: var(--danger-dark);
+        }
+
+        .result-title {
+            margin-bottom: 10px;
+            font-size: 20px;
+            font-weight: 900;
+            letter-spacing: -0.2px;
+        }
+
+        .result-answer {
+            padding-top: 13px;
+            border-top: 1px solid currentColor;
+            color: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.65;
+        }
+
+        .result-answer strong {
+            font-size: 16px;
+            font-weight: 900;
+        }
+
+        .review-actions {
+            gap: 12px;
+            margin-top: 17px;
+        }
+
+        .finish-review-button {
+            min-height: 50px;
+            padding: 12px 18px 10px;
+            border: 2px solid #c8d4d9;
+            border-bottom: 4px solid #aebdc4;
+            border-radius: 12px;
+            background: #ffffff;
+            color: #405159;
+            font-size: 14px;
+            font-weight: 850;
+            transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+        }
+
+        .finish-review-button:hover {
+            border-color: var(--definition-hover);
+            background: #f1f7fa;
+            color: var(--definition-dark);
+            transform: translateY(-1px);
+        }
+
+        .finish-review-button:active {
+            border-bottom-width: 2px;
+            transform: translateY(2px);
+        }
+
+        .exit-review-button:focus-visible,
+        .missing-input:focus-visible,
+        .submit-button:focus-visible,
+        .next-button:focus-visible,
+        .finish-review-button:focus-visible {
+            outline: 3px solid rgba(39, 143, 211, 0.3);
+            outline-offset: 3px;
+        }
+
+        @media (max-width: 700px) {
+            .page {
+                padding: 20px 18px 42px;
+            }
+
+            .header {
+                min-height: 0;
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 22px 20px;
+            }
+
+            .header::after {
+                right: -12px;
+                font-size: 108px;
+            }
+
+            .header h1 {
+                font-size: 27px;
+            }
+
+            .exit-review-button {
+                width: auto;
+            }
+
+            .term {
+                align-items: flex-start;
+                padding: 20px 18px;
+            }
+
+            .term-name {
+                font-size: 24px;
+            }
+
+            .definition-question {
+                padding: 19px;
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .term {
+                flex-direction: column;
+            }
+
+            .term-mastery {
+                min-width: 0;
+                flex-direction: row;
+                align-items: baseline;
+                align-self: flex-start;
+                gap: 7px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .exit-review-button,
+            .missing-input,
+            .submit-button,
+            .next-button,
+            .finish-review-button {
+                transition: none;
+            }
+        }
     </style>
 
 </head>
@@ -588,32 +1029,37 @@
 
     <div class="header">
 
-        <h1>
-            Review Definition
-        </h1>
+        <div class="header-copy">
 
-        <p>
-            Recall the missing part of the definition.
-        </p>
+            <h1>
+                Review Definition
+            </h1>
 
-    </div>
+            <p>
+                Recall the missing part of the definition.
+            </p>
 
+        </div>
 
-    <!-- =========================================
-         MASTERY
-    ========================================= -->
+        {% if review_scope == "subject" %}
 
-    <div class="mastery">
+            <a
+                href="{% url 'subject_detail' subject_index=subject_index %}"
+                class="exit-review-button"
+            >
+                Finish Review
+            </a>
 
-        <span class="mastery-label">
-            Mastery
-        </span>
+        {% else %}
 
-        <span class="mastery-value">
+            <a
+                href="{% url 'review_definitions' %}"
+                class="exit-review-button"
+            >
+                Finish Review
+            </a>
 
-            {{ progress.mastery_level }}/6
-
-        </span>
+        {% endif %}
 
     </div>
 
@@ -624,7 +1070,29 @@
 
     <div class="term">
 
-        {{ definition.term }}
+        <div class="term-copy">
+
+            <span class="term-label">
+                Term
+            </span>
+
+            <div class="term-name">
+                {{ definition.term }}
+            </div>
+
+        </div>
+
+        <div class="term-mastery">
+
+            <span>
+                Mastery
+            </span>
+
+            <strong>
+                {{ progress.mastery_level }}/6
+            </strong>
+
+        </div>
 
     </div>
 
