@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 
@@ -21,6 +22,20 @@ class Subject(models.Model):
     colour = models.CharField(
         max_length=7,
         default="#2563EB",
+    )
+
+    target_grade = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        validators=[
+            MinValueValidator(0),
+            MaxValueValidator(100),
+        ],
+    )
+
+    exam_date = models.DateField(
+        null=True,
+        blank=True,
     )
 
     created = models.DateTimeField(
