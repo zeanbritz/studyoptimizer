@@ -389,8 +389,10 @@
             transform: translateY(2px);
         }
 
-        .availability-card {
-            border-top: 3px solid var(--green);
+        .availability-section {
+            margin-top: 18px;
+            padding-top: 18px;
+            border-top: 1px solid #d8e2d4;
         }
 
         .panel-header {
@@ -904,7 +906,95 @@
                 </div>
             </header>
 
-            <section class="panel availability-card">
+            <section
+                class="panel subjects-panel profile-card"
+                id="profile-card"
+                aria-label="Academic target, study availability, and subjects"
+            >
+                <button
+                    type="button"
+                    class="profile-edit-button"
+                    onclick="openProfileEditor()"
+                    title="Edit academic target"
+                    aria-label="Edit academic target"
+                >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 20h9"></path>
+                        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"></path>
+                    </svg>
+                </button>
+
+                <div class="profile-display">
+                    <span class="profile-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <path d="m3 9 9-5 9 5-9 5Z"></path>
+                            <path d="M7 12v5c3 2 7 2 10 0v-5"></path>
+                            <path d="M21 9v6"></path>
+                        </svg>
+                    </span>
+
+                    <div class="profile-copy">
+                        <span class="profile-label">Academic target</span>
+                        <h2 class="degree-title">
+                            {{ profile.workspace_name|default:"My Degree" }}
+                        </h2>
+                        <p class="overall-target">
+                            Overall target
+                            <span class="target-badge">{{ profile.target_grade }}%</span>
+                        </p>
+                    </div>
+                </div>
+
+                <form method="POST" class="profile-edit-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_profile">
+
+                    <div class="profile-fields">
+                        <label class="field degree-field" for="workspace-name">
+                            <span class="field-label">Degree / qualification</span>
+                            <input
+                                id="workspace-name"
+                                class="text-input"
+                                type="text"
+                                name="workspace_name"
+                                value="{{ profile.workspace_name }}"
+                                required
+                            >
+                        </label>
+
+                        <label class="field" for="overall-target">
+                            <span class="field-label">Overall target %</span>
+                            <input
+                                id="overall-target"
+                                class="text-input"
+                                type="number"
+                                name="target_grade"
+                                value="{{ profile.target_grade }}"
+                                min="0"
+                                max="100"
+                                required
+                            >
+                        </label>
+                    </div>
+
+                    <div class="profile-actions">
+                        <button
+                            type="button"
+                            class="action-button cancel-button"
+                            onclick="closeProfileEditor()"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            class="action-button save-button"
+                        >
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+
+                <div class="availability-section">
                 <div class="panel-header">
                     <div class="panel-title">
                         <span class="panel-icon" aria-hidden="true">
@@ -1102,95 +1192,7 @@
                         Study time must use hh:mm and cannot exceed 24:00.
                     </div>
                 </form>
-            </section>
-
-            <section
-                class="panel subjects-panel profile-card"
-                id="profile-card"
-                aria-label="Academic target and subjects"
-            >
-                <button
-                    type="button"
-                    class="profile-edit-button"
-                    onclick="openProfileEditor()"
-                    title="Edit academic target"
-                    aria-label="Edit academic target"
-                >
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M12 20h9"></path>
-                        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"></path>
-                    </svg>
-                </button>
-
-                <div class="profile-display">
-                    <span class="profile-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24">
-                            <path d="m3 9 9-5 9 5-9 5Z"></path>
-                            <path d="M7 12v5c3 2 7 2 10 0v-5"></path>
-                            <path d="M21 9v6"></path>
-                        </svg>
-                    </span>
-
-                    <div class="profile-copy">
-                        <span class="profile-label">Academic target</span>
-                        <h2 class="degree-title">
-                            {{ profile.workspace_name|default:"My Degree" }}
-                        </h2>
-                        <p class="overall-target">
-                            Overall target
-                            <span class="target-badge">{{ profile.target_grade }}%</span>
-                        </p>
-                    </div>
                 </div>
-
-                <form method="POST" class="profile-edit-form">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="update_profile">
-
-                    <div class="profile-fields">
-                        <label class="field degree-field" for="workspace-name">
-                            <span class="field-label">Degree / qualification</span>
-                            <input
-                                id="workspace-name"
-                                class="text-input"
-                                type="text"
-                                name="workspace_name"
-                                value="{{ profile.workspace_name }}"
-                                required
-                            >
-                        </label>
-
-                        <label class="field" for="overall-target">
-                            <span class="field-label">Overall target %</span>
-                            <input
-                                id="overall-target"
-                                class="text-input"
-                                type="number"
-                                name="target_grade"
-                                value="{{ profile.target_grade }}"
-                                min="0"
-                                max="100"
-                                required
-                            >
-                        </label>
-                    </div>
-
-                    <div class="profile-actions">
-                        <button
-                            type="button"
-                            class="action-button cancel-button"
-                            onclick="closeProfileEditor()"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            class="action-button save-button"
-                        >
-                            Save Changes
-                        </button>
-                    </div>
-                </form>
 
                 <div class="subjects">
                     {% for subject in subjects %}
