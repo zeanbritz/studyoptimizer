@@ -104,6 +104,16 @@
             gap: 10px;
         }
 
+        .auth-form {
+            display: flex;
+            margin: 0;
+        }
+
+        .auth-form .button {
+            font-family: inherit;
+            cursor: pointer;
+        }
+
         .button {
             min-height: 44px;
             display: inline-flex;
@@ -419,8 +429,14 @@
                     <a href="{% url 'dashboard' %}" class="button button-green">
                         Dashboard
                     </a>
+                    <form method="post" action="{% url 'logout' %}" class="auth-form">
+                        {% csrf_token %}
+                        <button type="submit" class="button button-light">
+                            Log out
+                        </button>
+                    </form>
                 {% else %}
-                    <a href="{% url 'login' %}" class="button button-light">
+                    <a href="{% url 'login' %}?next={% url 'dashboard' %}" class="button button-light">
                         Log in
                     </a>
                     <a href="{% url 'register' %}" class="button button-green">
@@ -455,7 +471,7 @@
                             <a href="{% url 'register' %}" class="button button-green">
                                 Start studying →
                             </a>
-                            <a href="{% url 'login' %}" class="button button-outline">
+                            <a href="{% url 'login' %}?next={% url 'dashboard' %}" class="button button-outline">
                                 I have an account
                             </a>
                         {% endif %}

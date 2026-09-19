@@ -1,6 +1,6 @@
 <aside id="sidebar" class="sidebar">
     <div class="sidebar-top">
-        <div class="logo">StudyOptimizer</div>
+        <a href="{% url 'landing' %}" class="logo">StudyOptimizer</a>
     </div>
 
     <nav class="nav" aria-label="Main navigation">
@@ -66,4 +66,43 @@
             <span class="nav-text">Progress</span>
         </a>
     </nav>
+
+    <div class="sidebar-account">
+
+        {% if user.is_authenticated %}
+
+            <form method="post" action="{% url 'logout' %}" class="sidebar-auth-form">
+                {% csrf_token %}
+
+                <button type="submit" class="nav-link sidebar-auth-link sidebar-logout-link">
+                    <span class="nav-icon" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+                            <path d="M10 5H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h5"></path>
+                            <path d="M14 8l4 4-4 4"></path>
+                            <path d="M18 12H8"></path>
+                        </svg>
+                    </span>
+                    <span class="nav-text">Log out</span>
+                </button>
+            </form>
+
+        {% else %}
+
+            <a
+                href="{% url 'login' %}?next={% url 'dashboard' %}"
+                class="nav-link sidebar-auth-link"
+            >
+                <span class="nav-icon" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+                        <path d="M14 5h5a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-5"></path>
+                        <path d="m10 8-4 4 4 4"></path>
+                        <path d="M6 12h10"></path>
+                    </svg>
+                </span>
+                <span class="nav-text">Log in</span>
+            </a>
+
+        {% endif %}
+
+    </div>
 </aside>

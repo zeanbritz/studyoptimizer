@@ -46,6 +46,8 @@
     white-space: nowrap;
 
     color: #222;
+
+    text-decoration: none;
 }
 
 
@@ -125,4 +127,49 @@
 
 .nav-text {
     display: block;
+}
+
+
+.sidebar-account {
+    width: 100%;
+
+    margin-top: auto;
+
+    padding-top: 16px;
+
+    border-top: 1px solid #e8ecee;
+}
+
+
+.sidebar-auth-form {
+    width: 100%;
+
+    margin: 0;
+}
+
+
+.sidebar-auth-link {
+    border: 0;
+
+    background: transparent;
+
+    font-family: inherit;
+
+    text-align: left;
+
+    cursor: pointer;
+}
+
+
+.sidebar-auth-link:hover {
+    background: #eaf5fc;
+
+    color: #176f9f;
+}
+
+
+.sidebar-logout-link:hover {
+    background: #fff1f1;
+
+    color: #a93636;
 }
