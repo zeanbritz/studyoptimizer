@@ -39,6 +39,14 @@ class StudyProfile(models.Model):
         ],
     )
 
+    subject_count = models.PositiveSmallIntegerField(
+        default=0,
+        validators=[
+            MinValueValidator(0),
+            MaxValueValidator(20),
+        ],
+    )
+
     onboarding_complete = models.BooleanField(
         default=False
     )

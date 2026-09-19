@@ -1,8 +1,11 @@
-import json
+from datetime import date
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+
+from dashboard.models import StudyProfile
+from learning.models import Subject
 
 
 class AuthenticationFlowTests(TestCase):
@@ -46,7 +49,7 @@ class AuthenticationFlowTests(TestCase):
             fetch_redirect_response=False,
         )
 
-    def test_logout_preserves_workspace_and_login_restores_it(self):
+    def test_logout_persists_workspace_and_login_restores_it(self):
         self.client.force_login(self.user)
 
         profile = {
@@ -76,19 +79,25 @@ class AuthenticationFlowTests(TestCase):
 
         self.assertRedirects(response, reverse("landing"))
 
-        self.user.refresh_from_db()
-        stored_workspace = json.loads(self.user.workspace_data)
+        stored_profile = StudyProfile.objects.get(user=self.user)
+        stored_subject = Subject.objects.get(user=self.user)
 
         self.assertEqual(
-            stored_workspace["onboarding_profile"],
-            profile,
+            stored_profile.workspace_name,
+            profile["workspace_name"],
         )
+        self.assertEqual(stored_profile.target_grade, 85)
+        self.assertEqual(stored_profile.study_hours, 2)
+        self.assertEqual(stored_profile.subject_count, 1)
+        self.assertTrue(stored_profile.onboarding_complete)
         self.assertEqual(
-            stored_workspace["onboarding_subjects"],
-            subjects,
+            stored_subject.name,
+            "Business Informatics",
         )
-        self.assertTrue(
-            stored_workspace["onboarding_complete"]
+        self.assertEqual(stored_subject.target_grade, 85)
+        self.assertEqual(
+            stored_subject.exam_date,
+            date(2026, 11, 20),
         )
 
         login_response = self.client.post(
@@ -106,14 +115,28 @@ class AuthenticationFlowTests(TestCase):
         )
 
         restored_session = self.client.session
+        restored_profile = restored_session["onboarding_profile"]
+        restored_subject = restored_session["onboarding_subjects"][0]
 
         self.assertEqual(
-            restored_session["onboarding_profile"],
-            profile,
+            restored_profile["workspace_name"],
+            profile["workspace_name"],
+        )
+        self.assertEqual(restored_profile["target_grade"], 85)
+        self.assertEqual(restored_profile["study_hours"], 2)
+        self.assertEqual(restored_profile["subject_count"], 1)
+        self.assertEqual(
+            restored_subject["name"],
+            "Business Informatics",
+        )
+        self.assertEqual(restored_subject["target_grade"], 85)
+        self.assertEqual(
+            restored_subject["exam_date"],
+            "2026-11-20",
         )
         self.assertEqual(
-            restored_session["onboarding_subjects"],
-            subjects,
+            restored_subject["database_id"],
+            stored_subject.id,
         )
         self.assertTrue(
             restored_session["onboarding_complete"]
