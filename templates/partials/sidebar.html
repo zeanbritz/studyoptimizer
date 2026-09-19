@@ -1,6 +1,10 @@
 <aside id="sidebar" class="sidebar">
     <div class="sidebar-top">
-        <a href="{% url 'landing' %}" class="logo">StudyOptimizer</a>
+        <a
+            href="{% url 'landing' %}"
+            class="logo"
+            style="color: #222; text-decoration: none !important;"
+        >StudyOptimizer</a>
     </div>
 
     <nav class="nav" aria-label="Main navigation">
@@ -67,14 +71,26 @@
         </a>
     </nav>
 
-    <div class="sidebar-account">
+    <div
+        class="sidebar-account"
+        style="margin-top: 44px; padding-top: 0; border-top: 0;"
+    >
 
         {% if user.is_authenticated %}
 
-            <form method="post" action="{% url 'logout' %}" class="sidebar-auth-form">
+            <form
+                method="post"
+                action="{% url 'logout' %}"
+                class="sidebar-auth-form"
+                style="width: 100%; display: flex; justify-content: center; margin: 0;"
+            >
                 {% csrf_token %}
 
-                <button type="submit" class="nav-link sidebar-auth-link sidebar-logout-link">
+                <button
+                    type="submit"
+                    class="nav-link sidebar-auth-link sidebar-logout-link"
+                    style="width: auto; min-width: 104px; min-height: 34px; padding: 7px 13px; margin: 0 auto; justify-content: center; gap: 7px; border: 0; border-radius: 9px; background: #e5e8ea; color: #5d666b; font-size: 13px; cursor: pointer !important;"
+                >
                     <span class="nav-icon" aria-hidden="true">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false">
                             <path d="M10 5H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h5"></path>
