@@ -1,8 +1,16 @@
 studyenv/
 __pycache__/
 *.py[cod]
+
 .env
+.env.*
+!.env.example
+
 .vscode/
 .idea/
+
 media/
 staticfiles/
+
+db.sqlite3
+db.sqlite3-*
