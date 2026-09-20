@@ -1,5 +1,6 @@
 from datetime import date
 
+from allauth.account.models import EmailAddress
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -9,12 +10,21 @@ from learning.models import Subject
 
 
 class AuthenticationFlowTests(TestCase):
+
     def setUp(self):
         self.password = "Safe-test-password-123!"
+
         self.user = get_user_model().objects.create_user(
             username="student",
             email="student@example.com",
             password=self.password,
+        )
+
+        EmailAddress.objects.create(
+            user=self.user,
+            email=self.user.email,
+            primary=True,
+            verified=True,
         )
 
     def test_landing_page_is_public(self):
@@ -22,19 +32,29 @@ class AuthenticationFlowTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
+    def test_login_page_uses_custom_allauth_template(self):
+        response = self.client.get(reverse("login"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response,
+            "account/login.html",
+        )
+
     def test_dashboard_redirects_anonymous_users_to_login(self):
         response = self.client.get(reverse("dashboard"))
 
         expected_url = (
             f"{reverse('login')}?next={reverse('dashboard')}"
         )
+
         self.assertRedirects(
             response,
             expected_url,
             fetch_redirect_response=False,
         )
 
-    def test_valid_login_redirects_to_dashboard(self):
+    def test_valid_username_login_redirects_to_dashboard(self):
         response = self.client.post(
             reverse("login"),
             {
@@ -49,6 +69,52 @@ class AuthenticationFlowTests(TestCase):
             fetch_redirect_response=False,
         )
 
+    def test_valid_email_login_redirects_to_dashboard(self):
+        response = self.client.post(
+            reverse("login"),
+            {
+                "login": self.user.email,
+                "password": self.password,
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("dashboard"),
+            fetch_redirect_response=False,
+        )
+
+    def test_signup_uses_allauth_and_creates_email_address(self):
+        signup_email = "newstudent@example.com"
+
+        response = self.client.post(
+            reverse("register"),
+            {
+                "username": "newstudent",
+                "email": signup_email,
+                "password1": "Another-safe-password-456!",
+                "password2": "Another-safe-password-456!",
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("dashboard"),
+            fetch_redirect_response=False,
+        )
+
+        new_user = get_user_model().objects.get(
+            username="newstudent"
+        )
+
+        email_address = EmailAddress.objects.get(
+            user=new_user,
+            email=signup_email,
+        )
+
+        self.assertTrue(email_address.primary)
+        self.assertFalse(email_address.verified)
+
     def test_logout_persists_workspace_and_login_restores_it(self):
         self.client.force_login(self.user)
 
@@ -58,6 +124,7 @@ class AuthenticationFlowTests(TestCase):
             "study_hours": "2",
             "subject_count": 1,
         }
+
         subjects = [
             {
                 "name": "Business Informatics",
@@ -77,24 +144,45 @@ class AuthenticationFlowTests(TestCase):
 
         response = self.client.post(reverse("logout"))
 
-        self.assertRedirects(response, reverse("landing"))
+        self.assertRedirects(
+            response,
+            reverse("landing"),
+        )
 
-        stored_profile = StudyProfile.objects.get(user=self.user)
-        stored_subject = Subject.objects.get(user=self.user)
+        stored_profile = StudyProfile.objects.get(
+            user=self.user
+        )
+        stored_subject = Subject.objects.get(
+            user=self.user
+        )
 
         self.assertEqual(
             stored_profile.workspace_name,
             profile["workspace_name"],
         )
-        self.assertEqual(stored_profile.target_grade, 85)
-        self.assertEqual(stored_profile.study_hours, 2)
-        self.assertEqual(stored_profile.subject_count, 1)
-        self.assertTrue(stored_profile.onboarding_complete)
+        self.assertEqual(
+            stored_profile.target_grade,
+            85,
+        )
+        self.assertEqual(
+            stored_profile.study_hours,
+            2,
+        )
+        self.assertEqual(
+            stored_profile.subject_count,
+            1,
+        )
+        self.assertTrue(
+            stored_profile.onboarding_complete
+        )
         self.assertEqual(
             stored_subject.name,
             "Business Informatics",
         )
-        self.assertEqual(stored_subject.target_grade, 85)
+        self.assertEqual(
+            stored_subject.target_grade,
+            85,
+        )
         self.assertEqual(
             stored_subject.exam_date,
             date(2026, 11, 20),
@@ -115,21 +203,37 @@ class AuthenticationFlowTests(TestCase):
         )
 
         restored_session = self.client.session
-        restored_profile = restored_session["onboarding_profile"]
-        restored_subject = restored_session["onboarding_subjects"][0]
+        restored_profile = restored_session[
+            "onboarding_profile"
+        ]
+        restored_subject = restored_session[
+            "onboarding_subjects"
+        ][0]
 
         self.assertEqual(
             restored_profile["workspace_name"],
             profile["workspace_name"],
         )
-        self.assertEqual(restored_profile["target_grade"], 85)
-        self.assertEqual(restored_profile["study_hours"], 2)
-        self.assertEqual(restored_profile["subject_count"], 1)
+        self.assertEqual(
+            restored_profile["target_grade"],
+            85,
+        )
+        self.assertEqual(
+            restored_profile["study_hours"],
+            2,
+        )
+        self.assertEqual(
+            restored_profile["subject_count"],
+            1,
+        )
         self.assertEqual(
             restored_subject["name"],
             "Business Informatics",
         )
-        self.assertEqual(restored_subject["target_grade"], 85)
+        self.assertEqual(
+            restored_subject["target_grade"],
+            85,
+        )
         self.assertEqual(
             restored_subject["exam_date"],
             "2026-11-20",
