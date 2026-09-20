@@ -38,7 +38,7 @@ class AuthenticationFlowTests(TestCase):
         response = self.client.post(
             reverse("login"),
             {
-                "username": self.user.username,
+                "login": self.user.username,
                 "password": self.password,
             },
         )
@@ -103,7 +103,7 @@ class AuthenticationFlowTests(TestCase):
         login_response = self.client.post(
             reverse("login"),
             {
-                "username": self.user.username,
+                "login": self.user.username,
                 "password": self.password,
             },
         )
