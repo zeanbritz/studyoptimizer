@@ -67,6 +67,10 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+
+    "allauth",
+    "allauth.account",
+
     "accounts",
     "dashboard",
     "learning",
@@ -84,6 +88,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
     "accounts.middleware.WorkspaceSessionPersistenceMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -213,9 +218,39 @@ SECURE_HSTS_PRELOAD = SECURE_HSTS_SECONDS > 0
 
 AUTH_USER_MODEL = "accounts.User"
 
+AUTHENTICATION_BACKENDS = [
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
+
 LOGIN_REDIRECT_URL = "/dashboard/"
 LOGOUT_REDIRECT_URL = "/"
 LOGIN_URL = "/login/"
+
+
+# django-allauth
+
+ACCOUNT_LOGIN_METHODS = {
+    "username",
+    "email",
+}
+
+ACCOUNT_SIGNUP_FIELDS = [
+    "username*",
+    "email*",
+    "password1*",
+    "password2*",
+]
+
+ACCOUNT_UNIQUE_EMAIL = True
+
+ACCOUNT_EMAIL_VERIFICATION = os.getenv(
+    "ACCOUNT_EMAIL_VERIFICATION",
+    "none",
+).strip().lower()
+
+ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
+
+ACCOUNT_LOGOUT_ON_GET = False
 
 
 # Default primary key field type
