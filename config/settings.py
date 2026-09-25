@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
+    "anymail",
     "allauth",
     "allauth.account",
 
@@ -260,16 +261,21 @@ EMAIL_BACKEND = os.getenv(
     (
         "django.core.mail.backends.console.EmailBackend"
         if DEBUG
-        else "django.core.mail.backends.smtp.EmailBackend"
+        else "anymail.backends.mailgun.EmailBackend"
     ),
 )
 
-EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.eu.mailgun.org")
-EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
-EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", default=True)
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
-EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "10"))
+ANYMAIL = {
+    "MAILGUN_API_KEY": os.getenv("MAILGUN_API_KEY", ""),
+    "MAILGUN_SENDER_DOMAIN": os.getenv(
+        "MAILGUN_SENDER_DOMAIN",
+        "mg.studigarden.com",
+    ),
+    "MAILGUN_API_URL": os.getenv(
+        "MAILGUN_API_URL",
+        "https://api.eu.mailgun.net/v3",
+    ),
+}
 
 DEFAULT_FROM_EMAIL = os.getenv(
     "DEFAULT_FROM_EMAIL",
