@@ -1,6 +1,8 @@
 from allauth.account import views as account_views
 from django.urls import path
 
+from .views import BetaSignupView
+
 
 urlpatterns = [
     path(
@@ -15,7 +17,7 @@ urlpatterns = [
     ),
     path(
         "register/",
-        account_views.SignupView.as_view(),
+        BetaSignupView.as_view(),
         name="register",
     ),
 ]

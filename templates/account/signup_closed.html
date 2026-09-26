@@ -1,0 +1,20 @@
+{% extends "account/base_entrance.html" %}
+
+{% block head_title %}Early Access{% endblock head_title %}
+
+{% block content %}
+    <h1>StudiGarden Early Access</h1>
+
+    <p>
+        Signups are currently by invitation only.
+    </p>
+
+    <p>
+        If you received an invitation, open the unique link we sent you.
+        Each link can be used once.
+    </p>
+
+    <p>
+        <a href="{% url 'landing' %}">Back to home</a>
+    </p>
+{% endblock content %}

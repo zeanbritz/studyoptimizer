@@ -252,6 +252,12 @@
             >
                 {% csrf_token %}
 
+                <input
+                    type="hidden"
+                    name="invite_token"
+                    value="{% if request.method == 'POST' %}{{ request.POST.invite_token }}{% else %}{{ request.GET.invite }}{% endif %}"
+                >
+
                 {% if form.non_field_errors %}
                     <div class="signup-error" role="alert">
                         {{ form.non_field_errors }}

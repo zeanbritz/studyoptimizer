@@ -253,6 +253,8 @@ ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 
 ACCOUNT_LOGOUT_ON_GET = False
 
+ACCOUNT_ADAPTER = "accounts.adapter.BetaInviteAccountAdapter"
+
 
 # Email
 

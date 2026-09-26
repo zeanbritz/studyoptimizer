@@ -1,16 +1,15 @@
-from django.shortcuts import render, redirect
-from .forms import CustomUserCreationForm
+from allauth.account.views import SignupView
+
+from .adapter import InviteUnavailable
 
 
-def register(request):
-    if request.method == "POST":
-        form = CustomUserCreationForm(request.POST)
-
-        if form.is_valid():
-            form.save()
-            return redirect("login")
-
-    else:
-        form = CustomUserCreationForm()
-
-    return render(request, "accounts/register.html", {"form": form})
+class BetaSignupView(SignupView):
+    def form_valid(self, form):
+        try:
+            return super().form_valid(form)
+        except InviteUnavailable:
+            form.add_error(
+                None,
+                "This invitation has already been used or is no longer available.",
+            )
+            return self.form_invalid(form)
