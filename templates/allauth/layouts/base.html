@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block head_title %}Account{% endblock head_title %} · StudiGarden</title>
+    {% block extra_head %}{% endblock extra_head %}
+
+    <style>
+        :root {
+            --ink: #2f373b;
+            --muted: #68757b;
+            --page: #edf1f3;
+            --navy: #303a5a;
+            --navy-light: #485676;
+            --navy-dark: #222b45;
+            --green: #58b82a;
+            --green-dark: #3f8f1d;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            margin: 0;
+            padding: 24px;
+            background: var(--page);
+            color: var(--ink);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+        }
+
+        button, input { font: inherit; }
+
+        .auth-shell {
+            width: min(500px, 100%);
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            color: var(--navy);
+            font-size: 19px;
+            font-weight: 900;
+            letter-spacing: -0.45px;
+            text-decoration: none;
+        }
+
+        .brand-mark {
+            width: 37px;
+            height: 37px;
+            display: grid;
+            place-items: center;
+            border: 2px solid var(--green-dark);
+            border-bottom-width: 4px;
+            border-radius: 10px;
+            background: var(--green);
+            color: #fff;
+        }
+
+        .auth-card {
+            overflow: hidden;
+            border: 1px solid #d8e0e3;
+            border-bottom: 5px solid #c4cfd4;
+            border-radius: 17px;
+            background: #fff;
+            box-shadow: 0 12px 34px rgba(35, 45, 70, 0.1);
+        }
+
+        .auth-content {
+            padding: 25px 27px 27px;
+        }
+
+        .auth-content > h1 {
+            margin: -25px -27px 25px;
+            padding: 25px 27px;
+            border-bottom: 5px solid var(--navy-dark);
+            background: linear-gradient(135deg, var(--navy), var(--navy-light));
+            color: #fff;
+            font-size: 29px;
+            font-weight: 900;
+            letter-spacing: -0.7px;
+        }
+
+        .auth-content p {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .auth-content a {
+            color: #176f9f;
+            font-weight: 800;
+            text-decoration: none;
+        }
+
+        .auth-content a:hover,
+        .auth-nav a:hover {
+            text-decoration: underline;
+        }
+
+        .auth-content form {
+            margin-top: 20px;
+        }
+
+        .auth-content label {
+            display: block;
+            margin: 0 0 7px 2px;
+            color: #4d5a60;
+            font-size: 12px;
+            font-weight: 850;
+        }
+
+        .auth-content input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="submit"]) {
+            width: 100%;
+            min-height: 48px;
+            padding: 10px 13px 9px;
+            border: 2px solid #d0dade;
+            border-bottom-width: 4px;
+            border-radius: 11px;
+            background: #f9fbfc;
+            color: var(--ink);
+            font-size: 15px;
+            font-weight: 700;
+            outline: none;
+        }
+
+        .auth-content input:focus {
+            border-color: #78b8dd;
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(39, 143, 211, 0.12);
+        }
+
+        .auth-content input[type="checkbox"],
+        .auth-content input[type="radio"] {
+            accent-color: var(--green-dark);
+        }
+
+        .auth-content form p {
+            margin: 0 0 17px;
+        }
+
+        .auth-content form button,
+        .auth-content form input[type="submit"] {
+            width: 100%;
+            min-height: 49px;
+            margin-top: 6px;
+            padding: 11px 18px 9px;
+            border: 2px solid var(--green-dark);
+            border-bottom-width: 5px;
+            border-radius: 12px;
+            background: var(--green);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 900;
+            cursor: pointer;
+        }
+
+        .auth-content form button:hover,
+        .auth-content form input[type="submit"]:hover {
+            background: #65c936;
+            transform: translateY(-1px);
+        }
+
+        .auth-content form button:active,
+        .auth-content form input[type="submit"]:active {
+            border-bottom-width: 2px;
+            transform: translateY(2px);
+        }
+
+        .errorlist,
+        .auth-messages {
+            margin: 0 0 16px;
+            padding: 11px 13px;
+            border: 1px solid #e4adad;
+            border-radius: 9px;
+            background: #fff2f2;
+            color: #a93636;
+            font-size: 12px;
+            font-weight: 750;
+            list-style: none;
+        }
+
+        .auth-messages {
+            border-color: #b8dca9;
+            background: #f1faeb;
+            color: #397325;
+        }
+
+        .auth-messages ul {
+            margin: 0;
+            padding-left: 18px;
+        }
+
+        .auth-nav {
+            display: flex;
+            justify-content: center;
+            gap: 18px;
+            margin-top: 19px;
+            font-size: 13px;
+        }
+
+        .auth-nav a {
+            color: #176f9f;
+            font-weight: 800;
+            text-decoration: none;
+        }
+
+        @media (max-width: 520px) {
+            body { padding: 16px; }
+
+            .auth-content { padding: 22px 20px 24px; }
+
+            .auth-content > h1 {
+                margin: -22px -20px 23px;
+                padding: 23px 20px;
+                font-size: 26px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    {% block body %}
+        <div class="auth-shell">
+            <a href="{% url 'landing' %}" class="brand">
+                <span class="brand-mark" aria-hidden="true">S</span>
+                <span>StudiGarden</span>
+            </a>
+
+            {% if messages %}
+                <div class="auth-messages" role="status">
+                    <ul>
+                        {% for message in messages %}
+                            <li>{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <main class="auth-card">
+                <div class="auth-content">
+                    {% block content %}{% endblock content %}
+                </div>
+            </main>
+
+            <nav class="auth-nav" aria-label="Account links">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'dashboard' %}">Back to dashboard</a>
+                {% else %}
+                    <a href="{% url 'login' %}">Log in</a>
+                    <a href="{% url 'register' %}">Create account</a>
+                {% endif %}
+            </nav>
+        </div>
+    {% endblock body %}
+
+    {% block extra_body %}{% endblock extra_body %}
+</body>
+</html>
