@@ -1,86 +1,77 @@
 from django.urls import path
-from . import views
+
+from . import feedback_views, views
 
 
 urlpatterns = [
-
     path(
         "",
         views.dashboard,
-        name="dashboard"
+        name="dashboard",
     ),
-
+    path(
+        "feedback/submit/",
+        feedback_views.submit_beta_feedback,
+        name="submit_beta_feedback",
+    ),
     path(
         "onboarding/",
         views.onboarding,
-        name="onboarding"
+        name="onboarding",
     ),
-
     path(
         "goals/",
         views.goals,
-        name="goals"
+        name="goals",
     ),
-
     path(
         "review/",
         views.review,
-        name="review"
+        name="review",
     ),
-
     path(
         "subjects/<int:subject_index>/",
         views.subject_detail,
-        name="subject_detail"
+        name="subject_detail",
     ),
-
     path(
         "subjects/<int:subject_index>/definition/",
         views.definition,
-        name="definition"
+        name="definition",
     ),
-
     path(
         "review/definitions/",
         views.review_definitions,
-        name=
-        "review_definitions"
+        name="review_definitions",
     ),
-
     path(
         "progress/",
         views.progress,
         name="progress",
     ),
-
     path(
         "review/formulas/",
         views.review_formulas,
         name="review_formulas",
     ),
-
     path(
         "review/lists/",
         views.review_lists,
         name="review_lists",
     ),
-
     path(
         "review/steps/",
         views.review_steps,
         name="review_steps",
     ),
-
     path(
         "review/notes/",
         views.review_notes,
         name="review_notes",
     ),
-
     path(
         "review/comparisons/",
         views.review_comparisons,
         name="review_comparisons",
     ),
-
 ]

@@ -262,3 +262,44 @@ class SubjectRevisionPlan(models.Model):
             f"{self.subject.name} - "
             f"{self.revision_days} revision days"
         )
+
+
+
+class BetaFeedback(models.Model):
+    class Category(models.TextChoices):
+        IDEA = "idea", "Idea"
+        BUG = "bug", "Bug"
+        CONFUSING = "confusing", "Confusing"
+
+    class Status(models.TextChoices):
+        NEW = "new", "New"
+        REVIEWING = "reviewing", "Reviewing"
+        RESOLVED = "resolved", "Resolved"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="beta_feedback",
+    )
+    category = models.CharField(
+        max_length=10,
+        choices=Category.choices,
+    )
+    message = models.CharField(max_length=2000)
+    page_path = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+    )
+    status = models.CharField(
+        max_length=10,
+        choices=Status.choices,
+        default=Status.NEW,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.get_category_display()} from {self.user}"

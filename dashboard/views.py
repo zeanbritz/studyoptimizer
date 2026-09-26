@@ -1,5 +1,6 @@
 from collections import Counter
 from datetime import date, datetime, timedelta
+from django.conf import settings
 
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
@@ -1113,6 +1114,8 @@ def dashboard(request):
         request,
         "dashboard/dashboard.html",
         {
+            "beta_feedback_enabled": settings.BETA_FEEDBACK_ENABLED,
+
             # --------------------------------------------
             # ONBOARDING
             # --------------------------------------------

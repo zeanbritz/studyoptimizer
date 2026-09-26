@@ -1,0 +1,89 @@
+<div class="beta-feedback" id="beta-feedback">
+    <button
+        class="beta-feedback__launcher"
+        id="beta-feedback-launcher"
+        type="button"
+        aria-controls="beta-feedback-panel"
+        aria-expanded="false"
+    >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20 11.5a8 8 0 0 1-8 8 8.5 8.5 0 0 1-3.2-.6L4 20l1.1-4.8A8 8 0 1 1 20 11.5Z"></path>
+            <path d="M8 10h8M8 13.5h5"></path>
+        </svg>
+        Feedback
+    </button>
+
+    <section
+        class="beta-feedback__panel"
+        id="beta-feedback-panel"
+        aria-labelledby="beta-feedback-title"
+        hidden
+    >
+        <div class="beta-feedback__header">
+            <div>
+                <span class="beta-feedback__eyebrow">BETA FEEDBACK</span>
+                <h2 id="beta-feedback-title">What’s on your mind?</h2>
+            </div>
+
+            <button
+                class="beta-feedback__close"
+                id="beta-feedback-close"
+                type="button"
+                aria-label="Close feedback"
+            >×</button>
+        </div>
+
+        <form
+            id="beta-feedback-form"
+            method="post"
+            action="{% url 'submit_beta_feedback' %}"
+        >
+            {% csrf_token %}
+            <input type="hidden" name="page_path" value="{{ request.path }}">
+
+            <fieldset class="beta-feedback__choices">
+                <legend>Choose one</legend>
+
+                <div class="beta-feedback__choice-grid">
+                    <label class="beta-feedback__choice">
+                        <input type="radio" name="category" value="idea" required>
+                        <span><b aria-hidden="true">✦</b> Idea</span>
+                    </label>
+
+                    <label class="beta-feedback__choice">
+                        <input type="radio" name="category" value="bug" required>
+                        <span><b aria-hidden="true">!</b> Bug</span>
+                    </label>
+
+                    <label class="beta-feedback__choice">
+                        <input type="radio" name="category" value="confusing" required>
+                        <span><b aria-hidden="true">?</b> Confusing</span>
+                    </label>
+                </div>
+            </fieldset>
+
+            <label class="beta-feedback__message-label" for="beta-feedback-message">
+                Tell us more
+            </label>
+            <textarea
+                id="beta-feedback-message"
+                name="message"
+                maxlength="2000"
+                rows="4"
+                placeholder="What happened, or what would you improve?"
+                required
+            ></textarea>
+
+            <p
+                class="beta-feedback__status"
+                id="beta-feedback-status"
+                role="status"
+                aria-live="polite"
+            ></p>
+
+            <button class="beta-feedback__submit" type="submit">
+                Send feedback
+            </button>
+        </form>
+    </section>
+</div>

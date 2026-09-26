@@ -36,6 +36,13 @@
         href="{% static 'dashboard/css/dashboard.css' %}"
     >
 
+    {% if beta_feedback_enabled %}
+    <link
+        rel="stylesheet"
+        href="{% static 'dashboard/css/beta_feedback.css' %}"
+    >
+    {% endif %}
+
 
     <!-- =========================================
          TODAY PLAN GRID
@@ -1618,6 +1625,11 @@
 <script
     src="{% static 'dashboard/js/sidebar.js' %}"
 ></script>
+
+{% if beta_feedback_enabled %}
+    {% include 'dashboard/partials/beta_feedback.html' %}
+    <script src="{% static 'js/beta_feedback.js' %}"></script>
+{% endif %}
 
 
 </body>

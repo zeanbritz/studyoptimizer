@@ -255,6 +255,8 @@ ACCOUNT_LOGOUT_ON_GET = False
 
 ACCOUNT_ADAPTER = "accounts.adapter.BetaInviteAccountAdapter"
 
+BETA_FEEDBACK_ENABLED = env_bool("BETA_FEEDBACK_ENABLED", default=True)
+
 
 # Email
 
