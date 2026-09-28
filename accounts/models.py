@@ -8,7 +8,7 @@ from django.db import models
 class User(AbstractUser):
     """StudiGarden user."""
 
-    pass
+    beta_lifetime_access = models.BooleanField(default=False)
 
 
 class BetaInvite(models.Model):

@@ -66,6 +66,9 @@ class BetaInviteAccountAdapter(DefaultAccountAdapter):
             commit=True,
         )
 
+        saved_user.beta_lifetime_access = True
+        saved_user.save(update_fields=["beta_lifetime_access"])
+
         invite.claimed_by = saved_user
         invite.claimed_at = timezone.now()
         invite.save(update_fields=["claimed_by", "claimed_at"])

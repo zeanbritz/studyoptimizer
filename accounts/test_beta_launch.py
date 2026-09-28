@@ -77,6 +77,7 @@ class BetaInviteEmailVerificationTests(TestCase):
 
         self.assertFalse(email_address.verified)
         self.assertEqual(invite.claimed_by, student)
+        self.assertTrue(student.beta_lifetime_access)
         self.assertNotIn("_auth_user_id", self.client.session)
         self.assertTrue(
             any(
