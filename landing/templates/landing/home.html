@@ -465,11 +465,11 @@
                     <div class="hero-actions">
                         {% if user.is_authenticated %}
                             <a href="{% url 'dashboard' %}" class="button button-green">
-                                Open dashboard →
+                                Open dashboard
                             </a>
                         {% else %}
                             <a href="{% url 'register' %}" class="button button-green">
-                                Start studying →
+                                Start studying
                             </a>
                             <a href="{% url 'login' %}?next={% url 'dashboard' %}" class="button button-outline">
                                 I have an account

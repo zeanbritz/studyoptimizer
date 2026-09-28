@@ -1,5 +1,5 @@
 """
-Django settings for the StudyOptimizer project.
+Django settings for the StudiGarden project.
 """
 
 import os
