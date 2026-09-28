@@ -717,8 +717,8 @@ def create_formula(
             # =================================================
 
             return redirect(
-                "formula_detail",
-                formula_id=formula.id
+                "subject_detail",
+                subject_index=subject_index,
             )
 
     # ========================================================

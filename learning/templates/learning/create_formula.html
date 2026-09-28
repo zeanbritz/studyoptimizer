@@ -460,6 +460,15 @@
         }
 
 
+        .formula-picker.open {
+
+            flex: 0 0 100%;
+
+            min-width: 0;
+
+        }
+
+
         .picker-toggle {
 
             display: inline-flex;
@@ -482,27 +491,19 @@
 
         .formula-picker-menu {
 
-            position: absolute;
-
-            top: calc(100% + 7px);
-
-            left: 0;
-
-            z-index: 1000;
+            position: static;
 
             display: none;
 
-            width: max-content;
+            width: 100%;
 
-            max-width:
-                min(
-                    700px,
-                    85vw
-                );
+            max-width: 100%;
+
+            margin-top: 10px;
 
             padding: 12px;
 
-            overflow-x: auto;
+            overflow: visible;
 
             border:
                 1px solid
@@ -538,15 +539,13 @@
 
             display: grid;
 
-            grid-template-rows:
+            grid-template-columns:
                 repeat(
-                    5,
-                    40px
+                    auto-fit,
+                    minmax(44px, 1fr)
                 );
 
-            grid-auto-flow: column;
-
-            grid-auto-columns: 44px;
+            grid-auto-flow: row;
 
             gap: 6px;
 
@@ -555,7 +554,7 @@
 
         .picker-choice {
 
-            width: 44px;
+            width: 100%;
 
             height: 40px;
 
