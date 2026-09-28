@@ -1,8 +1,10 @@
-from datetime import date
+from datetime import date, timedelta
+from importlib import import_module
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from learning.models import Subject
 
@@ -103,3 +105,153 @@ class AssessmentCalendarTests(TestCase):
         self.assertContains(response, "?month=2027-01")
         self.assertContains(response, "?month=2026-11")
         self.assertContains(response, "Biology")
+
+    def test_move_event_and_reject_other_students_event(self):
+        event = AssessmentEvent.objects.create(
+            subject=self.subject,
+            date=date(2026, 12, 4),
+            kind="assessment",
+        )
+        self.client.force_login(self.user)
+        response = self.client.post(self.url, {
+            "action": "move", "event_id": event.pk, "date": "2026-12-11",
+        })
+        self.assertRedirects(response, f"{self.url}?date=2026-12-11")
+        event.refresh_from_db()
+        self.assertEqual(event.date, date(2026, 12, 11))
+
+        response = self.client.post(self.url, {
+            "action": "move", "event_id": event.pk, "date": "not-a-date",
+        })
+        self.assertEqual(response.status_code, 400)
+        event.refresh_from_db()
+        self.assertEqual(event.date, date(2026, 12, 11))
+
+        self.client.force_login(self.other)
+        response = self.client.post(self.url, {
+            "action": "move", "event_id": event.pk, "date": "2026-12-12",
+        })
+        self.assertEqual(response.status_code, 404)
+
+    def test_next_upcoming_exam_stays_in_sync_after_calendar_changes(self):
+        self.client.force_login(self.user)
+        first = timezone.localdate() + timedelta(days=10)
+        second = timezone.localdate() + timedelta(days=20)
+        third = timezone.localdate() + timedelta(days=30)
+
+        self.client.post(self.url, {
+            "action": "save", "subject": self.subject.pk,
+            "kind": "exam", "date": second.isoformat(),
+        })
+        self.subject.refresh_from_db()
+        self.assertEqual(self.subject.exam_date, second)
+
+        self.client.post(self.url, {
+            "action": "save", "subject": self.subject.pk,
+            "kind": "exam", "date": first.isoformat(),
+        })
+        self.subject.refresh_from_db()
+        self.assertEqual(self.subject.exam_date, first)
+
+        first_event = AssessmentEvent.objects.get(subject=self.subject, date=first)
+        self.client.post(self.url, {
+            "action": "move", "event_id": first_event.pk, "date": third.isoformat(),
+        })
+        self.subject.refresh_from_db()
+        self.assertEqual(self.subject.exam_date, second)
+
+        second_event = AssessmentEvent.objects.get(subject=self.subject, date=second)
+        self.client.post(self.url, {"action": "delete", "event_id": second_event.pk})
+        self.subject.refresh_from_db()
+        self.assertEqual(self.subject.exam_date, third)
+        self.assertEqual(
+            self.client.session["onboarding_subjects"][0]["exam_date"],
+            third.isoformat(),
+        )
+
+    def test_subject_detail_date_creates_edits_and_removes_calendar_exam(self):
+        self.client.force_login(self.user)
+        detail_url = reverse("subject_detail", args=[0])
+        first = timezone.localdate() + timedelta(days=10)
+        second = timezone.localdate() + timedelta(days=20)
+
+        response = self.client.post(detail_url, {
+            "action": "save_subject", "name": "Biology",
+            "target_grade": "85", "exam_date": first.isoformat(),
+        })
+        self.assertEqual(response.status_code, 200)
+        event = AssessmentEvent.objects.get(subject=self.subject, kind="exam")
+        self.assertEqual(event.date, first)
+
+        self.client.post(detail_url, {
+            "action": "save_subject", "name": "Biology",
+            "target_grade": "85", "exam_date": second.isoformat(),
+        })
+        event.refresh_from_db()
+        self.assertEqual(event.date, second)
+        self.assertEqual(AssessmentEvent.objects.filter(subject=self.subject).count(), 1)
+
+        self.client.post(detail_url, {
+            "action": "save_subject", "name": "Biology",
+            "target_grade": "85", "exam_date": "",
+        })
+        self.assertFalse(AssessmentEvent.objects.filter(subject=self.subject).exists())
+        self.subject.refresh_from_db()
+        self.assertIsNone(self.subject.exam_date)
+
+    def test_existing_subject_date_is_backfilled_once(self):
+        from django.apps import apps
+        from django.db import connection
+
+        backfill_subject_exams = import_module(
+            "exams.migrations.0002_backfill_subject_exam_dates"
+        ).backfill_subject_exams
+
+        planned = timezone.localdate() + timedelta(days=7)
+        self.subject.exam_date = planned
+        self.subject.save(update_fields=["exam_date"])
+        editor = type("Editor", (), {"connection": connection})()
+        backfill_subject_exams(apps, editor)
+        backfill_subject_exams(apps, editor)
+        self.assertEqual(
+            AssessmentEvent.objects.filter(
+                subject=self.subject, date=planned, kind="exam"
+            ).count(),
+            1,
+        )
+
+    def test_past_exam_advances_to_next_upcoming_exam(self):
+        yesterday = timezone.localdate() - timedelta(days=1)
+        future = timezone.localdate() + timedelta(days=7)
+        AssessmentEvent.objects.create(
+            subject=self.subject, date=yesterday, kind="exam"
+        )
+        AssessmentEvent.objects.create(
+            subject=self.subject, date=future, kind="exam"
+        )
+        self.subject.exam_date = yesterday
+        self.subject.save(update_fields=["exam_date"])
+
+        self.client.force_login(self.user)
+        self.client.get(self.url)
+        self.subject.refresh_from_db()
+        self.assertEqual(self.subject.exam_date, future)
+
+    def test_changing_exam_to_assessment_clears_subject_exam_date(self):
+        planned = timezone.localdate() + timedelta(days=7)
+        event = AssessmentEvent.objects.create(
+            subject=self.subject, date=planned, kind="exam"
+        )
+        self.subject.exam_date = planned
+        self.subject.save(update_fields=["exam_date"])
+
+        self.client.force_login(self.user)
+        self.client.post(self.url, {
+            "action": "save", "event_id": event.pk,
+            "subject": self.subject.pk, "kind": "assessment",
+            "date": planned.isoformat(),
+        })
+        self.subject.refresh_from_db()
+        self.assertIsNone(self.subject.exam_date)
+        event.refresh_from_db()
+        self.assertEqual(event.kind, "assessment")

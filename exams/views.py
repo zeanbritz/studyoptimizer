@@ -11,6 +11,7 @@ from learning.models import Subject
 
 from .forms import AssessmentEventForm
 from .models import AssessmentEvent
+from .sync import sync_subject_next_exam
 
 
 def _date_or_none(value):
@@ -93,15 +94,37 @@ def calendar_view(request):
             if editing is None:
                 return HttpResponseBadRequest("Choose an event to delete.")
             selected_date = editing.date
+            old_subject = editing.subject
+            was_exam = editing.kind == AssessmentEvent.Kind.EXAM
             editing.delete()
+            if was_exam:
+                sync_subject_next_exam(request, old_subject)
             return redirect(f"{reverse('exams:calendar')}?date={selected_date.isoformat()}")
+
+        if request.POST.get("action") == "move":
+            if editing is None:
+                return HttpResponseBadRequest("Choose an event to move.")
+            new_date = _date_or_none(request.POST.get("date"))
+            if new_date is None:
+                return HttpResponseBadRequest("Choose a valid date.")
+            editing.date = new_date
+            editing.save(update_fields=["date"])
+            if editing.kind == AssessmentEvent.Kind.EXAM:
+                sync_subject_next_exam(request, editing.subject)
+            return redirect(f"{reverse('exams:calendar')}?date={new_date.isoformat()}")
 
         if request.POST.get("action") != "save":
             return HttpResponseBadRequest("Unknown action.")
 
+        old_subject = editing.subject if editing is not None else None
+        was_exam = editing is not None and editing.kind == AssessmentEvent.Kind.EXAM
         form = AssessmentEventForm(request.POST, instance=editing, user=request.user)
         if form.is_valid():
             event = form.save()
+            if was_exam:
+                sync_subject_next_exam(request, old_subject)
+            if event.kind == AssessmentEvent.Kind.EXAM:
+                sync_subject_next_exam(request, event.subject)
             return redirect(f"{reverse('exams:calendar')}?date={event.date.isoformat()}")
 
         selected_date = _date_or_none(request.POST.get("date")) or (

@@ -25,7 +25,7 @@
                 </svg>
             </header>
 
-            <a class="back-link" href="{% url 'dashboard' %}">← Back to dashboard</a>
+            <a class="back-link" href="{% url 'dashboard' %}">Back to dashboard</a>
 
             <div class="layout">
                 <section class="panel calendar-panel" aria-label="Calendar">
@@ -46,21 +46,21 @@
                         {% for week in calendar_weeks %}
                             {% for day in week %}
                                 <a href="?date={{ day.date|date:'Y-m-d' }}"
+                                   data-drop-date="{{ day.date|date:'Y-m-d' }}"
                                    class="day{% if not day.in_month %} outside{% endif %}{% if day.is_today %} today{% endif %}{% if day.is_selected %} selected{% endif %}"
                                    {% if day.is_selected %}aria-current="date"{% endif %}
                                    aria-label="{{ day.date|date:'j F Y' }}{% if day.events %}, {{ day.events|length }} event{{ day.events|length|pluralize }}{% endif %}">
                                     <span class="day-number">{{ day.date|date:'j' }}</span>
                                     <span class="day-events">
-                                        {% for event in day.events|slice:':2' %}
-                                            <span class="day-event {{ event.kind }}" title="{{ event.subject.name }} — {{ event.get_kind_display }}">{{ event.subject.name }}</span>
+                                        {% for event in day.events %}
+                                            <span class="day-event {{ event.kind }}" draggable="true" data-event-id="{{ event.pk }}" title="Drag to another date: {{ event.subject.name }} — {{ event.get_kind_display }}{% if event.title %} — {{ event.title }}{% endif %}">{{ event.subject.name }}{% if event.title %} · {{ event.title }}{% endif %}</span>
                                         {% endfor %}
-                                        {% if day.events|length > 2 %}<span class="more-events">+{{ day.events|length|add:'-2' }} more</span>{% endif %}
                                     </span>
                                 </a>
                             {% endfor %}
                         {% endfor %}
                     </div>
-                    <div class="legend"><span><i class="legend-dot assessment"></i> Assessment</span><span><i class="legend-dot exam"></i> Exam</span></div>
+                    <div class="legend"><span><i class="legend-dot assessment"></i> Assessment</span><span><i class="legend-dot exam"></i> Exam</span><span class="drag-hint">Drag an event to move it</span></div>
                 </section>
 
                 <div class="side-column">
@@ -148,6 +148,13 @@
         </div>
     </main>
 </div>
+<form id="move-event-form" method="post" hidden>
+    {% csrf_token %}
+    <input type="hidden" name="action" value="move">
+    <input type="hidden" name="event_id" value="">
+    <input type="hidden" name="date" value="">
+</form>
 <script src="{% static 'dashboard/js/sidebar.js' %}"></script>
+<script src="{% static 'exams/calendar.js' %}"></script>
 </body>
 </html>

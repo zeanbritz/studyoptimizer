@@ -66,6 +66,7 @@ class WorkspaceSessionPersistenceMiddleware:
     @classmethod
     def _restore_workspace(cls, request):
         from dashboard.models import StudyProfile
+        from exams.sync import refresh_subject_exam_dates
         from learning.models import Subject
 
         profile_record = StudyProfile.objects.filter(
@@ -77,6 +78,7 @@ class WorkspaceSessionPersistenceMiddleware:
                 "id",
             )
         )
+        refresh_subject_exam_dates(database_subjects)
         session_changed = False
 
         if profile_record is not None:

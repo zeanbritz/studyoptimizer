@@ -11,9 +11,9 @@ class AssessmentEventForm(forms.ModelForm):
         fields = ("date", "subject", "kind", "title")
         widgets = {
             "date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
-            "title": forms.TextInput(attrs={"placeholder": "e.g. Chapter 4 (optional)"}),
+            "title": forms.TextInput(attrs={"placeholder": "e.g. Chapter 4 or Paper 1"}),
         }
-        labels = {"kind": "Type", "title": "Title (optional)"}
+        labels = {"kind": "Type", "title": "Description"}
 
     def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)

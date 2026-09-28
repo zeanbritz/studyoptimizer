@@ -3,7 +3,7 @@ from datetime import date, datetime, timedelta
 from django.conf import settings
 
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import render, redirect
 from django.utils import timezone
 
@@ -2523,6 +2523,13 @@ def subject_detail(
         action == "save_subject"
     ):
 
+        entered_exam_date = request.POST.get("exam_date", "").strip()
+        if entered_exam_date:
+            try:
+                date.fromisoformat(entered_exam_date)
+            except ValueError:
+                return HttpResponseBadRequest("Choose a valid exam date.")
+
         subject_data[
             "name"
         ] = (
@@ -2542,10 +2549,7 @@ def subject_detail(
 
         subject_data[
             "exam_date"
-        ] = request.POST.get(
-            "exam_date",
-            ""
-        )
+        ] = entered_exam_date
 
         subjects[
             subject_index
@@ -2691,6 +2695,19 @@ def subject_detail(
             ] = subjects
 
             request.session.modified = True
+
+    if database_subject and request.method == "POST" and action == "save_subject":
+        from exams.sync import update_exam_from_subject_detail
+
+        exam_date_text = subject_data.get("exam_date", "")
+        chosen_exam_date = date.fromisoformat(exam_date_text) if exam_date_text else None
+        update_exam_from_subject_detail(
+            request,
+            database_subject,
+            database_subject.exam_date,
+            chosen_exam_date,
+        )
+        subject_data = request.session["onboarding_subjects"][subject_index]
 
     # ========================================================
     # NOTES TO STUDY TODAY
