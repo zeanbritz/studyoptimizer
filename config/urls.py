@@ -14,6 +14,7 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
 
     path("dashboard/", include("dashboard.urls")),
+    path("exams/", include("exams.urls")),
     path("learning/", include("learning.urls")),
     path("practice/", include("practice.urls")),
 ]

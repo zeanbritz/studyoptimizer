@@ -1,0 +1,153 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exams and Assessments - StudiGarden</title>
+    <link rel="stylesheet" href="{% static 'dashboard/css/sidebar.css' %}">
+    <link rel="stylesheet" href="{% static 'exams/calendar.css' %}">
+</head>
+<body>
+<div class="app">
+    {% include 'partials/sidebar.html' %}
+    <main class="main">
+        <div class="page">
+            <header class="page-header">
+                <div>
+                    <span class="eyebrow">Study planner</span>
+                    <h1>Exams and Assessments</h1>
+                    <p>Choose a date to plan what is coming up.</p>
+                </div>
+                <svg class="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="3" y="5" width="18" height="16" rx="2"></rect>
+                    <path d="M8 3v4M16 3v4M3 10h18M8 15h3M8 18h3M15 15h2"></path>
+                </svg>
+            </header>
+
+            <a class="back-link" href="{% url 'dashboard' %}">← Back to dashboard</a>
+
+            <div class="layout">
+                <section class="panel calendar-panel" aria-label="Calendar">
+                    <div class="calendar-heading">
+                        <div>
+                            <span class="section-eyebrow">Calendar</span>
+                            <h2>{{ month_label }}</h2>
+                        </div>
+                        <div class="month-actions">
+                            <a href="?month={{ previous_month }}" aria-label="Previous month">‹</a>
+                            <a href="?date={% now 'Y-m-d' %}" class="today-link">Today</a>
+                            <a href="?month={{ next_month }}" aria-label="Next month">›</a>
+                        </div>
+                    </div>
+
+                    <div class="calendar-grid" role="group" aria-label="{{ month_label }}">
+                        <div class="weekday">Mon</div><div class="weekday">Tue</div><div class="weekday">Wed</div><div class="weekday">Thu</div><div class="weekday">Fri</div><div class="weekday">Sat</div><div class="weekday">Sun</div>
+                        {% for week in calendar_weeks %}
+                            {% for day in week %}
+                                <a href="?date={{ day.date|date:'Y-m-d' }}"
+                                   class="day{% if not day.in_month %} outside{% endif %}{% if day.is_today %} today{% endif %}{% if day.is_selected %} selected{% endif %}"
+                                   {% if day.is_selected %}aria-current="date"{% endif %}
+                                   aria-label="{{ day.date|date:'j F Y' }}{% if day.events %}, {{ day.events|length }} event{{ day.events|length|pluralize }}{% endif %}">
+                                    <span class="day-number">{{ day.date|date:'j' }}</span>
+                                    <span class="day-events">
+                                        {% for event in day.events|slice:':2' %}
+                                            <span class="day-event {{ event.kind }}" title="{{ event.subject.name }} — {{ event.get_kind_display }}">{{ event.subject.name }}</span>
+                                        {% endfor %}
+                                        {% if day.events|length > 2 %}<span class="more-events">+{{ day.events|length|add:'-2' }} more</span>{% endif %}
+                                    </span>
+                                </a>
+                            {% endfor %}
+                        {% endfor %}
+                    </div>
+                    <div class="legend"><span><i class="legend-dot assessment"></i> Assessment</span><span><i class="legend-dot exam"></i> Exam</span></div>
+                </section>
+
+                <div class="side-column">
+                    <section class="panel selected-panel" aria-labelledby="selected-heading">
+                        <div class="panel-heading">
+                            <div>
+                                <span class="section-eyebrow">Selected date</span>
+                                <h2 id="selected-heading">{{ selected_date|date:'l, j F Y' }}</h2>
+                            </div>
+                        </div>
+
+                        {% if selected_events %}
+                            <div class="event-list">
+                                {% for event in selected_events %}
+                                    <div class="event-row {{ event.kind }}">
+                                        <div class="event-info">
+                                            <span class="event-type">{{ event.get_kind_display }}</span>
+                                            <strong>{{ event.subject.name }}</strong>
+                                            {% if event.title %}<span class="event-title">{{ event.title }}</span>{% endif %}
+                                        </div>
+                                        <div class="event-actions">
+                                            <a href="?edit={{ event.pk }}" aria-label="Edit {{ event.subject.name }} {{ event.get_kind_display|lower }}">Edit</a>
+                                            <form method="post" onsubmit="return confirm('Delete this event?');">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="delete">
+                                                <input type="hidden" name="event_id" value="{{ event.pk }}">
+                                                <button type="submit" aria-label="Delete {{ event.subject.name }} {{ event.get_kind_display|lower }}">Delete</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="empty-state">Nothing planned for this date yet.</p>
+                        {% endif %}
+
+                        <div class="form-divider"></div>
+                        <h3>{% if editing %}Edit event{% else %}Add event{% endif %}</h3>
+                        {% if has_subjects %}
+                            <form method="post" class="event-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="save">
+                                {% if editing %}<input type="hidden" name="event_id" value="{{ editing.pk }}">{% endif %}
+                                {% if form.non_field_errors %}<div class="form-errors">{{ form.non_field_errors }}</div>{% endif %}
+                                {% for field in form %}
+                                    <div class="field">
+                                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                        {{ field }}
+                                        {% if field.errors %}<div class="field-error">{{ field.errors }}</div>{% endif %}
+                                    </div>
+                                {% endfor %}
+                                <div class="form-actions">
+                                    <button type="submit" class="save-button">{% if editing %}Save changes{% else %}Add to calendar{% endif %}</button>
+                                    {% if editing %}<a href="?date={{ editing.date|date:'Y-m-d' }}" class="cancel-link">Cancel</a>{% endif %}
+                                </div>
+                            </form>
+                        {% else %}
+                            <p class="empty-state">Add a subject first, then you can plan its assessments.</p>
+                            <a class="subject-link" href="{% url 'goals' %}">Go to Subjects</a>
+                        {% endif %}
+                    </section>
+
+                    <section class="panel upcoming-panel" aria-labelledby="upcoming-heading">
+                        <div class="panel-heading">
+                            <div>
+                                <span class="section-eyebrow">Ahead</span>
+                                <h2 id="upcoming-heading">Coming up</h2>
+                            </div>
+                        </div>
+                        {% if upcoming_events %}
+                            <div class="upcoming-list">
+                                {% for event in upcoming_events %}
+                                    <a href="?date={{ event.date|date:'Y-m-d' }}" class="upcoming-item">
+                                        <span class="upcoming-date">{{ event.date|date:'j M' }}</span>
+                                        <span class="upcoming-label"><strong>{{ event.subject.name }}</strong><small>{{ event.get_kind_display }}{% if event.title %} · {{ event.title }}{% endif %}</small></span>
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="empty-state">No upcoming events yet.</p>
+                        {% endif %}
+                    </section>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+<script src="{% static 'dashboard/js/sidebar.js' %}"></script>
+</body>
+</html>
