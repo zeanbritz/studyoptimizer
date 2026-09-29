@@ -105,12 +105,14 @@
             border: 2px solid transparent;
             border-bottom-width: 4px;
             border-radius: 11px;
+            font: inherit;
             font-size: 13px;
             font-weight: 850;
+            text-align: center;
             transition: background 0.15s ease, transform 0.15s ease;
         }
 
-        .button:hover { transform: translateY(-1px); }
+        a.button:hover { transform: translateY(-1px); }
 
         .button-green {
             border-color: var(--green-dark);
@@ -118,7 +120,7 @@
             color: white;
         }
 
-        .button-green:hover { background: #64c735; }
+        a.button-green:hover { background: #64c735; }
 
         .button-light {
             border-color: #cbd3d7;
@@ -126,7 +128,14 @@
             color: #455057;
         }
 
-        .button-light:hover { background: #f5f8f9; }
+        a.button-light:hover { background: #f5f8f9; }
+
+        .button-unavailable {
+            border-color: #cbd3d7;
+            background: #e9eef0;
+            color: #687278;
+            cursor: not-allowed;
+        }
 
         .intro {
             padding: 38px 42px;
@@ -156,7 +165,7 @@
         }
 
         .intro p {
-            max-width: 620px;
+            max-width: 650px;
             margin: 0;
             color: #dbe2ef;
             font-size: 15px;
@@ -184,13 +193,31 @@
 
         .plan.yearly { border-top-color: var(--green); }
 
+        .plan-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
         .plan-name {
-            margin: 0 0 16px;
+            margin: 0;
             color: #59646a;
             font-size: 12px;
             font-weight: 900;
             letter-spacing: 0.1em;
             text-transform: uppercase;
+        }
+
+        .saving-badge {
+            padding: 7px 10px;
+            border-radius: 999px;
+            background: #e6f4df;
+            color: #367c19;
+            font-size: 12px;
+            font-weight: 850;
         }
 
         .price {
@@ -209,7 +236,7 @@
         }
 
         .billing-note {
-            min-height: 42px;
+            min-height: 62px;
             margin: 12px 0 20px;
             color: var(--muted);
             font-size: 13px;
@@ -244,16 +271,40 @@
             margin-top: auto;
         }
 
+        .beta-note,
         .billing-disclaimer {
             margin: 20px 0 0;
-            padding: 15px 17px;
-            border: 1px solid #c9dce9;
-            border-left: 5px solid #278fd3;
+            padding: 17px 19px;
             border-radius: 11px;
-            background: #eaf5fc;
-            color: #3f5867;
             font-size: 13px;
             line-height: 1.6;
+        }
+
+        .beta-note {
+            border: 1px solid #d3e7cc;
+            border-left: 5px solid var(--green);
+            background: #f2faee;
+            color: #405642;
+        }
+
+        .beta-note strong {
+            display: block;
+            margin-bottom: 3px;
+            font-size: 14px;
+        }
+
+        .beta-note a {
+            color: #367c19;
+            font-weight: 850;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+
+        .billing-disclaimer {
+            border: 1px solid #c9dce9;
+            border-left: 5px solid #278fd3;
+            background: #eaf5fc;
+            color: #3f5867;
         }
 
         a:focus-visible {
@@ -268,6 +319,7 @@
 
         @media (max-width: 650px) {
             .plans { grid-template-columns: 1fr; }
+            .billing-note { min-height: 0; }
         }
 
         @media (max-width: 520px) {
@@ -300,58 +352,73 @@
                     <a href="{% url 'dashboard' %}" class="button button-green">Dashboard</a>
                 {% else %}
                     <a href="{% url 'login' %}" class="button button-light">Log in</a>
-                    <a href="{% url 'register' %}" class="button button-green">Get started</a>
+                    <a href="{% url 'register' %}" class="button button-green">Use an invite</a>
                 {% endif %}
             </nav>
         </header>
 
         <main>
             <section class="intro" aria-labelledby="pricing-title">
-                <span class="eyebrow">StudyGarden plans</span>
-                <h1 id="pricing-title">Simple pricing</h1>
-                <p>Choose monthly flexibility or pay for a full year. Both options are shown below while subscriptions are being set up.</p>
+                <span class="eyebrow">StudiGarden plans</span>
+                <h1 id="pricing-title">Simple pricing for your studies</h1>
+                <p>Choose a flexible monthly subscription or pay once for 12 months. Paid checkout is not open yet while we prepare the launch.</p>
             </section>
 
             <section class="plans" aria-label="Pricing plans">
                 <article class="plan">
-                    <h2 class="plan-name">Monthly</h2>
+                    <div class="plan-heading">
+                        <h2 class="plan-name">Monthly</h2>
+                    </div>
+
                     <p class="price">R99 <span>/ month</span></p>
-                    <p class="billing-note">A month-to-month option.</p>
+                    <p class="billing-note">
+                        Planned as an automatically renewing monthly subscription. You will be able to cancel future renewals.
+                    </p>
 
                     <ul>
-                        <li>Plan and organize your subjects</li>
+                        <li>Plan and organise your subjects</li>
                         <li>Create study material</li>
                         <li>Review and track your progress</li>
                     </ul>
 
-                    {% if user.is_authenticated %}
-                        <a href="{% url 'dashboard' %}" class="button button-green">Go to dashboard</a>
-                    {% else %}
-                        <a href="{% url 'register' %}" class="button button-green">Create an account</a>
-                    {% endif %}
+                    <button type="button" class="button button-unavailable" disabled>
+                        Checkout not yet available
+                    </button>
                 </article>
 
                 <article class="plan yearly">
-                    <h2 class="plan-name">Yearly</h2>
-                    <p class="price">R1,188 <span>/ year</span></p>
-                    <p class="billing-note">Equivalent to R99 per month, billed yearly. No annual discount is applied yet.</p>
+                    <div class="plan-heading">
+                        <h2 class="plan-name">Yearly</h2>
+                        <span class="saving-badge">Save R189</span>
+                    </div>
+
+                    <p class="price">R999 <span>/ 12 months</span></p>
+                    <p class="billing-note">
+                        One payment for 12 months of access. It will not renew automatically; you can choose whether to pay for another year.
+                    </p>
 
                     <ul>
-                        <li>Plan and organize your subjects</li>
+                        <li>Plan and organise your subjects</li>
                         <li>Create study material</li>
                         <li>Review and track your progress</li>
                     </ul>
 
-                    {% if user.is_authenticated %}
-                        <a href="{% url 'dashboard' %}" class="button button-green">Go to dashboard</a>
-                    {% else %}
-                        <a href="{% url 'register' %}" class="button button-green">Create an account</a>
-                    {% endif %}
+                    <button type="button" class="button button-unavailable" disabled>
+                        Checkout not yet available
+                    </button>
                 </article>
             </section>
 
+            <aside class="beta-note" aria-label="Invite-only beta">
+                <strong>Joining through a beta invite?</strong>
+                Invited beta students keep free access to StudiGarden’s standard study features as a thank-you for helping us improve. No payment details are needed for the beta.
+                {% if not user.is_authenticated %}
+                    <a href="{% url 'register' %}">Use your invite</a>
+                {% endif %}
+            </aside>
+
             <p class="billing-disclaimer">
-                These plans are informational for now. Registration does not select a plan or collect payment; subscription and checkout logic would need to be added separately.
+                These are the planned paid prices. No payment can be made on this page, and signing up with a beta invite will not start a subscription.
             </p>
         </main>
 
