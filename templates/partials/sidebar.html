@@ -55,6 +55,25 @@
         </a>
 
         <a
+            href="{% url 'exams:calendar' %}"
+            class="nav-link {% if active_page == 'exams' or active_page == 'calendar' %}active{% endif %}"
+            {% if active_page == 'exams' or active_page == 'calendar' %}aria-current="page"{% endif %}
+        >
+            <span class="nav-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+                    <rect x="3" y="5" width="18" height="16" rx="2"></rect>
+                    <path d="M7 3v4"></path>
+                    <path d="M17 3v4"></path>
+                    <path d="M3 10h18"></path>
+                    <path d="M8 15h3"></path>
+                    <path d="M8 18h3"></path>
+                    <path d="M15 15h2"></path>
+                </svg>
+            </span>
+            <span class="nav-text">Exams</span>
+        </a>
+
+        <a
             href="{% url 'progress' %}"
             class="nav-link {% if active_page == 'progress' %}active{% endif %}"
             {% if active_page == 'progress' %}aria-current="page"{% endif %}
@@ -69,15 +88,27 @@
             </span>
             <span class="nav-text">Progress</span>
         </a>
+
+        <a
+            href="{% url 'my_plan' %}"
+            class="nav-link {% if active_page == 'profile' or active_page == 'my_plan' %}active{% endif %}"
+            {% if active_page == 'profile' or active_page == 'my_plan' %}aria-current="page"{% endif %}
+        >
+            <span class="nav-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+                    <circle cx="12" cy="8" r="4"></circle>
+                    <path d="M4 21v-2a8 8 0 0 1 16 0v2"></path>
+                </svg>
+            </span>
+            <span class="nav-text">Profile</span>
+        </a>
     </nav>
 
     <div
         class="sidebar-account"
         style="margin-top: 44px; padding-top: 0; border-top: 0;"
     >
-
         {% if user.is_authenticated %}
-
             <form
                 method="post"
                 action="{% url 'logout' %}"
@@ -101,9 +132,7 @@
                     <span class="nav-text">Log out</span>
                 </button>
             </form>
-
         {% else %}
-
             <a
                 href="{% url 'login' %}?next={% url 'dashboard' %}"
                 class="nav-link sidebar-auth-link"
@@ -117,8 +146,6 @@
                 </span>
                 <span class="nav-text">Log in</span>
             </a>
-
         {% endif %}
-
     </div>
 </aside>
