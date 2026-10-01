@@ -593,17 +593,17 @@
                         href="{% url 'review' %}"
                         class="back-button"
                     >
-                        ← Back to Review
+                        Back to Review
                     </a>
 
-                    {% if definitions %}
+                    {% if definitions and mode == 'test' %}
 
                         <button
                             type="button"
                             class="random-review-button"
                             id="random-review-button"
                         >
-                            {% if mode == 'test' %}↻ Random Test{% else %}↻ Random Review{% endif %}
+                            ↻ Random Test
                         </button>
 
                     {% endif %}
@@ -652,7 +652,7 @@
                                 type="search"
                                 id="review-search"
                                 class="review-search"
-                                placeholder="Search by term, meaning, or subject"
+                                placeholder="{% if mode == 'test' %}Search by term or subject{% else %}Search by term, meaning, or subject{% endif %}"
                                 autocomplete="off"
                             >
 
@@ -727,9 +727,11 @@
                                     {{ item.subject.name }}
                                 </span>
 
-                                <span class="item-meta">
-                                    {{ item.definition.definition|truncatechars:150 }}
-                                </span>
+                                {% if mode == 'review' %}
+                                    <span class="item-meta">
+                                        {{ item.definition.definition|truncatechars:150 }}
+                                    </span>
+                                {% endif %}
 
                             </div>
 
@@ -953,8 +955,10 @@
                 filteredEmpty.hidden =
                     visibleTotal !== 0;
 
-                randomReviewButton.disabled =
-                    visibleTotal === 0;
+                if (randomReviewButton) {
+                    randomReviewButton.disabled =
+                        visibleTotal === 0;
+                }
 
             }
 
@@ -968,31 +972,33 @@
                 applyFilters
             );
 
-            randomReviewButton.addEventListener(
-                "click",
-                function() {
+            if (randomReviewButton) {
+                randomReviewButton.addEventListener(
+                    "click",
+                    function() {
 
-                    const availableCards =
-                        visibleCards();
+                        const availableCards =
+                            visibleCards();
 
-                    if (!availableCards.length) {
-                        return;
+                        if (!availableCards.length) {
+                            return;
+                        }
+
+                        const randomIndex =
+                            Math.floor(
+                                Math.random()
+                                *
+                                availableCards.length
+                            );
+
+                        window.location.href =
+                            availableCards[
+                                randomIndex
+                            ].href;
+
                     }
-
-                    const randomIndex =
-                        Math.floor(
-                            Math.random()
-                            *
-                            availableCards.length
-                        );
-
-                    window.location.href =
-                        availableCards[
-                            randomIndex
-                        ].href;
-
-                }
-            );
+                );
+            }
 
             applyFilters();
 

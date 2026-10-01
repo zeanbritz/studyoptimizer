@@ -7,7 +7,7 @@
     <title>{{ definition.term }} - Definitions - StudiGarden</title>
     <link rel="stylesheet" href="{% static 'dashboard/css/sidebar.css' %}">
     <style>
-        :root { --ink: #2f3335; --muted: #687278; --green: #58b82a; --green-dark: #3f8f1d; }
+        :root { --ink: #2f3335; --muted: #687278; }
         * { box-sizing: border-box; }
         body { margin: 0; background: #edf1f3; color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; }
         .app { display: flex; min-height: 100vh; }
@@ -17,11 +17,8 @@
         .eyebrow { color: #aebfdf; font-size: 11px; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
         h1 { margin: 8px 0 6px; color: #fff; font-size: 31px; line-height: 1.2; overflow-wrap: anywhere; }
         .page-header p { margin: 0; color: #d8dfed; font-size: 14px; font-weight: 600; }
-        .mode-switch { display: inline-flex; gap: 5px; margin: 20px 0; padding: 5px; border: 1px solid #d8e0e3; border-radius: 13px; background: #f8fafb; }
-        .mode-switch a { min-width: 112px; padding: 11px 20px; border: 2px solid transparent; border-radius: 9px; color: #58646a; font-size: 14px; font-weight: 850; text-align: center; text-decoration: none; }
-        .mode-switch a[aria-current="page"] { border-color: var(--green-dark); background: var(--green); color: #fff; }
-        .mode-switch a:focus-visible, .navigation a:focus-visible { outline: 3px solid rgba(39,143,211,.35); outline-offset: 2px; }
-        .definition-card { padding: 30px; border: 1px solid #dddad8; border-top: 3px solid #4b8fc7; border-bottom: 4px solid #cfc6c2; border-radius: 16px; background: #fff; box-shadow: 0 3px 11px rgba(54,46,43,.045); }
+        .navigation a:focus-visible, .back-link:focus-visible { outline: 3px solid rgba(39,143,211,.35); outline-offset: 2px; }
+        .definition-card { margin-top: 20px; padding: 30px; border: 1px solid #dddad8; border-top: 3px solid #4b8fc7; border-bottom: 4px solid #cfc6c2; border-radius: 16px; background: #fff; box-shadow: 0 3px 11px rgba(54,46,43,.045); }
         .definition-card h2 { margin: 0 0 16px; font-size: 25px; overflow-wrap: anywhere; }
         .definition-text { font-size: 17px; line-height: 1.7; overflow-wrap: anywhere; }
         .definition-text p:first-child { margin-top: 0; }
@@ -46,11 +43,6 @@
                 <p>{{ subject.name }} · Definition {{ position }} of {{ total }}</p>
             </header>
 
-            <nav class="mode-switch" aria-label="Definition mode">
-                <a href="{% url 'review_definitions' %}?mode=review" aria-current="page">Review</a>
-                <a href="{{ test_url }}">Test</a>
-            </nav>
-
             <article class="definition-card">
                 <h2>{{ definition.term }}</h2>
                 <div class="definition-text">{{ definition.definition|linebreaks }}</div>
@@ -64,10 +56,10 @@
             </article>
 
             <nav class="navigation" aria-label="Browse definitions">
-                {% if previous_url %}<a href="{{ previous_url }}">← Previous</a>{% else %}<span>← Previous</span>{% endif %}
-                {% if next_url %}<a href="{{ next_url }}">Next →</a>{% else %}<span>Next →</span>{% endif %}
+                {% if previous_url %}<a href="{{ previous_url }}">Previous</a>{% else %}<span>Previous</span>{% endif %}
+                {% if next_url %}<a href="{{ next_url }}">Next</a>{% else %}<span>Next</span>{% endif %}
             </nav>
-            <a class="back-link" href="{% url 'review_definitions' %}?mode=review">← All definitions</a>
+            <a class="back-link" href="{% url 'review_definitions' %}?mode=review">Finish Review</a>
         </div>
     </main>
 </div>

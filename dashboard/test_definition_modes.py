@@ -35,12 +35,21 @@ class DefinitionModesTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["mode"], "review")
         self.assertContains(response, 'aria-current="page">Review</a>')
+        self.assertNotContains(response, 'id="random-review-button"')
+        self.assertContains(response, "Meaning of Cells.")
+        self.assertContains(response, "Back to Review")
+        self.assertNotContains(response, "← Back to Review")
         self.assertContains(
             response, reverse("read_definition", args=[self.first.pk])
         )
 
         response = self.client.get(reverse("read_definition", args=[self.first.pk]))
         self.assertContains(response, "Meaning of Cells.")
+        self.assertContains(response, "Finish Review")
+        self.assertNotContains(response, "All definitions")
+        self.assertNotContains(response, 'class="mode-switch"')
+        self.assertNotContains(response, "← Previous")
+        self.assertNotContains(response, "Next →")
         self.assertEqual(StudentKnowledge.objects.count(), 0)
 
     def test_test_mode_keeps_existing_practice_links(self):
@@ -48,6 +57,8 @@ class DefinitionModesTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["mode"], "test")
         self.assertContains(response, 'aria-current="page">Test</a>')
+        self.assertContains(response, 'id="random-review-button"')
+        self.assertNotContains(response, "Meaning of Cells.")
         self.assertContains(
             response,
             reverse("practice_definition_review", args=[self.first.pk])
@@ -57,10 +68,8 @@ class DefinitionModesTests(TestCase):
         quiz = self.client.get(
             reverse("practice_definition_review", args=[self.first.pk])
         )
-        self.assertContains(quiz, 'aria-current="page">Test</a>')
-        self.assertContains(
-            quiz, reverse("read_definition", args=[self.first.pk])
-        )
+        self.assertNotContains(quiz, 'class="mode-switch"')
+        self.assertNotContains(quiz, reverse("read_definition", args=[self.first.pk]))
 
     def test_reader_browses_definitions_in_subject_without_writing_progress(self):
         url = reverse("read_definition", args=[self.first.pk])

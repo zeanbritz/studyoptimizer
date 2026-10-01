@@ -1009,38 +1009,6 @@
                 transition: none;
             }
         }
-        .mode-switch {
-            display: inline-flex;
-            gap: 5px;
-            margin: 0 0 22px;
-            padding: 5px;
-            border: 1px solid #d8e0e3;
-            border-radius: 13px;
-            background: #f8fafb;
-        }
-
-        .mode-switch a {
-            min-width: 112px;
-            padding: 11px 20px;
-            border: 2px solid transparent;
-            border-radius: 9px;
-            color: #58646a;
-            font-size: 14px;
-            font-weight: 850;
-            text-align: center;
-            text-decoration: none;
-        }
-
-        .mode-switch a[aria-current="page"] {
-            border-color: #3f8f1d;
-            background: #58b82a;
-            color: #fff;
-        }
-
-        .mode-switch a:focus-visible {
-            outline: 3px solid rgba(39,143,211,.35);
-            outline-offset: 2px;
-        }
     </style>
 
 </head>
@@ -1094,12 +1062,6 @@
         {% endif %}
 
     </div>
-
-    <nav class="mode-switch" aria-label="Definition mode">
-        <a href="{% url 'read_definition' definition_id=definition.id %}{% if review_scope == 'subject' %}?subject_id={{ definition.knowledge_unit.subject_id }}{% endif %}">Review</a>
-        <a href="{% url 'practice_definition_review' definition_id=definition.id %}?review_scope={{ review_scope }}{% if review_scope == 'subject' %}&amp;subject_index={{ subject_index }}{% endif %}" aria-current="page">Test</a>
-    </nav>
-
 
     <!-- =========================================
          TERM

@@ -4805,17 +4805,6 @@ def read_definition(request, definition_id):
         url = reverse("read_definition", kwargs={"definition_id": definition_pk})
         return f"{url}?subject_id={subject_id}" if subject_id is not None else url
 
-    test_url = reverse(
-        "practice_definition_review", kwargs={"definition_id": current.pk}
-    )
-    if subject_id is not None:
-        subject_index = get_review_subject_index(
-            request, current.knowledge_unit.subject
-        )
-        test_url += f"?review_scope=subject&subject_index={subject_index}"
-    else:
-        test_url += "?review_scope=global"
-
     return render(request, "dashboard/read_definition.html", {
         "definition": current,
         "subject": current.knowledge_unit.subject,
@@ -4823,7 +4812,6 @@ def read_definition(request, definition_id):
         "total": len(definition_ids),
         "previous_url": reader_url(definition_ids[position - 1]) if position else None,
         "next_url": reader_url(definition_ids[position + 1]) if position + 1 < len(definition_ids) else None,
-        "test_url": test_url,
     })
 
 
