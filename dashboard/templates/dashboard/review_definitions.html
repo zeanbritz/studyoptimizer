@@ -192,6 +192,46 @@
             cursor: not-allowed;
         }
 
+        .mode-switch {
+            display: inline-flex;
+            gap: 5px;
+            margin: 0 0 18px;
+            padding: 5px;
+            border: 1px solid var(--surface-border);
+            border-radius: 13px;
+            background: #f8fafb;
+        }
+
+        .mode-switch a {
+            min-width: 112px;
+            padding: 11px 20px;
+            border: 2px solid transparent;
+            border-radius: 9px;
+            color: #58646a;
+            font-size: 14px;
+            font-weight: 850;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .mode-switch a[aria-current="page"] {
+            border-color: var(--green-dark);
+            background: var(--green);
+            color: #ffffff;
+        }
+
+        .mode-switch a:focus-visible {
+            outline: 3px solid rgba(39, 143, 211, 0.35);
+            outline-offset: 2px;
+        }
+
+        .mode-help {
+            margin: -7px 0 18px;
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 600;
+        }
+
         .review-toolbar {
             display: grid;
             grid-template-columns:
@@ -563,7 +603,7 @@
                             class="random-review-button"
                             id="random-review-button"
                         >
-                            ↻ Random Review
+                            {% if mode == 'test' %}↻ Random Test{% else %}↻ Random Review{% endif %}
                         </button>
 
                     {% endif %}
@@ -571,6 +611,15 @@
                 </div>
 
             </header>
+
+            <nav class="mode-switch" aria-label="Definition mode">
+                <a href="{% url 'review_definitions' %}?mode=review" {% if mode == 'review' %}aria-current="page"{% endif %}>Review</a>
+                <a href="{% url 'review_definitions' %}?mode=test" {% if mode == 'test' %}aria-current="page"{% endif %}>Test</a>
+            </nav>
+
+            <p class="mode-help">
+                {% if mode == 'test' %}Test what you remember and track your progress.{% else %}Open a definition and read at your own pace. Review does not affect your progress.{% endif %}
+            </p>
 
             {% if definitions %}
 
@@ -660,12 +709,12 @@
                     {% for item in definitions %}
 
                         <a
-                            href="{% url 'practice_definition_review' definition_id=item.definition.id %}?review_scope=global"
+                            href="{% if mode == 'test' %}{% url 'practice_definition_review' definition_id=item.definition.id %}?review_scope=global{% else %}{% url 'read_definition' definition_id=item.definition.id %}{% endif %}"
                             class="review-card"
                             data-review-card
                             data-subject-name="{{ item.subject.name|escape }}"
-                            data-global-url="{% url 'practice_definition_review' definition_id=item.definition.id %}?review_scope=global"
-                            data-subject-url="{% url 'practice_definition_review' definition_id=item.definition.id %}?review_scope=subject&amp;subject_index={{ item.subject_index }}"
+                            data-global-url="{% if mode == 'test' %}{% url 'practice_definition_review' definition_id=item.definition.id %}?review_scope=global{% else %}{% url 'read_definition' definition_id=item.definition.id %}{% endif %}"
+                            data-subject-url="{% if mode == 'test' %}{% url 'practice_definition_review' definition_id=item.definition.id %}?review_scope=subject&amp;subject_index={{ item.subject_index }}{% else %}{% url 'read_definition' definition_id=item.definition.id %}?subject_id={{ item.subject.id }}{% endif %}"
                         >
 
                             <div class="item-content">

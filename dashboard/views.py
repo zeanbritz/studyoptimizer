@@ -3,8 +3,10 @@ from datetime import date, datetime, timedelta
 from django.conf import settings
 
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseBadRequest, JsonResponse
-from django.shortcuts import render, redirect
+from django.http import Http404, HttpResponseBadRequest, JsonResponse
+from django.shortcuts import get_object_or_404, render, redirect
+from django.urls import reverse
+from django.views.decorators.http import require_GET
 from django.utils import timezone
 
 from learning.models import (
@@ -4701,6 +4703,8 @@ def get_review_subject_index(
 @login_required
 def review_definitions(request):
 
+    mode = "test" if request.GET.get("mode") == "test" else "review"
+
     definition_knowledge_units = (
         KnowledgeUnit.objects
         .filter(
@@ -4759,12 +4763,68 @@ def review_definitions(request):
             "definitions":
                 definitions,
 
+            "mode": mode,
+
             "definition_count":
                 len(
                     definitions
                 ),
         }
     )
+
+
+@login_required
+@require_GET
+def read_definition(request, definition_id):
+    """Let a student browse their active definitions without grading them."""
+    definitions = Definition.objects.filter(
+        knowledge_unit__subject__user=request.user,
+        knowledge_unit__knowledge_type=KnowledgeUnit.KnowledgeType.DEFINITION,
+        knowledge_unit__active=True,
+    ).select_related("knowledge_unit__subject").order_by(
+        "knowledge_unit__subject__name", "term", "pk"
+    )
+
+    current = get_object_or_404(definitions, pk=definition_id)
+    subject_id = request.GET.get("subject_id")
+    if subject_id is not None:
+        try:
+            scoped_subject_id = int(subject_id)
+        except ValueError:
+            raise Http404("Invalid subject")
+        if scoped_subject_id != current.knowledge_unit.subject_id:
+            raise Http404("Definition is not in this subject")
+        definitions = definitions.filter(knowledge_unit__subject_id=scoped_subject_id)
+
+    definition_ids = list(definitions.values_list("pk", flat=True))
+    position = definition_ids.index(current.pk)
+
+    def reader_url(definition_pk):
+        if definition_pk is None:
+            return None
+        url = reverse("read_definition", kwargs={"definition_id": definition_pk})
+        return f"{url}?subject_id={subject_id}" if subject_id is not None else url
+
+    test_url = reverse(
+        "practice_definition_review", kwargs={"definition_id": current.pk}
+    )
+    if subject_id is not None:
+        subject_index = get_review_subject_index(
+            request, current.knowledge_unit.subject
+        )
+        test_url += f"?review_scope=subject&subject_index={subject_index}"
+    else:
+        test_url += "?review_scope=global"
+
+    return render(request, "dashboard/read_definition.html", {
+        "definition": current,
+        "subject": current.knowledge_unit.subject,
+        "position": position + 1,
+        "total": len(definition_ids),
+        "previous_url": reader_url(definition_ids[position - 1]) if position else None,
+        "next_url": reader_url(definition_ids[position + 1]) if position + 1 < len(definition_ids) else None,
+        "test_url": test_url,
+    })
 
 
 # ============================================================

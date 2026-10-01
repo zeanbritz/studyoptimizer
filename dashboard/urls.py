@@ -45,6 +45,11 @@ urlpatterns = [
         name="review_definitions",
     ),
     path(
+        "review/definitions/<int:definition_id>/read/",
+        views.read_definition,
+        name="read_definition",
+    ),
+    path(
         "progress/",
         views.progress,
         name="progress",
