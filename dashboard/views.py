@@ -5116,8 +5116,6 @@ def review_comparisons(request):
 @login_required
 def review_notes(request):
 
-    mode = "test" if request.GET.get("mode") == "test" else "review"
-
     # ========================================================
     # ALL NOTES FOR THIS USER
     # ========================================================
@@ -5171,8 +5169,6 @@ def review_notes(request):
         {
             "notes":
                 note_items,
-
-            "mode": mode,
 
             "note_count":
                 len(

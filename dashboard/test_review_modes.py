@@ -50,9 +50,6 @@ class ReviewModesTests(TestCase):
             question="How to study",
         )
         StepItem.objects.create(step_list=step_list, text="Read answer")
-        note = Note.objects.create(
-            subject=self.subject, title="My note", content="Detailed note answer"
-        )
         comparison = Comparison.objects.create(
             knowledge_unit=unit("Compare", KnowledgeUnit.KnowledgeType.COMPARISON),
             name="Cell comparison",
@@ -65,7 +62,6 @@ class ReviewModesTests(TestCase):
             ("formula", formula, "review_formulas", "practice_formula", "Water formula purpose"),
             ("list", bullet_list, "review_lists", "review_list", "Nucleus answer"),
             ("step", step_list, "review_steps", "practice_step_review", "Read answer"),
-            ("note", note, "review_notes", "note_detail", "Detailed note answer"),
             ("comparison", comparison, "review_comparisons", "practice_comparison_review", "Has a cell wall"),
         )
 
@@ -89,10 +85,6 @@ class ReviewModesTests(TestCase):
                 self.assertContains(reader, "Finish Review")
                 self.assertNotContains(reader, 'class="mode-switch"')
                 self.assertEqual(StudentKnowledge.objects.count(), 0)
-                if kind == "note":
-                    item.refresh_from_db()
-                    self.assertIsNone(item.last_studied_date)
-
                 test_page = self.client.get(reverse(list_name) + "?mode=test")
                 self.assertEqual(test_page.context["mode"], "test")
                 self.assertContains(test_page, 'id="random-review-button"')
@@ -102,39 +94,50 @@ class ReviewModesTests(TestCase):
         other_user = get_user_model().objects.create_user(
             username="private_student", password="Safe-test-password-123!"
         )
-        private_note = Note.objects.create(
+        private_unit = KnowledgeUnit.objects.create(
             subject=Subject.objects.create(user=other_user, name="Private"),
-            title="Private note",
-            content="Private answer",
+            title="Private formula",
+            knowledge_type=KnowledgeUnit.KnowledgeType.FORMULA,
         )
+        private_formula = Formula.objects.create(knowledge_unit=private_unit)
         private_url = reverse(
-            "read_review_item", kwargs={"kind": "note", "item_id": private_note.pk}
+            "read_review_item", kwargs={"kind": "formula", "item_id": private_formula.pk}
         )
         self.assertEqual(self.client.get(private_url).status_code, 404)
 
-        note = self.cases[3][1]
-        note_url = reverse("read_review_item", kwargs={"kind": "note", "item_id": note.pk})
+        formula = self.cases[0][1]
+        formula_url = reverse("read_review_item", kwargs={"kind": "formula", "item_id": formula.pk})
         self.assertEqual(
-            self.client.get(note_url + f"?subject_id={self.other_subject.pk}").status_code,
+            self.client.get(formula_url + f"?subject_id={self.other_subject.pk}").status_code,
             404,
         )
         self.assertEqual(
-            self.client.get(note_url + f"?subject_id={self.subject.pk}").status_code,
+            self.client.get(formula_url + f"?subject_id={self.subject.pk}").status_code,
             200,
         )
-        next_note = Note.objects.create(
-            subject=self.subject, title="Second note", content="Another answer"
+        next_unit = KnowledgeUnit.objects.create(
+            subject=self.subject,
+            title="Zzz formula",
+            knowledge_type=KnowledgeUnit.KnowledgeType.FORMULA,
         )
-        Note.objects.create(
-            subject=self.other_subject, title="Other subject", content="Elsewhere"
+        next_formula = Formula.objects.create(knowledge_unit=next_unit)
+        other_unit = KnowledgeUnit.objects.create(
+            subject=self.other_subject,
+            title="Other subject formula",
+            knowledge_type=KnowledgeUnit.KnowledgeType.FORMULA,
         )
-        scoped = self.client.get(note_url + f"?subject_id={self.subject.pk}")
+        Formula.objects.create(knowledge_unit=other_unit)
+        scoped = self.client.get(formula_url + f"?subject_id={self.subject.pk}")
         self.assertEqual(scoped.context["total"], 2)
-        self.assertIn(str(next_note.pk), scoped.context["next_url"])
+        self.assertIn(str(next_formula.pk), scoped.context["next_url"])
         self.assertIn(f"subject_id={self.subject.pk}", scoped.context["next_url"])
-        self.assertEqual(self.client.post(note_url).status_code, 405)
+        self.assertEqual(self.client.post(formula_url).status_code, 405)
         self.assertEqual(
-            self.client.get(reverse("read_review_item", args=["unknown", note.pk])).status_code,
+            self.client.get(reverse("read_review_item", args=["unknown", formula.pk])).status_code,
+            404,
+        )
+        self.assertEqual(
+            self.client.get(reverse("read_review_item", args=["note", formula.pk])).status_code,
             404,
         )
 
@@ -147,3 +150,16 @@ class ReviewModesTests(TestCase):
         hidden = Formula.objects.create(knowledge_unit=inactive)
         hidden_url = reverse("read_review_item", args=["formula", hidden.pk])
         self.assertEqual(self.client.get(hidden_url).status_code, 404)
+
+    def test_notes_keep_the_original_single_review_flow(self):
+        note = Note.objects.create(
+            subject=self.subject, title="My note", content="Detailed note"
+        )
+        response = self.client.get(reverse("review_notes"))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'class="mode-switch"')
+        self.assertContains(response, "Random Review")
+        self.assertContains(
+            response,
+            reverse("note_detail", args=[note.pk]) + "?mode=global_review",
+        )

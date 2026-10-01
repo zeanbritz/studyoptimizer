@@ -8,14 +8,13 @@ from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.views.decorators.http import require_GET
 
-from learning.models import BulletList, Comparison, Formula, Note, StepList
+from learning.models import BulletList, Comparison, Formula, StepList
 
 
 REVIEW_TYPES = {
     "formula": (Formula, "review_formulas", "Formula"),
     "list": (BulletList, "review_lists", "List"),
     "step": (StepList, "review_steps", "Steps"),
-    "note": (Note, "review_notes", "Note"),
     "comparison": (Comparison, "review_comparisons", "Comparison"),
 }
 
@@ -28,28 +27,21 @@ def read_review_item(request, kind, item_id):
         raise Http404("Unknown review type")
 
     model, list_url_name, label = REVIEW_TYPES[kind]
-    if kind == "note":
-        items = model.objects.filter(subject__user=request.user).select_related(
-            "subject"
-        ).order_by("subject__name", "created", "pk")
-        subject_field = "subject_id"
+    items = model.objects.filter(
+        knowledge_unit__subject__user=request.user,
+        knowledge_unit__active=True,
+    ).select_related("knowledge_unit__subject")
+    if kind == "formula":
+        items = items.prefetch_related("variables").order_by(
+            "knowledge_unit__subject__name", "knowledge_unit__title", "pk"
+        )
     else:
-        items = model.objects.filter(
-            knowledge_unit__subject__user=request.user,
-            knowledge_unit__active=True,
-        ).select_related("knowledge_unit__subject")
-        if kind == "formula":
-            items = items.prefetch_related("variables").order_by(
-                "knowledge_unit__subject__name", "knowledge_unit__title", "pk"
-            )
-        else:
-            items = items.order_by(
-                "knowledge_unit__subject__name", "knowledge_unit__created", "pk"
-            )
-        subject_field = "knowledge_unit__subject_id"
+        items = items.order_by(
+            "knowledge_unit__subject__name", "knowledge_unit__created", "pk"
+        )
 
     current = get_object_or_404(items, pk=item_id)
-    subject = current.subject if kind == "note" else current.knowledge_unit.subject
+    subject = current.knowledge_unit.subject
 
     subject_id = request.GET.get("subject_id")
     if subject_id is not None:
@@ -59,7 +51,7 @@ def read_review_item(request, kind, item_id):
             raise Http404("Invalid subject")
         if scoped_subject_id != subject.pk:
             raise Http404("Item is not in this subject")
-        items = items.filter(**{subject_field: scoped_subject_id})
+        items = items.filter(knowledge_unit__subject_id=scoped_subject_id)
 
     item_ids = list(items.values_list("pk", flat=True))
     position = item_ids.index(current.pk)
@@ -74,7 +66,6 @@ def read_review_item(request, kind, item_id):
         "item": current,
         "subject": subject,
         "title": (
-            current.title if kind == "note" else
             current.knowledge_unit.title if kind == "formula" else
             current.name if kind == "comparison" else current.question
         ),
