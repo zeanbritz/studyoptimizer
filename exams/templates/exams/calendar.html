@@ -45,22 +45,26 @@
                         <div class="weekday">Mon</div><div class="weekday">Tue</div><div class="weekday">Wed</div><div class="weekday">Thu</div><div class="weekday">Fri</div><div class="weekday">Sat</div><div class="weekday">Sun</div>
                         {% for week in calendar_weeks %}
                             {% for day in week %}
-                                <a href="?date={{ day.date|date:'Y-m-d' }}"
-                                   data-drop-date="{{ day.date|date:'Y-m-d' }}"
-                                   class="day{% if not day.in_month %} outside{% endif %}{% if day.is_today %} today{% endif %}{% if day.is_selected %} selected{% endif %}"
-                                   {% if day.is_selected %}aria-current="date"{% endif %}
-                                   aria-label="{{ day.date|date:'j F Y' }}{% if day.events %}, {{ day.events|length }} event{{ day.events|length|pluralize }}{% endif %}">
-                                    <span class="day-number">{{ day.date|date:'j' }}</span>
+                                <div data-drop-date="{{ day.date|date:'Y-m-d' }}"
+                                     class="day{% if not day.in_month %} outside{% endif %}{% if day.is_today %} today{% endif %}{% if day.is_selected %} selected{% endif %}">
+                                    <a class="day-date" href="?date={{ day.date|date:'Y-m-d' }}"
+                                       {% if day.is_selected %}aria-current="date"{% endif %}
+                                       aria-label="{{ day.date|date:'j F Y' }}{% if day.events %}, {{ day.events|length }} event{{ day.events|length|pluralize }}{% endif %}">
+                                        <span class="day-number">{{ day.date|date:'j' }}</span>
+                                    </a>
                                     <span class="day-events">
                                         {% for event in day.events %}
-                                            <span class="day-event {{ event.kind }}" draggable="true" data-event-id="{{ event.pk }}" title="Drag to another date: {{ event.subject.name }} — {{ event.get_kind_display }}{% if event.title %} — {{ event.title }}{% endif %}">{{ event.subject.name }}{% if event.title %} · {{ event.title }}{% endif %}</span>
+                                            <a href="?edit={{ event.pk }}" class="day-event {{ event.kind }}"
+                                               draggable="true" data-event-id="{{ event.pk }}"
+                                               aria-label="Edit {{ event.subject.name }} {{ event.get_kind_display }} on {{ event.date|date:'j F Y' }}"
+                                               title="Click to edit or drag to another date: {{ event.subject.name }} — {{ event.get_kind_display }}{% if event.title %} — {{ event.title }}{% endif %}">{{ event.subject.name }}{% if event.title %} · {{ event.title }}{% endif %}</a>
                                         {% endfor %}
                                     </span>
-                                </a>
+                                </div>
                             {% endfor %}
                         {% endfor %}
                     </div>
-                    <div class="legend"><span><i class="legend-dot assessment"></i> Assessment</span><span><i class="legend-dot exam"></i> Exam</span><span class="drag-hint">Drag an event to move it</span></div>
+                    <div class="legend"><span><i class="legend-dot assessment"></i> Assessment</span><span><i class="legend-dot exam"></i> Exam</span><span class="drag-hint">Click an event to edit, or drag it to move</span></div>
                 </section>
 
                 <div class="side-column">
@@ -80,9 +84,20 @@
                                             <span class="event-type">{{ event.get_kind_display }}</span>
                                             <strong>{{ event.subject.name }}</strong>
                                             {% if event.title %}<span class="event-title">{{ event.title }}</span>{% endif %}
+                                            {% if event.completed_at %}<span class="event-completed">Completed</span>{% endif %}
                                         </div>
                                         <div class="event-actions">
                                             <a href="?edit={{ event.pk }}" aria-label="Edit {{ event.subject.name }} {{ event.get_kind_display|lower }}">Edit</a>
+                                            {% if event.completed_at %}
+                                                <form method="post">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="action" value="reopen">
+                                                    <input type="hidden" name="event_id" value="{{ event.pk }}">
+                                                    <button type="submit" class="reopen-button">Reopen</button>
+                                                </form>
+                                            {% else %}
+                                                <button type="button" class="complete-button" data-complete-event-id="{{ event.pk }}" data-complete-label="{{ event.subject.name }} {{ event.get_kind_display|lower }}">Complete</button>
+                                            {% endif %}
                                             <form method="post" onsubmit="return confirm('Delete this event?');">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="action" value="delete">
@@ -109,6 +124,7 @@
                                     <div class="field">
                                         <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                                         {{ field }}
+                                        {% if field.help_text %}<small class="field-help">{{ field.help_text }}</small>{% endif %}
                                         {% if field.errors %}<div class="field-error">{{ field.errors }}</div>{% endif %}
                                     </div>
                                 {% endfor %}
@@ -154,7 +170,21 @@
     <input type="hidden" name="event_id" value="">
     <input type="hidden" name="date" value="">
 </form>
+<dialog id="completion-dialog" class="completion-dialog" aria-labelledby="completion-dialog-heading">
+    <form method="post" action="{% url 'exams:calendar' %}">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="complete">
+        <input type="hidden" name="event_id" value="">
+        <h2 id="completion-dialog-heading">Mark as completed?</h2>
+        <p>Have you completed <strong data-completion-label></strong>? This will clear its reminders.</p>
+        <div class="completion-dialog-actions">
+            <button type="button" data-completion-no>No, keep reminding me</button>
+            <button type="submit" class="save-button">Yes, completed</button>
+        </div>
+    </form>
+</dialog>
 <script src="{% static 'dashboard/js/sidebar.js' %}"></script>
 <script src="{% static 'exams/calendar.js' %}"></script>
+<script src="{% static 'exams/reminders.js' %}"></script>
 </body>
 </html>

@@ -50,7 +50,10 @@ def _calendar_context(request, selected_date, form, editing=None):
                 "in_month": day.month == month_start.month,
                 "is_today": day == today,
                 "is_selected": day == selected_date,
-                "events": events_by_date.get(day, []),
+                "events": [
+                    event for event in events_by_date.get(day, [])
+                    if event.completed_at is None
+                ],
             }
             for day in week
         ]
@@ -69,6 +72,7 @@ def _calendar_context(request, selected_date, form, editing=None):
         "upcoming_events": AssessmentEvent.objects.filter(
             subject__user=request.user,
             date__gte=today,
+            completed_at__isnull=True,
         ).select_related("subject").order_by("date", "pk")[:5],
         "form": form,
         "editing": editing,
@@ -84,6 +88,8 @@ def calendar_view(request):
     if request.method == "POST":
         event_id = request.POST.get("event_id")
         if event_id:
+            if not event_id.isdecimal():
+                return HttpResponseBadRequest("Choose a valid event.")
             editing = get_object_or_404(
                 AssessmentEvent,
                 pk=event_id,
@@ -100,6 +106,20 @@ def calendar_view(request):
             if was_exam:
                 sync_subject_next_exam(request, old_subject)
             return redirect(f"{reverse('exams:calendar')}?date={selected_date.isoformat()}")
+
+        if request.POST.get("action") in {"complete", "reopen"}:
+            if editing is None:
+                return HttpResponseBadRequest("Choose an event to update.")
+            completed_at = (
+                timezone.now() if request.POST["action"] == "complete" else None
+            )
+            editing.completed_at = completed_at
+            editing.save(update_fields=["completed_at"])
+            if editing.kind == AssessmentEvent.Kind.EXAM:
+                sync_subject_next_exam(request, editing.subject)
+            if request.POST.get("return_to") == "dashboard":
+                return redirect("dashboard")
+            return redirect(f"{reverse('exams:calendar')}?date={editing.date.isoformat()}")
 
         if request.POST.get("action") == "move":
             if editing is None:

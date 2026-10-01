@@ -18,6 +18,7 @@ from learning.models import (
     Note,
     Comparison,
 )
+from exams.reminders import due_reminders
 
 from .models import (
     StudyAvailability,
@@ -49,6 +50,9 @@ def dashboard(request):
     # --------------------------------------------------------
 
     today = timezone.localdate()
+    due_assessment_events = (
+        due_reminders(request.user, today) if onboarding_complete else []
+    )
 
     # --------------------------------------------------------
     # SESSION SUBJECTS
@@ -1122,6 +1126,9 @@ def dashboard(request):
 
             "onboarding_complete":
                 onboarding_complete,
+
+            "due_assessment_events": due_assessment_events,
+            "today": today,
 
             # --------------------------------------------
             # DEFINITIONS

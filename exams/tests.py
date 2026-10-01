@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 from importlib import import_module
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -9,6 +10,7 @@ from django.utils import timezone
 from learning.models import Subject
 
 from .models import AssessmentEvent
+from .reminders import due_reminders
 
 
 class AssessmentCalendarTests(TestCase):
@@ -255,3 +257,101 @@ class AssessmentCalendarTests(TestCase):
         self.assertIsNone(self.subject.exam_date)
         event.refresh_from_db()
         self.assertEqual(event.kind, "assessment")
+
+    def test_event_chip_is_an_edit_link_and_day_remains_a_drop_target(self):
+        event = AssessmentEvent.objects.create(
+            subject=self.subject, date=timezone.localdate(), kind="exam"
+        )
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        self.assertContains(response, f'href="?edit={event.pk}"')
+        self.assertContains(response, f'data-event-id="{event.pk}"')
+        self.assertContains(response, f'data-drop-date="{event.date.isoformat()}"')
+
+    def test_reminder_days_saved_and_validated(self):
+        self.client.force_login(self.user)
+        planned = timezone.localdate() + timedelta(days=10)
+        data = {
+            "action": "save", "subject": self.subject.pk,
+            "kind": "assessment", "date": planned.isoformat(),
+            "reminder_days": "5",
+        }
+        self.client.post(self.url, data)
+        event = AssessmentEvent.objects.get()
+        self.assertEqual(event.reminder_days, 5)
+        self.assertEqual(event.reminder_date, planned - timedelta(days=5))
+
+        for invalid in ("-1", "366", "not-a-number"):
+            response = self.client.post(self.url, {**data, "event_id": event.pk,
+                                                   "reminder_days": invalid})
+            self.assertEqual(response.status_code, 200)
+            event.refresh_from_db()
+            self.assertEqual(event.reminder_days, 5)
+
+    def test_reminder_stays_visible_from_lead_day_until_completed(self):
+        today = timezone.localdate()
+        event = AssessmentEvent.objects.create(
+            subject=self.subject, date=today + timedelta(days=4),
+            kind="exam", title="Paper 1", reminder_days=3,
+        )
+        self.assertNotIn(event, due_reminders(self.user, today))
+        for day in (today + timedelta(days=1), today + timedelta(days=2),
+                    event.date, event.date + timedelta(days=1)):
+            self.assertIn(event, due_reminders(self.user, day))
+
+        self.client.force_login(self.user)
+        session = self.client.session
+        session["onboarding_complete"] = True
+        session.save()
+        with patch("django.utils.timezone.localdate", return_value=today + timedelta(days=1)):
+            response = self.client.get(reverse("dashboard"))
+        self.assertContains(response, "Paper 1")
+        self.assertContains(response, f'data-complete-event-id="{event.pk}"')
+
+        response = self.client.post(self.url, {
+            "action": "complete", "event_id": event.pk,
+            "return_to": "dashboard",
+        })
+        self.assertRedirects(response, reverse("dashboard"))
+        event.refresh_from_db()
+        self.assertIsNotNone(event.completed_at)
+        self.assertNotIn(event, due_reminders(self.user, event.date))
+        with patch("django.utils.timezone.localdate", return_value=today + timedelta(days=1)):
+            response = self.client.get(reverse("dashboard"))
+        self.assertNotContains(response, "Paper 1")
+
+    def test_complete_and_reopen_exam_update_subject_date(self):
+        planned = timezone.localdate() + timedelta(days=5)
+        event = AssessmentEvent.objects.create(
+            subject=self.subject, date=planned, kind="exam"
+        )
+        self.client.force_login(self.user)
+        self.client.get(self.url)
+        self.subject.refresh_from_db()
+        self.assertEqual(self.subject.exam_date, planned)
+
+        self.client.post(self.url, {"action": "complete", "event_id": event.pk})
+        self.subject.refresh_from_db()
+        self.assertIsNone(self.subject.exam_date)
+        response = self.client.get(f"{self.url}?date={planned.isoformat()}")
+        self.assertContains(response, "Completed")
+        self.assertNotContains(response, f'data-event-id="{event.pk}"')
+        self.assertNotIn(event, response.context["upcoming_events"])
+
+        self.client.post(self.url, {"action": "reopen", "event_id": event.pk})
+        event.refresh_from_db()
+        self.subject.refresh_from_db()
+        self.assertIsNone(event.completed_at)
+        self.assertEqual(self.subject.exam_date, planned)
+
+    def test_other_students_cannot_complete_or_reopen_events(self):
+        event = AssessmentEvent.objects.create(
+            subject=self.other_subject, date=timezone.localdate(), kind="exam"
+        )
+        self.client.force_login(self.user)
+        for action in ("complete", "reopen"):
+            response = self.client.post(self.url, {"action": action,
+                                                   "event_id": event.pk})
+            self.assertEqual(response.status_code, 404)
+        event.refresh_from_db()
+        self.assertIsNone(event.completed_at)

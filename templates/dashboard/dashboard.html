@@ -376,6 +376,22 @@
         .empty-plan { min-height: 112px; display: flex; align-items: center; justify-content: center; padding: 22px; border: 1px dashed #cfd8d3; border-radius: 13px; background: #fbfcfb; color: var(--muted); text-align: center; }
         .empty-plan p { margin: 0; font-size: 14px; font-weight: 650; }
 
+        .assessment-reminders { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 12px; margin-bottom: 16px; }
+        .assessment-reminder { display: grid; gap: 5px; width: 100%; padding: 15px 16px; border: 1px solid #e4d7ae; border-bottom: 4px solid #cfbd83; border-radius: 12px; background: #fffaf0; color: #353b3d; text-align: left; cursor: pointer; }
+        .assessment-reminder:hover { background: #fff4d9; }
+        .assessment-reminder:focus-visible { outline: 3px solid #a87e00; outline-offset: 2px; }
+        .assessment-reminder strong { font-size: 15px; }
+        .assessment-reminder small { color: #6a6250; font-size: 12px; }
+        .assessment-reminder .reminder-type { color: #89691d; font-size: 11px; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; }
+        .completion-dialog { width: min(440px, calc(100% - 32px)); padding: 25px; border: 1px solid #dfe5e2; border-radius: 16px; color: #2f3335; box-shadow: 0 20px 60px rgba(22, 37, 50, .22); }
+        .completion-dialog::backdrop { background: rgba(28, 42, 52, .48); }
+        .completion-dialog h2 { margin: 0 0 10px; font-size: 22px; }
+        .completion-dialog p { margin: 0 0 20px; line-height: 1.5; }
+        .completion-dialog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 9px; }
+        .completion-dialog-actions button { padding: 10px 13px; border-radius: 9px; font: inherit; font-weight: 750; cursor: pointer; }
+        .completion-dialog-actions [data-completion-no] { border: 1px solid #cbd6da; background: #fff; color: #4d5d65; }
+        .completion-dialog-actions [type="submit"] { border: 1px solid #4caa25; background: #58b82a; color: #fff; }
+
         .get-started-button { padding: 11px 18px 9px; border: 2px solid var(--brand-green-dark); border-bottom-width: 4px; border-radius: 11px; background: var(--brand-green); color: white; font-size: 14px; font-weight: 850; text-decoration: none; }
         .get-started-button:hover { background: #64c934; transform: translateY(-1px); }
         .get-started-button:active { border-bottom-width: 2px; transform: translateY(2px); }
@@ -859,7 +875,21 @@
                      HAS PLAN ITEMS
                 ============================== -->
 
-                {% elif due_definition_subjects or due_formula_subjects or due_list_subjects or book_summary_subjects or due_step_subjects or due_comparison_subjects or note_subjects %}
+                {% elif due_definition_subjects or due_formula_subjects or due_list_subjects or book_summary_subjects or due_step_subjects or due_comparison_subjects or note_subjects or due_assessment_events %}
+
+                    {% if due_assessment_events %}
+                        <div class="assessment-reminders" aria-label="Exam and assessment reminders">
+                            {% for event in due_assessment_events %}
+                                <button type="button" class="assessment-reminder"
+                                        data-complete-event-id="{{ event.pk }}"
+                                        data-complete-label="{{ event.subject.name }} {{ event.get_kind_display|lower }}">
+                                    <span class="reminder-type">{{ event.get_kind_display }} reminder</span>
+                                    <strong>{{ event.subject.name }}{% if event.title %} · {{ event.title }}{% endif %}</strong>
+                                    <small>{% if event.date < today %}Overdue · {% elif event.date == today %}Today · {% endif %}Due {{ event.date|date:'j F Y' }} · Click to mark complete</small>
+                                </button>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
 
 
                     <div class="today-plan-columns">
@@ -1624,10 +1654,26 @@
 
 </div>
 
+<dialog id="completion-dialog" class="completion-dialog" aria-labelledby="completion-dialog-heading">
+    <form method="post" action="{% url 'exams:calendar' %}">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="complete">
+        <input type="hidden" name="event_id" value="">
+        <input type="hidden" name="return_to" value="dashboard">
+        <h2 id="completion-dialog-heading">Mark as completed?</h2>
+        <p>Have you completed <strong data-completion-label></strong>? This will clear its reminders.</p>
+        <div class="completion-dialog-actions">
+            <button type="button" data-completion-no>No, keep reminding me</button>
+            <button type="submit">Yes, completed</button>
+        </div>
+    </form>
+</dialog>
+
 
 <script
     src="{% static 'dashboard/js/sidebar.js' %}"
 ></script>
+<script src="{% static 'exams/reminders.js' %}"></script>
 
 {% if beta_feedback_enabled %}
     {% include 'dashboard/partials/beta_feedback.html' %}

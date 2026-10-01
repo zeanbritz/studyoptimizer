@@ -17,6 +17,7 @@ def refresh_subject_exam_dates(subjects):
         AssessmentEvent.objects.filter(
             subject_id__in=subject_ids,
             kind=AssessmentEvent.Kind.EXAM,
+            completed_at__isnull=True,
         ).order_by().values("subject_id").annotate(
             next_date=Min("date", filter=Q(date__gte=today)),
         ).values_list("subject_id", "next_date")
@@ -36,6 +37,7 @@ def sync_subject_next_exam(request, subject):
     next_date = AssessmentEvent.objects.filter(
         subject=subject,
         kind=AssessmentEvent.Kind.EXAM,
+        completed_at__isnull=True,
         date__gte=timezone.localdate(),
     ).order_by("date", "pk").values_list("date", flat=True).first()
     if subject.exam_date != next_date:
