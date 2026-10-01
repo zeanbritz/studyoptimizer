@@ -1,7 +1,8 @@
+{% load static %}
 <footer class="landing-footer" role="contentinfo">
     <div class="landing-footer__inner">
         <div class="landing-footer__brand">
-            <a href="{% url 'landing' %}" class="landing-footer__logo">StudiGarden</a>
+            <a href="{% url 'landing' %}" class="landing-footer__logo" aria-label="StudiGarden home"><img src="{% static 'images/logo.webp' %}" alt="StudiGarden" width="204" height="52"></a>
             <p>A calmer place to plan, learn, and review.</p>
         </div>
 

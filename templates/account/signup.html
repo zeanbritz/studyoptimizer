@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -6,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Create account - StudiGarden</title>
+    <link rel="stylesheet" href="{% static 'css/brand-logo.css' %}">
 
     <style>
         :root {
@@ -234,8 +236,7 @@
     <div class="signup-shell">
 
         <a href="{% url 'landing' %}" class="brand">
-            <span class="brand-mark" aria-hidden="true">S</span>
-            <span>StudiGarden</span>
+            <img class="brand-logo-image" src="{% static 'images/logo.webp' %}" alt="StudiGarden" width="204" height="52">
         </a>
 
         <main class="signup-card">

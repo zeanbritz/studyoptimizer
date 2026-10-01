@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -5,6 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Log in - StudiGarden</title>
+    <link rel="stylesheet" href="{% static 'css/brand-logo.css' %}">
 
     <style>
         :root {
@@ -187,8 +189,7 @@
 <body>
     <div class="login-shell">
         <a href="{% url 'landing' %}" class="brand">
-            <span class="brand-mark" aria-hidden="true">S</span>
-            <span>StudiGarden</span>
+            <img class="brand-logo-image" src="{% static 'images/logo.webp' %}" alt="StudiGarden" width="204" height="52">
         </a>
 
         <main class="login-card">

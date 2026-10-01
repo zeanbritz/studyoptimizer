@@ -1,9 +1,11 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block head_title %}Account{% endblock head_title %} · StudiGarden</title>
+    <link rel="stylesheet" href="{% static 'css/brand-logo.css' %}">
     {% block extra_head %}{% endblock extra_head %}
 
     <style>
@@ -227,8 +229,7 @@
     {% block body %}
         <div class="auth-shell">
             <a href="{% url 'landing' %}" class="brand">
-                <span class="brand-mark" aria-hidden="true">S</span>
-                <span>StudiGarden</span>
+                <img class="brand-logo-image" src="{% static 'images/logo.webp' %}" alt="StudiGarden" width="204" height="52">
             </a>
 
             {% if messages %}
