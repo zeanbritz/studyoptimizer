@@ -8,6 +8,14 @@
     border-radius: 8px;
 }
 
+.brand-icon-image {
+    display: block;
+    width: 40px;
+    height: 40px;
+    flex: none;
+    border-radius: 8px;
+}
+
 @media (max-width: 520px) {
     .brand-logo-image {
         width: 180px;
