@@ -227,7 +227,8 @@
         }
 
         .field input,
-        .field textarea {
+        .field textarea,
+        .field select {
             width: 100%;
             border: 2px solid #d4dce0;
             border-bottom-width: 4px;
@@ -240,7 +241,8 @@
             transition: border-color 0.15s ease, box-shadow 0.15s ease;
         }
 
-        .field input {
+        .field input,
+        .field select {
             min-height: 49px;
             padding: 10px 13px 9px;
         }
@@ -259,12 +261,14 @@
         }
 
         .field input:hover,
-        .field textarea:hover {
+        .field textarea:hover,
+        .field select:hover {
             border-color: #c4cfd4;
         }
 
         .field input:focus,
-        .field textarea:focus {
+        .field textarea:focus,
+        .field select:focus {
             border-color: #78b8dd;
             box-shadow: 0 0 0 4px rgba(39, 143, 211, 0.12);
         }
@@ -345,6 +349,7 @@
         .back-button:focus-visible,
         .field input:focus-visible,
         .field textarea:focus-visible,
+        .field select:focus-visible,
         .cancel-button:focus-visible,
         .save-button:focus-visible {
             outline: 3px solid rgba(39, 143, 211, 0.28);
@@ -399,6 +404,7 @@
             .back-button,
             .field input,
             .field textarea,
+            .field select,
             .cancel-button,
             .save-button {
                 transition: none;
@@ -443,7 +449,7 @@
                     </span>
                     <div>
                         <h2>Definition details</h2>
-                        <p>Update the term and its review settings.</p>
+                        <p>Update the term and its textbook details.</p>
                     </div>
                 </div>
 
@@ -452,13 +458,18 @@
 
                     <div class="form-grid">
 
+                        {% if error %}
+                            <div class="error-message">{{ error }}</div>
+                        {% endif %}
+
                         <div class="field term-field">
                             <label for="id_term">Term</label>
                             <input
                                 type="text"
                                 id="id_term"
                                 name="term"
-                                value="{{ definition.term }}"
+                                value="{{ term }}"
+                                maxlength="255"
                                 placeholder="e.g. Enterprise Architecture"
                                 autocomplete="off"
                                 required
@@ -472,7 +483,22 @@
                                 name="definition"
                                 placeholder="Write the definition in your own words..."
                                 required
-                            >{{ definition.definition }}</textarea>
+                            >{{ definition_text }}</textarea>
+                        </div>
+
+                        <div class="field">
+                            <label for="id_book_name">Book (optional)</label>
+                            <select id="id_book_name" name="book_name">
+                                <option value="">No book selected</option>
+                                {% for textbook in textbooks %}
+                                    <option value="{{ textbook.name }}"{% if selected_book == textbook.name %} selected{% endif %}>{{ textbook.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="id_chapter">Chapter (optional)</label>
+                            <input type="text" id="id_chapter" name="chapter" value="{{ chapter }}" maxlength="255" placeholder="e.g. Chapter 4">
                         </div>
 
                         <input

@@ -635,11 +635,11 @@
         <div class="card">
 
 
-            {% if form.errors %}
+            {% if error %}
 
                 <div class="error-message">
 
-                    Please correct the errors below.
+                    {{ error }}
 
                 </div>
 
@@ -649,6 +649,7 @@
             <form method="POST">
 
                 {% csrf_token %}
+                <input type="hidden" name="subject_index" value="{{ subject_index }}">
 
 
                 <!-- =====================================
@@ -668,7 +669,8 @@
                         type="text"
                         id="id_term"
                         name="term"
-                        value="{{ form.term.value|default:'' }}"
+                        value="{{ term }}"
+                        maxlength="255"
                         placeholder="e.g. Enterprise Architecture"
                         required
                     >
@@ -701,7 +703,7 @@
                         name="definition"
                         placeholder="Write the definition in your own words..."
                         required
-                    >{{ form.definition.value|default:'' }}</textarea>
+                    >{{ definition_text }}</textarea>
 
 
                     <p class="help-text">
@@ -716,8 +718,8 @@
                 <input type="hidden" name="difficulty" value="1">
                 <input type="hidden" name="estimated_minutes" value="2">
 
-                <details class="additional-details">
-                    <summary>Additional Details</summary>
+                <details class="additional-details"{% if selected_book or error %} open{% endif %}>
+                    <summary>Additional Details{% if selected_book %} · {{ selected_book }}{% endif %}</summary>
                     <div class="additional-details-content">
                         <div class="additional-grid">
                             <div class="field">
@@ -731,7 +733,7 @@
                             </div>
                             <div class="field">
                                 <label for="id_chapter">Chapter <span class="help-text">Optional</span></label>
-                                <input type="text" id="id_chapter" name="chapter" value="{{ chapter|default:'' }}" placeholder="e.g. Chapter 4">
+                                <input type="text" id="id_chapter" name="chapter" value="{{ chapter|default:'' }}" maxlength="255" placeholder="e.g. Chapter 4">
                             </div>
                         </div>
                     </div>

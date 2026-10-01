@@ -1037,6 +1037,18 @@ def create_definition(
 
         subject_index = 0
 
+    textbooks = list(
+        SubjectTextbook.objects
+        .filter(subject=subject)
+        .order_by("created", "id")
+    )
+
+    term = ""
+    definition_text = ""
+    selected_book = textbooks[0].name if len(textbooks) == 1 else ""
+    chapter = ""
+    error = None
+
     # ========================================================
     # POST
     # ========================================================
@@ -1053,49 +1065,75 @@ def create_definition(
             ""
         ).strip()
 
+        selected_book = request.POST.get(
+            "book_name",
+            ""
+        ).strip()
+
+        chapter = request.POST.get(
+            "chapter",
+            ""
+        ).strip()
+
         # ====================================================
         # VALIDATION
         # ====================================================
 
-        if term and definition_text:
+        if not term or not definition_text:
+            error = "Enter a term and its definition."
+        elif len(term) > 255:
+            error = "The term cannot be longer than 255 characters."
+        elif len(chapter) > 255:
+            error = "The chapter cannot be longer than 255 characters."
+        elif selected_book and not any(
+            textbook.name == selected_book for textbook in textbooks
+        ):
+            error = "The selected textbook does not belong to this subject."
+
+        if error is None:
 
             # =================================================
             # CREATE KNOWLEDGE UNIT
             # =================================================
 
-            knowledge_unit = KnowledgeUnit.objects.create(
+            with transaction.atomic():
+                knowledge_unit = KnowledgeUnit.objects.create(
 
-                subject=subject,
+                    subject=subject,
 
-                title=term,
+                    title=term,
 
-                knowledge_type=(
-                    KnowledgeUnit
-                    .KnowledgeType
-                    .DEFINITION
-                ),
+                    knowledge_type=(
+                        KnowledgeUnit
+                        .KnowledgeType
+                        .DEFINITION
+                    ),
 
-                difficulty=1,
+                    difficulty=1,
 
-                estimated_minutes=2,
+                    estimated_minutes=2,
 
-                active=True,
+                    active=True,
 
-            )
+                )
 
-            # =================================================
-            # CREATE DEFINITION
-            # =================================================
+                # =================================================
+                # CREATE DEFINITION
+                # =================================================
 
-            Definition.objects.create(
+                Definition.objects.create(
 
-                knowledge_unit=knowledge_unit,
+                    knowledge_unit=knowledge_unit,
 
-                term=term,
+                    term=term,
 
-                definition=definition_text,
+                    definition=definition_text,
 
-            )
+                    book_name=selected_book,
+
+                    chapter=chapter,
+
+                )
 
             # =================================================
             # NEW DEFINITIONS ARE IMMEDIATELY DUE
@@ -1111,10 +1149,10 @@ def create_definition(
             # This is exactly how formulas work.
             # =================================================
 
-        return redirect(
-            "subject_detail",
-            subject_index=subject_index
-        )
+            return redirect(
+                "subject_detail",
+                subject_index=subject_index
+            )
 
     # ========================================================
     # DISPLAY CREATE PAGE
@@ -1126,6 +1164,12 @@ def create_definition(
         {
             "subject": subject,
             "subject_index": subject_index,
+            "textbooks": textbooks,
+            "term": term,
+            "definition_text": definition_text,
+            "selected_book": selected_book,
+            "chapter": chapter,
+            "error": error,
         }
     )
 
@@ -3911,6 +3955,17 @@ def edit_definition(
 
         subject_index = 0
 
+    textbooks = list(
+        SubjectTextbook.objects
+        .filter(subject=subject)
+        .order_by("created", "id")
+    )
+    term = definition.term
+    definition_text = definition.definition
+    selected_book = definition.book_name
+    chapter = definition.chapter
+    error = None
+
     # ========================================================
     # POST
     # ========================================================
@@ -3924,6 +3979,16 @@ def edit_definition(
 
         definition_text = request.POST.get(
             "definition",
+            ""
+        ).strip()
+
+        selected_book = request.POST.get(
+            "book_name",
+            ""
+        ).strip()
+
+        chapter = request.POST.get(
+            "chapter",
             ""
         ).strip()
 
@@ -3941,7 +4006,18 @@ def edit_definition(
         # VALIDATION
         # ====================================================
 
-        if term and definition_text:
+        if not term or not definition_text:
+            error = "Enter a term and its definition."
+        elif len(term) > 255:
+            error = "The term cannot be longer than 255 characters."
+        elif len(chapter) > 255:
+            error = "The chapter cannot be longer than 255 characters."
+        elif selected_book and not any(
+            textbook.name == selected_book for textbook in textbooks
+        ):
+            error = "The selected textbook does not belong to this subject."
+
+        if error is None:
 
             # ------------------------------------------------
             # UPDATE KNOWLEDGE UNIT
@@ -3981,6 +4057,9 @@ def edit_definition(
                 definition_text
             )
 
+            definition.book_name = selected_book
+            definition.chapter = chapter
+
             definition.save()
 
             return redirect(
@@ -4004,6 +4083,13 @@ def edit_definition(
 
             "subject_index":
                 subject_index,
+
+            "textbooks": textbooks,
+            "term": term,
+            "definition_text": definition_text,
+            "selected_book": selected_book,
+            "chapter": chapter,
+            "error": error,
         }
     )
 
