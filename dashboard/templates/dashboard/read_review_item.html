@@ -1,0 +1,90 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - {{ label }} Review - StudiGarden</title>
+    <link rel="stylesheet" href="{% static 'dashboard/css/sidebar.css' %}">
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #edf1f3; color: #2f3335; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; }
+        .app { display: flex; min-height: 100vh; }
+        .main { min-width: 0; flex: 1; }
+        .page { max-width: 900px; margin: 0 auto; padding: 30px 40px 56px; }
+        .page-header { padding: 25px 27px; border: 1px solid #465270; border-bottom: 5px solid #222b45; border-radius: 17px; background: linear-gradient(135deg, #303a5a, #485676); box-shadow: 0 9px 24px rgba(35,45,70,.12); }
+        .eyebrow { color: #aebfdf; font-size: 11px; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
+        h1 { margin: 8px 0 6px; color: #fff; font-size: 31px; line-height: 1.2; overflow-wrap: anywhere; }
+        .page-header p { margin: 0; color: #d8dfed; font-size: 14px; font-weight: 600; }
+        .card { margin-top: 20px; padding: 30px; border: 1px solid #dddad8; border-top: 3px solid #4b8fc7; border-bottom: 4px solid #cfc6c2; border-radius: 16px; background: #fff; box-shadow: 0 3px 11px rgba(54,46,43,.045); }
+        .card h2 { margin: 0 0 16px; font-size: 24px; overflow-wrap: anywhere; }
+        .card h3 { margin: 24px 0 10px; font-size: 16px; }
+        .body-text { font-size: 16px; line-height: 1.7; overflow-wrap: anywhere; }
+        .body-text p:first-child { margin-top: 0; }
+        .body-text p:last-child { margin-bottom: 0; }
+        .source { margin: 22px 0 0; padding-top: 17px; border-top: 1px solid #e2e8eb; color: #687278; font-size: 13px; font-weight: 600; }
+        .formula { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; padding: 16px; border-radius: 10px; background: #f2f8fc; font-size: 20px; font-weight: 700; overflow-wrap: anywhere; }
+        .fraction { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; }
+        .fraction-top { padding: 1px 6px 4px; border-bottom: 2px solid currentColor; }
+        .fraction-bottom { padding: 4px 6px 1px; }
+        .entries { margin: 0; padding-left: 23px; line-height: 1.65; }
+        .entries li { padding: 7px 0; }
+        .entry-description { display: block; color: #687278; font-size: 14px; }
+        .variable-list { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; }
+        .variable-list dt { font-weight: 800; }
+        .variable-list dd { margin: 0; }
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; line-height: 1.5; }
+        th, td { min-width: 110px; padding: 11px; border: 1px solid #d8e0e3; text-align: left; vertical-align: top; }
+        th { background: #edf7fd; }
+        .navigation { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; margin-top: 20px; }
+        .navigation a, .navigation span { display: inline-flex; justify-content: center; padding: 10px 16px; border: 2px solid #a8d3ec; border-bottom-width: 4px; border-radius: 11px; background: #edf8ff; color: #176f9f; font-size: 13px; font-weight: 850; text-decoration: none; }
+        .navigation span { opacity: .55; }
+        .finish-link { display: inline-block; margin-top: 24px; color: #276f97; font-weight: 750; text-decoration: none; }
+        .finish-link:hover { text-decoration: underline; }
+        .navigation a:focus-visible, .finish-link:focus-visible { outline: 3px solid rgba(39,143,211,.35); outline-offset: 2px; }
+        @media (max-width: 650px) { .page { padding: 20px 18px 42px; } .page-header, .card { padding: 22px 20px; } h1 { font-size: 27px; } .navigation a, .navigation span { flex: 1; } }
+    </style>
+</head>
+<body>
+<div class="app">
+    {% include 'partials/sidebar.html' with active_page='review' %}
+    <main class="main"><div class="page">
+        <header class="page-header">
+            <span class="eyebrow">{{ label }} review</span>
+            <h1>{{ title }}</h1>
+            <p>{{ subject.name }} · {{ position }} of {{ total }}</p>
+        </header>
+
+        <article class="card">
+            <h2>{{ title }}</h2>
+            {% if kind == 'formula' %}
+                <div class="formula" aria-label="Formula">
+                    {% for element in formula_elements %}
+                        {% if element.type == 'fraction' %}
+                            <span class="fraction"><span class="fraction-top">{% for part in element.numerator %}{{ part.value }}{% endfor %}</span><span class="fraction-bottom">{% for part in element.denominator %}{{ part.value }}{% endfor %}</span></span>
+                        {% else %}<span>{{ element.value }}</span>{% endif %}
+                    {% empty %}<span>No formula structure added.</span>{% endfor %}
+                </div>
+                {% if item.purpose %}<h3>Purpose</h3><div class="body-text">{{ item.purpose|linebreaks }}</div>{% endif %}
+                {% if item.when_to_use %}<h3>When to use it</h3><div class="body-text">{{ item.when_to_use|linebreaks }}</div>{% endif %}
+                {% if variables %}<h3>Variables</h3><dl class="variable-list">{% for variable in variables %}<dt>{{ variable.symbol }}</dt><dd>{{ variable.meaning }}</dd>{% endfor %}</dl>{% endif %}
+            {% elif kind == 'list' or kind == 'step' %}
+                <ol class="entries">{% for entry in entries %}<li>{{ entry.text }}{% if entry.description %}<span class="entry-description">{{ entry.description }}</span>{% endif %}</li>{% empty %}<li>No items added yet.</li>{% endfor %}</ol>
+            {% elif kind == 'note' %}
+                <div class="body-text">{{ item.content|linebreaks }}</div>
+            {% elif kind == 'comparison' %}
+                <div class="table-wrap"><table><thead><tr><th scope="col">Item</th>{% for column in columns %}<th scope="col">{{ column.name }}</th>{% endfor %}</tr></thead><tbody>{% for row in rows %}<tr><th scope="row">{{ row.name }}</th>{% for value in row.values %}<td>{{ value|linebreaksbr }}</td>{% endfor %}</tr>{% empty %}<tr><td colspan="100">No comparison rows added yet.</td></tr>{% endfor %}</tbody></table></div>
+            {% endif %}
+            {% if item.book_name or item.chapter %}<p class="source">{% if item.book_name %}{{ item.book_name }}{% endif %}{% if item.book_name and item.chapter %} · {% endif %}{% if item.chapter %}{{ item.chapter }}{% endif %}</p>{% endif %}
+        </article>
+
+        <nav class="navigation" aria-label="Browse {{ label|lower }} items">
+            {% if previous_url %}<a href="{{ previous_url }}">Previous</a>{% else %}<span>Previous</span>{% endif %}
+            {% if next_url %}<a href="{{ next_url }}">Next</a>{% else %}<span>Next</span>{% endif %}
+        </nav>
+        <a class="finish-link" href="{{ list_url }}">Finish Review</a>
+    </div></main>
+</div>
+</body>
+</html>

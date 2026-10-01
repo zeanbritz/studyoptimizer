@@ -20,6 +20,7 @@
         rel="stylesheet"
         href="{% static 'dashboard/css/sidebar.css' %}"
     >
+    <link rel="stylesheet" href="{% static 'dashboard/css/review_modes.css' %}">
 
     <style>
 
@@ -553,17 +554,17 @@
                         href="{% url 'review' %}"
                         class="back-button"
                     >
-                        ← Back to Review
+                        Back to Review
                     </a>
 
-                    {% if notes %}
+                    {% if notes and mode == 'test' %}
 
                         <button
                             type="button"
                             class="random-review-button"
                             id="random-review-button"
                         >
-                            ↻ Random Review
+                            ↻ Random Test
                         </button>
 
                     {% endif %}
@@ -655,17 +656,19 @@
 
                 </section>
 
+                {% include 'dashboard/partials/review_mode_switch.html' with list_url_name='review_notes' item_label='notes' test_help='Work through your notes and record when you have studied them.' %}
+
                 <div class="review-list">
 
                     {% for item in notes %}
 
                         <a
-                            href="{% url 'note_detail' note_id=item.note.id %}?mode=global_review"
+                            href="{% if mode == 'test' %}{% url 'note_detail' note_id=item.note.id %}?mode=global_review{% else %}{% url 'read_review_item' kind='note' item_id=item.note.id %}{% endif %}"
                             class="review-card"
                             data-review-card
                             data-subject-name="{{ item.subject.name|escape }}"
-                            data-global-url="{% url 'note_detail' note_id=item.note.id %}?mode=global_review"
-                            data-subject-url="{% url 'note_detail' note_id=item.note.id %}?mode=global_review&amp;subject_id={{ item.subject.id }}"
+                            data-global-url="{% if mode == 'test' %}{% url 'note_detail' note_id=item.note.id %}?mode=global_review{% else %}{% url 'read_review_item' kind='note' item_id=item.note.id %}{% endif %}"
+                            data-subject-url="{% if mode == 'test' %}{% url 'note_detail' note_id=item.note.id %}?mode=global_review&amp;subject_id={{ item.subject.id }}{% else %}{% url 'read_review_item' kind='note' item_id=item.note.id %}?subject_id={{ item.subject.id }}{% endif %}"
                         >
 
                             <div class="item-content">
@@ -914,8 +917,10 @@
                 filteredEmpty.hidden =
                     visibleTotal !== 0;
 
-                randomReviewButton.disabled =
-                    visibleTotal === 0;
+                if (randomReviewButton) {
+                    randomReviewButton.disabled =
+                        visibleTotal === 0;
+                }
 
             }
 
@@ -929,7 +934,7 @@
                 applyFilters
             );
 
-            randomReviewButton.addEventListener(
+            randomReviewButton?.addEventListener(
                 "click",
                 function() {
 

@@ -20,6 +20,7 @@
         rel="stylesheet"
         href="{% static 'dashboard/css/sidebar.css' %}"
     >
+    <link rel="stylesheet" href="{% static 'dashboard/css/review_modes.css' %}">
 
     <style>
 
@@ -565,17 +566,17 @@
                         href="{% url 'review' %}"
                         class="back-button"
                     >
-                        ← Back to Review
+                        Back to Review
                     </a>
 
-                    {% if formulas %}
+                    {% if formulas and mode == 'test' %}
 
                         <button
                             type="button"
                             class="random-review-button"
                             id="random-review-button"
                         >
-                            ↻ Random Review
+                            ↻ Random Test
                         </button>
 
                     {% endif %}
@@ -667,17 +668,19 @@
 
                 </section>
 
+                {% include 'dashboard/partials/review_mode_switch.html' with list_url_name='review_formulas' item_label='formulas' test_help='Test your formulas and track your progress.' %}
+
                 <div class="review-list">
 
                     {% for item in formulas %}
 
                         <a
-                            href="{% url 'practice_formula' formula_id=item.formula.id %}?review_mode=global"
+                            href="{% if mode == 'test' %}{% url 'practice_formula' formula_id=item.formula.id %}?review_mode=global{% else %}{% url 'read_review_item' kind='formula' item_id=item.formula.id %}{% endif %}"
                             class="review-card"
                             data-review-card
                             data-subject-name="{{ item.subject.name|escape }}"
-                            data-global-url="{% url 'practice_formula' formula_id=item.formula.id %}?review_mode=global"
-                            data-subject-url="{% url 'practice_formula' formula_id=item.formula.id %}?review_mode=normal&amp;subject_index={{ item.subject_index }}"
+                            data-global-url="{% if mode == 'test' %}{% url 'practice_formula' formula_id=item.formula.id %}?review_mode=global{% else %}{% url 'read_review_item' kind='formula' item_id=item.formula.id %}{% endif %}"
+                            data-subject-url="{% if mode == 'test' %}{% url 'practice_formula' formula_id=item.formula.id %}?review_mode=normal&amp;subject_index={{ item.subject_index }}{% else %}{% url 'read_review_item' kind='formula' item_id=item.formula.id %}?subject_id={{ item.subject.id }}{% endif %}"
                         >
 
                             <div class="item-content">
@@ -690,7 +693,7 @@
                                     {{ item.subject.name }}
                                 </span>
 
-                                {% if item.formula.purpose %}
+                                {% if mode == 'review' and item.formula.purpose %}
                                     <span class="item-meta">
                                         {{ item.formula.purpose|truncatechars:150 }}
                                     </span>
@@ -919,8 +922,10 @@
                 filteredEmpty.hidden =
                     visibleTotal !== 0;
 
-                randomReviewButton.disabled =
-                    visibleTotal === 0;
+                if (randomReviewButton) {
+                    randomReviewButton.disabled =
+                        visibleTotal === 0;
+                }
 
             }
 
@@ -934,7 +939,7 @@
                 applyFilters
             );
 
-            randomReviewButton.addEventListener(
+            randomReviewButton?.addEventListener(
                 "click",
                 function() {
 

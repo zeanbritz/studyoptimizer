@@ -20,6 +20,7 @@
         rel="stylesheet"
         href="{% static 'dashboard/css/sidebar.css' %}"
     >
+    <link rel="stylesheet" href="{% static 'dashboard/css/review_modes.css' %}">
 
     <style>
 
@@ -555,17 +556,17 @@
                         href="{% url 'review' %}"
                         class="back-button"
                     >
-                        ← Back to Review
+                        Back to Review
                     </a>
 
-                    {% if comparisons %}
+                    {% if comparisons and mode == 'test' %}
 
                         <button
                             type="button"
                             class="random-review-button"
                             id="random-review-button"
                         >
-                            ↻ Random Review
+                            ↻ Random Test
                         </button>
 
                     {% endif %}
@@ -657,17 +658,19 @@
 
                 </section>
 
+                {% include 'dashboard/partials/review_mode_switch.html' with list_url_name='review_comparisons' item_label='comparisons' test_help='Test your comparisons and track your progress.' %}
+
                 <div class="review-list">
 
                     {% for item in comparisons %}
 
                         <a
-                            href="{% url 'practice_comparison_review' comparison_id=item.comparison.id %}?scope=all"
+                            href="{% if mode == 'test' %}{% url 'practice_comparison_review' comparison_id=item.comparison.id %}?scope=all{% else %}{% url 'read_review_item' kind='comparison' item_id=item.comparison.id %}{% endif %}"
                             class="review-card"
                             data-review-card
                             data-subject-name="{{ item.subject.name|escape }}"
-                            data-global-url="{% url 'practice_comparison_review' comparison_id=item.comparison.id %}?scope=all"
-                            data-subject-url="{% url 'practice_comparison_review' comparison_id=item.comparison.id %}?scope=subject&amp;subject_index={{ item.subject_index }}"
+                            data-global-url="{% if mode == 'test' %}{% url 'practice_comparison_review' comparison_id=item.comparison.id %}?scope=all{% else %}{% url 'read_review_item' kind='comparison' item_id=item.comparison.id %}{% endif %}"
+                            data-subject-url="{% if mode == 'test' %}{% url 'practice_comparison_review' comparison_id=item.comparison.id %}?scope=subject&amp;subject_index={{ item.subject_index }}{% else %}{% url 'read_review_item' kind='comparison' item_id=item.comparison.id %}?subject_id={{ item.subject.id }}{% endif %}"
                         >
 
                             <div class="item-content">
@@ -915,8 +918,10 @@
                 filteredEmpty.hidden =
                     visibleTotal !== 0;
 
-                randomReviewButton.disabled =
-                    visibleTotal === 0;
+                if (randomReviewButton) {
+                    randomReviewButton.disabled =
+                        visibleTotal === 0;
+                }
 
             }
 
@@ -930,7 +935,7 @@
                 applyFilters
             );
 
-            randomReviewButton.addEventListener(
+            randomReviewButton?.addEventListener(
                 "click",
                 function() {
 

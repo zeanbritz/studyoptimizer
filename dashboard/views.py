@@ -4822,6 +4822,8 @@ def read_definition(request, definition_id):
 @login_required
 def review_formulas(request):
 
+    mode = "test" if request.GET.get("mode") == "test" else "review"
+
     formulas = (
         Formula.objects
         .filter(
@@ -4874,6 +4876,8 @@ def review_formulas(request):
             "formulas":
                 formula_items,
 
+            "mode": mode,
+
             "formula_count":
                 len(
                     formula_items
@@ -4888,6 +4892,8 @@ def review_formulas(request):
 
 @login_required
 def review_lists(request):
+
+    mode = "test" if request.GET.get("mode") == "test" else "review"
 
     bullet_lists = (
         BulletList.objects
@@ -4944,6 +4950,8 @@ def review_lists(request):
             "lists":
                 list_items,
 
+            "mode": mode,
+
             "list_count":
                 len(
                     list_items
@@ -4958,6 +4966,8 @@ def review_lists(request):
 
 @login_required
 def review_steps(request):
+
+    mode = "test" if request.GET.get("mode") == "test" else "review"
 
     step_lists = (
         StepList.objects
@@ -5014,6 +5024,8 @@ def review_steps(request):
             "steps":
                 step_items,
 
+            "mode": mode,
+
             "step_count":
                 len(
                     step_items
@@ -5028,6 +5040,8 @@ def review_steps(request):
 
 @login_required
 def review_comparisons(request):
+
+    mode = "test" if request.GET.get("mode") == "test" else "review"
 
     comparisons = (
         Comparison.objects
@@ -5085,6 +5099,8 @@ def review_comparisons(request):
             "comparisons":
                 comparison_items,
 
+            "mode": mode,
+
             "comparison_count":
                 len(
                     comparison_items
@@ -5099,6 +5115,8 @@ def review_comparisons(request):
 
 @login_required
 def review_notes(request):
+
+    mode = "test" if request.GET.get("mode") == "test" else "review"
 
     # ========================================================
     # ALL NOTES FOR THIS USER
@@ -5153,6 +5171,8 @@ def review_notes(request):
         {
             "notes":
                 note_items,
+
+            "mode": mode,
 
             "note_count":
                 len(

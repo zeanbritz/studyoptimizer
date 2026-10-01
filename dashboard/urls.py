@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import feedback_views, views
+from . import feedback_views, reading_views, views
 
 
 urlpatterns = [
@@ -78,5 +78,10 @@ urlpatterns = [
         "review/comparisons/",
         views.review_comparisons,
         name="review_comparisons",
+    ),
+    path(
+        "review/<str:kind>/<int:item_id>/read/",
+        reading_views.read_review_item,
+        name="read_review_item",
     ),
 ]

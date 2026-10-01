@@ -20,6 +20,7 @@
         rel="stylesheet"
         href="{% static 'dashboard/css/sidebar.css' %}"
     >
+    <link rel="stylesheet" href="{% static 'dashboard/css/review_modes.css' %}">
 
     <style>
 
@@ -555,17 +556,17 @@
                         href="{% url 'review' %}"
                         class="back-button"
                     >
-                        ← Back to Review
+                        Back to Review
                     </a>
 
-                    {% if lists %}
+                    {% if lists and mode == 'test' %}
 
                         <button
                             type="button"
                             class="random-review-button"
                             id="random-review-button"
                         >
-                            ↻ Random Review
+                            ↻ Random Test
                         </button>
 
                     {% endif %}
@@ -657,17 +658,19 @@
 
                 </section>
 
+                {% include 'dashboard/partials/review_mode_switch.html' with list_url_name='review_lists' item_label='lists' test_help='Test your lists and track your progress.' %}
+
                 <div class="review-list">
 
                     {% for item in lists %}
 
                         <a
-                            href="{% url 'review_list' list_id=item.list.id %}?scope=all"
+                            href="{% if mode == 'test' %}{% url 'review_list' list_id=item.list.id %}?scope=all{% else %}{% url 'read_review_item' kind='list' item_id=item.list.id %}{% endif %}"
                             class="review-card"
                             data-review-card
                             data-subject-name="{{ item.subject.name|escape }}"
-                            data-global-url="{% url 'review_list' list_id=item.list.id %}?scope=all"
-                            data-subject-url="{% url 'review_list' list_id=item.list.id %}?scope=subject&amp;subject_index={{ item.subject_index }}"
+                            data-global-url="{% if mode == 'test' %}{% url 'review_list' list_id=item.list.id %}?scope=all{% else %}{% url 'read_review_item' kind='list' item_id=item.list.id %}{% endif %}"
+                            data-subject-url="{% if mode == 'test' %}{% url 'review_list' list_id=item.list.id %}?scope=subject&amp;subject_index={{ item.subject_index }}{% else %}{% url 'read_review_item' kind='list' item_id=item.list.id %}?subject_id={{ item.subject.id }}{% endif %}"
                         >
 
                             <div class="item-content">
@@ -902,8 +905,10 @@
                 filteredEmpty.hidden =
                     visibleTotal !== 0;
 
-                randomReviewButton.disabled =
-                    visibleTotal === 0;
+                if (randomReviewButton) {
+                    randomReviewButton.disabled =
+                        visibleTotal === 0;
+                }
 
             }
 
@@ -917,7 +922,7 @@
                 applyFilters
             );
 
-            randomReviewButton.addEventListener(
+            randomReviewButton?.addEventListener(
                 "click",
                 function() {
 
