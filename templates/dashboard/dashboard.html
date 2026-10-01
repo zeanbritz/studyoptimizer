@@ -449,6 +449,28 @@
             color: var(--muted) !important;
         }
 
+        .today-plan .garden-preview-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            flex: 0 0 auto;
+            min-height: 48px;
+            padding: 5px 12px 5px 5px;
+            border: 1px solid #b8d9b3;
+            border-bottom: 3px solid #9cc995;
+            border-radius: 30px;
+            background: #f0f8ed;
+            color: #255c35;
+            font-size: 13px;
+            font-weight: 800;
+            text-decoration: none;
+            transition: background .15s ease, transform .15s ease;
+        }
+
+        .today-plan .garden-preview-link:hover { background: #e2f2dd; transform: translateY(-1px); }
+        .today-plan .garden-preview-link:focus-visible { outline: 3px solid #438f5b; outline-offset: 3px; }
+        .today-plan .garden-preview-link img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
+
         .today-plan .today-plan-columns {
             grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
             gap: 13px !important;
@@ -890,6 +912,11 @@
 
 
                     </div>
+
+                    <a class="garden-preview-link" href="{% url 'beta_garden' %}" aria-label="Explore the beta garden preview">
+                        <img src="{% static 'images/logosmall.webp' %}" alt="" width="36" height="36">
+                        <span>Beta garden</span>
+                    </a>
 
 
                 </div>

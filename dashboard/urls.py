@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import feedback_views, reading_views, views
+from . import feedback_views, garden_views, reading_views, views
 
 
 urlpatterns = [
@@ -8,6 +8,11 @@ urlpatterns = [
         "",
         views.dashboard,
         name="dashboard",
+    ),
+    path(
+        "garden/beta/",
+        garden_views.beta_garden,
+        name="beta_garden",
     ),
     path(
         "feedback/submit/",
