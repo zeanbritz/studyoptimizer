@@ -9,18 +9,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const previews = {
         growing: {
             title: "Growing well",
-            description: "A little attention each day is helping this garden flourish.",
-            image: "A healthy garden with three green plants",
+            description: "A little attention each day could help these subject pots flourish.",
         },
         resting: {
             title: "A little rest",
-            description: "Some leaves have fallen after a few days away. The garden can grow again when you return.",
-            image: "A garden with gently drooping plants and fallen leaves",
+            description: "Some leaves have fallen after a few days away. The plants can grow again when you return.",
         },
         visitors: {
             title: "Ready for care",
-            description: "The plants are waiting for attention and a few tiny pests have appeared. Nothing here is permanent.",
-            image: "A garden with drooping plants, fallen leaves and small pests",
+            description: "The pots are waiting for attention and a few tiny pests have appeared. Nothing here is permanent.",
         },
     };
 
@@ -31,7 +28,6 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!preview) return;
 
             stage.dataset.state = state;
-            stage.setAttribute("aria-label", preview.image);
             title.textContent = preview.title;
             description.textContent = preview.description;
             buttons.forEach((item) => item.setAttribute("aria-pressed", String(item === button)));

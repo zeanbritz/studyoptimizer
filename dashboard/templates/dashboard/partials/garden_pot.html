@@ -1,0 +1,94 @@
+<article class="potplant potplant--{{ variant }}" data-subject-id="{{ subject.pk }}" aria-label="{{ subject.name }} potplant">
+    <div class="potplant-art" aria-hidden="true">
+        <svg viewBox="0 0 220 278" xmlns="http://www.w3.org/2000/svg" focusable="false">
+            <defs>
+                <linearGradient id="pot-body-{{ subject.pk }}" x1="0" x2="1" y1="0" y2=".25">
+                    <stop offset="0" stop-color="#b86548"/>
+                    <stop offset=".52" stop-color="#db9270"/>
+                    <stop offset="1" stop-color="#a75640"/>
+                </linearGradient>
+            </defs>
+
+            <ellipse class="pot-shadow" cx="110" cy="263" rx="76" ry="10"/>
+
+            <g class="plant-canopy">
+                <g class="plant-kind plant-kind--foliage">
+                    <path class="plant-stem" d="M109 181 C109 130 113 88 108 44 M107 148 C90 125 71 110 56 99 M112 131 C131 108 151 92 169 86"/>
+                    <path class="leaf-primary" d="M108 79 C69 63 55 26 64 15 C100 20 114 49 108 79Z"/>
+                    <path class="leaf-secondary" d="M115 94 C136 50 172 36 186 49 C178 80 149 99 115 94Z"/>
+                    <path class="leaf-primary" d="M99 128 C72 115 42 77 43 69 C76 67 97 88 99 128Z"/>
+                    <path class="leaf-secondary" d="M120 139 C142 105 174 105 185 116 C169 143 143 153 120 139Z"/>
+                    <path class="leaf-primary" d="M104 164 C76 151 48 132 43 118 C76 117 102 133 104 164Z"/>
+                    <path class="plant-vein" d="M106 73 Q91 49 69 24 M119 89 Q147 65 178 52 M94 117 Q73 91 49 73 M126 133 Q150 117 179 118 M99 156 Q75 137 49 123"/>
+                </g>
+
+                <g class="plant-kind plant-kind--bloom">
+                    <path class="plant-stem" d="M109 182 Q94 115 77 67 M111 182 Q111 107 113 46 M111 182 Q133 113 151 76"/>
+                    <path class="leaf-primary" d="M101 147 C65 145 53 118 59 109 C86 109 101 125 101 147Z"/>
+                    <path class="leaf-secondary" d="M111 137 C140 125 154 104 153 96 C124 99 110 112 111 137Z"/>
+                    <path class="leaf-primary" d="M128 137 C153 143 174 125 178 114 C154 110 133 121 128 137Z"/>
+                    <g class="flower-head" transform="translate(76 61)">
+                        <ellipse class="flower-petal" cx="0" cy="-15" rx="10" ry="16"/>
+                        <ellipse class="flower-petal" cx="14" cy="-3" rx="15" ry="10"/>
+                        <ellipse class="flower-petal" cx="9" cy="13" rx="11" ry="15"/>
+                        <ellipse class="flower-petal" cx="-11" cy="11" rx="11" ry="14"/>
+                        <ellipse class="flower-petal" cx="-14" cy="-5" rx="14" ry="10"/>
+                        <circle class="flower-core" r="9"/>
+                        <circle class="flower-detail" cx="-2" cy="-2" r="2"/>
+                    </g>
+                    <g class="flower-head" transform="translate(113 44) scale(.88)">
+                        <ellipse class="flower-petal" cx="0" cy="-15" rx="10" ry="16"/>
+                        <ellipse class="flower-petal" cx="14" cy="-3" rx="15" ry="10"/>
+                        <ellipse class="flower-petal" cx="9" cy="13" rx="11" ry="15"/>
+                        <ellipse class="flower-petal" cx="-11" cy="11" rx="11" ry="14"/>
+                        <ellipse class="flower-petal" cx="-14" cy="-5" rx="14" ry="10"/>
+                        <circle class="flower-core" r="9"/>
+                        <circle class="flower-detail" cx="-2" cy="-2" r="2"/>
+                    </g>
+                    <g class="flower-head" transform="translate(152 73) scale(.8)">
+                        <ellipse class="flower-petal" cx="0" cy="-15" rx="10" ry="16"/>
+                        <ellipse class="flower-petal" cx="14" cy="-3" rx="15" ry="10"/>
+                        <ellipse class="flower-petal" cx="9" cy="13" rx="11" ry="15"/>
+                        <ellipse class="flower-petal" cx="-11" cy="11" rx="11" ry="14"/>
+                        <ellipse class="flower-petal" cx="-14" cy="-5" rx="14" ry="10"/>
+                        <circle class="flower-core" r="9"/>
+                        <circle class="flower-detail" cx="-2" cy="-2" r="2"/>
+                    </g>
+                </g>
+
+                <g class="plant-kind plant-kind--fern">
+                    <path class="plant-stem" d="M109 182 Q106 95 111 27 M108 181 Q88 111 43 58 M111 181 Q137 111 176 60 M110 181 Q88 142 55 112 M111 181 Q137 144 169 117"/>
+                    <g class="fern-leaflets">
+                        <ellipse cx="92" cy="58" rx="10" ry="22" transform="rotate(-36 92 58)"/><ellipse cx="125" cy="65" rx="10" ry="22" transform="rotate(36 125 65)"/>
+                        <ellipse cx="88" cy="91" rx="10" ry="24" transform="rotate(-53 88 91)"/><ellipse cx="129" cy="99" rx="10" ry="24" transform="rotate(52 129 99)"/>
+                        <ellipse cx="87" cy="127" rx="9" ry="23" transform="rotate(-66 87 127)"/><ellipse cx="134" cy="135" rx="9" ry="23" transform="rotate(66 134 135)"/>
+                        <ellipse cx="60" cy="73" rx="8" ry="19" transform="rotate(-60 60 73)"/><ellipse cx="78" cy="91" rx="8" ry="20" transform="rotate(22 78 91)"/>
+                        <ellipse cx="84" cy="112" rx="8" ry="20" transform="rotate(-63 84 112)"/><ellipse cx="99" cy="137" rx="8" ry="20" transform="rotate(32 99 137)"/>
+                        <ellipse cx="160" cy="78" rx="8" ry="19" transform="rotate(57 160 78)"/><ellipse cx="142" cy="98" rx="8" ry="20" transform="rotate(-20 142 98)"/>
+                        <ellipse cx="138" cy="118" rx="8" ry="20" transform="rotate(58 138 118)"/><ellipse cx="124" cy="143" rx="8" ry="20" transform="rotate(-29 124 143)"/>
+                        <ellipse cx="70" cy="125" rx="8" ry="18" transform="rotate(-58 70 125)"/><ellipse cx="88" cy="145" rx="8" ry="18" transform="rotate(23 88 145)"/>
+                        <ellipse cx="151" cy="127" rx="8" ry="18" transform="rotate(54 151 127)"/><ellipse cx="132" cy="148" rx="8" ry="18" transform="rotate(-23 132 148)"/>
+                    </g>
+                </g>
+            </g>
+
+            <ellipse class="pot-soil" cx="110" cy="184" rx="62" ry="12"/>
+            <path class="pot-body" d="M49 185 H171 L158 252 Q110 270 62 252Z" fill="url(#pot-body-{{ subject.pk }})"/>
+            <path class="pot-highlight" d="M65 193 L76 246 Q81 250 87 251 L81 192Z"/>
+            <path class="pot-rim" d="M42 176 Q110 169 178 176 L172 194 Q110 204 48 194Z"/>
+            <ellipse class="pot-rim-top" cx="110" cy="176" rx="68" ry="10"/>
+            <ellipse class="pot-soil-top" cx="110" cy="177" rx="57" ry="6"/>
+            <path class="pot-engraving" d="M93 218 Q110 207 127 218 M110 212 V238 M96 236 Q110 242 124 236"/>
+
+            <g class="pot-fallen-leaves">
+                <path d="M29 251 Q43 229 56 242 Q48 258 29 251Z"/>
+                <path d="M165 253 Q180 234 196 246 Q182 260 165 253Z"/>
+            </g>
+            <g class="pot-pests">
+                <ellipse cx="154" cy="223" rx="5" ry="4"/><circle cx="161" cy="222" r="2"/>
+                <path d="M150 227 l-4 5 m9-4 l-2 5"/>
+            </g>
+        </svg>
+    </div>
+    <h3 class="potplant-label">{{ subject.name }}</h3>
+</article>

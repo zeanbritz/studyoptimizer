@@ -20,7 +20,7 @@
                 <div>
                     <span class="garden-eyebrow">Experimental preview</span>
                     <h1>Your study garden</h1>
-                    <p>A first look at how your study habits could help a little garden grow.</p>
+                    <p>Each subject has its own potplant. Imagine tending to them as you study.</p>
                 </div>
                 <img src="{% static 'images/logosmall.webp' %}" alt="" width="66" height="66">
             </header>
@@ -32,93 +32,56 @@
             <section class="garden-card" aria-labelledby="garden-title">
                 <div class="garden-card-heading">
                     <div>
-                        <span class="garden-kicker">A small space to grow</span>
-                        <h2 id="garden-title">A garden that grows with you</h2>
+                        <span class="garden-kicker">Your subjects, in bloom</span>
+                        <h2 id="garden-title">One potplant for every subject</h2>
                     </div>
-                    <span class="garden-preview-badge">Preview only</span>
+                    <span class="garden-preview-badge">{{ garden_subjects|length }} pot{{ garden_subjects|length|pluralize }} · Preview only</span>
                 </div>
 
-                <div class="garden-stage" data-state="growing" role="img" aria-label="A healthy garden with three green plants">
-                    <svg viewBox="0 0 900 440" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-                        <defs>
-                            <linearGradient id="garden-sky" x2="0" y2="1">
-                                <stop offset="0" stop-color="#e7f6fb"/>
-                                <stop offset="1" stop-color="#f7fbf4"/>
-                            </linearGradient>
-                            <linearGradient id="garden-ground" x2="0" y2="1">
-                                <stop offset="0" stop-color="#8dba6a"/>
-                                <stop offset="1" stop-color="#6f9a55"/>
-                            </linearGradient>
-                        </defs>
-                        <rect width="900" height="440" fill="url(#garden-sky)"/>
-                        <circle cx="734" cy="79" r="46" fill="#ffe4a0" class="garden-sun"/>
-                        <path d="M0 319 Q165 262 325 316 T650 308 T900 311 V440 H0Z" fill="#d9edc4"/>
-                        <path d="M0 347 Q173 317 342 345 T680 337 T900 341 V440 H0Z" fill="url(#garden-ground)"/>
-                        <path d="M0 391 Q180 370 348 393 T680 382 T900 389 V440 H0Z" fill="#56834d" opacity=".28"/>
-                        <g class="garden-cloud" fill="#fff" opacity=".88">
-                            <ellipse cx="156" cy="92" rx="73" ry="19"/><circle cx="131" cy="75" r="27"/><circle cx="175" cy="75" r="31"/>
-                        </g>
-
-                        <g class="plant plant-one">
-                            <path class="stem" d="M222 338 Q233 262 219 172"/>
-                            <path class="leaf" d="M223 260 Q168 211 156 230 Q164 273 223 273Z"/>
-                            <path class="leaf leaf-secondary" d="M226 223 Q277 172 298 190 Q293 230 226 236Z"/>
-                            <path class="leaf" d="M220 198 Q181 147 190 128 Q227 134 228 190Z"/>
-                            <circle class="flower-center" cx="218" cy="163" r="15"/>
-                            <g class="flower-petals">
-                                <ellipse cx="218" cy="133" rx="13" ry="20"/><ellipse cx="248" cy="163" rx="20" ry="13"/>
-                                <ellipse cx="218" cy="193" rx="13" ry="20"/><ellipse cx="188" cy="163" rx="20" ry="13"/>
-                            </g>
-                            <circle class="flower-center" cx="218" cy="163" r="13"/>
-                        </g>
-                        <g class="plant plant-two">
-                            <path class="stem" d="M451 350 Q445 271 459 174"/>
-                            <path class="leaf" d="M451 278 Q398 224 379 241 Q388 283 452 293Z"/>
-                            <path class="leaf leaf-secondary" d="M455 251 Q506 205 526 221 Q517 262 453 267Z"/>
-                            <path class="leaf" d="M459 208 Q410 161 418 140 Q460 149 464 205Z"/>
-                            <path class="leaf leaf-secondary" d="M459 178 Q498 135 515 144 Q505 180 459 191Z"/>
-                        </g>
-                        <g class="plant plant-three">
-                            <path class="stem" d="M677 347 Q664 279 680 204"/>
-                            <path class="leaf" d="M672 292 Q625 253 607 267 Q622 301 674 307Z"/>
-                            <path class="leaf leaf-secondary" d="M677 263 Q728 220 743 235 Q735 271 676 281Z"/>
-                            <path class="leaf" d="M681 219 Q646 182 655 168 Q687 177 686 214Z"/>
-                        </g>
-
-                        <g class="fallen-leaves">
-                            <path d="M298 347 Q320 325 343 340 Q326 355 298 347Z"/>
-                            <path d="M542 367 Q561 344 585 356 Q566 373 542 367Z"/>
-                            <path d="M126 363 Q149 344 164 360 Q148 373 126 363Z"/>
-                        </g>
-                        <g class="garden-pests" fill="#744c31">
-                            <ellipse cx="539" cy="342" rx="7" ry="5"/><circle cx="548" cy="339" r="3"/>
-                            <ellipse cx="570" cy="348" rx="7" ry="5"/><circle cx="579" cy="345" r="3"/>
-                            <path d="M534 347l-6 6m13-4-3 7m28-3-5 6m13-4 3 7" stroke="#744c31" stroke-width="2" fill="none"/>
-                        </g>
-                    </svg>
+                <div class="garden-stage" data-state="growing" role="group" aria-label="Subject potplants">
+                    <div class="garden-scene">
+                        {% if garden_subjects %}
+                            <div class="garden-pots">
+                                {% for subject in garden_subjects %}
+                                    {% cycle 'foliage' 'bloom' 'fern' as plant_variant silent %}
+                                    {% include 'dashboard/partials/garden_pot.html' with subject=subject variant=plant_variant %}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="garden-empty">
+                                <h3>Your first pot is waiting</h3>
+                                <p>Add a subject and it will appear here as a potplant.</p>
+                                <a href="{% url 'goals' %}">Go to Subjects</a>
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
 
-                <div class="garden-mood" aria-live="polite">
-                    <span class="garden-mood-dot" aria-hidden="true"></span>
+                {% if garden_subjects %}
+                    <div class="garden-mood" aria-live="polite">
+                        <span class="garden-mood-dot" aria-hidden="true"></span>
+                        <div>
+                            <h3 id="garden-mood-title">Growing well</h3>
+                            <p id="garden-mood-description">A little attention each day could help these subject pots flourish.</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </section>
+
+            {% if garden_subjects %}
+                <section class="garden-controls" aria-labelledby="preview-heading">
                     <div>
-                        <h3 id="garden-mood-title">Growing well</h3>
-                        <p id="garden-mood-description">A little attention each day is helping this garden flourish.</p>
+                        <span class="garden-kicker">Try the idea</span>
+                        <h2 id="preview-heading">Preview a garden state</h2>
+                        <p>These buttons only change the appearance of the pots on this page.</p>
                     </div>
-                </div>
-            </section>
-
-            <section class="garden-controls" aria-labelledby="preview-heading">
-                <div>
-                    <span class="garden-kicker">Try the idea</span>
-                    <h2 id="preview-heading">Preview a garden state</h2>
-                    <p>These buttons only change the picture on this page.</p>
-                </div>
-                <div class="garden-switch" role="group" aria-label="Garden preview state">
-                    <button type="button" data-garden-state="growing" aria-pressed="true">Growing well</button>
-                    <button type="button" data-garden-state="resting" aria-pressed="false">A few missed days</button>
-                    <button type="button" data-garden-state="visitors" aria-pressed="false">Needs care</button>
-                </div>
-            </section>
+                    <div class="garden-switch" role="group" aria-label="Garden preview state">
+                        <button type="button" data-garden-state="growing" aria-pressed="true">Growing well</button>
+                        <button type="button" data-garden-state="resting" aria-pressed="false">A few missed days</button>
+                        <button type="button" data-garden-state="visitors" aria-pressed="false">Needs care</button>
+                    </div>
+                </section>
+            {% endif %}
         </div>
     </main>
 </div>

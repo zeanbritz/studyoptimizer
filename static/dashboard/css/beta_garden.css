@@ -24,34 +24,55 @@ body { margin: 0; }
 .garden-card-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 24px 25px 20px; }
 .garden-card-heading h2, .garden-controls h2 { margin: 7px 0 0; color: #243a2d; font-size: clamp(21px, 2.8vw, 28px); line-height: 1.2; }
 .garden-preview-badge { flex: 0 0 auto; padding: 7px 11px; border-radius: 30px; background: #eaf3e6; color: #357044; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
-.garden-stage { margin: 0 24px; overflow: hidden; border: 1px solid #d6e8d0; border-radius: 14px; background: #eff8f7; }
-.garden-stage svg { display: block; width: 100%; height: auto; }
-.garden-stage .stem { fill: none; stroke: #367d4a; stroke-width: 9; stroke-linecap: round; }
-.garden-stage .leaf { fill: #4eae64; }
-.garden-stage .leaf-secondary { fill: #88c971; }
-.garden-stage .flower-petals { fill: #f3aaba; }
-.garden-stage .flower-center { fill: #f3c957; }
-.garden-stage .fallen-leaves, .garden-stage .garden-pests { opacity: 0; transition: opacity .3s ease; }
-.garden-stage .fallen-leaves { fill: #c2954d; }
-.garden-stage .plant { transform-box: fill-box; transform-origin: bottom center; transition: transform .5s ease, opacity .5s ease; }
-.garden-stage .leaf, .garden-stage .stem, .garden-stage .flower-petals { transition: fill .5s ease, stroke .5s ease, opacity .5s ease; }
-.garden-stage[data-state="resting"] .plant-one { transform: rotate(-10deg); }
-.garden-stage[data-state="resting"] .plant-two { transform: rotate(6deg); }
-.garden-stage[data-state="resting"] .plant-three { transform: rotate(-13deg); }
-.garden-stage[data-state="resting"] .leaf { fill: #a5b46c; }
-.garden-stage[data-state="resting"] .leaf-secondary { fill: #c0ba71; }
-.garden-stage[data-state="resting"] .flower-petals { opacity: .45; }
-.garden-stage[data-state="resting"] .fallen-leaves { opacity: 1; }
-.garden-stage[data-state="visitors"] .plant-one { transform: rotate(-18deg); }
-.garden-stage[data-state="visitors"] .plant-two { transform: rotate(13deg); }
-.garden-stage[data-state="visitors"] .plant-three { transform: rotate(-22deg); }
-.garden-stage[data-state="visitors"] .leaf { fill: #b5a769; }
-.garden-stage[data-state="visitors"] .leaf-secondary { fill: #c7b57a; }
-.garden-stage[data-state="visitors"] .stem { stroke: #858448; }
-.garden-stage[data-state="visitors"] .flower-petals { opacity: .15; }
-.garden-stage[data-state="visitors"] .fallen-leaves, .garden-stage[data-state="visitors"] .garden-pests { opacity: 1; }
-.garden-stage[data-state="resting"] .fallen-leaves, .garden-stage[data-state="visitors"] .fallen-leaves { animation: garden-breeze 3s ease-in-out infinite alternate; }
-@keyframes garden-breeze { from { transform: translateX(-5px); } to { transform: translateX(8px); } }
+.garden-stage { margin: 0 24px; overflow: hidden; border: 1px solid #d6e8d0; border-radius: 14px; background: #eaf2dc; }
+.garden-scene { position: relative; isolation: isolate; min-height: 380px; display: grid; align-items: end; overflow: hidden; }
+.garden-scene::before { position: absolute; inset: -10px; z-index: 0; background: url("../../images/garden-backdrop-v1.png") center / cover no-repeat; filter: blur(3px) saturate(.84); content: ""; }
+.garden-scene::after { position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, rgba(249, 253, 244, .35), rgba(236, 246, 222, .53) 65%, rgba(240, 246, 226, .75)); content: ""; }
+.garden-pots { position: relative; z-index: 2; display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); align-items: end; justify-items: center; gap: 20px 12px; width: 100%; padding: 34px 22px 22px; }
+.potplant { display: flex; flex-direction: column; align-items: center; width: min(100%, 220px); min-width: 0; margin: 0; }
+.potplant-art { width: min(100%, 200px); filter: drop-shadow(0 9px 7px rgba(38, 59, 31, .23)); }
+.potplant-art svg { display: block; width: 100%; height: auto; overflow: visible; }
+.potplant-label { width: 100%; min-height: 43px; display: grid; place-items: center; margin: -2px 0 0; padding: 8px 11px; border: 1px solid rgba(200, 216, 194, .95); border-bottom: 3px solid #b9ceb3; border-radius: 10px; background: rgba(255, 255, 251, .92); color: #23422c; font-size: 14px; font-weight: 850; line-height: 1.25; text-align: center; overflow-wrap: anywhere; box-shadow: 0 5px 15px rgba(27, 61, 32, .11); }
+.plant-kind { display: none; }
+.potplant--foliage .plant-kind--foliage, .potplant--bloom .plant-kind--bloom, .potplant--fern .plant-kind--fern { display: block; }
+.plant-canopy { transform-box: fill-box; transform-origin: center bottom; transition: transform .55s ease; }
+.plant-stem { fill: none; stroke: #326e40; stroke-width: 4.5; stroke-linecap: round; stroke-linejoin: round; transition: stroke .45s ease; }
+.leaf-primary { fill: #38975b; transition: fill .45s ease; }
+.leaf-secondary { fill: #70b965; transition: fill .45s ease; }
+.plant-vein { fill: none; stroke: #a5df91; stroke-width: 2; stroke-linecap: round; opacity: .82; }
+.flower-petal { fill: #ec91a2; transition: fill .45s ease, opacity .45s ease; }
+.flower-core { fill: #f5d476; }
+.flower-detail { fill: #ae7f38; }
+.fern-leaflets { fill: #4b9d61; transition: fill .45s ease; }
+.fern-leaflets ellipse:nth-child(2n) { fill: #71ba73; }
+.pot-shadow { fill: rgba(39, 52, 31, .25); }
+.pot-soil, .pot-soil-top { fill: #674838; }
+.pot-highlight { fill: rgba(255, 218, 178, .27); }
+.pot-rim { fill: #ac5e48; }
+.pot-rim-top { fill: #d89872; }
+.pot-engraving { fill: none; stroke: rgba(113, 48, 35, .35); stroke-width: 2.5; stroke-linecap: round; }
+.pot-fallen-leaves, .pot-pests { opacity: 0; transition: opacity .35s ease; }
+.pot-fallen-leaves { fill: #a68b4b; }
+.pot-pests { fill: #634735; stroke: #634735; stroke-width: 1.8; }
+.garden-stage[data-state="resting"] .plant-canopy { transform: rotate(-9deg) scaleY(.89); }
+.garden-stage[data-state="visitors"] .plant-canopy { transform: rotate(-16deg) scaleY(.78); }
+.garden-stage[data-state="resting"] .leaf-primary, .garden-stage[data-state="resting"] .fern-leaflets { fill: #9aab66; }
+.garden-stage[data-state="resting"] .leaf-secondary { fill: #b7b66e; }
+.garden-stage[data-state="resting"] .flower-petal { fill: #c5a17d; opacity: .7; }
+.garden-stage[data-state="visitors"] .leaf-primary, .garden-stage[data-state="visitors"] .fern-leaflets { fill: #a99966; }
+.garden-stage[data-state="visitors"] .leaf-secondary { fill: #c4af75; }
+.garden-stage[data-state="visitors"] .plant-stem { stroke: #737d43; }
+.garden-stage[data-state="visitors"] .flower-petal { fill: #b9a083; opacity: .42; }
+.garden-stage[data-state="resting"] .pot-fallen-leaves,
+.garden-stage[data-state="visitors"] .pot-fallen-leaves,
+.garden-stage[data-state="visitors"] .pot-pests { opacity: 1; }
+.garden-stage[data-state="resting"] .pot-fallen-leaves,
+.garden-stage[data-state="visitors"] .pot-fallen-leaves { animation: garden-breeze 3s ease-in-out infinite alternate; }
+@keyframes garden-breeze { from { transform: translateX(-4px); } to { transform: translateX(6px); } }
+.garden-empty { position: relative; z-index: 2; width: min(370px, calc(100% - 32px)); margin: 75px auto; padding: 26px; border: 1px solid #d7e7d1; border-radius: 14px; background: rgba(255, 255, 251, .93); text-align: center; box-shadow: 0 12px 30px rgba(29, 56, 32, .13); }
+.garden-empty h3 { margin: 0 0 8px; color: #274c33; font-size: 21px; }
+.garden-empty p { margin: 0 0 17px; color: #607065; line-height: 1.5; }
+.garden-empty a { display: inline-flex; align-items: center; min-height: 40px; padding: 9px 15px; border-radius: 9px; background: #4da95a; color: #fff; font-weight: 800; text-decoration: none; }
 .garden-mood { display: flex; align-items: flex-start; gap: 12px; padding: 19px 25px 23px; }
 .garden-mood-dot { flex: 0 0 auto; width: 12px; height: 12px; margin-top: 7px; border-radius: 50%; background: #4ea75c; box-shadow: 0 0 0 5px #e7f4e8; }
 .garden-stage[data-state="resting"] + .garden-mood .garden-mood-dot,
@@ -83,12 +104,15 @@ body { margin: 0; }
     .garden-card-heading { padding: 19px 17px 16px; }
     .garden-preview-badge { display: none; }
     .garden-stage { margin: 0 12px; }
+    .garden-pots { grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); gap: 16px 8px; padding: 26px 12px 18px; }
+    .potplant-label { font-size: 12px; }
     .garden-mood { padding: 17px; }
     .garden-controls { padding: 18px 17px; }
     .garden-switch button { flex: 1 1 auto; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .garden-stage .plant, .garden-stage .leaf, .garden-stage .stem, .garden-stage .flower-petals,
-    .garden-stage .fallen-leaves, .garden-stage .garden-pests { animation: none !important; transition: none !important; }
+    .garden-stage .plant-canopy, .garden-stage .leaf-primary, .garden-stage .leaf-secondary,
+    .garden-stage .flower-petal, .garden-stage .fern-leaflets, .garden-stage .pot-fallen-leaves,
+    .garden-stage .pot-pests { animation: none !important; transition: none !important; }
 }
