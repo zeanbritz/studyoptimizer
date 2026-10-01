@@ -7,7 +7,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from learning.models import Subject
+from learning.models import Definition, KnowledgeUnit, Subject
 
 from .models import AssessmentEvent
 from .reminders import due_reminders
@@ -319,6 +319,37 @@ class AssessmentCalendarTests(TestCase):
         with patch("django.utils.timezone.localdate", return_value=today + timedelta(days=1)):
             response = self.client.get(reverse("dashboard"))
         self.assertNotContains(response, "Paper 1")
+
+    def test_dashboard_groups_event_cards_above_review(self):
+        today = timezone.localdate()
+        exam = AssessmentEvent.objects.create(
+            subject=self.subject, date=today, kind="exam", title="Paper 1"
+        )
+        assessment = AssessmentEvent.objects.create(
+            subject=self.subject, date=today, kind="assessment", title="Project"
+        )
+        unit = KnowledgeUnit.objects.create(
+            subject=self.subject,
+            title="Cells",
+            knowledge_type=KnowledgeUnit.KnowledgeType.DEFINITION,
+        )
+        Definition.objects.create(
+            knowledge_unit=unit, term="Cell", definition="Smallest unit of life"
+        )
+
+        self.client.force_login(self.user)
+        session = self.client.session
+        session["onboarding_complete"] = True
+        session.save()
+        response = self.client.get(reverse("dashboard"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="today-plan-column plan-event plan-exam"')
+        self.assertContains(response, 'class="today-plan-column plan-event plan-assessment"')
+        self.assertContains(response, f'data-complete-event-id="{exam.pk}"')
+        self.assertContains(response, f'data-complete-event-id="{assessment.pk}"')
+        html = response.content.decode()
+        self.assertLess(html.index('id="plan-events-heading"'),
+                        html.index('id="plan-review-heading"'))
 
     def test_complete_and_reopen_exam_update_subject_date(self):
         planned = timezone.localdate() + timedelta(days=5)

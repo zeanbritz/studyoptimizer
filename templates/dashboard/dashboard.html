@@ -60,16 +60,16 @@
 
          Example:
 
-         Definitions | Formulas | Lists | Book Summaries
+         Definitions | Formulas | Lists | Steps
          Steps
 
          If Lists disappears:
 
-         Definitions | Formulas | Book Summaries | Steps
+         Definitions | Formulas | Steps | Notes
 
          If Formulas disappears too:
 
-         Definitions | Book Summaries | Steps
+         Definitions | Steps | Notes
     ========================================== -->
 
     <style>
@@ -376,13 +376,6 @@
         .empty-plan { min-height: 112px; display: flex; align-items: center; justify-content: center; padding: 22px; border: 1px dashed #cfd8d3; border-radius: 13px; background: #fbfcfb; color: var(--muted); text-align: center; }
         .empty-plan p { margin: 0; font-size: 14px; font-weight: 650; }
 
-        .assessment-reminders { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 12px; margin-bottom: 16px; }
-        .assessment-reminder { display: grid; gap: 5px; width: 100%; padding: 15px 16px; border: 1px solid #e4d7ae; border-bottom: 4px solid #cfbd83; border-radius: 12px; background: #fffaf0; color: #353b3d; text-align: left; cursor: pointer; }
-        .assessment-reminder:hover { background: #fff4d9; }
-        .assessment-reminder:focus-visible { outline: 3px solid #a87e00; outline-offset: 2px; }
-        .assessment-reminder strong { font-size: 15px; }
-        .assessment-reminder small { color: #6a6250; font-size: 12px; }
-        .assessment-reminder .reminder-type { color: #89691d; font-size: 11px; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; }
         .completion-dialog { width: min(440px, calc(100% - 32px)); padding: 25px; border: 1px solid #dfe5e2; border-radius: 16px; color: #2f3335; box-shadow: 0 20px 60px rgba(22, 37, 50, .22); }
         .completion-dialog::backdrop { background: rgba(28, 42, 52, .48); }
         .completion-dialog h2 { margin: 0 0 10px; font-size: 22px; }
@@ -773,6 +766,58 @@
             }
         }
 
+        .today-plan .plan-section + .plan-section { margin-top: 23px; }
+        .today-plan .plan-section-heading {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 0 0 13px;
+            color: #718087;
+            font-size: 12px;
+            font-weight: 850;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+        .today-plan .plan-section-heading::before,
+        .today-plan .plan-section-heading::after {
+            flex: 1;
+            height: 1px;
+            background: #dce3e1;
+            content: "";
+        }
+        .today-plan .plan-event.plan-assessment {
+            --plan-accent: #5f9fc7;
+            --plan-dark: #226f9c;
+            --plan-button-border: #bfd9e9;
+            border-bottom-color: #bfd9e9 !important;
+            background: linear-gradient(145deg, #ffffff, #eef7fc) !important;
+        }
+        .today-plan .plan-event.plan-exam {
+            --plan-accent: #c9a647;
+            --plan-dark: #8d6d17;
+            --plan-button-border: #e2d2a1;
+            border-bottom-color: #e2d2a1 !important;
+            background: linear-gradient(145deg, #ffffff, #fcf5df) !important;
+        }
+        .today-plan .plan-event .plan-column-header h3 { color: var(--plan-dark) !important; }
+        .today-plan .plan-event .plan-column-header p { color: #69767c; }
+        .today-plan .plan-event-action {
+            display: grid;
+            gap: 5px;
+            width: 100%;
+            padding: 12px 13px !important;
+            border-color: var(--plan-button-border) !important;
+            color: var(--ink);
+            font: inherit;
+            text-align: left;
+            cursor: pointer;
+        }
+        .today-plan .plan-event-action:hover { background: #f7fafb !important; }
+        .today-plan .plan-event-action:focus-visible { outline: 3px solid var(--plan-accent); outline-offset: 2px; }
+        .today-plan .plan-event-action strong { font-size: 16px; overflow-wrap: anywhere; }
+        .today-plan .plan-event-description { color: #5f6e74; font-size: 12px; overflow-wrap: anywhere; }
+        .today-plan .plan-event-status { color: var(--plan-dark); font-size: 11px; font-weight: 800; }
+
     </style>
 
 </head>
@@ -878,21 +923,38 @@
                 {% elif due_definition_subjects or due_formula_subjects or due_list_subjects or book_summary_subjects or due_step_subjects or due_comparison_subjects or note_subjects or due_assessment_events %}
 
                     {% if due_assessment_events %}
-                        <div class="assessment-reminders" aria-label="Exam and assessment reminders">
-                            {% for event in due_assessment_events %}
-                                <button type="button" class="assessment-reminder"
-                                        data-complete-event-id="{{ event.pk }}"
-                                        data-complete-label="{{ event.subject.name }} {{ event.get_kind_display|lower }}">
-                                    <span class="reminder-type">{{ event.get_kind_display }} reminder</span>
-                                    <strong>{{ event.subject.name }}{% if event.title %} · {{ event.title }}{% endif %}</strong>
-                                    <small>{% if event.date < today %}Overdue · {% elif event.date == today %}Today · {% endif %}Due {{ event.date|date:'j F Y' }} · Click to mark complete</small>
-                                </button>
-                            {% endfor %}
-                        </div>
+                        <section class="plan-section" aria-labelledby="plan-events-heading">
+                            <h3 class="plan-section-heading" id="plan-events-heading"><span>Exams &amp; Assessments</span></h3>
+                            <div class="today-plan-columns">
+                                {% for event in due_assessment_events %}
+                                    <div class="today-plan-column plan-event {% if event.kind == 'exam' %}plan-exam{% else %}plan-assessment{% endif %}">
+                                        <div class="plan-column-header">
+                                            <div>
+                                                <h3>{{ event.get_kind_display }}</h3>
+                                                <p>Due {{ event.date|date:'j F Y' }}</p>
+                                            </div>
+                                        </div>
+                                        <div class="plan-subject-list">
+                                            <button type="button" class="plan-subject-card plan-event-action"
+                                                    data-complete-event-id="{{ event.pk }}"
+                                                    data-complete-label="{{ event.subject.name }} {{ event.get_kind_display|lower }}">
+                                                <strong>{{ event.subject.name }}</strong>
+                                                {% if event.title %}<span class="plan-event-description">{{ event.title }}</span>{% endif %}
+                                                <span class="plan-event-status">
+                                                    {% if event.date < today %}Overdue{% elif event.date == today %}Due today{% else %}Reminder{% endif %} · Click to mark complete
+                                                </span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </section>
                     {% endif %}
 
-
-                    <div class="today-plan-columns">
+                    {% if due_definition_subjects or due_formula_subjects or due_list_subjects or due_step_subjects or due_comparison_subjects or note_subjects %}
+                    <section class="plan-section" aria-labelledby="plan-review-heading">
+                        <h3 class="plan-section-heading" id="plan-review-heading"><span>Review</span></h3>
+                        <div class="today-plan-columns">
 
 
                         <!-- =================================
@@ -1140,97 +1202,6 @@
                                                 <span class="plan-card-count">
 
                                                     {{ item.count }}
-
-                                                </span>
-
-
-                                            </div>
-
-
-                                        </a>
-
-
-                                    {% endfor %}
-
-
-                                </div>
-
-
-                            </div>
-
-
-                        {% endif %}
-
-
-                        <!-- =================================
-                             BOOK SUMMARIES
-                        ================================== -->
-
-                        {% if book_summary_subjects %}
-
-
-                            <div class="today-plan-column plan-books">
-
-                                <svg class="plan-bg-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                                    <path d="M6 2.5h12a2 2 0 0 1 2 2V21H6a3 3 0 0 1-3-3V5.5a3 3 0 0 1 3-3Z"></path>
-                                    <path d="M3 18a3 3 0 0 1 3-3h14M8 2.5V15M11 7h6M11 10h4"></path>
-                                    <path d="M15 2.5v5l-2-1.4-2 1.4v-5"></path>
-                                </svg>
-
-
-                                <div class="plan-column-header">
-
-
-                                    <div>
-
-
-                                        <h3>
-                                            Book Summaries
-                                        </h3>
-
-
-
-
-                                    </div>
-
-
-                                    <span class="plan-total-count">
-
-                                        {{ book_summary_total }}
-
-                                    </span>
-
-
-                                </div>
-
-
-                                <div class="plan-subject-list">
-
-
-                                    {% for item in book_summary_subjects %}
-
-
-                                        <a
-                                            href="{% url 'book_summary' subject_index=item.subject_index %}"
-                                            class="plan-subject-card"
-                                        >
-
-
-                                            <div class="plan-card-content">
-
-
-                                                <span class="plan-card-title">
-
-                                                    {{ item.subject.name }}
-
-                                                </span>
-
-
-                                                <span class="plan-card-count">
-
-
-                                                    {{ item.count }}
-
 
                                                 </span>
 
@@ -1523,6 +1494,40 @@
 
 
                     </div>
+                    </section>
+                    {% endif %}
+
+                    {% if book_summary_subjects %}
+                    <section class="plan-section" aria-labelledby="plan-study-heading">
+                        <h3 class="plan-section-heading" id="plan-study-heading"><span>Study</span></h3>
+                        <div class="today-plan-columns">
+                            <div class="today-plan-column plan-books">
+                                <svg class="plan-bg-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                    <path d="M6 2.5h12a2 2 0 0 1 2 2V21H6a3 3 0 0 1-3-3V5.5a3 3 0 0 1 3-3Z"></path>
+                                    <path d="M3 18a3 3 0 0 1 3-3h14M8 2.5V15M11 7h6M11 10h4"></path>
+                                    <path d="M15 2.5v5l-2-1.4-2 1.4v-5"></path>
+                                </svg>
+                                <div class="plan-column-header">
+                                    <div>
+                                        <h3>Study</h3>
+                                        <p>Today's book work</p>
+                                    </div>
+                                    <span class="plan-total-count">{{ book_summary_total }}</span>
+                                </div>
+                                <div class="plan-subject-list">
+                                    {% for item in book_summary_subjects %}
+                                        <a href="{% url 'book_summary' subject_index=item.subject_index %}" class="plan-subject-card">
+                                            <div class="plan-card-content">
+                                                <span class="plan-card-title">{{ item.subject.name }}</span>
+                                                <span class="plan-card-count">{{ item.count }}</span>
+                                            </div>
+                                        </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    {% endif %}
 
 
                 <!-- =============================
