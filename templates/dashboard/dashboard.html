@@ -913,10 +913,12 @@
 
                     </div>
 
-                    <a class="garden-preview-link" href="{% url 'beta_garden' %}" aria-label="Explore the beta garden preview">
-                        <img src="{% static 'images/logosmall.webp' %}" alt="" width="36" height="36">
-                        <span>Beta garden</span>
-                    </a>
+                    {% if request.user.is_superuser %}
+                        <a class="garden-preview-link" href="{% url 'beta_garden' %}" aria-label="Open your garden">
+                            <img src="{% static 'images/logosmall.webp' %}" alt="" width="36" height="36">
+                            <span>Garden</span>
+                        </a>
+                    {% endif %}
 
 
                 </div>

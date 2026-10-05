@@ -6,30 +6,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!stage || !title || !description || !buttons.length) return;
 
-    const previews = {
+    const phases = {
         growing: {
             title: "Growing well",
-            description: "A little attention each day could help these subject pots flourish.",
+            description: "Your subject plants are looking healthy.",
         },
         resting: {
-            title: "A little rest",
-            description: "Some leaves have fallen after a few days away. The plants can grow again when you return.",
+            title: "A little thirsty",
+            description: "A few leaves have fallen, but the plants still have room to recover.",
         },
         visitors: {
             title: "Ready for care",
-            description: "The pots are waiting for attention and a few tiny pests have appeared. Nothing here is permanent.",
+            description: "The plants have lost some colour and tiny garden visitors have arrived.",
         },
     };
 
     buttons.forEach((button) => {
         button.addEventListener("click", () => {
             const state = button.dataset.gardenState;
-            const preview = previews[state];
-            if (!preview) return;
+            const phase = phases[state];
+            if (!phase) return;
 
             stage.dataset.state = state;
-            title.textContent = preview.title;
-            description.textContent = preview.description;
+            title.textContent = phase.title;
+            description.textContent = phase.description;
             buttons.forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
         });
     });

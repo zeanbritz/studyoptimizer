@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Beta Garden · StudiGarden</title>
+    <title>Garden · StudiGarden</title>
     <link rel="stylesheet" href="{% static 'dashboard/css/sidebar.css' %}">
     <link rel="stylesheet" href="{% static 'dashboard/css/beta_garden.css' %}">
     <script src="{% static 'js/beta_garden.js' %}" defer></script>
@@ -18,33 +18,29 @@
 
             <header class="garden-heading">
                 <div>
-                    <span class="garden-eyebrow">Experimental preview</span>
-                    <h1>Your study garden</h1>
-                    <p>Each subject has its own potplant. Imagine tending to them as you study.</p>
+                    <span class="garden-eyebrow">StudiGarden</span>
+                    <h1>Your garden</h1>
+                    <p>Every subject has a place to grow. Select a plant to open its subject.</p>
                 </div>
                 <img src="{% static 'images/logosmall.webp' %}" alt="" width="66" height="66">
             </header>
 
-            <div class="garden-notice" role="note">
-                This is a visual mockup. It does not track missed days, change your progress, or affect your account.
-            </div>
-
             <section class="garden-card" aria-labelledby="garden-title">
                 <div class="garden-card-heading">
                     <div>
-                        <span class="garden-kicker">Your subjects, in bloom</span>
-                        <h2 id="garden-title">One potplant for every subject</h2>
+                        <span class="garden-kicker">Your subjects</span>
+                        <h2 id="garden-title">A potplant for every subject</h2>
                     </div>
-                    <span class="garden-preview-badge">{{ garden_subjects|length }} pot{{ garden_subjects|length|pluralize }} · Preview only</span>
+                    <span class="garden-count-badge">{{ garden_subjects|length }} pot{{ garden_subjects|length|pluralize }}</span>
                 </div>
 
                 <div class="garden-stage" data-state="growing" role="group" aria-label="Subject potplants">
                     <div class="garden-scene">
                         {% if garden_subjects %}
                             <div class="garden-pots">
-                                {% for subject in garden_subjects %}
+                                {% for garden_item in garden_subjects %}
                                     {% cycle 'foliage' 'bloom' 'fern' as plant_variant silent %}
-                                    {% include 'dashboard/partials/garden_pot.html' with subject=subject variant=plant_variant %}
+                                    {% include 'dashboard/partials/garden_pot.html' with subject=garden_item.subject detail_url=garden_item.detail_url variant=plant_variant %}
                                 {% endfor %}
                             </div>
                         {% else %}
@@ -62,20 +58,19 @@
                         <span class="garden-mood-dot" aria-hidden="true"></span>
                         <div>
                             <h3 id="garden-mood-title">Growing well</h3>
-                            <p id="garden-mood-description">A little attention each day could help these subject pots flourish.</p>
+                            <p id="garden-mood-description">Your subject plants are looking healthy.</p>
                         </div>
                     </div>
                 {% endif %}
             </section>
 
             {% if garden_subjects %}
-                <section class="garden-controls" aria-labelledby="preview-heading">
+                <section class="garden-controls" aria-labelledby="garden-phases-heading">
                     <div>
-                        <span class="garden-kicker">Try the idea</span>
-                        <h2 id="preview-heading">Preview a garden state</h2>
-                        <p>These buttons only change the appearance of the pots on this page.</p>
+                        <span class="garden-kicker">Garden phases</span>
+                        <h2 id="garden-phases-heading">Change the garden mood</h2>
                     </div>
-                    <div class="garden-switch" role="group" aria-label="Garden preview state">
+                    <div class="garden-switch" role="group" aria-label="Garden phase">
                         <button type="button" data-garden-state="growing" aria-pressed="true">Growing well</button>
                         <button type="button" data-garden-state="resting" aria-pressed="false">A few missed days</button>
                         <button type="button" data-garden-state="visitors" aria-pressed="false">Needs care</button>
