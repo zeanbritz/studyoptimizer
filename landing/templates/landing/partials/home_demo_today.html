@@ -1,24 +1,12 @@
+{% load static %}
 <section id="demo-panel-today" class="demo-panel" role="tabpanel" aria-labelledby="demo-tab-today" data-demo-panel="today">
     <div class="demo-panel__heading">
         <div><span class="demo-panel__eyebrow">Your day at a glance</span><h3>Today's plan</h3></div>
-        <span class="demo-panel__date">A sample day</span>
+        <span class="demo-panel__date">Real screen</span>
     </div>
-    <p class="demo-panel__intro">A clear place to begin, with the important things at the top.</p>
-    <div class="sample-plan">
-        <div class="sample-plan__item sample-plan__item--assessment">
-            <span class="sample-plan__marker" aria-hidden="true"></span>
-            <div><span class="sample-plan__label">Coming up · Assessment</span><strong>Biology lab report</strong><small>Keep the deadline in sight</small></div>
-            <span class="sample-plan__end" aria-hidden="true">↗</span>
-        </div>
-        <div class="sample-plan__item sample-plan__item--review">
-            <span class="sample-plan__marker" aria-hidden="true"></span>
-            <div><span class="sample-plan__label">Review</span><strong>Cell biology definitions</strong><small>Pick up where you left off</small></div>
-            <span class="sample-plan__end" aria-hidden="true">↗</span>
-        </div>
-        <div class="sample-plan__item sample-plan__item--study">
-            <span class="sample-plan__marker" aria-hidden="true"></span>
-            <div><span class="sample-plan__label">Study</span><strong>Economics · pages 42–48</strong><small>A manageable piece for today</small></div>
-            <span class="sample-plan__end" aria-hidden="true">↗</span>
-        </div>
-    </div>
+    <p class="demo-panel__intro">Open your dashboard and see the work that needs your attention today.</p>
+    <a class="product-shot" href="{% static 'landing/images/product-todays-plan.jpg' %}" target="_blank" rel="noopener" aria-label="Open the Today's Plan screenshot at full size in a new tab">
+        <img src="{% static 'landing/images/product-todays-plan.jpg' %}" alt="StudiGarden dashboard showing today's review and study items" width="1390" height="795" loading="lazy">
+    </a>
+    <p class="product-shot__caption">Today's Plan <span>Open image for a closer look</span></p>
 </section>

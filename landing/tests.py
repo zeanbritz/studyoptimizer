@@ -10,14 +10,17 @@ class LandingHomeTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Stop planning your studying.")
-        self.assertContains(response, "Illustrative examples.")
+        self.assertContains(response, "Actual StudiGarden screens")
         self.assertContains(response, 'href="#experience"')
         self.assertContains(response, 'role="tablist"')
         self.assertContains(response, 'id="demo-panel-review"')
+        self.assertContains(response, 'id="demo-panel-subjects"')
         self.assertContains(response, 'href="#why"')
         self.assertContains(response, reverse("pricing"))
         self.assertNotContains(response, 'href="' + reverse("register") + '"')
         self.assertNotContains(response, "Start for free")
+        self.assertNotContains(response, 'class="demo-tab__arrow"')
+        self.assertNotContains(response, "↗")
 
     def test_signed_in_student_has_dashboard_route(self):
         user = get_user_model().objects.create_user(
@@ -40,6 +43,10 @@ class LandingHomeTests(TestCase):
             "landing/js/home.js",
             "landing/images/study-desk-hero-v1.webp",
             "landing/images/study-pages-v1.webp",
+            "landing/images/product-todays-plan.jpg",
+            "landing/images/product-subjects.jpg",
+            "landing/images/product-review.jpg",
+            "landing/images/product-exams.jpg",
         ):
             with self.subTest(asset=asset):
                 self.assertIsNotNone(finders.find(asset))

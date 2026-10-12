@@ -6,28 +6,30 @@
         <p>No elaborate schedule to build before you begin. Your subjects, reviews and important dates come together in a day you can actually use.</p>
     </div>
 
-    <div class="product-demo reveal" aria-label="Illustrative StudiGarden interface preview">
+    <div class="product-demo reveal" aria-label="StudiGarden product screenshots">
         <div class="product-demo__topbar">
             <div class="product-demo__identity">
                 <img src="{% static 'images/logosmall.webp' %}" alt="" width="34" height="34">
                 <span>Inside StudiGarden</span>
             </div>
-            <span class="product-demo__example"><span aria-hidden="true"></span> Example workspace</span>
+            <span class="product-demo__example"><span aria-hidden="true"></span> Real product screens</span>
         </div>
 
         <div class="product-demo__body">
             <div class="product-demo__sidebar" role="tablist" aria-label="Explore the study workspace">
-                <button id="demo-tab-today" class="demo-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="demo-panel-today" tabindex="0" data-demo-tab="today"><span aria-hidden="true">01</span> Today <span class="demo-tab__arrow" aria-hidden="true">↗</span></button>
-                <button id="demo-tab-review" class="demo-tab" type="button" role="tab" aria-selected="false" aria-controls="demo-panel-review" tabindex="-1" data-demo-tab="review"><span aria-hidden="true">02</span> Review <span class="demo-tab__arrow" aria-hidden="true">↗</span></button>
-                <button id="demo-tab-exams" class="demo-tab" type="button" role="tab" aria-selected="false" aria-controls="demo-panel-exams" tabindex="-1" data-demo-tab="exams"><span aria-hidden="true">03</span> Exams <span class="demo-tab__arrow" aria-hidden="true">↗</span></button>
-                <p class="product-demo__sidebar-note">A small look at how your study day can come together.</p>
+                <button id="demo-tab-today" class="demo-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="demo-panel-today" tabindex="0" data-demo-tab="today"><span aria-hidden="true">01</span> Today</button>
+                <button id="demo-tab-subjects" class="demo-tab" type="button" role="tab" aria-selected="false" aria-controls="demo-panel-subjects" tabindex="-1" data-demo-tab="subjects"><span aria-hidden="true">02</span> Subjects</button>
+                <button id="demo-tab-review" class="demo-tab" type="button" role="tab" aria-selected="false" aria-controls="demo-panel-review" tabindex="-1" data-demo-tab="review"><span aria-hidden="true">03</span> Review</button>
+                <button id="demo-tab-exams" class="demo-tab" type="button" role="tab" aria-selected="false" aria-controls="demo-panel-exams" tabindex="-1" data-demo-tab="exams"><span aria-hidden="true">04</span> Exams</button>
+                <p class="product-demo__sidebar-note">Explore the screens that turn what you add into a clear study day.</p>
             </div>
             <div class="product-demo__panel-wrap">
                 {% include 'landing/partials/home_demo_today.html' %}
+                {% include 'landing/partials/home_demo_subjects.html' %}
                 {% include 'landing/partials/home_demo_review.html' %}
                 {% include 'landing/partials/home_demo_exams.html' %}
             </div>
         </div>
-        <p class="product-demo__disclaimer">Illustrative examples. Your own plan reflects the subjects, material and dates you add.</p>
+        <p class="product-demo__disclaimer">Actual StudiGarden screens from an example study setup. Your plan reflects the subjects, material and dates you add.</p>
     </div>
 </section>

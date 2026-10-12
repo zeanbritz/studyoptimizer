@@ -8,11 +8,11 @@
 
             <div class="hero__actions">
                 {% if user.is_authenticated %}
-                    <a class="button button--lime" href="{% url 'dashboard' %}">Open your dashboard <span aria-hidden="true">↗</span></a>
+                    <a class="button button--lime" href="{% url 'dashboard' %}">Open your dashboard</a>
                 {% else %}
-                    <a class="button button--lime" href="#experience">See your study day <span aria-hidden="true">↗</span></a>
+                    <a class="button button--lime" href="#experience">See your study day</a>
                 {% endif %}
-                <a class="text-link text-link--light" href="#how-it-works">How it works <span aria-hidden="true">↘</span></a>
+                <a class="text-link text-link--light" href="#how-it-works">How it works</a>
             </div>
 
             <div class="hero__footnote">
@@ -24,22 +24,6 @@
         <div class="hero__visual">
             <img class="hero__photo" src="{% static 'landing/images/study-desk-hero-v1.webp' %}" alt="Student writing notes beside an open textbook and a leafy plant" width="1672" height="941" fetchpriority="high">
             <div class="hero__visual-shade" aria-hidden="true"></div>
-            <div class="day-glance" aria-label="Illustrative study-day example">
-                <div class="day-glance__topline">
-                    <span class="day-glance__brand"><span class="day-glance__dot" aria-hidden="true"></span> Today, in focus</span>
-                    <span class="day-glance__sample">Example</span>
-                </div>
-                <div class="day-glance__item">
-                    <span class="day-glance__icon day-glance__icon--blue" aria-hidden="true">↻</span>
-                    <span><strong>Review</strong><small>Cell biology definitions</small></span>
-                    <span class="day-glance__arrow" aria-hidden="true">↗</span>
-                </div>
-                <div class="day-glance__item">
-                    <span class="day-glance__icon day-glance__icon--green" aria-hidden="true">⌁</span>
-                    <span><strong>Study</strong><small>Economics · pages 42–48</small></span>
-                    <span class="day-glance__arrow" aria-hidden="true">↗</span>
-                </div>
-            </div>
         </div>
     </div>
     <div class="hero__bottom shell">
