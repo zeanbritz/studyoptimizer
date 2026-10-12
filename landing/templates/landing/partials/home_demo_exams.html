@@ -1,12 +1,8 @@
-{% load static %}
 <section id="demo-panel-exams" class="demo-panel" role="tabpanel" aria-labelledby="demo-tab-exams" data-demo-panel="exams" hidden>
-    <div class="demo-panel__heading">
-        <div><span class="demo-panel__eyebrow">Know what's ahead</span><h3>Exams &amp; assessments</h3></div>
-        <span class="demo-panel__date">Real screen</span>
+    <header class="demo-page-header"><p>STUDY PLANNER</p><h3>Exams and Assessments</h3><span>Choose a date to plan what's coming up.</span></header>
+    <div class="demo-readonly-banner">Preview only · Dates in this sample cannot be changed.</div>
+    <div class="demo-calendar" aria-label="Illustrative sample week">
+        <div class="demo-calendar__title"><strong>A sample week</strong><span>Two subjects, one place</span></div>
+        <div class="demo-calendar__week"><div><small>MON</small><strong>9</strong></div><div><small>TUE</small><strong>10</strong></div><div><small>WED</small><strong>11</strong><span class="demo-calendar__event demo-calendar__event--assessment">Chemistry assessment</span></div><div><small>THU</small><strong>12</strong></div><div><small>FRI</small><strong>13</strong><span class="demo-calendar__event demo-calendar__event--exam">Maths exam</span></div><div><small>SAT</small><strong>14</strong></div><div><small>SUN</small><strong>15</strong></div></div>
     </div>
-    <p class="demo-panel__intro">Keep your dates together and make the next deadline easier to see.</p>
-    <a class="product-shot" href="{% static 'landing/images/product-exams.jpg' %}" target="_blank" rel="noopener" aria-label="Open the Exams screenshot at full size in a new tab">
-        <img src="{% static 'landing/images/product-exams.jpg' %}" alt="StudiGarden Exams and Assessments calendar with subject events" width="1845" height="879" loading="lazy">
-    </a>
-    <p class="product-shot__caption">Exams calendar <span>Open image for a closer look</span></p>
 </section>

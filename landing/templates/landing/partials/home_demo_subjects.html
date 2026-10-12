@@ -1,12 +1,9 @@
-{% load static %}
 <section id="demo-panel-subjects" class="demo-panel" role="tabpanel" aria-labelledby="demo-tab-subjects" data-demo-panel="subjects" hidden>
-    <div class="demo-panel__heading">
-        <div><span class="demo-panel__eyebrow">Start with what you're studying</span><h3>Bring your subjects in</h3></div>
-        <span class="demo-panel__date">Real screen</span>
+    <header class="demo-page-header"><p>STUDY SETUP</p><h3>Subjects</h3><span>Manage your subjects and study settings.</span></header>
+    <div class="demo-readonly-banner">Preview only · Add and edit subjects in your own workspace.</div>
+    <div class="demo-subject-grid">
+        <article class="demo-subject-card demo-subject-card--math"><span class="demo-subject-card__icon" aria-hidden="true">▣</span><h4>Maths</h4><p>Formula ready to review</p></article>
+        <article class="demo-subject-card demo-subject-card--chem"><span class="demo-subject-card__icon" aria-hidden="true">▣</span><h4>Chemistry</h4><p>Definition ready to review</p></article>
     </div>
-    <p class="demo-panel__intro">Add your subjects and study availability. StudiGarden uses what you enter to shape a plan for the day.</p>
-    <a class="product-shot" href="{% static 'landing/images/product-subjects.jpg' %}" target="_blank" rel="noopener" aria-label="Open the Subjects screenshot at full size in a new tab">
-        <img src="{% static 'landing/images/product-subjects.jpg' %}" alt="StudiGarden Subjects screen with study availability and subject cards" width="1840" height="920" loading="lazy">
-    </a>
-    <p class="product-shot__caption">Subjects workspace <span>Open image for a closer look</span></p>
+    <div class="demo-readonly-detail"><strong>Your subjects shape your day.</strong><p>When you add material, study time and exam dates, StudiGarden brings the next steps into Today's Plan.</p></div>
 </section>

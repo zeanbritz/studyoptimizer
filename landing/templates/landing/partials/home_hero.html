@@ -2,28 +2,32 @@
 <section class="hero" aria-labelledby="hero-title">
     <div class="shell hero__grid">
         <div class="hero__content">
-            <p class="eyebrow eyebrow--light"><span class="eyebrow__line" aria-hidden="true"></span> A calmer way to study</p>
-            <h1 id="hero-title">Stop planning your studying. <em>Start studying.</em></h1>
-            <p class="hero__intro">Bring your subjects and exam dates together. StudiGarden works out what needs your attention today—so you can put more energy into learning.</p>
+            <p class="eyebrow eyebrow--light">STUDY WITH A PLAN THAT MOVES WITH YOU</p>
+            <h1 id="hero-title">Less planning.<br><em>More studying.</em></h1>
+            <p class="hero__intro">Put your subjects, material and exam dates in one place. StudiGarden helps you see what to study today, so you can get on with learning.</p>
 
             <div class="hero__actions">
                 {% if user.is_authenticated %}
                     <a class="button button--lime" href="{% url 'dashboard' %}">Open your dashboard</a>
                 {% else %}
-                    <a class="button button--lime" href="#experience">See your study day</a>
+                    <a class="button button--lime" href="#experience">Try the sample dashboard</a>
                 {% endif %}
                 <a class="text-link text-link--light" href="#how-it-works">How it works</a>
             </div>
 
-            <div class="hero__footnote">
-                <span class="hero__footnote-mark" aria-hidden="true">✳</span>
-                <span>Less deciding what to do. More time doing it.</span>
-            </div>
+            <div class="hero__footnote"><span class="hero__footnote-mark" aria-hidden="true">✳</span><span>No account needed to explore the demo.</span></div>
         </div>
 
-        <div class="hero__visual">
-            <img class="hero__photo" src="{% static 'landing/images/study-desk-hero-v1.webp' %}" alt="Student writing notes beside an open textbook and a leafy plant" width="1672" height="941" fetchpriority="high">
-            <div class="hero__visual-shade" aria-hidden="true"></div>
+        <div class="hero__visual" aria-label="Preview of a simple study day">
+            <div class="hero-preview">
+                <div class="hero-preview__top"><span>YOUR WORKSPACE</span><strong>Today's Plan</strong><small>A clear place to begin.</small></div>
+                <div class="hero-preview__body">
+                    <div class="hero-preview__section"><span>REVIEW</span></div>
+                    <div class="hero-preview__cards"><div class="hero-preview__card hero-preview__card--blue"><span>Definitions</span><strong>Chemistry</strong><small>What is an atom?</small></div><div class="hero-preview__card hero-preview__card--green"><span>Formulas</span><strong>Maths</strong><small>Area of a circle</small></div></div>
+                    <div class="hero-preview__section"><span>STUDY</span></div>
+                    <div class="hero-preview__study">Your next steps, all in one place.</div>
+                </div>
+            </div>
         </div>
     </div>
     <div class="hero__bottom shell">

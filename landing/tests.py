@@ -9,12 +9,19 @@ class LandingHomeTests(TestCase):
         response = self.client.get(reverse("landing"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Stop planning your studying.")
-        self.assertContains(response, "Actual StudiGarden screens")
+        self.assertContains(response, "Less planning.")
+        self.assertContains(response, "A study day you can actually try.")
         self.assertContains(response, 'href="#experience"')
         self.assertContains(response, 'role="tablist"')
         self.assertContains(response, 'id="demo-panel-review"')
         self.assertContains(response, 'id="demo-panel-subjects"')
+        self.assertContains(response, 'id="demo-panel-progress"')
+        self.assertContains(response, 'id="demo-panel-profile"')
+        self.assertContains(response, 'data-demo-open="formula"')
+        self.assertContains(response, 'data-demo-open="definition"')
+        self.assertContains(response, 'data-answer="pi"')
+        self.assertContains(response, 'data-answer="smallest"')
+        self.assertContains(response, "Nothing here is saved to an account.")
         self.assertContains(response, 'href="#why"')
         self.assertContains(response, reverse("pricing"))
         self.assertNotContains(response, 'href="' + reverse("register") + '"')
@@ -40,13 +47,10 @@ class LandingHomeTests(TestCase):
             "landing/css/home-demo.css",
             "landing/css/home-sections.css",
             "landing/css/home-responsive.css",
+            "landing/css/home-app.css",
             "landing/js/home.js",
-            "landing/images/study-desk-hero-v1.webp",
             "landing/images/study-pages-v1.webp",
-            "landing/images/product-todays-plan.jpg",
-            "landing/images/product-subjects.jpg",
-            "landing/images/product-review.jpg",
-            "landing/images/product-exams.jpg",
+            "images/logo.webp",
         ):
             with self.subTest(asset=asset):
                 self.assertIsNotNone(finders.find(asset))

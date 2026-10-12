@@ -1,12 +1,26 @@
-{% load static %}
 <section id="demo-panel-today" class="demo-panel" role="tabpanel" aria-labelledby="demo-tab-today" data-demo-panel="today">
-    <div class="demo-panel__heading">
-        <div><span class="demo-panel__eyebrow">Your day at a glance</span><h3>Today's plan</h3></div>
-        <span class="demo-panel__date">Real screen</span>
+    <header class="demo-page-header"><p>YOUR WORKSPACE</p><h3>Welcome back, Student</h3><span>Your learning overview and priorities for today.</span></header>
+    <div class="demo-today-card">
+        <div class="demo-today-card__heading"><h4>Today's Plan</h4><span>Sample day</span></div>
+        <p class="demo-today-card__hint">Choose a card to try a quick review. This example won't change your real progress.</p>
+        <div class="demo-section-heading"><span>Review</span></div>
+        <div class="demo-plan-grid">
+            <div class="demo-plan-column demo-plan-column--definition">
+                <div class="demo-plan-column__heading"><h5>Definitions</h5><span>1</span></div>
+                <button class="demo-plan-task" type="button" data-demo-open="definition"><span><strong>Chemistry</strong><small>What is an atom?</small></span><span class="demo-plan-task__count" aria-hidden="true">1</span></button>
+            </div>
+            <div class="demo-plan-column demo-plan-column--formula">
+                <div class="demo-plan-column__heading"><h5>Formulas</h5><span>1</span></div>
+                <button class="demo-plan-task" type="button" data-demo-open="formula"><span><strong>Maths</strong><small>Area of a circle</small></span><span class="demo-plan-task__count" aria-hidden="true">1</span></button>
+            </div>
+        </div>
+        <div class="demo-section-heading"><span>Study</span></div>
+        <p class="demo-empty-study">Your own textbooks and study targets would appear here.</p>
     </div>
-    <p class="demo-panel__intro">Open your dashboard and see the work that needs your attention today.</p>
-    <a class="product-shot" href="{% static 'landing/images/product-todays-plan.jpg' %}" target="_blank" rel="noopener" aria-label="Open the Today's Plan screenshot at full size in a new tab">
-        <img src="{% static 'landing/images/product-todays-plan.jpg' %}" alt="StudiGarden dashboard showing today's review and study items" width="1390" height="795" loading="lazy">
-    </a>
-    <p class="product-shot__caption">Today's Plan <span>Open image for a closer look</span></p>
+    <div class="demo-quick-grid" aria-label="Sample dashboard sections">
+        <div class="demo-quick-card demo-quick-card--subjects"><strong>Subjects</strong><span>Maths · Chemistry</span></div>
+        <div class="demo-quick-card demo-quick-card--review"><strong>Review</strong><span>2 things to revisit</span></div>
+        <div class="demo-quick-card demo-quick-card--progress"><strong>Progress</strong><span>Your learning, at a glance</span></div>
+        <div class="demo-quick-card demo-quick-card--exams"><strong>Exams</strong><span>Important dates together</span></div>
+    </div>
 </section>

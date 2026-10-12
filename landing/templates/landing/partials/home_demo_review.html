@@ -1,12 +1,12 @@
-{% load static %}
 <section id="demo-panel-review" class="demo-panel" role="tabpanel" aria-labelledby="demo-tab-review" data-demo-panel="review" hidden>
-    <div class="demo-panel__heading">
-        <div><span class="demo-panel__eyebrow">Keep the material close</span><h3>Review what you've saved</h3></div>
-        <span class="demo-panel__date">Real screen</span>
+    <header class="demo-page-header"><p>YOUR MATERIAL</p><h3>Review</h3><span>Review your knowledge across all of your subjects.</span></header>
+    <div class="demo-readonly-banner">Preview only · Try the two sample reviews from Today's Plan.</div>
+    <div class="demo-review-grid">
+        <article class="demo-review-card demo-review-card--definitions"><h4>Definition</h4><p>Revisit important terms and their meanings.</p></article>
+        <article class="demo-review-card demo-review-card--formulas"><h4>Formula</h4><p>Practise formulas and what their symbols mean.</p></article>
+        <article class="demo-review-card demo-review-card--lists"><h4>List</h4><p>Keep collections of information close.</p></article>
+        <article class="demo-review-card demo-review-card--steps"><h4>Steps</h4><p>Review a process one step at a time.</p></article>
+        <article class="demo-review-card demo-review-card--notes"><h4>Notes</h4><p>Return to the notes you've saved.</p></article>
+        <article class="demo-review-card demo-review-card--comparisons"><h4>Comparisons</h4><p>See related ideas side by side.</p></article>
     </div>
-    <p class="demo-panel__intro">Definitions, formulas, lists, steps, notes and comparisons all have a place to revisit.</p>
-    <a class="product-shot" href="{% static 'landing/images/product-review.jpg' %}" target="_blank" rel="noopener" aria-label="Open the Review screenshot at full size in a new tab">
-        <img src="{% static 'landing/images/product-review.jpg' %}" alt="StudiGarden Review screen with six types of study material" width="1277" height="700" loading="lazy">
-    </a>
-    <p class="product-shot__caption">Review workspace <span>Open image for a closer look</span></p>
 </section>
