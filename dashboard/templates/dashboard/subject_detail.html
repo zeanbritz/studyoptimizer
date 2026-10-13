@@ -2557,6 +2557,70 @@
             font-weight: 650;
         }
 
+        .summary-header-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .download-summary-button {
+            flex-shrink: 0;
+            min-height: 39px;
+            padding: 8px 13px;
+            border: 2px solid var(--green-dark);
+            border-bottom-width: 4px;
+            border-radius: 9px;
+            background: var(--green);
+            color: white;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 850;
+            cursor: pointer;
+        }
+
+        .download-summary-button:hover {
+            background: #65c936;
+        }
+
+        .export-choice {
+            display: flex;
+            align-items: flex-start;
+            gap: 11px;
+            margin: 10px 0;
+            padding: 12px;
+            border: 1px solid #dce2e4;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .export-choice:has(input:checked) {
+            border-color: var(--green-dark);
+            background: #f1faec;
+        }
+
+        .export-choice input {
+            margin-top: 3px;
+            accent-color: var(--green-dark);
+        }
+
+        .export-choice strong,
+        .export-choice small {
+            display: block;
+        }
+
+        .export-choice strong {
+            font-size: 13px;
+        }
+
+        .export-choice small {
+            margin-top: 3px;
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.4;
+        }
+
         .summary-options,
         .review-categories {
             display: grid;
@@ -3006,6 +3070,7 @@
         .save-button:focus-visible,
         .cancel-edit-button:focus-visible,
         .summary-option:focus-visible,
+        .download-summary-button:focus-visible,
         .delete-subject-button:focus-visible,
         .reset-reviews-button:focus-visible,
         .review-category:focus-visible,
@@ -3906,13 +3971,21 @@
 
                         <div class="workspace-header">
 
-                            <h2>
-                                Summarize
-                            </h2>
-
-                            <p>
-                                Choose what you want to summarize.
-                            </p>
+                            <div class="summary-header-row">
+                                <div>
+                                    <h2>Summarize</h2>
+                                    <p>Choose what you want to summarize.</p>
+                                </div>
+                                {% if database_subject %}
+                                    <button type="button" class="download-summary-button"
+                                            id="download-summary-button"
+                                            aria-haspopup="dialog"
+                                            aria-controls="summary-export-modal"
+                                            onclick="openSummaryExportModal()">
+                                        Download summary
+                                    </button>
+                                {% endif %}
+                            </div>
 
                         </div>
 
@@ -4571,6 +4644,41 @@
 
 </div>
 
+
+{% if database_subject %}
+<div class="modal-overlay" id="summary-export-modal"
+     onclick="if (event.target === this) closeSummaryExportModal()">
+    <div class="modal" role="dialog" aria-modal="true"
+         aria-labelledby="summary-export-title">
+        <h2 id="summary-export-title">Download summary</h2>
+        <p class="modal-description">
+            Export all your saved study material for {{ database_subject.name }} as a PDF.
+        </p>
+        <form method="GET" action="{% url 'download_subject_summary' subject_id=database_subject.id %}"
+              onsubmit="closeSummaryExportModal()">
+            <label class="export-choice">
+                <input type="radio" name="organize" value="regular" checked>
+                <span>
+                    <strong>Regular</strong>
+                    <small>Group definitions, formulas, lists, steps, comparisons and notes by type.</small>
+                </span>
+            </label>
+            <label class="export-choice">
+                <input type="radio" name="organize" value="books">
+                <span>
+                    <strong>Books &amp; chapters</strong>
+                    <small>Group by book and chapter, then by type. Items without both go under Extra.</small>
+                </span>
+            </label>
+            <div class="modal-actions">
+                <button type="button" class="modal-cancel-button"
+                        onclick="closeSummaryExportModal()">Cancel</button>
+                <button type="submit" class="modal-save-button">Download PDF</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
 
 <!-- =========================================
      ADD TEXTBOOK MODAL
@@ -5516,6 +5624,20 @@
     }
 
 
+    function openSummaryExportModal() {
+        const modal = document.getElementById("summary-export-modal");
+        if (!modal) return;
+        modal.classList.add("open");
+        modal.querySelector('input[name="organize"]').focus();
+    }
+
+    function closeSummaryExportModal() {
+        const modal = document.getElementById("summary-export-modal");
+        if (!modal || !modal.classList.contains("open")) return;
+        modal.classList.remove("open");
+        document.getElementById("download-summary-button")?.focus();
+    }
+
     // =============================================
     // ADD TEXTBOOK MODAL
     // =============================================
@@ -5788,6 +5910,7 @@
             ) {
 
                 closeTextbookModal();
+                closeSummaryExportModal();
                 closeEditTextbookModal();
                 closeDeleteModal();
                 closeSubjectEditor();
