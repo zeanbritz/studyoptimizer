@@ -264,6 +264,37 @@ class SubjectRevisionPlan(models.Model):
         )
 
 
+class DailyReviewPlan(models.Model):
+    """A stable, time-budgeted review batch for one student and date."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="daily_review_plans",
+    )
+    day = models.DateField()
+    knowledge_unit_ids = models.JSONField(default=list)
+    settings_signature = models.CharField(max_length=64)
+    available_minutes = models.PositiveIntegerField(default=0)
+    summary_minutes = models.PositiveIntegerField(default=0)
+    summary_shortfall_minutes = models.PositiveIntegerField(default=0)
+    review_minutes = models.PositiveIntegerField(default=0)
+    overdue_count = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "day"],
+                name="unique_daily_review_plan",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.user_id}: {self.day}"
+
+
 
 class BetaFeedback(models.Model):
     class Category(models.TextChoices):

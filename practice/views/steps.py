@@ -127,9 +127,13 @@ def find_next_due_step_list(
         timezone.localdate()
     )
 
+    from dashboard.review_planner import get_daily_review_plan, remaining_review_ids
+    planned_ids = remaining_review_ids(user, get_daily_review_plan(user, today))
+
     candidates = (
         StepList.objects
         .filter(
+            knowledge_unit_id__in=planned_ids,
             knowledge_unit__subject=subject,
             knowledge_unit__active=True,
         )

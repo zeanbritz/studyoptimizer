@@ -34,6 +34,7 @@ from dashboard.models import (
     SubjectTextbook,
     SubjectRevisionPlan,
 )
+from dashboard.review_planner import get_daily_review_plan, remaining_review_ids
 
 
 # ============================================================
@@ -2477,9 +2478,14 @@ def review_list(
                     timezone.localdate()
                 )
 
+                planned_ids = remaining_review_ids(
+                    request.user, get_daily_review_plan(request.user, today)
+                )
+
                 possible_next_lists = (
                     BulletList.objects
                     .filter(
+                        knowledge_unit_id__in=planned_ids,
                         knowledge_unit__subject=subject,
                         knowledge_unit__active=True,
                     )
@@ -2881,6 +2887,9 @@ def formula_review_list(
     # ========================================================
 
     due_formulas = []
+    planned_ids = remaining_review_ids(
+        request.user, get_daily_review_plan(request.user)
+    )
 
     if database_subject:
 
@@ -2889,6 +2898,7 @@ def formula_review_list(
         knowledge_units = (
             KnowledgeUnit.objects
             .filter(
+                pk__in=planned_ids,
                 subject=database_subject,
 
                 knowledge_type=(
@@ -3084,10 +3094,14 @@ def definition_review_list(
     # ========================================================
 
     today = timezone.localdate()
+    planned_ids = remaining_review_ids(
+        request.user, get_daily_review_plan(request.user, today)
+    )
 
     knowledge_units = (
         KnowledgeUnit.objects
         .filter(
+            pk__in=planned_ids,
             subject=database_subject,
             knowledge_type=(
                 KnowledgeUnit
@@ -3287,6 +3301,9 @@ def list_review_list(
     # ========================================================
 
     today = timezone.localdate()
+    planned_ids = remaining_review_ids(
+        request.user, get_daily_review_plan(request.user, today)
+    )
 
     # ========================================================
     # ALL ACTIVE LISTS FOR SUBJECT
@@ -3295,6 +3312,7 @@ def list_review_list(
     bullet_lists = (
         BulletList.objects
         .filter(
+            knowledge_unit_id__in=planned_ids,
             knowledge_unit__subject=database_subject,
             knowledge_unit__knowledge_type=(
                 KnowledgeUnit
@@ -3563,6 +3581,9 @@ def step_review_list(
     # ========================================================
 
     today = timezone.localdate()
+    planned_ids = remaining_review_ids(
+        request.user, get_daily_review_plan(request.user, today)
+    )
 
     # ========================================================
     # ALL ACTIVE STEPS FOR THIS SUBJECT
@@ -3571,6 +3592,7 @@ def step_review_list(
     step_lists = (
         StepList.objects
         .filter(
+            knowledge_unit_id__in=planned_ids,
             knowledge_unit__subject=subject,
             knowledge_unit__active=True,
         )
@@ -9670,10 +9692,14 @@ def comparison_review_list(
     # ========================================================
 
     today = timezone.localdate()
+    planned_ids = remaining_review_ids(
+        request.user, get_daily_review_plan(request.user, today)
+    )
 
     comparisons = (
         Comparison.objects
         .filter(
+            knowledge_unit_id__in=planned_ids,
             knowledge_unit__subject=subject,
             knowledge_unit__knowledge_type=(
                 KnowledgeUnit

@@ -27,6 +27,11 @@ from .models import (
     SubjectTextbook,
     SubjectRevisionPlan,
 )
+from .review_planner import (
+    get_daily_review_plan,
+    remaining_review_ids,
+    review_capacity_outlook,
+)
 
 
 # ============================================================
@@ -52,6 +57,9 @@ def dashboard(request):
     # --------------------------------------------------------
 
     today = timezone.localdate()
+    review_plan = None
+    planned_review_ids = []
+    review_outlook = None
     due_assessment_events = (
         due_reminders(request.user, today) if onboarding_complete else []
     )
@@ -198,6 +206,10 @@ def dashboard(request):
 
     if onboarding_complete:
 
+        review_plan = get_daily_review_plan(request.user, today)
+        planned_review_ids = remaining_review_ids(request.user, review_plan)
+        review_outlook = review_capacity_outlook(request.user, today)
+
         # ====================================================
         # DEFINITIONS
         # ====================================================
@@ -205,6 +217,7 @@ def dashboard(request):
         definition_knowledge_units = (
             KnowledgeUnit.objects
             .filter(
+                pk__in=planned_review_ids,
                 subject__user=request.user,
                 knowledge_type=(
                     KnowledgeUnit
@@ -364,6 +377,7 @@ def dashboard(request):
         formula_knowledge_units = (
             KnowledgeUnit.objects
             .filter(
+                pk__in=planned_review_ids,
                 subject__user=request.user,
                 knowledge_type=(
                     KnowledgeUnit
@@ -499,6 +513,7 @@ def dashboard(request):
         bullet_lists = (
             BulletList.objects
             .filter(
+                knowledge_unit_id__in=planned_review_ids,
                 knowledge_unit__subject__user=request.user,
                 knowledge_unit__active=True,
             )
@@ -624,6 +639,7 @@ def dashboard(request):
         step_lists = (
             StepList.objects
             .filter(
+                knowledge_unit_id__in=planned_review_ids,
                 knowledge_unit__subject__user=request.user,
                 knowledge_unit__active=True,
             )
@@ -749,6 +765,7 @@ def dashboard(request):
         comparisons = (
             Comparison.objects
             .filter(
+                knowledge_unit_id__in=planned_review_ids,
                 knowledge_unit__subject__user=request.user,
                 knowledge_unit__knowledge_type=(
                     KnowledgeUnit
@@ -1131,6 +1148,12 @@ def dashboard(request):
 
             "due_assessment_events": due_assessment_events,
             "today": today,
+            "review_plan": review_plan,
+            "review_outlook": review_outlook,
+            "review_waiting_count": (
+                max(0, review_plan.overdue_count - len(review_plan.knowledge_unit_ids))
+                if review_plan else 0
+            ),
 
             # --------------------------------------------
             # DEFINITIONS
@@ -3848,6 +3871,9 @@ def subject_detail(
     # REVIEW ITEMS
     # ========================================================
 
+    subject_review_plan = get_daily_review_plan(request.user, today)
+    subject_review_ids = remaining_review_ids(request.user, subject_review_plan)
+
     due_formulas = []
     due_definitions = []
     due_bullet_lists = []
@@ -3867,6 +3893,7 @@ def subject_detail(
         formula_knowledge_units = (
             KnowledgeUnit.objects
             .filter(
+                pk__in=subject_review_ids,
                 subject=database_subject,
                 knowledge_type=(
                     KnowledgeUnit
@@ -3943,6 +3970,7 @@ def subject_detail(
         definition_knowledge_units = (
             KnowledgeUnit.objects
             .filter(
+                pk__in=subject_review_ids,
                 subject=database_subject,
                 knowledge_type=(
                     KnowledgeUnit
@@ -4019,6 +4047,7 @@ def subject_detail(
         bullet_lists = (
             BulletList.objects
             .filter(
+                knowledge_unit_id__in=subject_review_ids,
                 knowledge_unit__subject=database_subject,
                 knowledge_unit__active=True,
             )
@@ -4090,6 +4119,7 @@ def subject_detail(
         step_lists = (
             StepList.objects
             .filter(
+                knowledge_unit_id__in=subject_review_ids,
                 knowledge_unit__subject=database_subject,
                 knowledge_unit__active=True,
             )
@@ -4163,6 +4193,7 @@ def subject_detail(
         comparisons = (
             Comparison.objects
             .filter(
+                knowledge_unit_id__in=subject_review_ids,
                 knowledge_unit__subject=database_subject,
                 knowledge_unit__knowledge_type=(
                     KnowledgeUnit

@@ -14,6 +14,7 @@ from learning.models import (
     KnowledgeUnit,
     StudentKnowledge,
 )
+from dashboard.review_planner import get_daily_review_plan, remaining_review_ids
 
 
 # ============================================================
@@ -371,12 +372,15 @@ def get_next_subject_definition(
         .subject
     )
 
+    planned_ids = remaining_review_ids(user, get_daily_review_plan(user))
+
     now = timezone.now()
 
 
     definitions = (
         Definition.objects
         .filter(
+            knowledge_unit_id__in=planned_ids,
             knowledge_unit__subject=subject,
 
             knowledge_unit__subject__user=user,

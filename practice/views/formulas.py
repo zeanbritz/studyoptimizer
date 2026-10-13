@@ -1212,6 +1212,11 @@ def get_next_due_formula(
         )
     )
 
+    if subject is not None:
+        from dashboard.review_planner import get_daily_review_plan, remaining_review_ids
+        planned_ids = remaining_review_ids(user, get_daily_review_plan(user))
+        formulas = formulas.filter(knowledge_unit_id__in=planned_ids)
+
     if (
         subject
         is not None
