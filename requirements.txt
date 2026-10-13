@@ -4,6 +4,7 @@ django-allauth==65.19.4
 dj-database-url==3.1.2
 gunicorn==26.2.0
 psycopg[binary]==3.3.6
+pypdf==6.10.0
 reportlab==4.4.9
 tzdata==2026.3
 whitenoise==6.12.0

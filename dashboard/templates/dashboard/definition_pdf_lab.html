@@ -1,0 +1,139 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PDF definition lab - {{ subject.name }} - StudiGarden</title>
+    <link rel="icon" href="{% static 'images/favicon.png' %}">
+    <link rel="stylesheet" href="{% static 'dashboard/css/sidebar.css' %}">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        body { margin: 0; background: #edf1f3; color: #2f3335; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; }
+        .app { display: flex; min-height: 100vh; }
+        .main { flex: 1; min-width: 0; padding: 30px 40px 64px; }
+        .page { max-width: 1120px; margin: 0 auto; }
+        .hero { display: flex; justify-content: space-between; align-items: center; gap: 18px; flex-wrap: wrap; padding: 27px 30px; border-radius: 17px; border-bottom: 5px solid #222b45; background: linear-gradient(110deg, #303a5a, #455578); color: white; box-shadow: 0 12px 28px rgba(36, 49, 69, .12); }
+        .eyebrow { margin: 0 0 7px; color: #c7d8e6; text-transform: uppercase; letter-spacing: .12em; font-size: 10px; font-weight: 900; }
+        h1 { margin: 0; font-size: clamp(24px, 4vw, 33px); line-height: 1.12; letter-spacing: -.03em; }
+        .hero p:last-child { margin: 8px 0 0; color: #e2e9f0; font-size: 13px; }
+        .back-link { display: inline-flex; align-items: center; min-height: 40px; padding: 9px 14px; border: 1px solid #b7cee0; border-bottom: 3px solid #9db8cc; border-radius: 9px; background: #f4fbff; color: #176f9f; font-size: 12px; font-weight: 850; text-decoration: none; }
+        .back-link:hover { background: #e7f5fd; }
+        .card { margin-top: 20px; padding: 25px; border: 1px solid #d8e0e3; border-top: 3px solid #58b82a; border-bottom: 4px solid #c4cfd4; border-radius: 15px; background: #f8fafb; }
+        .card h2 { margin: 0 0 7px; font-size: 21px; letter-spacing: -.02em; }
+        .intro { margin: 0 0 21px; color: #687278; font-size: 13px; line-height: 1.55; }
+        .form-grid { display: grid; grid-template-columns: minmax(0, 1fr) 140px 150px; gap: 13px; align-items: end; }
+        label { display: block; margin-bottom: 7px; color: #424a50; font-size: 11px; font-weight: 850; }
+        input { width: 100%; min-height: 43px; padding: 9px 11px; border: 1px solid #cbd5d9; border-bottom: 3px solid #b8c5ca; border-radius: 9px; background: white; color: #263246; font: inherit; font-size: 13px; }
+        input[type=file] { padding: 8px; }
+        input:focus-visible, button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid rgba(39,143,211,.3); outline-offset: 3px; }
+        .scan-button { margin-top: 18px; min-height: 43px; padding: 9px 18px; border: 2px solid #3f8f1d; border-bottom-width: 4px; border-radius: 10px; background: #58b82a; color: white; font: inherit; font-size: 12px; font-weight: 850; cursor: pointer; }
+        .scan-button:hover { background: #65c936; }
+        .hint { margin: 12px 0 0; color: #687278; font-size: 11px; line-height: 1.5; }
+        .error { margin: 17px 0 0; padding: 12px 14px; border: 1px solid #e7b9b9; border-radius: 9px; background: #fff1f1; color: #a93636; font-size: 12px; font-weight: 700; }
+        .results-title { display: flex; justify-content: space-between; align-items: end; flex-wrap: wrap; gap: 10px; }
+        .results-title p { margin: 0; color: #687278; font-size: 12px; }
+        .metrics { display: flex; flex-wrap: wrap; gap: 9px; margin: 18px 0; }
+        .metric { padding: 9px 12px; border: 1px solid #d8e0e3; border-radius: 9px; background: white; color: #46545d; font-size: 12px; }
+        .metric strong { color: #303a5a; }
+        .notice { margin: 17px 0; padding: 13px 15px; border-left: 4px solid #c19f4d; border-radius: 8px; background: #fcf7e9; color: #5e502c; font-size: 12px; line-height: 1.5; }
+        .candidate-list { display: grid; gap: 12px; margin-top: 16px; }
+        .candidate { padding: 18px 19px; border: 1px solid #d9e2e5; border-left: 4px solid #58b82a; border-radius: 11px; background: white; }
+        .candidate.possible { border-left-color: #c19f4d; }
+        .candidate-meta { display: flex; gap: 9px; align-items: center; flex-wrap: wrap; color: #687278; font-size: 11px; font-weight: 750; }
+        .confidence { padding: 3px 7px; border-radius: 5px; background: #ecf6e7; color: #3f8f1d; }
+        .candidate.possible .confidence { background: #faf1d9; color: #987516; }
+        .candidate h3 { margin: 10px 0 6px; color: #263246; font-size: 17px; }
+        .candidate p { margin: 0; color: #46545d; font-size: 13px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+        details { margin-top: 20px; color: #687278; font-size: 12px; }
+        summary { cursor: pointer; font-weight: 800; }
+        .sample { margin: 10px 0 0; padding: 13px; border-radius: 8px; background: white; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
+        @media (max-width: 800px) { .main { padding: 20px 16px 45px; } .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .file-field { grid-column: 1 / -1; } }
+        @media (max-width: 520px) { .form-grid { grid-template-columns: 1fr; } .card { padding: 19px; } .hero { padding: 23px 20px; } }
+    </style>
+</head>
+<body>
+<div class="app">
+    {% include 'partials/sidebar.html' with active_page='summarize' %}
+    <main class="main">
+        <div class="page">
+            <header class="hero">
+                <div>
+                    <p class="eyebrow">Private prototype · {{ subject.name }}</p>
+                    <h1>Find definitions in a PDF</h1>
+                    <p>Upload a chapter and inspect what StudiGarden can identify.</p>
+                </div>
+                <a class="back-link" href="{{ back_url }}">Back to subject</a>
+            </header>
+
+            <section class="card" aria-labelledby="upload-title">
+                <h2 id="upload-title">Scan a PDF</h2>
+                <p class="intro">This first experiment finds likely definitions in selectable text. Review the results before we build an import step; nothing is saved to the subject.</p>
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="form-grid">
+                        <div class="file-field">
+                            <label for="pdf-file">PDF file</label>
+                            <input id="pdf-file" type="file" name="pdf_file" accept="application/pdf,.pdf" required>
+                        </div>
+                        <div>
+                            <label for="start-page">Start page</label>
+                            <input id="start-page" type="number" name="start_page" min="1" value="{{ start_page }}" required>
+                        </div>
+                        <div>
+                            <label for="pages-to-scan">Pages to scan</label>
+                            <input id="pages-to-scan" type="number" name="pages_to_scan" min="1" max="{{ max_pages }}" value="{{ pages_to_scan }}" required>
+                        </div>
+                    </div>
+                    <button class="scan-button" type="submit">Find definitions</button>
+                    <p class="hint">Up to {{ max_pages }} pages per scan and {{ max_size_mb }} MB per file. For a long textbook, scan one chapter at a time by changing the start page. Scanned/image-only PDFs need OCR, which is not in this first test. The upload is processed for this preview and not saved to your account.</p>
+                </form>
+                {% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
+            </section>
+
+            {% if scan %}
+            <section class="card" aria-labelledby="results-heading">
+                <div class="results-title">
+                    <div>
+                        <h2 id="results-heading">Possible definitions</h2>
+                        <p>{{ file_name }} · PDF pages {{ scan.start_page }}-{{ scan.last_page }} of {{ scan.total_pages }}</p>
+                    </div>
+                </div>
+                <div class="metrics">
+                    <span class="metric"><strong>{{ scan.candidates|length }}</strong> candidates</span>
+                    <span class="metric"><strong>{{ scan.text_pages }}</strong> pages with selectable text</span>
+                    <span class="metric"><strong>{{ scan.pages_scanned }}</strong> pages scanned</span>
+                </div>
+                {% if not scan.text_pages %}
+                    <p class="notice">No selectable text was found in this page range. This PDF may be scanned images; OCR will be needed.</p>
+                {% elif not scan.candidates %}
+                    <p class="notice">Text was extracted, but no clear definitions matched this first-pass detector. Try a glossary or definitions chapter, and check the text sample below.</p>
+                {% endif %}
+                {% if scan.truncated %}<p class="notice">This scan reached the 300-candidate preview limit. Scan a smaller range to inspect the rest.</p>{% endif %}
+                {% if scan.candidates %}
+                <div class="candidate-list">
+                    {% for item in scan.candidates %}
+                    <article class="candidate {% if item.confidence == 'possible' %}possible{% endif %}">
+                        <div class="candidate-meta">
+                            <span>PDF page {{ item.page }}</span>
+                            <span class="confidence">{% if item.confidence == 'strong' %}Clear pattern{% else %}Possible match{% endif %}</span>
+                        </div>
+                        <h3>{{ item.term }}</h3>
+                        <p>{{ item.definition }}</p>
+                    </article>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% if scan.text_sample %}
+                <details>
+                    <summary>See a sample of the extracted text</summary>
+                    <p class="sample">{{ scan.text_sample }}</p>
+                </details>
+                {% endif %}
+            </section>
+            {% endif %}
+        </div>
+    </main>
+</div>
+</body>
+</html>

@@ -2565,6 +2565,32 @@
             gap: 12px;
         }
 
+        .summary-header-actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .pdf-lab-button {
+            min-height: 39px;
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 13px;
+            border: 2px solid var(--blue-dark);
+            border-bottom-width: 4px;
+            border-radius: 9px;
+            background: var(--blue);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 850;
+            text-decoration: none;
+        }
+
+        .pdf-lab-button:hover {
+            background: #40a2df;
+        }
+
         .download-summary-button {
             flex-shrink: 0;
             min-height: 39px;
@@ -3071,6 +3097,7 @@
         .cancel-edit-button:focus-visible,
         .summary-option:focus-visible,
         .download-summary-button:focus-visible,
+        .pdf-lab-button:focus-visible,
         .delete-subject-button:focus-visible,
         .reset-reviews-button:focus-visible,
         .review-category:focus-visible,
@@ -3977,13 +4004,21 @@
                                     <p>Choose what you want to summarize.</p>
                                 </div>
                                 {% if database_subject %}
-                                    <button type="button" class="download-summary-button"
-                                            id="download-summary-button"
-                                            aria-haspopup="dialog"
-                                            aria-controls="summary-export-modal"
-                                            onclick="openSummaryExportModal()">
-                                        Download summary
-                                    </button>
+                                    <div class="summary-header-actions">
+                                        {% if request.user.is_superuser %}
+                                            <a class="pdf-lab-button"
+                                               href="{% url 'definition_pdf_lab' subject_id=database_subject.id %}">
+                                                Find definitions in PDF
+                                            </a>
+                                        {% endif %}
+                                        <button type="button" class="download-summary-button"
+                                                id="download-summary-button"
+                                                aria-haspopup="dialog"
+                                                aria-controls="summary-export-modal"
+                                                onclick="openSummaryExportModal()">
+                                            Download summary
+                                        </button>
+                                    </div>
                                 {% endif %}
                             </div>
 

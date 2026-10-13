@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import feedback_views, garden_views, reading_views, summary_export, views
+from . import feedback_views, garden_views, pdf_lab_views, reading_views, summary_export, views
 
 
 urlpatterns = [
@@ -43,6 +43,11 @@ urlpatterns = [
         "subjects/<int:subject_id>/summary.pdf",
         summary_export.download_subject_summary,
         name="download_subject_summary",
+    ),
+    path(
+        "subjects/<int:subject_id>/definition-lab/",
+        pdf_lab_views.definition_pdf_lab,
+        name="definition_pdf_lab",
     ),
     path(
         "subjects/<int:subject_index>/definition/",
