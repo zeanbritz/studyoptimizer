@@ -45,6 +45,14 @@
         .candidate.possible .confidence { background: #faf1d9; color: #987516; }
         .candidate h3 { margin: 10px 0 6px; color: #263246; font-size: 17px; }
         .candidate p { margin: 0; color: #46545d; font-size: 13px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+        .candidate-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-top: 15px; }
+        .candidate-actions form { margin: 0; }
+        .action-button, .edit-link { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; padding: 8px 13px; border: 1px solid #b9cbd4; border-bottom-width: 3px; border-radius: 8px; background: #fff; color: #176f9f; font: inherit; font-size: 12px; font-weight: 800; text-decoration: none; cursor: pointer; }
+        .action-button.primary { border-color: #3f8f1d; background: #58b82a; color: white; }
+        .action-button:hover, .edit-link:hover { filter: brightness(.96); }
+        .saved-label { color: #3f8f1d; font-size: 12px; font-weight: 850; }
+        .batch-form { margin-top: 16px; }
+        .success { margin: 17px 0 0; padding: 12px 14px; border: 1px solid #b7dbab; border-radius: 9px; background: #f0f9eb; color: #397d1c; font-size: 12px; font-weight: 750; }
         details { margin-top: 20px; color: #687278; font-size: 12px; }
         summary { cursor: pointer; font-weight: 800; }
         .sample { margin: 10px 0 0; padding: 13px; border-radius: 8px; background: white; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
@@ -68,9 +76,10 @@
 
             <section class="card" aria-labelledby="upload-title">
                 <h2 id="upload-title">Scan a PDF</h2>
-                <p class="intro">This first experiment finds likely definitions in selectable text. Review the results before we build an import step; nothing is saved to the subject.</p>
+                <p class="intro">Find likely definitions in selectable text. Review each result, then add it directly or open the existing definition editor to correct it first.</p>
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
+                    <input type="hidden" name="action" value="scan">
                     <div class="form-grid">
                         <div class="file-field">
                             <label for="pdf-file">PDF file</label>
@@ -86,9 +95,10 @@
                         </div>
                     </div>
                     <button class="scan-button" type="submit">Find definitions</button>
-                    <p class="hint">Up to {{ max_pages }} pages per scan and {{ max_size_mb }} MB per file. For a long textbook, scan one chapter at a time by changing the start page. Scanned/image-only PDFs need OCR, which is not in this first test. The upload is processed for this preview and not saved to your account.</p>
+                    <p class="hint">Up to {{ max_pages }} pages per scan and {{ max_size_mb }} MB per file. For a long textbook, scan one chapter at a time by changing the start page. Scanned/image-only PDFs need OCR, which is not in this first test. The PDF file is not saved; its text results remain in this session for up to 24 hours.</p>
                 </form>
                 {% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
+                {% for message in messages %}<div class="success" role="status">{{ message }}</div>{% endfor %}
             </section>
 
             {% if scan %}
@@ -111,6 +121,13 @@
                 {% endif %}
                 {% if scan.truncated %}<p class="notice">This scan reached the 300-candidate preview limit. Scan a smaller range to inspect the rest.</p>{% endif %}
                 {% if scan.candidates %}
+                <p class="hint">Review the possible matches before using Add all. Matching terms already in this subject are skipped, so a correction you made will not be overwritten by a rescan.</p>
+                <form class="batch-form" method="post" onsubmit="return confirm('Add every remaining candidate from this scan to {{ subject.name|escapejs }}? Review possible matches first.');">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add_all">
+                    <input type="hidden" name="scan_id" value="{{ scan_id }}">
+                    <button class="action-button primary" type="submit">Add all definitions to {{ subject.name }}</button>
+                </form>
                 <div class="candidate-list">
                     {% for item in scan.candidates %}
                     <article class="candidate {% if item.confidence == 'possible' %}possible{% endif %}">
@@ -120,6 +137,21 @@
                         </div>
                         <h3>{{ item.term }}</h3>
                         <p>{{ item.definition }}</p>
+                        <div class="candidate-actions">
+                            {% if item.saved_definition_id %}
+                                <span class="saved-label">Added to review</span>
+                                <a class="edit-link" href="{% url 'edit_definition' definition_id=item.saved_definition_id %}">Edit saved definition</a>
+                            {% else %}
+                                <form method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="add_one">
+                                    <input type="hidden" name="scan_id" value="{{ scan_id }}">
+                                    <input type="hidden" name="candidate_index" value="{{ item.index }}">
+                                    <button class="action-button primary" type="submit">Add definition</button>
+                                </form>
+                                <a class="edit-link" href="{% url 'create_definition' subject_id=subject.id %}?subject_index={{ subject_index }}&amp;pdf_scan_id={{ scan_id }}&amp;pdf_candidate_index={{ item.index }}">Edit before adding</a>
+                            {% endif %}
+                        </div>
                     </article>
                     {% endfor %}
                 </div>

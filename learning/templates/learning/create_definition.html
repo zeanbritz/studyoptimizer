@@ -604,10 +604,10 @@
 
 
             <a
-                href="{% url 'subject_detail' subject_index=subject_index %}"
+                href="{% if pdf_candidate %}{% url 'definition_pdf_lab' subject_id=subject.id %}{% else %}{% url 'subject_detail' subject_index=subject_index %}{% endif %}"
                 class="back-button"
             >
-                ← Back to Subject
+                {% if pdf_candidate %}Back to PDF results{% else %}← Back to Subject{% endif %}
             </a>
 
 
@@ -615,7 +615,7 @@
                 <span class="eyebrow">Definition editor</span>
 
                 <h1>
-                    Create Definition
+                    {% if pdf_candidate %}Review detected definition{% else %}Create Definition{% endif %}
                 </h1>
 
                 <p>
@@ -650,6 +650,10 @@
 
                 {% csrf_token %}
                 <input type="hidden" name="subject_index" value="{{ subject_index }}">
+                {% if pdf_candidate %}
+                    <input type="hidden" name="pdf_scan_id" value="{{ pdf_scan_id }}">
+                    <input type="hidden" name="pdf_candidate_index" value="{{ pdf_candidate_index }}">
+                {% endif %}
 
 
                 <!-- =====================================
@@ -748,7 +752,7 @@
 
 
                     <a
-                        href="{% url 'subject_detail' subject_index=subject_index %}"
+                        href="{% if pdf_candidate %}{% url 'definition_pdf_lab' subject_id=subject.id %}{% else %}{% url 'subject_detail' subject_index=subject_index %}{% endif %}"
                         class="cancel-button"
                     >
                         Cancel

@@ -10,6 +10,7 @@ from reportlab.pdfgen import canvas
 from learning.models import Definition, KnowledgeUnit, Subject
 
 from .definition_detection import find_definition_candidates
+from .pdf_lab_session import SESSION_KEY
 
 
 class DefinitionDetectionTests(SimpleTestCase):
@@ -78,6 +79,18 @@ class DefinitionPdfLabTests(TestCase):
         return SimpleUploadedFile(
             "biology-chapter.pdf", buffer.getvalue(), content_type="application/pdf"
         )
+
+    def scan_definitions(self, lines=None):
+        response = self.client.post(self.url, {
+            "pdf_file": self.pdf_upload([lines or [
+                "Definition 1 Photosynthesis: The process by which plants use light to make food.",
+                "Definition 2 Osmosis: The movement of water through a selectively permeable membrane.",
+            ]]),
+            "start_page": "1",
+            "pages_to_scan": "1",
+        })
+        self.assertEqual(response.status_code, 200)
+        return self.client.session[SESSION_KEY]["id"]
 
     def test_superuser_can_preview_candidates_with_correct_pdf_pages(self):
         upload = self.pdf_upload([
@@ -177,3 +190,95 @@ class DefinitionPdfLabTests(TestCase):
         self.assertEqual(page.status_code, 200)
         self.assertContains(page, "Find definitions in PDF")
         self.assertContains(page, self.url)
+
+    def test_add_one_creates_reviewable_definition_and_cannot_duplicate(self):
+        scan_id = self.scan_definitions()
+        data = {"action": "add_one", "scan_id": scan_id, "candidate_index": "0"}
+        response = self.client.post(self.url, data)
+        self.assertRedirects(response, self.url)
+        definition = Definition.objects.get(term="Photosynthesis")
+        self.assertEqual(definition.knowledge_unit.subject, self.subject)
+        self.assertEqual(definition.knowledge_unit.knowledge_type, KnowledgeUnit.KnowledgeType.DEFINITION)
+        self.assertTrue(definition.knowledge_unit.active)
+        self.assertContains(self.client.get(self.url), "Edit saved definition")
+        self.client.post(self.url, data)
+        self.assertEqual(Definition.objects.count(), 1)
+
+    def test_add_all_skips_previously_added_and_exact_existing_definitions(self):
+        scan_id = self.scan_definitions()
+        self.client.post(self.url, {
+            "action": "add_one", "scan_id": scan_id, "candidate_index": "0",
+        })
+        response = self.client.post(self.url, {"action": "add_all", "scan_id": scan_id})
+        self.assertRedirects(response, self.url)
+        self.assertEqual(Definition.objects.count(), 2)
+        self.assertEqual(KnowledgeUnit.objects.filter(subject=self.subject).count(), 2)
+        self.client.post(self.url, {"action": "add_all", "scan_id": scan_id})
+        self.assertEqual(Definition.objects.count(), 2)
+
+        new_scan_id = self.scan_definitions()
+        self.client.post(self.url, {"action": "add_all", "scan_id": new_scan_id})
+        self.assertEqual(Definition.objects.count(), 2)
+
+    def test_edit_before_adding_prefills_existing_editor_then_saves_correction(self):
+        scan_id = self.scan_definitions()
+        editor_url = reverse("create_definition", args=[self.subject.pk])
+        response = self.client.get(editor_url, {
+            "subject_index": "0", "pdf_scan_id": scan_id, "pdf_candidate_index": "0",
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Photosynthesis")
+        self.assertContains(response, "Review detected definition")
+        self.assertEqual(Definition.objects.count(), 0)
+
+        response = self.client.post(editor_url, {
+            "subject_index": "0",
+            "pdf_scan_id": scan_id,
+            "pdf_candidate_index": "0",
+            "term": "Photosynthesis",
+            "definition": "A corrected description of energy conversion in plants.",
+        })
+        self.assertRedirects(response, self.url)
+        definition = Definition.objects.get(term="Photosynthesis")
+        self.assertEqual(definition.definition, "A corrected description of energy conversion in plants.")
+        self.assertEqual(self.client.session[SESSION_KEY]["saved"]["0"], definition.pk)
+
+        new_scan_id = self.scan_definitions()
+        self.client.post(self.url, {"action": "add_all", "scan_id": new_scan_id})
+        self.assertEqual(Definition.objects.filter(term="Photosynthesis").count(), 1)
+        definition.refresh_from_db()
+        self.assertEqual(definition.definition, "A corrected description of energy conversion in plants.")
+
+    def test_stale_scan_or_invalid_candidate_cannot_be_imported(self):
+        scan_id = self.scan_definitions()
+        for data in (
+            {"action": "add_all", "scan_id": "wrong"},
+            {"action": "add_all"},
+            {"action": "add_one", "scan_id": scan_id, "candidate_index": "999"},
+            {"action": "add_one", "scan_id": scan_id, "candidate_index": "bad"},
+        ):
+            response = self.client.post(self.url, data)
+            self.assertEqual(response.status_code, 200)
+            self.assertIsNotNone(response.context["error"])
+        self.assertEqual(Definition.objects.count(), 0)
+
+    def test_batch_import_is_atomic_when_a_candidate_is_invalid(self):
+        scan_id = self.scan_definitions()
+        session = self.client.session
+        state = session[SESSION_KEY]
+        state["scan"]["candidates"][1]["definition"] = ""
+        session[SESSION_KEY] = state
+        session.save()
+
+        response = self.client.post(self.url, {"action": "add_all", "scan_id": scan_id})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "incomplete")
+        self.assertEqual(Definition.objects.count(), 0)
+        self.assertEqual(KnowledgeUnit.objects.count(), 0)
+
+    def test_other_users_subject_cannot_receive_imports(self):
+        scan_id = self.scan_definitions()
+        other_url = reverse("definition_pdf_lab", args=[self.student_subject.pk])
+        response = self.client.post(other_url, {"action": "add_all", "scan_id": scan_id})
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(Definition.objects.count(), 0)

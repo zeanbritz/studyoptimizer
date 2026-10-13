@@ -35,6 +35,7 @@ from dashboard.models import (
     SubjectRevisionPlan,
 )
 from dashboard.review_planner import get_daily_review_plan, remaining_review_ids
+from dashboard.pdf_lab_session import get_candidate, get_scan, mark_saved
 
 
 # ============================================================
@@ -1038,6 +1039,27 @@ def create_definition(
 
         subject_index = 0
 
+    pdf_scan_id = (
+        request.POST.get("pdf_scan_id") if request.method == "POST"
+        else request.GET.get("pdf_scan_id")
+    )
+    pdf_candidate_index = (
+        request.POST.get("pdf_candidate_index") if request.method == "POST"
+        else request.GET.get("pdf_candidate_index")
+    )
+    pdf_candidate = None
+    if pdf_scan_id and pdf_candidate_index not in (None, "") and request.user.is_superuser:
+        pdf_candidate = get_candidate(
+            request, subject.pk, pdf_scan_id, pdf_candidate_index,
+        )
+        if pdf_candidate is None:
+            return redirect("definition_pdf_lab", subject_id=subject.pk)
+        pdf_candidate_index = int(pdf_candidate_index)
+        state = get_scan(request, subject.pk, pdf_scan_id)
+        saved_id = state["saved"].get(str(pdf_candidate_index))
+        if saved_id and request.method == "GET":
+            return redirect("edit_definition", definition_id=saved_id)
+
     textbooks = list(
         SubjectTextbook.objects
         .filter(subject=subject)
@@ -1046,9 +1068,14 @@ def create_definition(
 
     term = ""
     definition_text = ""
-    selected_book = textbooks[0].name if len(textbooks) == 1 else ""
+    selected_book = (
+        textbooks[0].name if len(textbooks) == 1 and pdf_candidate is None else ""
+    )
     chapter = ""
     error = None
+    if pdf_candidate is not None and request.method == "GET":
+        term = pdf_candidate["term"]
+        definition_text = pdf_candidate["definition"]
 
     # ========================================================
     # POST
@@ -1122,7 +1149,7 @@ def create_definition(
                 # CREATE DEFINITION
                 # =================================================
 
-                Definition.objects.create(
+                saved_definition = Definition.objects.create(
 
                     knowledge_unit=knowledge_unit,
 
@@ -1150,10 +1177,14 @@ def create_definition(
             # This is exactly how formulas work.
             # =================================================
 
-            return redirect(
-                "subject_detail",
-                subject_index=subject_index
-            )
+            if pdf_candidate is not None:
+                mark_saved(
+                    request, subject.pk, pdf_scan_id,
+                    pdf_candidate_index, saved_definition.pk,
+                )
+                return redirect("definition_pdf_lab", subject_id=subject.pk)
+
+            return redirect("subject_detail", subject_index=subject_index)
 
     # ========================================================
     # DISPLAY CREATE PAGE
@@ -1171,6 +1202,9 @@ def create_definition(
             "selected_book": selected_book,
             "chapter": chapter,
             "error": error,
+            "pdf_scan_id": pdf_scan_id if pdf_candidate is not None else "",
+            "pdf_candidate_index": pdf_candidate_index if pdf_candidate is not None else "",
+            "pdf_candidate": pdf_candidate is not None,
         }
     )
 
