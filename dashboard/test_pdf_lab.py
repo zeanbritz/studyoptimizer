@@ -1,3 +1,4 @@
+import json
 from io import BytesIO
 
 from django.contrib.auth import get_user_model
@@ -7,9 +8,11 @@ from django.urls import reverse
 from pypdf import PdfWriter
 from reportlab.pdfgen import canvas
 
-from learning.models import Definition, KnowledgeUnit, Subject
+from learning.models import Definition, Formula, FormulaVariable, KnowledgeUnit, Subject
 
 from .definition_detection import find_definition_candidates
+from .formula_detection import equation_to_structure, find_formula_candidates
+from .models import SubjectTextbook
 from .pdf_lab_session import SESSION_KEY
 
 
@@ -45,6 +48,27 @@ class DefinitionDetectionTests(SimpleTestCase):
             ),
             [],
         )
+
+
+class FormulaDetectionTests(SimpleTestCase):
+    def test_short_equations_are_editable(self):
+        candidates = find_formula_candidates(
+            "DIFFUSION\nJ = -D (dC/dx)\nMEMBRANE\nP = D/L; |J| = P (C1 - C2)", 3
+        )
+        self.assertEqual(len(candidates), 3)
+        self.assertEqual(candidates[0]["title"], "Diffusion (J)")
+        self.assertEqual(candidates[0]["page"], 3)
+        self.assertEqual(candidates[0]["structure"][0]["value"], "J")
+        self.assertEqual(candidates[0]["structure"][0]["type"], "variable")
+
+    def test_prose_and_complex_expressions_are_not_suggested(self):
+        self.assertEqual(find_formula_candidates(
+            "A solution has C = 5 because this is its starting value.\n"
+            "C1 = 2; C2 = 3; therefore the answer is C = 5.\n"
+            "a = b = c", 1,
+        ), [])
+        with self.assertRaises(ValueError):
+            equation_to_structure("a = b = c")
 
 
 class DefinitionPdfLabTests(TestCase):
@@ -91,6 +115,18 @@ class DefinitionPdfLabTests(TestCase):
         })
         self.assertEqual(response.status_code, 200)
         return self.client.session[SESSION_KEY]["id"]
+
+    def scan_formulas(self, book_name="", chapter=""):
+        response = self.client.post(self.url, {
+            "pdf_file": self.pdf_upload([[
+                "DIFFUSION", "J = -D (dC/dx)",
+                "MEMBRANE", "P = D/L", "|J| = P (C1 - C2)",
+            ]]),
+            "start_page": "1", "pages_to_scan": "1",
+            "book_name": book_name, "chapter": chapter,
+        })
+        self.assertEqual(response.status_code, 200)
+        return response, self.client.session[SESSION_KEY]["id"]
 
     def test_superuser_can_preview_candidates_with_correct_pdf_pages(self):
         upload = self.pdf_upload([
@@ -175,7 +211,7 @@ class DefinitionPdfLabTests(TestCase):
         self.assertEqual(self.client.post(student_url).status_code, 404)
         page = self.client.get(reverse("subject_detail", args=[0]))
         self.assertEqual(page.status_code, 200)
-        self.assertNotContains(page, "Find definitions in PDF")
+        self.assertNotContains(page, "Scan PDF for definitions and formulas")
 
     def test_superuser_cannot_scan_another_users_subject(self):
         response = self.client.get(reverse("definition_pdf_lab", args=[self.student_subject.pk]))
@@ -188,7 +224,7 @@ class DefinitionPdfLabTests(TestCase):
     def test_superuser_sees_button_on_subject_page(self):
         page = self.client.get(reverse("subject_detail", args=[0]))
         self.assertEqual(page.status_code, 200)
-        self.assertContains(page, "Find definitions in PDF")
+        self.assertContains(page, "Scan PDF for definitions and formulas")
         self.assertContains(page, self.url)
 
     def test_add_one_creates_reviewable_definition_and_cannot_duplicate(self):
@@ -282,3 +318,97 @@ class DefinitionPdfLabTests(TestCase):
         response = self.client.post(other_url, {"action": "add_all", "scan_id": scan_id})
         self.assertEqual(response.status_code, 404)
         self.assertEqual(Definition.objects.count(), 0)
+
+    def test_optional_book_and_chapter_are_applied_to_definitions(self):
+        SubjectTextbook.objects.create(subject=self.subject, name="Science Reader", page_count=200)
+        response = self.client.post(self.url, {
+            "pdf_file": self.pdf_upload([[
+                "Diffusion: The movement of particles from high to low concentration."
+            ]]),
+            "start_page": "1", "pages_to_scan": "1",
+            "book_name": "Science Reader", "chapter": "Chapter 2",
+        })
+        self.assertContains(response, "Science Reader")
+        scan_id = self.client.session[SESSION_KEY]["id"]
+        editor = self.client.get(reverse("create_definition", args=[self.subject.pk]), {
+            "pdf_scan_id": scan_id, "pdf_candidate_index": "0", "subject_index": "0",
+        })
+        self.assertEqual(editor.context["selected_book"], "Science Reader")
+        self.assertEqual(editor.context["chapter"], "Chapter 2")
+        self.client.post(self.url, {"action": "add_one", "scan_id": scan_id, "candidate_index": "0"})
+        definition = Definition.objects.get(term="Diffusion")
+        self.assertEqual((definition.book_name, definition.chapter), ("Science Reader", "Chapter 2"))
+
+    def test_scan_rejects_book_from_another_subject(self):
+        SubjectTextbook.objects.create(subject=self.student_subject, name="Private Book", page_count=100)
+        response = self.client.post(self.url, {
+            "pdf_file": self.pdf_upload([["J = D/L"]]),
+            "start_page": "1", "pages_to_scan": "1", "book_name": "Private Book",
+        })
+        self.assertContains(response, "does not belong to this subject")
+        self.assertNotIn(SESSION_KEY, self.client.session)
+
+    def test_formula_preview_and_individual_batch_import(self):
+        response, scan_id = self.scan_formulas()
+        self.assertEqual(len(response.context["scan"]["formula_candidates"]), 3)
+        self.assertContains(response, "Add all formulas")
+        self.client.post(self.url, {
+            "action": "add_formula_one", "scan_id": scan_id, "candidate_index": "0",
+        })
+        formula = Formula.objects.get(knowledge_unit__title="Diffusion (J)")
+        self.assertEqual(formula.knowledge_unit.subject, self.subject)
+        self.assertEqual(json.loads(formula.structure)[0]["value"], "J")
+        self.assertTrue(FormulaVariable.objects.filter(formula=formula, symbol="J").exists())
+        self.assertContains(self.client.get(self.url), "Edit saved formula")
+        self.client.post(self.url, {"action": "add_formula_all", "scan_id": scan_id})
+        self.assertEqual(Formula.objects.count(), 3)
+        self.client.post(self.url, {"action": "add_formula_all", "scan_id": scan_id})
+        self.assertEqual(Formula.objects.count(), 3)
+        _, new_scan_id = self.scan_formulas()
+        self.client.post(self.url, {"action": "add_formula_all", "scan_id": new_scan_id})
+        self.assertEqual(Formula.objects.count(), 3)
+
+    def test_formula_editor_prefills_context_and_returns_to_scan(self):
+        SubjectTextbook.objects.create(subject=self.subject, name="Science Reader", page_count=200)
+        _, scan_id = self.scan_formulas("Science Reader", "Chapter 2")
+        editor_url = reverse("create_formula", args=[self.subject.pk])
+        response = self.client.get(editor_url, {
+            "pdf_scan_id": scan_id, "pdf_formula_index": "0", "subject_index": "0",
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Review detected formula")
+        self.assertEqual(response.context["selected_book"], "Science Reader")
+        self.assertEqual(response.context["chapter"], "Chapter 2")
+        self.assertEqual(json.loads(response.context["formula_structure"])[0]["value"], "J")
+        response = self.client.post(editor_url, {
+            "subject_index": "0", "pdf_scan_id": scan_id, "pdf_formula_index": "0",
+            "title": "Corrected diffusion law", "formula_structure": response.context["formula_structure"],
+            "book_name": "Science Reader", "chapter": "Chapter 2",
+        })
+        self.assertRedirects(response, self.url)
+        formula = Formula.objects.get(knowledge_unit__title="Corrected diffusion law")
+        self.assertEqual((formula.book_name, formula.chapter), ("Science Reader", "Chapter 2"))
+        self.assertEqual(self.client.session[SESSION_KEY]["saved_formulas"]["0"], formula.pk)
+
+    def test_formula_batch_inherits_selected_book_and_chapter(self):
+        SubjectTextbook.objects.create(subject=self.subject, name="Science Reader", page_count=200)
+        _, scan_id = self.scan_formulas("Science Reader", "Chapter 2")
+        self.client.post(self.url, {"action": "add_formula_all", "scan_id": scan_id})
+        self.assertEqual(Formula.objects.count(), 3)
+        self.assertEqual(
+            Formula.objects.filter(book_name="Science Reader", chapter="Chapter 2").count(),
+            3,
+        )
+
+    def test_formula_batch_is_atomic_and_rejects_stale_scan(self):
+        _, scan_id = self.scan_formulas()
+        response = self.client.post(self.url, {"action": "add_formula_all", "scan_id": "stale"})
+        self.assertContains(response, "no longer available")
+        session = self.client.session
+        state = session[SESSION_KEY]
+        state["scan"]["formula_candidates"][1]["equation"] = "a = b = c"
+        session[SESSION_KEY] = state
+        session.save()
+        response = self.client.post(self.url, {"action": "add_formula_all", "scan_id": scan_id})
+        self.assertContains(response, "manual entry")
+        self.assertEqual(Formula.objects.count(), 0)

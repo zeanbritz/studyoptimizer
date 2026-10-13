@@ -1,4 +1,4 @@
-"""Session-backed, short-lived preview data for the private PDF definition lab."""
+"""Session-backed, short-lived preview data for the private PDF learning lab."""
 
 from uuid import uuid4
 from time import time
@@ -8,14 +8,17 @@ SESSION_KEY = "pdf_definition_lab_scan"
 MAX_AGE_SECONDS = 24 * 60 * 60
 
 
-def save_scan(request, subject_id, scan, file_name):
+def save_scan(request, subject_id, scan, file_name, book_name="", chapter=""):
     state = {
         "id": uuid4().hex,
         "created_at": int(time()),
         "subject_id": subject_id,
         "scan": scan,
         "file_name": file_name,
+        "book_name": book_name,
+        "chapter": chapter,
         "saved": {},
+        "saved_formulas": {},
     }
     request.session[SESSION_KEY] = state
     return state
@@ -37,21 +40,26 @@ def get_scan(request, subject_id, scan_id=None):
     return state
 
 
-def get_candidate(request, subject_id, scan_id, index):
+def get_candidate(request, subject_id, scan_id, index, kind="definition"):
     state = get_scan(request, subject_id, scan_id)
+    if kind not in {"definition", "formula"}:
+        return None
+    key = "candidates" if kind == "definition" else "formula_candidates"
     try:
         index = int(index)
     except (TypeError, ValueError):
         return None
-    if state is None or index < 0 or index >= len(state["scan"]["candidates"]):
+    candidates = state["scan"].get(key, []) if state is not None else []
+    if index < 0 or index >= len(candidates):
         return None
-    return state["scan"]["candidates"][index]
+    return candidates[index]
 
 
-def mark_saved(request, subject_id, scan_id, index, definition_id):
+def mark_saved(request, subject_id, scan_id, index, item_id, kind="definition"):
     state = get_scan(request, subject_id, scan_id)
-    if state is None or get_candidate(request, subject_id, scan_id, index) is None:
+    if state is None or get_candidate(request, subject_id, scan_id, index, kind) is None:
         return False
-    state["saved"][str(index)] = definition_id
+    key = "saved" if kind == "definition" else "saved_formulas"
+    state.setdefault(key, {})[str(index)] = item_id
     request.session[SESSION_KEY] = state
     return True

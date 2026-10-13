@@ -1,5 +1,6 @@
-"""Superuser-only experiment for inspecting definitions in uploaded PDFs."""
+"""Superuser-only experiment for inspecting learning items in uploaded PDFs."""
 
+import json
 from pathlib import Path
 
 from django.contrib import messages
@@ -12,9 +13,11 @@ from django.views.decorators.http import require_http_methods
 from pypdf import PdfReader
 from pypdf.errors import PdfReadError
 
-from learning.models import Definition, KnowledgeUnit, Subject
+from learning.models import Definition, Formula, FormulaVariable, KnowledgeUnit, Subject
 
 from .definition_detection import find_definition_candidates
+from .formula_detection import equation_to_structure, find_formula_candidates
+from .models import SubjectTextbook
 from .pdf_lab_session import SESSION_KEY, get_scan, save_scan
 
 
@@ -69,6 +72,8 @@ def _import_candidates(request, subject, state, indexes):
                     knowledge_unit=unit,
                     term=term,
                     definition=definition_text,
+                    book_name=state.get("book_name", ""),
+                    chapter=state.get("chapter", ""),
                 ).pk
                 existing[key] = definition_id
                 created += 1
@@ -81,20 +86,89 @@ def _import_candidates(request, subject, state, indexes):
     return created, already_present
 
 
+def _import_formulas(request, subject, state, indexes):
+    """Create editable, reviewable formulas without importing duplicates."""
+    candidates = state["scan"].get("formula_candidates", [])
+    saved = dict(state.get("saved_formulas") or {})
+    created = already_present = 0
+    with transaction.atomic():
+        Subject.objects.select_for_update().get(pk=subject.pk)
+        existing = {
+            formula.knowledge_unit.title.casefold(): formula.pk
+            for formula in Formula.objects.filter(
+                knowledge_unit__subject=subject,
+                knowledge_unit__active=True,
+            ).select_related("knowledge_unit")
+        }
+        for index in indexes:
+            if str(index) in saved:
+                already_present += 1
+                continue
+            candidate = candidates[index]
+            title = str(candidate.get("title", "")).strip()
+            equation = str(candidate.get("equation", "")).strip()
+            if not title or len(title) > 255:
+                raise ValueError("A formula in this scan is incomplete. Scan the PDF again.")
+            # Re-parse the PDF expression rather than trusting mutable session data.
+            structure = equation_to_structure(equation)
+            key = title.casefold()
+            formula_id = existing.get(key)
+            if formula_id is None:
+                unit = KnowledgeUnit.objects.create(
+                    subject=subject, title=title,
+                    knowledge_type=KnowledgeUnit.KnowledgeType.FORMULA,
+                    difficulty=1, estimated_minutes=2, active=True,
+                )
+                formula = Formula.objects.create(
+                    knowledge_unit=unit,
+                    structure=json.dumps(structure, ensure_ascii=False),
+                    book_name=state.get("book_name", ""),
+                    chapter=state.get("chapter", ""),
+                )
+                seen_symbols = set()
+                for element in structure:
+                    if element["type"] != "variable":
+                        continue
+                    symbol = element["value"]
+                    if symbol.casefold() in seen_symbols:
+                        continue
+                    seen_symbols.add(symbol.casefold())
+                    FormulaVariable.objects.create(
+                        formula=formula, symbol=symbol, meaning="",
+                        order=len(seen_symbols),
+                    )
+                formula_id = formula.pk
+                existing[key] = formula_id
+                created += 1
+            else:
+                already_present += 1
+            saved[str(index)] = formula_id
+    state["saved_formulas"] = saved
+    request.session[SESSION_KEY] = state
+    return created, already_present
+
+
 def _display_scan(context, state):
     if state is None:
         return
     scan = state["scan"]
     saved = state.get("saved") or {}
+    saved_formulas = state.get("saved_formulas") or {}
     context["scan"] = {
         **scan,
         "candidates": [
             {**item, "index": index, "saved_definition_id": saved.get(str(index))}
             for index, item in enumerate(scan["candidates"])
         ],
+        "formula_candidates": [
+            {**item, "index": index, "saved_formula_id": saved_formulas.get(str(index))}
+            for index, item in enumerate(scan.get("formula_candidates", []))
+        ],
     }
     context["scan_id"] = state["id"]
     context["file_name"] = state["file_name"]
+    context["selected_book"] = state.get("book_name", "")
+    context["chapter"] = state.get("chapter", "")
 
 
 def _subject_index(request, subject):
@@ -121,11 +195,11 @@ def _scan_pdf(upload, start_page, pages_to_scan):
         raise ValueError(f"Start page must be between 1 and {total_pages}.")
 
     last_page = min(total_pages, start_page + pages_to_scan - 1)
-    results = []
-    seen = set()
+    results, formula_results = [], []
+    seen, seen_formulas = set(), set()
     text_pages = 0
     text_sample = ""
-    truncated = False
+    truncated = formula_truncated = False
     scanned_through = start_page - 1
     for page_number in range(start_page, last_page + 1):
         scanned_through = page_number
@@ -150,7 +224,16 @@ def _scan_pdf(upload, start_page, pages_to_scan):
                 truncated = True
                 break
             results.append(candidate)
-        if truncated:
+        for candidate in find_formula_candidates(text[:100_000], page_number):
+            key = "".join(candidate["equation"].casefold().split())
+            if key in seen_formulas:
+                continue
+            seen_formulas.add(key)
+            if len(formula_results) >= MAX_CANDIDATES:
+                formula_truncated = True
+                break
+            formula_results.append(candidate)
+        if truncated and formula_truncated:
             break
 
     return {
@@ -160,8 +243,10 @@ def _scan_pdf(upload, start_page, pages_to_scan):
         "pages_scanned": scanned_through - start_page + 1,
         "text_pages": text_pages,
         "candidates": results,
+        "formula_candidates": formula_results,
         "text_sample": text_sample,
         "truncated": truncated,
+        "formula_truncated": formula_truncated,
     }
 
 
@@ -179,30 +264,38 @@ def definition_pdf_lab(request, subject_id):
         "max_size_mb": MAX_UPLOAD_BYTES // (1024 * 1024),
         "start_page": 1,
         "pages_to_scan": 25,
+        "textbooks": SubjectTextbook.objects.filter(subject=subject).order_by("created", "id"),
+        "selected_book": "",
+        "chapter": "",
     }
     state = get_scan(request, subject.pk)
     if request.method == "POST":
         action = request.POST.get("action", "scan")
-        if action in {"add_one", "add_all"}:
+        if action in {"add_one", "add_all", "add_formula_one", "add_formula_all"}:
             state = get_scan(request, subject.pk, request.POST.get("scan_id") or "")
             if state is None:
                 context["error"] = "This PDF preview is no longer available. Scan the PDF again."
             else:
                 try:
-                    candidates = state["scan"]["candidates"]
-                    if action == "add_one":
+                    formula_action = action.startswith("add_formula")
+                    candidates = state["scan"].get(
+                        "formula_candidates" if formula_action else "candidates", []
+                    )
+                    if action.endswith("one"):
                         index = int(request.POST.get("candidate_index", ""))
                         if not 0 <= index < len(candidates):
-                            raise ValueError("Choose a definition from the current scan.")
+                            raise ValueError("Choose an item from the current scan.")
                         indexes = [index]
                     else:
                         indexes = range(len(candidates))
-                    created, already_present = _import_candidates(
+                    import_items = _import_formulas if formula_action else _import_candidates
+                    created, already_present = import_items(
                         request, subject, state, indexes,
                     )
+                    item_name = "formula" if formula_action else "definition"
                     messages.success(
                         request,
-                        f"{created} definition{'s' if created != 1 else ''} added to "
+                        f"{created} {item_name}{'s' if created != 1 else ''} added to "
                         f"{subject.name}."
                         + (f" {already_present} already added or present." if already_present else ""),
                     )
@@ -213,7 +306,15 @@ def definition_pdf_lab(request, subject_id):
             upload = request.FILES.get("pdf_file")
             context["start_page"] = request.POST.get("start_page", "1")
             context["pages_to_scan"] = request.POST.get("pages_to_scan", "25")
+            context["selected_book"] = request.POST.get("book_name", "").strip()
+            context["chapter"] = request.POST.get("chapter", "").strip()
             try:
+                if context["selected_book"] and not SubjectTextbook.objects.filter(
+                    subject=subject, name=context["selected_book"]
+                ).exists():
+                    raise ValueError("The selected textbook does not belong to this subject.")
+                if len(context["chapter"]) > 255:
+                    raise ValueError("The chapter cannot be longer than 255 characters.")
                 start_page = int(context["start_page"])
                 pages_to_scan = int(context["pages_to_scan"])
                 if start_page < 1 or not 1 <= pages_to_scan <= MAX_PAGES_PER_SCAN:
@@ -233,6 +334,7 @@ def definition_pdf_lab(request, subject_id):
                 state = save_scan(
                     request, subject.pk, _scan_pdf(upload, start_page, pages_to_scan),
                     Path(upload.name).name,
+                    context["selected_book"], context["chapter"],
                 )
             except (PdfReadError, ValueError, OSError, IndexError) as exc:
                 context["error"] = str(exc) or "Could not read this PDF."

@@ -311,6 +311,27 @@ def create_formula(
         user=request.user,
     )
 
+    pdf_scan_id = (
+        request.POST.get("pdf_scan_id") if request.method == "POST"
+        else request.GET.get("pdf_scan_id")
+    )
+    pdf_formula_index = (
+        request.POST.get("pdf_formula_index") if request.method == "POST"
+        else request.GET.get("pdf_formula_index")
+    )
+    pdf_formula_candidate = None
+    if pdf_scan_id and pdf_formula_index not in (None, "") and request.user.is_superuser:
+        pdf_formula_candidate = get_candidate(
+            request, subject.pk, pdf_scan_id, pdf_formula_index, kind="formula",
+        )
+        if pdf_formula_candidate is None:
+            return redirect("definition_pdf_lab", subject_id=subject.pk)
+        pdf_formula_index = int(pdf_formula_index)
+        state = get_scan(request, subject.pk, pdf_scan_id)
+        saved_id = (state.get("saved_formulas") or {}).get(str(pdf_formula_index))
+        if saved_id and request.method == "GET":
+            return redirect("edit_formula", formula_id=saved_id)
+
     # ========================================================
     # SUBJECT INDEX
     # ========================================================
@@ -459,6 +480,12 @@ def create_formula(
 
     error = None
 
+    if pdf_formula_candidate is not None and request.method == "GET":
+        title = pdf_formula_candidate["title"]
+        formula_structure = json.dumps(pdf_formula_candidate["structure"], ensure_ascii=False)
+        selected_book = state.get("book_name", "")
+        chapter = state.get("chapter", "")
+
     # ========================================================
     # POST
     # ========================================================
@@ -535,6 +562,11 @@ def create_formula(
             error = (
                 "Please enter a formula name."
             )
+
+        if error is None and len(title) > 255:
+            error = "The formula name cannot be longer than 255 characters."
+        if error is None and len(chapter) > 255:
+            error = "The chapter cannot be longer than 255 characters."
 
         # ====================================================
         # VALIDATE TEXTBOOK
@@ -718,6 +750,13 @@ def create_formula(
             # DONE
             # =================================================
 
+            if pdf_formula_candidate is not None:
+                mark_saved(
+                    request, subject.pk, pdf_scan_id,
+                    pdf_formula_index, formula.pk, kind="formula",
+                )
+                return redirect("definition_pdf_lab", subject_id=subject.pk)
+
             return redirect(
                 "subject_detail",
                 subject_index=subject_index,
@@ -773,6 +812,10 @@ def create_formula(
 
             "error":
                 error,
+
+            "pdf_scan_id": pdf_scan_id if pdf_formula_candidate is not None else "",
+            "pdf_formula_index": pdf_formula_index if pdf_formula_candidate is not None else "",
+            "pdf_formula_candidate": pdf_formula_candidate is not None,
         }
     )
 
@@ -1076,6 +1119,8 @@ def create_definition(
     if pdf_candidate is not None and request.method == "GET":
         term = pdf_candidate["term"]
         definition_text = pdf_candidate["definition"]
+        selected_book = state.get("book_name", "")
+        chapter = state.get("chapter", "")
 
     # ========================================================
     # POST

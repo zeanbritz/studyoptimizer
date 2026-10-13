@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>PDF definition lab - {{ subject.name }} - StudiGarden</title>
+    <title>PDF learning lab - {{ subject.name }} - StudiGarden</title>
     <link rel="icon" href="{% static 'images/favicon.png' %}">
     <link rel="stylesheet" href="{% static 'dashboard/css/sidebar.css' %}">
     <style>
@@ -23,10 +23,11 @@
         .card h2 { margin: 0 0 7px; font-size: 21px; letter-spacing: -.02em; }
         .intro { margin: 0 0 21px; color: #687278; font-size: 13px; line-height: 1.55; }
         .form-grid { display: grid; grid-template-columns: minmax(0, 1fr) 140px 150px; gap: 13px; align-items: end; }
+        .details-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; margin-top: 16px; }
         label { display: block; margin-bottom: 7px; color: #424a50; font-size: 11px; font-weight: 850; }
-        input { width: 100%; min-height: 43px; padding: 9px 11px; border: 1px solid #cbd5d9; border-bottom: 3px solid #b8c5ca; border-radius: 9px; background: white; color: #263246; font: inherit; font-size: 13px; }
+        input, select { width: 100%; min-height: 43px; padding: 9px 11px; border: 1px solid #cbd5d9; border-bottom: 3px solid #b8c5ca; border-radius: 9px; background: white; color: #263246; font: inherit; font-size: 13px; }
         input[type=file] { padding: 8px; }
-        input:focus-visible, button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid rgba(39,143,211,.3); outline-offset: 3px; }
+        input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid rgba(39,143,211,.3); outline-offset: 3px; }
         .scan-button { margin-top: 18px; min-height: 43px; padding: 9px 18px; border: 2px solid #3f8f1d; border-bottom-width: 4px; border-radius: 10px; background: #58b82a; color: white; font: inherit; font-size: 12px; font-weight: 850; cursor: pointer; }
         .scan-button:hover { background: #65c936; }
         .hint { margin: 12px 0 0; color: #687278; font-size: 11px; line-height: 1.5; }
@@ -52,12 +53,15 @@
         .action-button:hover, .edit-link:hover { filter: brightness(.96); }
         .saved-label { color: #3f8f1d; font-size: 12px; font-weight: 850; }
         .batch-form { margin-top: 16px; }
+        .result-group { margin-top: 25px; padding-top: 20px; border-top: 1px solid #d8e0e3; }
+        .result-group h3 { margin: 0 0 7px; font-size: 19px; }
+        .equation { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 15px !important; }
         .success { margin: 17px 0 0; padding: 12px 14px; border: 1px solid #b7dbab; border-radius: 9px; background: #f0f9eb; color: #397d1c; font-size: 12px; font-weight: 750; }
         details { margin-top: 20px; color: #687278; font-size: 12px; }
         summary { cursor: pointer; font-weight: 800; }
         .sample { margin: 10px 0 0; padding: 13px; border-radius: 8px; background: white; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
         @media (max-width: 800px) { .main { padding: 20px 16px 45px; } .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .file-field { grid-column: 1 / -1; } }
-        @media (max-width: 520px) { .form-grid { grid-template-columns: 1fr; } .card { padding: 19px; } .hero { padding: 23px 20px; } }
+        @media (max-width: 520px) { .form-grid, .details-grid { grid-template-columns: 1fr; } .card { padding: 19px; } .hero { padding: 23px 20px; } }
     </style>
 </head>
 <body>
@@ -68,15 +72,15 @@
             <header class="hero">
                 <div>
                     <p class="eyebrow">Private prototype · {{ subject.name }}</p>
-                    <h1>Find definitions in a PDF</h1>
-                    <p>Upload a chapter and inspect what StudiGarden can identify.</p>
+                    <h1>Find definitions and formulas in a PDF</h1>
+                    <p>Upload a chapter and inspect what StudiGarden can identify before adding anything.</p>
                 </div>
                 <a class="back-link" href="{{ back_url }}">Back to subject</a>
             </header>
 
             <section class="card" aria-labelledby="upload-title">
                 <h2 id="upload-title">Scan a PDF</h2>
-                <p class="intro">Find likely definitions in selectable text. Review each result, then add it directly or open the existing definition editor to correct it first.</p>
+                <p class="intro">Find likely definitions and formulas in selectable text. Review each result, add it directly, or open its editor to correct it first.</p>
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="scan">
@@ -94,7 +98,23 @@
                             <input id="pages-to-scan" type="number" name="pages_to_scan" min="1" max="{{ max_pages }}" value="{{ pages_to_scan }}" required>
                         </div>
                     </div>
-                    <button class="scan-button" type="submit">Find definitions</button>
+                    <div class="details-grid">
+                        <div>
+                            <label for="pdf-book">Book for detected items (optional)</label>
+                            <select id="pdf-book" name="book_name">
+                                <option value="">No book selected</option>
+                                {% for textbook in textbooks %}
+                                <option value="{{ textbook.name }}" {% if selected_book == textbook.name %}selected{% endif %}>{{ textbook.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label for="pdf-chapter">Chapter (optional)</label>
+                            <input id="pdf-chapter" type="text" name="chapter" maxlength="255" value="{{ chapter }}" placeholder="e.g. Chapter 4">
+                        </div>
+                    </div>
+                    <button class="scan-button" type="submit">Find learning items</button>
+                    <p class="hint">Book and chapter are labels for the items you add; they do not affect detection. You can change them in each item's editor.</p>
                     <p class="hint">Up to {{ max_pages }} pages per scan and {{ max_size_mb }} MB per file. For a long textbook, scan one chapter at a time by changing the start page. Scanned/image-only PDFs need OCR, which is not in this first test. The PDF file is not saved; its text results remain in this session for up to 24 hours.</p>
                 </form>
                 {% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
@@ -105,21 +125,25 @@
             <section class="card" aria-labelledby="results-heading">
                 <div class="results-title">
                     <div>
-                        <h2 id="results-heading">Possible definitions</h2>
+                        <h2 id="results-heading">PDF suggestions</h2>
                         <p>{{ file_name }} · PDF pages {{ scan.start_page }}-{{ scan.last_page }} of {{ scan.total_pages }}</p>
+                        {% if selected_book or chapter %}<p>{% if selected_book %}{{ selected_book }}{% endif %}{% if selected_book and chapter %} · {% endif %}{% if chapter %}{{ chapter }}{% endif %}</p>{% endif %}
                     </div>
                 </div>
                 <div class="metrics">
-                    <span class="metric"><strong>{{ scan.candidates|length }}</strong> candidates</span>
+                    <span class="metric"><strong>{{ scan.candidates|length }}</strong> definitions</span>
+                    <span class="metric"><strong>{{ scan.formula_candidates|length }}</strong> formulas</span>
                     <span class="metric"><strong>{{ scan.text_pages }}</strong> pages with selectable text</span>
                     <span class="metric"><strong>{{ scan.pages_scanned }}</strong> pages scanned</span>
                 </div>
                 {% if not scan.text_pages %}
                     <p class="notice">No selectable text was found in this page range. This PDF may be scanned images; OCR will be needed.</p>
-                {% elif not scan.candidates %}
-                    <p class="notice">Text was extracted, but no clear definitions matched this first-pass detector. Try a glossary or definitions chapter, and check the text sample below.</p>
+                {% elif not scan.candidates and not scan.formula_candidates %}
+                    <p class="notice">Text was extracted, but no clear definitions or formulas matched this first-pass detector. Check the text sample below.</p>
                 {% endif %}
-                {% if scan.truncated %}<p class="notice">This scan reached the 300-candidate preview limit. Scan a smaller range to inspect the rest.</p>{% endif %}
+                {% if scan.truncated or scan.formula_truncated %}<p class="notice">This scan reached the 300-candidate preview limit for a learning-item type. Scan a smaller range to inspect the rest.</p>{% endif %}
+                <div class="result-group">
+                <h3>Possible definitions</h3>
                 {% if scan.candidates %}
                 <p class="hint">Review the possible matches before using Add all. Matching terms already in this subject are skipped, so a correction you made will not be overwritten by a rescan.</p>
                 <form class="batch-form" method="post" onsubmit="return confirm('Add every remaining candidate from this scan to {{ subject.name|escapejs }}? Review possible matches first.');">
@@ -155,7 +179,52 @@
                     </article>
                     {% endfor %}
                 </div>
+                {% else %}
+                <p class="hint">No likely definitions found in these pages.</p>
                 {% endif %}
+                </div>
+
+                <div class="result-group">
+                    <h3>Possible formulas</h3>
+                    {% if scan.formula_candidates %}
+                    <p class="hint">These short equations are first-pass suggestions. Check symbols and variable meanings in the formula editor, especially before adding all.</p>
+                    <form class="batch-form" method="post" onsubmit="return confirm('Add every remaining formula suggestion from this scan to {{ subject.name|escapejs }}? Check the equations first.');">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="add_formula_all">
+                        <input type="hidden" name="scan_id" value="{{ scan_id }}">
+                        <button class="action-button primary" type="submit">Add all formulas to {{ subject.name }}</button>
+                    </form>
+                    <div class="candidate-list">
+                        {% for item in scan.formula_candidates %}
+                        <article class="candidate {% if item.confidence == 'possible' %}possible{% endif %}">
+                            <div class="candidate-meta">
+                                <span>PDF page {{ item.page }}</span>
+                                <span class="confidence">{% if item.confidence == 'strong' %}Clear pattern{% else %}Possible match{% endif %}</span>
+                            </div>
+                            <h3>{{ item.title }}</h3>
+                            <p class="equation">{{ item.equation }}</p>
+                            <div class="candidate-actions">
+                                {% if item.saved_formula_id %}
+                                <span class="saved-label">Added to review</span>
+                                <a class="edit-link" href="{% url 'edit_formula' formula_id=item.saved_formula_id %}">Edit saved formula</a>
+                                {% else %}
+                                <form method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="add_formula_one">
+                                    <input type="hidden" name="scan_id" value="{{ scan_id }}">
+                                    <input type="hidden" name="candidate_index" value="{{ item.index }}">
+                                    <button class="action-button primary" type="submit">Add formula</button>
+                                </form>
+                                <a class="edit-link" href="{% url 'create_formula' subject_id=subject.id %}?subject_index={{ subject_index }}&amp;pdf_scan_id={{ scan_id }}&amp;pdf_formula_index={{ item.index }}">Edit before adding</a>
+                                {% endif %}
+                            </div>
+                        </article>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="hint">No short, editable equations found in these pages. Multi-line equations and scanned images need manual entry for now.</p>
+                    {% endif %}
+                </div>
                 {% if scan.text_sample %}
                 <details>
                     <summary>See a sample of the extracted text</summary>

@@ -961,10 +961,14 @@
 
 
             <a
+                {% if pdf_formula_candidate %}
+                href="{% url 'definition_pdf_lab' subject_id=subject.id %}"
+                {% else %}
                 href="{% url 'subject_detail' subject_index=subject_index %}"
+                {% endif %}
                 class="back-button"
             >
-                ← Back to Subject
+                {% if pdf_formula_candidate %}Back to PDF results{% else %}← Back to Subject{% endif %}
             </a>
 
 
@@ -973,7 +977,7 @@
 
 
                 <h1>
-                    Create Formula
+                    {% if pdf_formula_candidate %}Review detected formula{% else %}Create Formula{% endif %}
                 </h1>
 
 
@@ -1002,6 +1006,11 @@
                     name="subject_index"
                     value="{{ subject_index }}"
                 >
+                {% if pdf_formula_candidate %}
+                <input type="hidden" name="pdf_scan_id" value="{{ pdf_scan_id }}">
+                <input type="hidden" name="pdf_formula_index" value="{{ pdf_formula_index }}">
+                <p class="hint">Check the equation and add meanings to its variables before saving. PDF formulas are suggestions and may need correction.</p>
+                {% endif %}
 
 
                 {% if error %}
@@ -1329,7 +1338,7 @@
                 <section class="section">
 
 
-                    <details class="additional-details">
+                    <details class="additional-details" {% if pdf_formula_candidate %}open{% endif %}>
 
 
                         <summary>
@@ -1409,7 +1418,11 @@
 
 
                     <a
+                        {% if pdf_formula_candidate %}
+                        href="{% url 'definition_pdf_lab' subject_id=subject.id %}"
+                        {% else %}
                         href="{% url 'subject_detail' subject_index=subject_index %}"
+                        {% endif %}
                         class="footer-button"
                     >
                         Cancel
