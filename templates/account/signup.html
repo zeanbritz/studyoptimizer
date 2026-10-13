@@ -243,7 +243,7 @@
 
             <header class="signup-header">
                 <h1>Create your account</h1>
-                <p>Start planning, learning, and reviewing.</p>
+                <p>Sign up for free. Confirm your email address to start using StudiGarden.</p>
             </header>
 
             <form
@@ -252,12 +252,6 @@
                 class="signup-form"
             >
                 {% csrf_token %}
-
-                <input
-                    type="hidden"
-                    name="invite_token"
-                    value="{% if request.method == 'POST' %}{{ request.POST.invite_token }}{% else %}{{ request.GET.invite }}{% endif %}"
-                >
 
                 {% if form.non_field_errors %}
                     <div class="signup-error" role="alert">

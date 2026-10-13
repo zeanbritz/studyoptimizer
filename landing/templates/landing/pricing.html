@@ -175,7 +175,7 @@
 
         .plans {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 18px;
             margin-top: 22px;
         }
@@ -192,7 +192,8 @@
             background: #f8fafb;
         }
 
-        .plan.yearly { border-top-color: var(--green); }
+        .plan.yearly,
+        .plan.free { border-top-color: var(--green); }
 
         .plan-heading {
             display: flex;
@@ -316,6 +317,7 @@
         @media (max-width: 820px) {
             .site-header { flex-wrap: wrap; }
             .header-actions { width: 100%; }
+            .plans { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
 
         @media (max-width: 650px) {
@@ -352,7 +354,7 @@
                     <a href="{% url 'dashboard' %}" class="button button-green">Dashboard</a>
                 {% else %}
                     <a href="{% url 'login' %}" class="button button-light">Log in</a>
-                    <a href="{% url 'register' %}" class="button button-green">Use an invite</a>
+                    <a href="{% url 'register' %}" class="button button-green">Sign up</a>
                 {% endif %}
             </nav>
         </header>
@@ -361,10 +363,33 @@
             <section class="intro" aria-labelledby="pricing-title">
                 <span class="eyebrow">StudiGarden plans</span>
                 <h1 id="pricing-title">Simple pricing for your studies</h1>
-                <p>Choose a flexible monthly subscription or pay once for 12 months. Paid checkout is not open yet while we prepare the launch.</p>
+                <p>Create a free account now. Monthly and yearly paid plans are planned, but checkout is not open yet.</p>
             </section>
 
             <section class="plans" aria-label="Pricing plans">
+                <article class="plan free">
+                    <div class="plan-heading">
+                        <h2 class="plan-name">Free</h2>
+                    </div>
+
+                    <p class="price">R0</p>
+                    <p class="billing-note">
+                        Get started with StudiGarden while we develop the paid plans. No payment details needed.
+                    </p>
+
+                    <ul>
+                        <li>Set up your subjects and study dates</li>
+                        <li>Use the current study and review tools</li>
+                        <li>Keep your own progress</li>
+                    </ul>
+
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'dashboard' %}" class="button button-green">Open dashboard</a>
+                    {% else %}
+                        <a href="{% url 'register' %}" class="button button-green">Sign up for free</a>
+                    {% endif %}
+                </article>
+
                 <article class="plan">
                     <div class="plan-heading">
                         <h2 class="plan-name">Monthly</h2>
@@ -409,16 +434,13 @@
                 </article>
             </section>
 
-            <aside class="beta-note" aria-label="Invite-only beta">
-                <strong>Joining through a beta invite?</strong>
-                Invited beta students keep free access to StudiGarden’s standard study features as a thank-you for helping us improve. No payment details are needed for the beta.
-                {% if not user.is_authenticated %}
-                    <a href="{% url 'register' %}">Use your invite</a>
-                {% endif %}
+            <aside class="beta-note" aria-label="Existing beta members">
+                <strong>Already joined during the invited beta?</strong>
+                Your previously granted permanent free access remains in place.
             </aside>
 
             <p class="billing-disclaimer">
-                These are the planned paid prices. No payment can be made on this page, and signing up with a beta invite will not start a subscription.
+                These are planned paid prices. No payment can be made on this page, and creating a free account will not start a subscription.
             </p>
         </main>
 

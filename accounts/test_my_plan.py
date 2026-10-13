@@ -22,14 +22,14 @@ class MyPlanPageTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response.url.startswith("/login/"))
 
-    def test_user_without_plan_sees_no_paid_plan(self):
+    def test_user_without_paid_plan_sees_free_account(self):
         self.client.force_login(self.user)
 
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "No paid plan")
-        self.assertContains(response, "Paid subscriptions are not open yet")
+        self.assertContains(response, "Free account")
+        self.assertContains(response, "No payment details are needed")
 
     def test_beta_user_sees_free_access(self):
         self.user.beta_lifetime_access = True

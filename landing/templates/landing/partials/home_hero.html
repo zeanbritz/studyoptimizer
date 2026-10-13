@@ -10,12 +10,12 @@
                 {% if user.is_authenticated %}
                     <a class="button button--lime" href="{% url 'dashboard' %}">Open your dashboard</a>
                 {% else %}
-                    <a class="button button--lime" href="#experience">Try the sample dashboard</a>
+                    <a class="button button--lime" href="{% url 'register' %}">Sign up</a>
                 {% endif %}
                 <a class="text-link text-link--light" href="#how-it-works">How it works</a>
             </div>
 
-            <div class="hero__footnote"><span class="hero__footnote-mark" aria-hidden="true">✳</span><span>No account needed to explore the demo.</span></div>
+            <div class="hero__footnote"><span class="hero__footnote-mark" aria-hidden="true">✳</span><span>Free to sign up. No payment details needed.</span></div>
         </div>
 
         <div class="hero__visual" aria-label="Preview of a simple study day">

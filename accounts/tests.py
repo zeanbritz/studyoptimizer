@@ -1,8 +1,12 @@
 from datetime import date
+import re
+from urllib.parse import urlsplit
 
 from allauth.account.models import EmailAddress
+from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.core import mail
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from accounts.models import BetaInvite
@@ -180,150 +184,126 @@ class AuthenticationFlowTests(TestCase):
         )
 
 
-class BetaInviteSignupTests(TestCase):
+class PublicSignupTests(TestCase):
     def setUp(self):
-        self.invite = BetaInvite.objects.get(slot=1)
         self.password = "Another-safe-password-456!"
 
-    def signup_data(self, username, token=None):
+    def signup_data(self, username):
         return {
             "username": username,
             "email": f"{username}@example.com",
             "password1": self.password,
             "password2": self.password,
-            "invite_token": (
-                str(token) if token is not None else ""
-            ),
         }
 
-    def test_migration_created_exactly_50_invites(self):
-        self.assertEqual(BetaInvite.objects.count(), 50)
-
-    def test_both_signup_urls_are_closed_without_invitation(self):
-        for url in (
-            reverse("register"),
-            reverse("account_signup"),
-        ):
+    def test_both_signup_urls_open_without_invitation(self):
+        for url in (reverse("register"), reverse("account_signup")):
             with self.subTest(url=url):
                 response = self.client.get(url)
-
                 self.assertEqual(response.status_code, 200)
-                self.assertTemplateUsed(
-                    response,
-                    "account/signup_closed.html",
-                )
+                self.assertTemplateUsed(response, "account/signup.html")
+                self.assertContains(response, "Sign up for free")
+                self.assertNotContains(response, 'name="invite_token"')
 
-        self.assertEqual(
-            get_user_model().objects.count(),
-            0,
-        )
+    def test_public_signup_sends_confirmation_and_does_not_grant_beta_access(self):
+        self.assertEqual(settings.ACCOUNT_EMAIL_VERIFICATION, "mandatory")
+        invite = BetaInvite.objects.get(slot=1)
+        with override_settings(
+            EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend"
+        ):
+            response = self.client.post(
+                reverse("register"),
+                self.signup_data("newstudent"),
+            )
 
-    def test_valid_invite_opens_signup_page(self):
-        response = self.client.get(
-            f"{reverse('register')}?invite={self.invite.token}"
-        )
+        self.assertEqual(response.status_code, 302)
+        self.assertNotEqual(response.url, reverse("dashboard"))
+        user = get_user_model().objects.get(username="newstudent")
+        address = EmailAddress.objects.get(user=user)
+        invite.refresh_from_db()
+        self.assertTrue(address.primary)
+        self.assertFalse(address.verified)
+        self.assertFalse(user.beta_lifetime_access)
+        self.assertIsNone(invite.claimed_by)
+        self.assertNotIn("_auth_user_id", self.client.session)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(user.email, mail.outbox[0].to)
 
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(
-            response,
-            "account/signup.html",
+        login_response = self.client.post(
+            reverse("login"),
+            {"login": user.username, "password": self.password},
         )
-        self.assertContains(
-            response,
-            f'value="{self.invite.token}"',
-        )
+        if login_response.status_code == 302:
+            self.assertNotEqual(login_response.url, reverse("dashboard"))
+        self.assertNotIn("_auth_user_id", self.client.session)
 
-    def test_valid_invite_creates_user_and_is_claimed(self):
-        response = self.client.post(
-            reverse("register"),
-            self.signup_data(
-                "newstudent",
-                self.invite.token,
-            ),
-        )
+    def test_standard_allauth_signup_url_also_accepts_public_signup(self):
+        with override_settings(
+            EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend"
+        ):
+            response = self.client.post(
+                reverse("account_signup"),
+                self.signup_data("anotherstudent"),
+            )
 
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(
+            get_user_model().objects.filter(
+                username="anotherstudent"
+            ).exists()
+        )
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_confirmation_link_is_required_before_account_access(self):
+        with override_settings(
+            EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend"
+        ):
+            self.client.post(
+                reverse("register"),
+                self.signup_data("verifiedstudent"),
+            )
+
+        user = get_user_model().objects.get(username="verifiedstudent")
+        self.assertFalse(EmailAddress.objects.get(user=user).verified)
+        link = re.search(
+            r"https?://[^\s]+/accounts/confirm-email/[^\s]+",
+            mail.outbox[0].body,
+        )
+        self.assertIsNotNone(link)
+        path = urlsplit(link.group(0)).path
+
+        self.client.get(path)
+        self.assertFalse(EmailAddress.objects.get(user=user).verified)
+        response = self.client.post(path)
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(EmailAddress.objects.get(user=user).verified)
+
+        self.client.logout()
+        login_response = self.client.post(
+            reverse("login"),
+            {"login": user.username, "password": self.password},
+        )
         self.assertRedirects(
-            response,
+            login_response,
             reverse("dashboard"),
             fetch_redirect_response=False,
         )
 
-        new_user = get_user_model().objects.get(
-            username="newstudent"
-        )
-        email_address = EmailAddress.objects.get(
-            user=new_user,
-            email="newstudent@example.com",
-        )
+    def test_old_unclaimed_invite_link_does_not_grant_lifetime_access(self):
+        invite = BetaInvite.objects.get(slot=1)
+        with override_settings(
+            EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend"
+        ):
+            response = self.client.post(
+                f"{reverse('register')}?invite={invite.token}",
+                {
+                    **self.signup_data("ordinary"),
+                    "invite_token": str(invite.token),
+                },
+            )
 
-        self.invite.refresh_from_db()
-
-        self.assertEqual(self.invite.claimed_by, new_user)
-        self.assertIsNotNone(self.invite.claimed_at)
-        self.assertTrue(email_address.primary)
-        self.assertFalse(email_address.verified)
-
-    def test_used_invite_cannot_create_another_user(self):
-        self.client.post(
-            reverse("register"),
-            self.signup_data(
-                "firststudent",
-                self.invite.token,
-            ),
-        )
-        self.client.logout()
-
-        self.client.post(
-            reverse("register"),
-            self.signup_data(
-                "secondstudent",
-                self.invite.token,
-            ),
-        )
-
-        self.assertTrue(
-            get_user_model().objects.filter(
-                username="firststudent"
-            ).exists()
-        )
-        self.assertFalse(
-            get_user_model().objects.filter(
-                username="secondstudent"
-            ).exists()
-        )
-
-        self.invite.refresh_from_db()
-        self.assertEqual(
-            self.invite.claimed_by.username,
-            "firststudent",
-        )
-
-    def test_inactive_invite_cannot_create_user(self):
-        self.invite.is_active = False
-        self.invite.save(update_fields=["is_active"])
-
-        self.client.post(
-            reverse("register"),
-            self.signup_data(
-                "blockedstudent",
-                self.invite.token,
-            ),
-        )
-
-        self.assertFalse(
-            get_user_model().objects.filter(
-                username="blockedstudent"
-            ).exists()
-        )
-
-    def test_post_without_invite_cannot_create_user(self):
-        self.client.post(
-            reverse("register"),
-            self.signup_data("uninvitedstudent"),
-        )
-
-        self.assertFalse(
-            get_user_model().objects.filter(
-                username="uninvitedstudent"
-            ).exists()
-        )
+        self.assertEqual(response.status_code, 302)
+        user = get_user_model().objects.get(username="ordinary")
+        invite.refresh_from_db()
+        self.assertFalse(user.beta_lifetime_access)
+        self.assertIsNone(invite.claimed_by)
