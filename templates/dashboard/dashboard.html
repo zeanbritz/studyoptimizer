@@ -330,7 +330,6 @@
 
         .today-plan-header h2 { margin: 0; color: #24698f; font-size: 30px; line-height: 1.15; }
         .today-plan-header p { margin: 0; color: #5f7f90; font-size: 13px; font-weight: 600; }
-        .review-budget-note { margin: 0 0 16px; padding: 12px 15px; border: 1px solid #dbe8dc; border-radius: 11px; background: #f5faf4; color: #47614a; font-size: 13px; line-height: 1.5; }
         .review-capacity-warning { margin: -5px 0 16px; padding: 12px 15px; border: 1px solid #ead8a6; border-radius: 11px; background: #fffaf0; color: #72561d; font-size: 13px; line-height: 1.5; }
         .today-plan-columns { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 15px; }
 
@@ -926,16 +925,6 @@
                 </div>
 
                 {% if onboarding_complete and review_plan %}
-                    <p class="review-budget-note">
-                        Today: {{ review_plan.available_minutes }} minutes available; about {{ review_plan.summary_minutes }} minutes reserved for textbook work and up to {{ review_plan.review_minutes }} minutes for reviews.
-                        {% if review_waiting_count %}
-                            {{ review_waiting_count }} due item{{ review_waiting_count|pluralize }} will wait for later sessions. You can still practise extra from Review.
-                        {% endif %}
-                        {% if review_plan.available_minutes == 0 %}
-                            Set your study days and times on Subjects to build a daily review batch.
-                        {% endif %}
-                        These are estimates, using about 3 minutes per textbook page and extra time for difficult reviews.
-                    </p>
                     {% if review_plan.summary_shortfall_minutes %}
                         <p class="review-capacity-warning">
                             Today's estimated textbook work exceeds your saved study time, so no reviews fit in the scheduled batch. You can adjust your study time or textbook goal, or practise extra from Review.
