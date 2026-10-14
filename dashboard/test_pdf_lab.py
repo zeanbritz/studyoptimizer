@@ -8,12 +8,19 @@ from django.urls import reverse
 from pypdf import PdfWriter
 from reportlab.pdfgen import canvas
 
-from learning.models import Definition, Formula, FormulaVariable, KnowledgeUnit, Subject
+from learning.models import (
+    BulletList, Comparison, Definition, Formula, FormulaVariable,
+    KnowledgeUnit, Note, StepList, Subject,
+)
 
 from .definition_detection import find_definition_candidates
 from .formula_detection import equation_to_structure, find_formula_candidates
 from .models import SubjectTextbook
 from .pdf_lab_session import SESSION_KEY
+from .structured_detection import (
+    find_comparison_candidates, find_list_candidates,
+    find_note_candidates, find_step_candidates,
+)
 
 
 class DefinitionDetectionTests(SimpleTestCase):
@@ -71,6 +78,44 @@ class FormulaDetectionTests(SimpleTestCase):
             equation_to_structure("a = b = c")
 
 
+class StructuredDetectionTests(SimpleTestCase):
+    def test_sample_style_list_steps_note_and_comparison(self):
+        page = (
+            "Assumptions to check\n"
+            "Mix each chamber thoroughly.\n"
+            "The concentration difference stays steady.\n"
+            "Worked method for estimating permeability\n"
+            "1     Record the chamber concentrations\n"
+            "      Use two samples.\n"
+            "2     Calculate permeability\n"
+            "      Divide diffusivity by thickness.\n"
+            "Two transport mechanisms compared\n"
+            "Feature          Passive diffusion          Carrier transport\n"
+            "Driving force    Concentration difference          Coupled gradient\n"
+            "Saturation       Not expected in this model     Often saturates\n"
+            "Study note. Check the units before using the equations.\n"
+        )
+        lists = find_list_candidates(page, 2)
+        steps = find_step_candidates(page, 2)
+        notes = find_note_candidates(page, 2)
+        comparisons = find_comparison_candidates(page, 2)
+        self.assertEqual(len(lists), 1)
+        self.assertEqual(len(lists[0]["items"]), 2)
+        self.assertEqual(len(steps), 1)
+        self.assertEqual(steps[0]["steps"][1]["text"], "Calculate permeability")
+        self.assertEqual(len(notes), 1)
+        self.assertEqual(len(comparisons), 1)
+        self.assertEqual(comparisons[0]["columns"], ["Passive diffusion", "Carrier transport"])
+        self.assertEqual(len(comparisons[0]["rows"]), 2)
+
+    def test_unmarked_prose_is_not_a_structured_suggestion(self):
+        prose = "An experiment can include several measurements.\nThese values may be compared later."
+        self.assertEqual(find_list_candidates(prose, 1), [])
+        self.assertEqual(find_step_candidates(prose, 1), [])
+        self.assertEqual(find_note_candidates(prose, 1), [])
+        self.assertEqual(find_comparison_candidates(prose, 1), [])
+
+
 class DefinitionPdfLabTests(TestCase):
     def setUp(self):
         users = get_user_model()
@@ -122,6 +167,52 @@ class DefinitionPdfLabTests(TestCase):
                 "DIFFUSION", "J = -D (dC/dx)",
                 "MEMBRANE", "P = D/L", "|J| = P (C1 - C2)",
             ]]),
+            "start_page": "1", "pages_to_scan": "1",
+            "book_name": book_name, "chapter": chapter,
+        })
+        self.assertEqual(response.status_code, 200)
+        return response, self.client.session[SESSION_KEY]["id"]
+
+    @staticmethod
+    def structured_pdf_upload():
+        buffer = BytesIO()
+        document = canvas.Canvas(buffer, pageCompression=0)
+        y = 780
+
+        def line(text, x=50, gap=22):
+            nonlocal y
+            document.drawString(x, y, text)
+            y -= gap
+
+        line("Assumptions to check")
+        line("Mix each chamber thoroughly so the sample represents the whole chamber.")
+        line("The concentration difference remains steady during measurement.")
+        line("Worked method for estimating permeability")
+        line("1     Record the chamber concentrations")
+        line("Use two samples from the chambers.", x=70)
+        line("2     Calculate permeability")
+        line("Divide diffusivity by thickness.", x=70)
+        line("Two transport mechanisms compared")
+        document.drawString(50, y, "Feature")
+        document.drawString(220, y, "Passive diffusion")
+        document.drawString(410, y, "Carrier transport")
+        y -= 22
+        document.drawString(50, y, "Driving force")
+        document.drawString(220, y, "Concentration difference")
+        document.drawString(410, y, "Coupled gradient")
+        y -= 22
+        document.drawString(50, y, "Saturation")
+        document.drawString(220, y, "Not expected")
+        document.drawString(410, y, "Often saturates")
+        y -= 22
+        line("Study note. Check the units and assumptions before using these equations.")
+        document.showPage()
+        document.save()
+        return SimpleUploadedFile("structured.pdf", buffer.getvalue(), content_type="application/pdf")
+
+    def scan_structured(self, book_name="", chapter=""):
+        response = self.client.post(self.url, {
+            "pdf_file": self.structured_pdf_upload(),
             "start_page": "1", "pages_to_scan": "1",
             "book_name": book_name, "chapter": chapter,
         })
@@ -211,7 +302,7 @@ class DefinitionPdfLabTests(TestCase):
         self.assertEqual(self.client.post(student_url).status_code, 404)
         page = self.client.get(reverse("subject_detail", args=[0]))
         self.assertEqual(page.status_code, 200)
-        self.assertNotContains(page, "Scan PDF for definitions and formulas")
+        self.assertNotContains(page, "Scan PDF for learning items")
 
     def test_superuser_cannot_scan_another_users_subject(self):
         response = self.client.get(reverse("definition_pdf_lab", args=[self.student_subject.pk]))
@@ -224,7 +315,7 @@ class DefinitionPdfLabTests(TestCase):
     def test_superuser_sees_button_on_subject_page(self):
         page = self.client.get(reverse("subject_detail", args=[0]))
         self.assertEqual(page.status_code, 200)
-        self.assertContains(page, "Scan PDF for definitions and formulas")
+        self.assertContains(page, "Scan PDF for learning items")
         self.assertContains(page, self.url)
 
     def test_add_one_creates_reviewable_definition_and_cannot_duplicate(self):
@@ -412,3 +503,98 @@ class DefinitionPdfLabTests(TestCase):
         response = self.client.post(self.url, {"action": "add_formula_all", "scan_id": scan_id})
         self.assertContains(response, "manual entry")
         self.assertEqual(Formula.objects.count(), 0)
+
+    def test_structured_preview_uses_collapsed_count_cards(self):
+        response, _ = self.scan_structured()
+        scan = response.context["scan"]
+        for key in ("list_candidates", "step_candidates", "note_candidates", "comparison_candidates"):
+            self.assertEqual(len(scan[key]), 1, key)
+        self.assertContains(response, 'class="result-group kind-list"')
+        self.assertContains(response, 'class="result-group kind-comparison"')
+        self.assertContains(response, "1 detected")
+        self.assertContains(response, "Image-only PDFs need OCR")
+        self.assertNotContains(response, "For a long textbook, scan one chapter at a time")
+
+    def test_structured_items_can_be_added_individually_and_in_batches(self):
+        SubjectTextbook.objects.create(subject=self.subject, name="Science Reader", page_count=200)
+        _, scan_id = self.scan_structured("Science Reader", "Chapter 4")
+        self.assertRedirects(self.client.post(self.url, {
+            "action": "add_list_one", "scan_id": scan_id, "candidate_index": "0",
+        }), self.url)
+        for kind in ("list", "steps", "note", "comparison"):
+            self.assertRedirects(self.client.post(self.url, {
+                "action": f"add_{kind}_all", "scan_id": scan_id,
+            }), self.url)
+        self.assertEqual(BulletList.objects.count(), 1)
+        self.assertEqual(BulletList.objects.get().items.count(), 2)
+        self.assertEqual(StepList.objects.count(), 1)
+        self.assertEqual(StepList.objects.get().steps.count(), 2)
+        self.assertEqual(Note.objects.count(), 1)
+        self.assertEqual(Comparison.objects.count(), 1)
+        self.assertEqual(Comparison.objects.get().columns.count(), 2)
+        self.assertEqual(Comparison.objects.get().rows.count(), 2)
+        for model in (BulletList, StepList, Note, Comparison):
+            self.assertEqual(model.objects.get().book_name, "Science Reader")
+            self.assertEqual(model.objects.get().chapter, "Chapter 4")
+        self.assertContains(self.client.get(self.url), "Edit saved comparison")
+        _, new_scan_id = self.scan_structured("Science Reader", "Chapter 4")
+        for kind in ("list", "steps", "note", "comparison"):
+            self.client.post(self.url, {"action": f"add_{kind}_all", "scan_id": new_scan_id})
+        self.assertEqual((BulletList.objects.count(), StepList.objects.count(), Note.objects.count(), Comparison.objects.count()), (1, 1, 1, 1))
+
+    def test_structured_editor_can_correct_each_type_before_adding(self):
+        _, scan_id = self.scan_structured()
+        cases = {
+            "list": {
+                "title": "Corrected assumptions", "entry_text": ["First item", "Second item"],
+                "entry_description": ["", ""],
+            },
+            "steps": {
+                "title": "Corrected method", "entry_text": ["First step", "Second step"],
+                "entry_description": ["Check inputs", "Check output"],
+            },
+            "note": {"title": "Corrected note", "content": "A corrected note with enough detail."},
+            "comparison": {
+                "title": "Corrected comparison", "column_name": ["Option A", "Option B"],
+                "row_name": ["Speed"], "cell_left": ["Slow"], "cell_right": ["Fast"],
+            },
+        }
+        for kind, changes in cases.items():
+            editor = reverse("edit_pdf_suggestion", args=[self.subject.pk, kind, 0])
+            preview = self.client.get(editor, {"scan_id": scan_id})
+            self.assertEqual(preview.status_code, 200)
+            self.assertContains(preview, "Review detected")
+            response = self.client.post(editor, {"scan_id": scan_id, **changes})
+            self.assertRedirects(response, self.url)
+            self.assertIn("0", self.client.session[SESSION_KEY][{
+                "list": "saved_lists", "steps": "saved_steps",
+                "note": "saved_notes", "comparison": "saved_comparisons",
+            }[kind]])
+        self.assertEqual(BulletList.objects.get().question, "Corrected assumptions")
+        self.assertEqual(StepList.objects.get().steps.first().description, "Check inputs")
+        self.assertEqual(Note.objects.get().content, "A corrected note with enough detail.")
+        self.assertEqual(Comparison.objects.get().columns.first().name, "Option A")
+
+    def test_structured_import_rejects_stale_scan_and_is_atomic(self):
+        _, scan_id = self.scan_structured()
+        response = self.client.post(self.url, {"action": "add_list_all", "scan_id": "stale"})
+        self.assertContains(response, "no longer available")
+        session = self.client.session
+        state = session[SESSION_KEY]
+        state["scan"]["list_candidates"].append({"title": "Broken", "items": []})
+        session[SESSION_KEY] = state
+        session.save()
+        response = self.client.post(self.url, {"action": "add_list_all", "scan_id": scan_id})
+        self.assertContains(response, "needs between 1 and 20 entries")
+        self.assertEqual(BulletList.objects.count(), 0)
+        self.assertEqual(KnowledgeUnit.objects.count(), 0)
+
+    def test_structured_editor_is_private_and_subject_scoped(self):
+        _, scan_id = self.scan_structured()
+        editor = reverse("edit_pdf_suggestion", args=[self.subject.pk, "list", 0])
+        self.assertEqual(self.client.get(editor, {"scan_id": "stale"}).status_code, 302)
+        self.assertEqual(self.client.get(reverse(
+            "edit_pdf_suggestion", args=[self.student_subject.pk, "list", 0],
+        ), {"scan_id": scan_id}).status_code, 404)
+        self.client.force_login(self.student)
+        self.assertEqual(self.client.get(editor, {"scan_id": scan_id}).status_code, 404)

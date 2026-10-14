@@ -6,6 +6,14 @@ from time import time
 
 SESSION_KEY = "pdf_definition_lab_scan"
 MAX_AGE_SECONDS = 24 * 60 * 60
+KIND_KEYS = {
+    "definition": ("candidates", "saved"),
+    "formula": ("formula_candidates", "saved_formulas"),
+    "list": ("list_candidates", "saved_lists"),
+    "steps": ("step_candidates", "saved_steps"),
+    "note": ("note_candidates", "saved_notes"),
+    "comparison": ("comparison_candidates", "saved_comparisons"),
+}
 
 
 def save_scan(request, subject_id, scan, file_name, book_name="", chapter=""):
@@ -19,6 +27,10 @@ def save_scan(request, subject_id, scan, file_name, book_name="", chapter=""):
         "chapter": chapter,
         "saved": {},
         "saved_formulas": {},
+        "saved_lists": {},
+        "saved_steps": {},
+        "saved_notes": {},
+        "saved_comparisons": {},
     }
     request.session[SESSION_KEY] = state
     return state
@@ -42,9 +54,9 @@ def get_scan(request, subject_id, scan_id=None):
 
 def get_candidate(request, subject_id, scan_id, index, kind="definition"):
     state = get_scan(request, subject_id, scan_id)
-    if kind not in {"definition", "formula"}:
+    if kind not in KIND_KEYS:
         return None
-    key = "candidates" if kind == "definition" else "formula_candidates"
+    key = KIND_KEYS[kind][0]
     try:
         index = int(index)
     except (TypeError, ValueError):
@@ -59,7 +71,7 @@ def mark_saved(request, subject_id, scan_id, index, item_id, kind="definition"):
     state = get_scan(request, subject_id, scan_id)
     if state is None or get_candidate(request, subject_id, scan_id, index, kind) is None:
         return False
-    key = "saved" if kind == "definition" else "saved_formulas"
+    key = KIND_KEYS[kind][1]
     state.setdefault(key, {})[str(index)] = item_id
     request.session[SESSION_KEY] = state
     return True

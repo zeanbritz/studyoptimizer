@@ -1,0 +1,133 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Review PDF {{ label }} - StudiGarden</title>
+    <link rel="icon" href="{% static 'images/favicon.png' %}">
+    <link rel="stylesheet" href="{% static 'dashboard/css/sidebar.css' %}">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        body { margin: 0; background: #edf1f3; color: #263246; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; }
+        .app { display: flex; min-height: 100vh; }
+        .main { flex: 1; min-width: 0; padding: 30px 40px 64px; }
+        .page { max-width: 850px; margin: 0 auto; }
+        .hero { padding: 28px 30px; border-radius: 17px; border-bottom: 5px solid #222b45; background: linear-gradient(110deg, #303a5a, #455578); color: white; }
+        .hero p { margin: 0 0 8px; color: #d8e3ed; font-size: 12px; }
+        h1 { margin: 0; font-size: clamp(24px, 4vw, 32px); }
+        .card { margin-top: 20px; padding: 25px; border: 1px solid #d8e0e3; border-top: 3px solid #58b82a; border-bottom: 4px solid #c4cfd4; border-radius: 15px; background: #f8fafb; }
+        .intro { margin: 0 0 22px; color: #647178; font-size: 13px; line-height: 1.55; }
+        .field { margin-bottom: 17px; }
+        label { display: block; margin-bottom: 7px; font-size: 12px; font-weight: 800; }
+        input, select, textarea { width: 100%; min-height: 42px; padding: 10px 12px; border: 1px solid #cbd5d9; border-bottom: 3px solid #b8c5ca; border-radius: 9px; background: white; color: #263246; font: inherit; font-size: 13px; }
+        textarea { min-height: 140px; line-height: 1.5; resize: vertical; }
+        input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid rgba(39,143,211,.3); outline-offset: 3px; }
+        .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+        h2 { margin: 24px 0 13px; font-size: 18px; }
+        .entry { margin: 10px 0; padding: 14px; border: 1px solid #d8e0e3; border-radius: 10px; background: white; }
+        .entry-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+        .entry-grid .field, .entry .field { margin-bottom: 0; }
+        .entry .field + .field { margin-top: 10px; }
+        .comparison-row .field + .field { margin-top: 0; }
+        .error { margin-bottom: 18px; padding: 12px 14px; border: 1px solid #e7b9b9; border-radius: 9px; background: #fff1f1; color: #a93636; font-size: 12px; font-weight: 700; }
+        .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 25px; }
+        .button { display: inline-flex; justify-content: center; align-items: center; min-height: 42px; padding: 10px 16px; border: 1px solid #b9cbd4; border-bottom-width: 3px; border-radius: 9px; background: white; color: #176f9f; font: inherit; font-size: 12px; font-weight: 800; text-decoration: none; cursor: pointer; }
+        .button.primary { border-color: #3f8f1d; background: #58b82a; color: white; }
+        .hint { color: #687278; font-size: 11px; line-height: 1.5; }
+        @media (max-width: 700px) { .main { padding: 20px 16px 45px; } .two, .entry-grid { grid-template-columns: 1fr; } .card { padding: 19px; } }
+    </style>
+</head>
+<body>
+<div class="app">
+    {% include 'partials/sidebar.html' with active_page='summarize' %}
+    <main class="main"><div class="page">
+        <header class="hero">
+            <p>Private PDF lab · {{ subject.name }}</p>
+            <h1>Review detected {{ label }}</h1>
+        </header>
+        <section class="card">
+            <p class="intro">Check and correct this suggestion before adding it to your subject. Blank entry rows are ignored.</p>
+            {% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="scan_id" value="{{ scan_id }}">
+                <div class="field"><label for="item-title">Name</label><input id="item-title" name="title" maxlength="255" value="{{ item.title }}" required></div>
+
+                {% if kind == 'list' or kind == 'steps' %}
+                <h2>{% if kind == 'list' %}List items{% else %}Steps{% endif %}</h2>
+                <div id="entry-list">
+                    {% if kind == 'list' %}
+                        {% for entry in item.items %}
+                        <div class="entry">
+                            <div class="field"><label>Item {{ forloop.counter }}</label><input name="entry_text" maxlength="255" value="{{ entry.text }}"></div>
+                            <div class="field"><label>Description (optional)</label><input name="entry_description" maxlength="500" value="{{ entry.description }}"></div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        {% for entry in item.steps %}
+                        <div class="entry">
+                            <div class="field"><label>Step {{ forloop.counter }}</label><input name="entry_text" maxlength="255" value="{{ entry.text }}"></div>
+                            <div class="field"><label>Description (optional)</label><input name="entry_description" maxlength="500" value="{{ entry.description }}"></div>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                <button class="button" type="button" data-add="entry-list" data-template="entry-template">Add another</button>
+                <template id="entry-template"><div class="entry">
+                    <div class="field"><label>New entry</label><input name="entry_text" maxlength="255"></div>
+                    <div class="field"><label>Description (optional)</label><input name="entry_description" maxlength="500"></div>
+                </div></template>
+                {% elif kind == 'note' %}
+                <div class="field"><label for="note-content">Note</label><textarea id="note-content" name="content" required>{{ item.content }}</textarea></div>
+                {% else %}
+                <h2>Compare two columns</h2>
+                <div class="two">
+                    {% for column in item.columns %}
+                    <div class="field"><label>Column {{ forloop.counter }}</label><input name="column_name" maxlength="255" value="{{ column }}" required></div>
+                    {% endfor %}
+                </div>
+                <h2>Comparison rows</h2>
+                <div id="comparison-rows">
+                    {% for row in item.rows %}
+                    <div class="entry comparison-row"><div class="entry-grid">
+                        <div class="field"><label>Feature</label><input name="row_name" maxlength="255" value="{{ row.name }}"></div>
+                        <div class="field"><label>Column 1</label><input name="cell_left" value="{{ row.cells.0 }}"></div>
+                        <div class="field"><label>Column 2</label><input name="cell_right" value="{{ row.cells.1 }}"></div>
+                    </div></div>
+                    {% endfor %}
+                </div>
+                <button class="button" type="button" data-add="comparison-rows" data-template="comparison-template">Add another row</button>
+                <template id="comparison-template"><div class="entry comparison-row"><div class="entry-grid">
+                    <div class="field"><label>Feature</label><input name="row_name" maxlength="255"></div>
+                    <div class="field"><label>Column 1</label><input name="cell_left"></div>
+                    <div class="field"><label>Column 2</label><input name="cell_right"></div>
+                </div></div></template>
+                {% endif %}
+
+                <h2>Book and chapter</h2>
+                <div class="two">
+                    <div class="field"><label for="item-book">Book (optional)</label>
+                        <select id="item-book" name="book_name"><option value="">No book selected</option>
+                            {% for textbook in textbooks %}<option value="{{ textbook.name }}" {% if book_name == textbook.name %}selected{% endif %}>{{ textbook.name }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="field"><label for="item-chapter">Chapter (optional)</label><input id="item-chapter" name="chapter" maxlength="255" value="{{ chapter }}"></div>
+                </div>
+                <p class="hint">This is a suggestion from selectable PDF text; confirm the content before saving.</p>
+                <div class="actions"><button class="button primary" type="submit">Add {{ label }}</button><a class="button" href="{{ back_url }}">Back to results</a></div>
+            </form>
+        </section>
+    </div></main>
+</div>
+<script>
+document.querySelectorAll('[data-add]').forEach(function (button) {
+    button.addEventListener('click', function () {
+        var container = document.getElementById(button.dataset.add);
+        var template = document.getElementById(button.dataset.template);
+        if (container.children.length < 20) container.appendChild(template.content.cloneNode(true));
+    });
+});
+</script>
+</body>
+</html>

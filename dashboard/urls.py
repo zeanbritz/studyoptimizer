@@ -50,6 +50,11 @@ urlpatterns = [
         name="definition_pdf_lab",
     ),
     path(
+        "subjects/<int:subject_id>/definition-lab/<str:kind>/<int:index>/edit/",
+        pdf_lab_views.edit_pdf_suggestion,
+        name="edit_pdf_suggestion",
+    ),
+    path(
         "subjects/<int:subject_index>/definition/",
         views.definition,
         name="definition",

@@ -18,7 +18,12 @@ from learning.models import Definition, Formula, FormulaVariable, KnowledgeUnit,
 from .definition_detection import find_definition_candidates
 from .formula_detection import equation_to_structure, find_formula_candidates
 from .models import SubjectTextbook
-from .pdf_lab_session import SESSION_KEY, get_scan, save_scan
+from .pdf_lab_session import KIND_KEYS, SESSION_KEY, get_candidate, get_scan, mark_saved, save_scan
+from .structured_detection import (
+    find_comparison_candidates, find_list_candidates,
+    find_note_candidates, find_step_candidates,
+)
+from .structured_import import KINDS, LABELS, import_candidate, normalize_candidate
 
 
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024
@@ -148,12 +153,58 @@ def _import_formulas(request, subject, state, indexes):
     return created, already_present
 
 
+def _import_structured(request, subject, state, kind, indexes):
+    candidates_key, saved_key = KIND_KEYS[kind]
+    candidates = state["scan"].get(candidates_key, [])
+    saved = dict(state.get(saved_key) or {})
+    created = already_present = 0
+    with transaction.atomic():
+        Subject.objects.select_for_update().get(pk=subject.pk)
+        for index in indexes:
+            if str(index) in saved:
+                already_present += 1
+                continue
+            item_id, was_created = import_candidate(
+                subject, kind, candidates[index],
+                state.get("book_name", ""), state.get("chapter", ""),
+            )
+            saved[str(index)] = item_id
+            created += int(was_created)
+            already_present += int(not was_created)
+    state[saved_key] = saved
+    request.session[SESSION_KEY] = state
+    return created, already_present
+
+
 def _display_scan(context, state):
     if state is None:
         return
     scan = state["scan"]
     saved = state.get("saved") or {}
     saved_formulas = state.get("saved_formulas") or {}
+    structured_edit_names = {
+        "list": "edit_list", "steps": "edit_steps",
+        "note": "edit_note", "comparison": "edit_comparison",
+    }
+    structured_display = {}
+    for kind in KINDS:
+        candidate_key, saved_key = KIND_KEYS[kind]
+        saved_items = state.get(saved_key) or {}
+        decorated = []
+        for index, item in enumerate(scan.get(candidate_key, [])):
+            saved_id = saved_items.get(str(index))
+            decorated.append({
+                **item, "index": index, "saved_id": saved_id,
+                "saved_edit_url": (
+                    reverse(structured_edit_names[kind], args=[saved_id])
+                    if saved_id else ""
+                ),
+                "edit_before_url": (
+                    reverse("edit_pdf_suggestion", args=[state["subject_id"], kind, index])
+                    + "?scan_id=" + state["id"]
+                ),
+            })
+        structured_display[candidate_key] = decorated
     context["scan"] = {
         **scan,
         "candidates": [
@@ -164,6 +215,7 @@ def _display_scan(context, state):
             {**item, "index": index, "saved_formula_id": saved_formulas.get(str(index))}
             for index, item in enumerate(scan.get("formula_candidates", []))
         ],
+        **structured_display,
     }
     context["scan_id"] = state["id"]
     context["file_name"] = state["file_name"]
@@ -197,6 +249,9 @@ def _scan_pdf(upload, start_page, pages_to_scan):
     last_page = min(total_pages, start_page + pages_to_scan - 1)
     results, formula_results = [], []
     seen, seen_formulas = set(), set()
+    structured = {KIND_KEYS[kind][0]: [] for kind in KINDS}
+    seen_structured = {kind: set() for kind in KINDS}
+    structured_truncated = {kind: False for kind in KINDS}
     text_pages = 0
     text_sample = ""
     truncated = formula_truncated = False
@@ -233,7 +288,31 @@ def _scan_pdf(upload, start_page, pages_to_scan):
                 formula_truncated = True
                 break
             formula_results.append(candidate)
-        if truncated and formula_truncated:
+        try:
+            layout_text = reader.pages[page_number - 1].extract_text(extraction_mode="layout") or text
+        except (PdfReadError, ValueError, TypeError, KeyError, IndexError):
+            layout_text = text
+        detectors = {
+            "list": find_list_candidates(layout_text[:100_000], page_number),
+            "steps": find_step_candidates(layout_text[:100_000], page_number),
+            "note": find_note_candidates(layout_text[:100_000], page_number),
+            "comparison": find_comparison_candidates(layout_text[:100_000], page_number),
+        }
+        for kind, candidates in detectors.items():
+            bucket = structured[KIND_KEYS[kind][0]]
+            for candidate in candidates:
+                key = json.dumps(
+                    {field: value for field, value in candidate.items() if field not in {"page", "confidence"}},
+                    sort_keys=True, ensure_ascii=False,
+                )
+                if key in seen_structured[kind]:
+                    continue
+                seen_structured[kind].add(key)
+                if len(bucket) >= MAX_CANDIDATES:
+                    structured_truncated[kind] = True
+                    break
+                bucket.append(candidate)
+        if truncated and formula_truncated and all(structured_truncated.values()):
             break
 
     return {
@@ -244,9 +323,11 @@ def _scan_pdf(upload, start_page, pages_to_scan):
         "text_pages": text_pages,
         "candidates": results,
         "formula_candidates": formula_results,
+        **structured,
         "text_sample": text_sample,
         "truncated": truncated,
         "formula_truncated": formula_truncated,
+        "structured_truncated": any(structured_truncated.values()),
     }
 
 
@@ -271,16 +352,22 @@ def definition_pdf_lab(request, subject_id):
     state = get_scan(request, subject.pk)
     if request.method == "POST":
         action = request.POST.get("action", "scan")
-        if action in {"add_one", "add_all", "add_formula_one", "add_formula_all"}:
+        structured_actions = {
+            f"add_{kind}_{mode}"
+            for kind in KINDS for mode in ("one", "all")
+        }
+        if action in {"add_one", "add_all", "add_formula_one", "add_formula_all"} | structured_actions:
             state = get_scan(request, subject.pk, request.POST.get("scan_id") or "")
             if state is None:
                 context["error"] = "This PDF preview is no longer available. Scan the PDF again."
             else:
                 try:
-                    formula_action = action.startswith("add_formula")
-                    candidates = state["scan"].get(
-                        "formula_candidates" if formula_action else "candidates", []
+                    kind = (
+                        "formula" if action.startswith("add_formula")
+                        else action[4:].rsplit("_", 1)[0] if action in structured_actions
+                        else "definition"
                     )
+                    candidates = state["scan"].get(KIND_KEYS[kind][0], [])
                     if action.endswith("one"):
                         index = int(request.POST.get("candidate_index", ""))
                         if not 0 <= index < len(candidates):
@@ -288,11 +375,16 @@ def definition_pdf_lab(request, subject_id):
                         indexes = [index]
                     else:
                         indexes = range(len(candidates))
-                    import_items = _import_formulas if formula_action else _import_candidates
-                    created, already_present = import_items(
-                        request, subject, state, indexes,
-                    )
-                    item_name = "formula" if formula_action else "definition"
+                    if kind in KINDS:
+                        created, already_present = _import_structured(
+                            request, subject, state, kind, indexes,
+                        )
+                    else:
+                        import_items = _import_formulas if kind == "formula" else _import_candidates
+                        created, already_present = import_items(
+                            request, subject, state, indexes,
+                        )
+                    item_name = LABELS.get(kind, kind)
                     messages.success(
                         request,
                         f"{created} {item_name}{'s' if created != 1 else ''} added to "
@@ -301,7 +393,7 @@ def definition_pdf_lab(request, subject_id):
                     )
                     return redirect("definition_pdf_lab", subject_id=subject.pk)
                 except (TypeError, ValueError, IndexError) as exc:
-                    context["error"] = str(exc) or "Could not add this definition."
+                    context["error"] = str(exc) or "Could not add this item."
         elif action == "scan":
             upload = request.FILES.get("pdf_file")
             context["start_page"] = request.POST.get("start_page", "1")
@@ -343,3 +435,84 @@ def definition_pdf_lab(request, subject_id):
 
     _display_scan(context, state)
     return render(request, "dashboard/definition_pdf_lab.html", context)
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def edit_pdf_suggestion(request, subject_id, kind, index):
+    """Review and correct a structured suggestion before saving it."""
+    if not request.user.is_superuser or kind not in KINDS:
+        raise Http404()
+    subject = get_object_or_404(Subject, pk=subject_id, user=request.user)
+    scan_id = request.POST.get("scan_id") if request.method == "POST" else request.GET.get("scan_id")
+    state = get_scan(request, subject.pk, scan_id or "")
+    candidate = get_candidate(request, subject.pk, scan_id or "", index, kind)
+    if state is None or candidate is None:
+        messages.error(request, "This PDF preview has expired. Scan the PDF again.")
+        return redirect("definition_pdf_lab", subject_id=subject.pk)
+    saved_id = (state.get(KIND_KEYS[kind][1]) or {}).get(str(index))
+    if saved_id:
+        edit_names = {
+            "list": "edit_list", "steps": "edit_steps",
+            "note": "edit_note", "comparison": "edit_comparison",
+        }
+        return redirect(edit_names[kind], saved_id)
+
+    try:
+        item = normalize_candidate(kind, candidate)
+    except ValueError as exc:
+        messages.error(request, str(exc))
+        return redirect("definition_pdf_lab", subject_id=subject.pk)
+    book_name = state.get("book_name", "")
+    chapter = state.get("chapter", "")
+    error = None
+    textbooks = SubjectTextbook.objects.filter(subject=subject).order_by("created", "id")
+    if request.method == "POST":
+        book_name = request.POST.get("book_name", "").strip()
+        chapter = request.POST.get("chapter", "").strip()
+        item["title"] = request.POST.get("title", "").strip()
+        if kind in {"list", "steps"}:
+            texts = request.POST.getlist("entry_text")
+            descriptions = request.POST.getlist("entry_description")
+            item["items" if kind == "list" else "steps"] = [
+                {"text": text.strip(), "description": (
+                    descriptions[position].strip() if position < len(descriptions) else ""
+                )}
+                for position, text in enumerate(texts) if text.strip()
+            ]
+        elif kind == "note":
+            item["content"] = request.POST.get("content", "").strip()
+        else:
+            item["columns"] = [name.strip() for name in request.POST.getlist("column_name")]
+            row_names = request.POST.getlist("row_name")
+            left_cells = request.POST.getlist("cell_left")
+            right_cells = request.POST.getlist("cell_right")
+            item["rows"] = [
+                {"name": name.strip(), "cells": [
+                    left_cells[position].strip() if position < len(left_cells) else "",
+                    right_cells[position].strip() if position < len(right_cells) else "",
+                ]}
+                for position, name in enumerate(row_names) if name.strip()
+            ]
+        try:
+            if book_name and not textbooks.filter(name=book_name).exists():
+                raise ValueError("The selected textbook does not belong to this subject.")
+            if len(chapter) > 255:
+                raise ValueError("The chapter cannot be longer than 255 characters.")
+            item = normalize_candidate(kind, item)
+            with transaction.atomic():
+                Subject.objects.select_for_update().get(pk=subject.pk)
+                item_id, created = import_candidate(
+                    subject, kind, item, book_name, chapter,
+                )
+            mark_saved(request, subject.pk, scan_id, index, item_id, kind=kind)
+            messages.success(request, f"{'Added' if created else 'Already present'}: {item['title']}.")
+            return redirect("definition_pdf_lab", subject_id=subject.pk)
+        except ValueError as exc:
+            error = str(exc)
+    return render(request, "dashboard/edit_pdf_suggestion.html", {
+        "subject": subject, "kind": kind, "label": LABELS[kind], "item": item,
+        "scan_id": scan_id, "index": index, "book_name": book_name,
+        "chapter": chapter, "textbooks": textbooks, "error": error,
+        "back_url": reverse("definition_pdf_lab", args=[subject.pk]),
+    })
