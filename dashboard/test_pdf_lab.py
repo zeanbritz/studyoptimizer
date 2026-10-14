@@ -375,7 +375,7 @@ class DefinitionPdfLabTests(TestCase):
         })
         self.assertContains(response, "Password-protected PDFs are not supported")
 
-    def test_student_cannot_view_lab_or_button(self):
+    def test_student_sees_lab_upgrade_link_but_cannot_open_it(self):
         self.client.force_login(self.student)
         session = self.client.session
         session["onboarding_profile"] = {"name": "Student"}
@@ -384,11 +384,11 @@ class DefinitionPdfLabTests(TestCase):
         ]
         session.save()
         student_url = reverse("definition_pdf_lab", args=[self.student_subject.pk])
-        self.assertEqual(self.client.get(student_url).status_code, 404)
-        self.assertEqual(self.client.post(student_url).status_code, 404)
+        self.assertRedirects(self.client.get(student_url), reverse("pricing"))
+        self.assertRedirects(self.client.post(student_url), reverse("pricing"))
         page = self.client.get(reverse("subject_detail", args=[0]))
         self.assertEqual(page.status_code, 200)
-        self.assertNotContains(page, "Auto Summarize PDF")
+        self.assertContains(page, "Auto Summarize PDF")
 
     def test_superuser_cannot_scan_another_users_subject(self):
         response = self.client.get(reverse("definition_pdf_lab", args=[self.student_subject.pk]))
@@ -686,4 +686,6 @@ class DefinitionPdfLabTests(TestCase):
             "edit_pdf_suggestion", args=[self.student_subject.pk, "list", 0],
         ), {"scan_id": scan_id}).status_code, 404)
         self.client.force_login(self.student)
-        self.assertEqual(self.client.get(editor, {"scan_id": scan_id}).status_code, 404)
+        self.assertRedirects(
+            self.client.get(editor, {"scan_id": scan_id}), reverse("pricing")
+        )

@@ -1238,14 +1238,21 @@
                         </a>
                     {% endfor %}
 
-                    <form method="POST" class="add-subject-form">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="add_subject">
-                        <button type="submit" class="add-subject">
+                    {% if can_add_subject %}
+                        <form method="POST" class="add-subject-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="add_subject">
+                            <button type="submit" class="add-subject">
+                                <span class="add-subject-plus" aria-hidden="true">+</span>
+                                <span class="add-subject-text">Add Subject</span>
+                            </button>
+                        </form>
+                    {% else %}
+                        <a href="{% url 'pricing' %}" class="add-subject" style="text-decoration: none;">
                             <span class="add-subject-plus" aria-hidden="true">+</span>
-                            <span class="add-subject-text">Add Subject</span>
-                        </button>
-                    </form>
+                            <span class="add-subject-text">Unlock more subjects</span>
+                        </a>
+                    {% endif %}
                 </div>
             </section>
 

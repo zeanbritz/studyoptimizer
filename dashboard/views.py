@@ -21,6 +21,13 @@ from learning.models import (
     Comparison,
 )
 from exams.reminders import due_reminders
+from accounts.entitlements import (
+    FREE_SUBJECT_LIMIT,
+    can_export_subject_summary,
+    can_create_subject,
+    free_learning_item_limit,
+    is_free_student,
+)
 
 from .models import (
     StudyAvailability,
@@ -1465,6 +1472,12 @@ def onboarding(request):
             )
         )
 
+        if is_free_student(request.user) and (
+            subject_count > FREE_SUBJECT_LIMIT
+            or Subject.objects.filter(user=request.user).count() + subject_count > FREE_SUBJECT_LIMIT
+        ):
+            return redirect("pricing")
+
         request.session[
             "onboarding_profile"
         ] = {
@@ -1526,7 +1539,11 @@ def onboarding(request):
 
     return render(
         request,
-        "dashboard/onboarding.html"
+        "dashboard/onboarding.html",
+        {
+            "subject_limit": FREE_SUBJECT_LIMIT if is_free_student(request.user) else 20,
+            "is_free_student": is_free_student(request.user),
+        },
     )
 
 
@@ -1887,6 +1904,9 @@ def goals(request):
 
         elif action == "add_subject":
 
+            if not can_create_subject(request.user, session_subject_count=len(subjects)):
+                return redirect("pricing")
+
             if len(subjects) >= 20:
 
                 return redirect(
@@ -2079,6 +2099,10 @@ def goals(request):
 
             "study_availability":
                 study_availability,
+
+            "can_add_subject": can_create_subject(
+                request.user, session_subject_count=len(subjects)
+            ),
         }
     )
 
@@ -2661,12 +2685,20 @@ def subject_detail(
 
         if subject_name:
 
-            database_subject = (
-                Subject.objects.create(
+            if not can_create_subject(request.user):
+                return redirect("pricing")
+
+            from django.contrib.auth import get_user_model
+            from django.db import transaction
+
+            with transaction.atomic():
+                get_user_model().objects.select_for_update().get(pk=request.user.pk)
+                if not can_create_subject(request.user):
+                    return redirect("pricing")
+                database_subject = Subject.objects.create(
                     user=request.user,
                     name=subject_name,
                 )
-            )
 
     # ========================================================
     # UPDATE DATABASE SUBJECT NAME
@@ -4315,6 +4347,8 @@ def subject_detail(
             "database_subject":
                 database_subject,
 
+            "can_export_pdf": can_export_subject_summary(request.user),
+
             "subject_id":
                 (
                     database_subject.id
@@ -4453,6 +4487,7 @@ def subject_detail(
 # ============================================================
 
 @login_required
+@free_learning_item_limit
 def definition(
     request,
     subject_index

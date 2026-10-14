@@ -344,8 +344,7 @@
 
                 <label>
 
-                    How many subjects are you
-                    taking?
+                    How many subjects would you like to start with?
 
                 </label>
 
@@ -354,10 +353,14 @@
                     type="number"
                     name="subject_count"
                     min="1"
-                    max="20"
-                    placeholder="e.g. 6"
+                    max="{{ subject_limit }}"
+                    placeholder="e.g. 2"
                     required
                 >
+
+                {% if is_free_student %}
+                    <small>The Free plan includes two subjects. <a href="{% url 'pricing' %}">See plans</a></small>
+                {% endif %}
 
             </div>
 

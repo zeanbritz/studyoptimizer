@@ -85,3 +85,15 @@ class MyPlanPageTests(TestCase):
         self.assertContains(response, "Yearly plan")
         self.assertContains(response, "R999 for 12 months")
         self.assertContains(response, "does not renew automatically")
+
+    def test_expired_member_sees_free_plan_without_losing_data_message(self):
+        StudyMembership.objects.create(
+            user=self.user,
+            plan=StudyMembership.Plan.YEARLY,
+            status=StudyMembership.Status.EXPIRED,
+            paid_until=timezone.now() - timedelta(days=1),
+        )
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        self.assertContains(response, "Free account")
+        self.assertContains(response, "saved subjects and learning items remain available")

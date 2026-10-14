@@ -22,7 +22,8 @@ class SubjectSummaryExportTests(TestCase):
     def setUp(self):
         user_model = get_user_model()
         self.student = user_model.objects.create_user(
-            username="summary_student", password="Safe-test-password-123!"
+            username="summary_student", password="Safe-test-password-123!",
+            beta_lifetime_access=True,
         )
         self.other_student = user_model.objects.create_user(
             username="other_student", password="Safe-test-password-123!"
@@ -38,6 +39,12 @@ class SubjectSummaryExportTests(TestCase):
         return KnowledgeUnit.objects.create(
             subject=self.subject, knowledge_type=kind, title=title
         )
+
+    def test_free_student_is_sent_to_pricing_before_export(self):
+        self.student.beta_lifetime_access = False
+        self.student.save(update_fields=["beta_lifetime_access"])
+        response = self.client.get(self.url)
+        self.assertRedirects(response, reverse("pricing"))
 
     def test_exports_are_pdf_downloads_in_both_organizations(self):
         unit = self.add_unit(KnowledgeUnit.KnowledgeType.DEFINITION, "Force")

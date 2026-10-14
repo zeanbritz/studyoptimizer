@@ -36,6 +36,7 @@ from dashboard.models import (
 )
 from dashboard.review_planner import get_daily_review_plan, remaining_review_ids
 from dashboard.pdf_lab_session import get_candidate, get_scan, mark_saved
+from accounts.entitlements import free_learning_item_limit
 
 
 # ============================================================
@@ -296,6 +297,7 @@ def get_variable_meaning_suggestions(
 # ============================================================
 
 @login_required
+@free_learning_item_limit
 def create_formula(
     request,
     subject_id
@@ -1042,6 +1044,7 @@ def delete_formula(request, formula_id):
 # ============================================================
 
 @login_required
+@free_learning_item_limit
 def create_definition(
     request,
     subject_id
@@ -4908,6 +4911,7 @@ def calculate_book_summary_targets(
 # ============================================================
 
 @login_required
+@free_learning_item_limit
 def create_steps(
     request,
     subject_id
@@ -5998,6 +6002,7 @@ def book_summary(
 # ============================================================
 
 @login_required
+@free_learning_item_limit
 def create_list(
     request,
     subject_id
@@ -6748,6 +6753,7 @@ def delete_list(
 # ============================================================
 
 @login_required
+@free_learning_item_limit
 def create_note(
     request,
     subject_id
@@ -8627,6 +8633,7 @@ def random_note_review(
 # ============================================================
 
 @login_required
+@free_learning_item_limit
 def create_comparison(
     request,
     subject_id

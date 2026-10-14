@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
+from .access import ACCESS_FULL, get_study_access_level
 from .models import BetaInvite, StudyMembership
 
 
@@ -21,5 +22,6 @@ def my_plan(request):
         {
             "is_beta_member": is_beta_member,
             "membership": membership,
+            "has_paid_access": get_study_access_level(user) == ACCESS_FULL,
         },
     )

@@ -12,6 +12,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
+from django.shortcuts import redirect
 from django.utils import timezone
 from django.utils.text import slugify
 from django.views.decorators.http import require_GET
@@ -28,6 +29,7 @@ from reportlab.lib.utils import ImageReader
 from PIL import Image, ImageOps
 
 from learning.models import KnowledgeUnit, Note, Subject
+from accounts.entitlements import can_export_subject_summary
 
 
 TYPE_ORDER = (
@@ -340,6 +342,8 @@ def _group_by_book_and_chapter(items):
 @login_required
 @require_GET
 def download_subject_summary(request, subject_id):
+    if not can_export_subject_summary(request.user):
+        return redirect("pricing")
     mode = request.GET.get("organize", "regular")
     if mode not in {"regular", "books"}:
         return HttpResponseBadRequest("Invalid summary organization.")

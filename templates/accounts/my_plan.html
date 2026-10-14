@@ -279,7 +279,7 @@
                         as a thank-you for helping us improve. No subscription or payment details are needed.
                     </p>
 
-                {% elif membership %}
+                {% elif membership and has_paid_access %}
                     <h2 id="current-plan-title">
                         {{ membership.get_plan_display }} plan
                     </h2>
@@ -313,17 +313,21 @@
                     </dl>
 
                     <p class="notice">
-                        If a paid plan ends, your account and existing study material remain available
-                        to view. Editing and new study activity will require an active plan once
-                        subscription access rules are launched.
+                        If a paid plan ends, your account returns to the Free limits. Existing
+                        subjects and study material remain available to view and review; nothing
+                        is deleted because it exceeds a Free limit.
                     </p>
 
                 {% else %}
                     <h2 id="current-plan-title">Free account</h2>
                     <p class="plan-description">
-                        Your account is free to use while paid subscriptions are being prepared.
-                        No payment details are needed.
+                        Create up to 2 subjects and 100 learning items in total. You can review
+                        your saved material as often as you like. PDF export and Auto Summarize
+                        are not included. No payment details are needed.
                     </p>
+                    {% if membership %}
+                        <p class="notice">Your previous paid plan is not active. Your saved subjects and learning items remain available.</p>
+                    {% endif %}
                 {% endif %}
             </section>
 

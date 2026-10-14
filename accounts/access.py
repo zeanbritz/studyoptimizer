@@ -4,6 +4,7 @@ from .models import BetaInvite, StudyMembership
 
 
 ACCESS_NONE = "none"
+ACCESS_FREE = "free"
 ACCESS_READ_ONLY = "read_only"
 ACCESS_FULL = "full"
 
@@ -21,7 +22,7 @@ def has_permanent_free_access(user):
 
 
 def get_study_access_level(user):
-    """Return full, read-only, or no study access."""
+    """Return full, free, or no study access."""
     if not user or not user.is_authenticated or not user.is_active:
         return ACCESS_NONE
 
@@ -30,7 +31,7 @@ def get_study_access_level(user):
 
     membership = StudyMembership.objects.filter(user_id=user.pk).first()
     if membership is None or membership.paid_until is None:
-        return ACCESS_NONE
+        return ACCESS_FREE
 
     now = timezone.now()
     full_access_statuses = {
@@ -50,10 +51,7 @@ def get_study_access_level(user):
         ):
             return ACCESS_FULL
 
-    if membership.paid_until <= now:
-        return ACCESS_READ_ONLY
-
-    return ACCESS_NONE
+    return ACCESS_FREE
 
 
 def has_study_access(user):
@@ -65,5 +63,6 @@ def can_view_existing_study_data(user):
     """Return whether the user may view existing study material."""
     return get_study_access_level(user) in {
         ACCESS_FULL,
+        ACCESS_FREE,
         ACCESS_READ_ONLY,
     }

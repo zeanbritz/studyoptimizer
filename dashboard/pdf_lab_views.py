@@ -10,6 +10,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
+from accounts.entitlements import can_use_pdf_summarizer
 from pypdf import PdfReader
 from pypdf.errors import PdfReadError
 
@@ -367,8 +368,8 @@ def _scan_pdf(upload, start_page, pages_to_scan):
 @login_required
 @require_http_methods(["GET", "POST"])
 def definition_pdf_lab(request, subject_id):
-    if not request.user.is_superuser:
-        raise Http404()
+    if not can_use_pdf_summarizer(request.user):
+        return redirect("pricing")
     subject = get_object_or_404(Subject, pk=subject_id, user=request.user)
     context = {
         "subject": subject,
@@ -474,7 +475,9 @@ def definition_pdf_lab(request, subject_id):
 @require_http_methods(["GET", "POST"])
 def edit_pdf_suggestion(request, subject_id, kind, index):
     """Review and correct a structured suggestion before saving it."""
-    if not request.user.is_superuser or kind not in KINDS:
+    if not can_use_pdf_summarizer(request.user):
+        return redirect("pricing")
+    if kind not in KINDS:
         raise Http404()
     subject = get_object_or_404(Subject, pk=subject_id, user=request.user)
     scan_id = request.POST.get("scan_id") if request.method == "POST" else request.GET.get("scan_id")

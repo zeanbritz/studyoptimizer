@@ -2594,6 +2594,8 @@
         .download-summary-button {
             flex-shrink: 0;
             min-height: 39px;
+            display: inline-flex;
+            align-items: center;
             padding: 8px 13px;
             border: 2px solid var(--green-dark);
             border-bottom-width: 4px;
@@ -2603,6 +2605,7 @@
             font-family: inherit;
             font-size: 12px;
             font-weight: 850;
+            text-decoration: none;
             cursor: pointer;
         }
 
@@ -4005,12 +4008,11 @@
                                 </div>
                                 {% if database_subject %}
                                     <div class="summary-header-actions">
-                                        {% if request.user.is_superuser %}
-                                            <a class="pdf-lab-button"
-                                               href="{% url 'definition_pdf_lab' subject_id=database_subject.id %}">
+                                        <a class="pdf-lab-button"
+                                           href="{% url 'definition_pdf_lab' subject_id=database_subject.id %}">
                                             Auto Summarize PDF
-                                            </a>
-                                        {% endif %}
+                                        </a>
+                                        {% if can_export_pdf %}
                                         <button type="button" class="download-summary-button"
                                                 id="download-summary-button"
                                                 aria-haspopup="dialog"
@@ -4018,6 +4020,12 @@
                                                 onclick="openSummaryExportModal()">
                                             Download summary
                                         </button>
+                                        {% else %}
+                                        <a class="download-summary-button"
+                                           href="{% url 'download_subject_summary' subject_id=database_subject.id %}">
+                                            Download summary
+                                        </a>
+                                        {% endif %}
                                     </div>
                                 {% endif %}
                             </div>
@@ -4680,7 +4688,7 @@
 </div>
 
 
-{% if database_subject %}
+{% if database_subject and can_export_pdf %}
 <div class="modal-overlay" id="summary-export-modal"
      onclick="if (event.target === this) closeSummaryExportModal()">
     <div class="modal" role="dialog" aria-modal="true"
