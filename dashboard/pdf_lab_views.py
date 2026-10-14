@@ -18,6 +18,7 @@ from learning.models import Definition, Formula, FormulaVariable, KnowledgeUnit,
 from .definition_detection import find_definition_candidates
 from .formula_detection import equation_to_structure, find_formula_candidates
 from .models import SubjectTextbook
+from .pdf_image_ocr import MAX_OCR_IMAGES_PER_SCAN, scan_page_images
 from .pdf_lab_session import KIND_KEYS, SESSION_KEY, get_candidate, get_scan, mark_saved, save_scan
 from .structured_detection import (
     find_comparison_candidates, find_list_candidates,
@@ -253,20 +254,14 @@ def _scan_pdf(upload, start_page, pages_to_scan):
     seen_structured = {kind: set() for kind in KINDS}
     structured_truncated = {kind: False for kind in KINDS}
     text_pages = 0
+    image_pages = image_text_pages = images_checked = 0
+    image_ocr_unavailable = image_limit_reached = False
     text_sample = ""
     truncated = formula_truncated = False
     scanned_through = start_page - 1
-    for page_number in range(start_page, last_page + 1):
-        scanned_through = page_number
-        try:
-            text = reader.pages[page_number - 1].extract_text() or ""
-        except (PdfReadError, ValueError, TypeError, KeyError, IndexError) as exc:
-            raise ValueError(f"Could not read page {page_number} of this PDF.") from exc
-        if not text.strip():
-            continue
-        text_pages += 1
-        if not text_sample:
-            text_sample = " ".join(text.split())[:900]
+
+    def add_detected(text, layout_text, page_number, source):
+        nonlocal truncated, formula_truncated
         for candidate in find_definition_candidates(text[:100_000], page_number):
             key = (
                 candidate["term"].casefold(),
@@ -278,6 +273,8 @@ def _scan_pdf(upload, start_page, pages_to_scan):
             if len(results) >= MAX_CANDIDATES:
                 truncated = True
                 break
+            if source == "image":
+                candidate = {**candidate, "source": "image", "confidence": "possible"}
             results.append(candidate)
         for candidate in find_formula_candidates(text[:100_000], page_number):
             key = "".join(candidate["equation"].casefold().split())
@@ -287,11 +284,9 @@ def _scan_pdf(upload, start_page, pages_to_scan):
             if len(formula_results) >= MAX_CANDIDATES:
                 formula_truncated = True
                 break
+            if source == "image":
+                candidate = {**candidate, "source": "image", "confidence": "possible"}
             formula_results.append(candidate)
-        try:
-            layout_text = reader.pages[page_number - 1].extract_text(extraction_mode="layout") or text
-        except (PdfReadError, ValueError, TypeError, KeyError, IndexError):
-            layout_text = text
         detectors = {
             "list": find_list_candidates(layout_text[:100_000], page_number),
             "steps": find_step_candidates(layout_text[:100_000], page_number),
@@ -302,7 +297,7 @@ def _scan_pdf(upload, start_page, pages_to_scan):
             bucket = structured[KIND_KEYS[kind][0]]
             for candidate in candidates:
                 key = json.dumps(
-                    {field: value for field, value in candidate.items() if field not in {"page", "confidence"}},
+                    {field: value for field, value in candidate.items() if field not in {"page", "confidence", "source"}},
                     sort_keys=True, ensure_ascii=False,
                 )
                 if key in seen_structured[kind]:
@@ -311,7 +306,40 @@ def _scan_pdf(upload, start_page, pages_to_scan):
                 if len(bucket) >= MAX_CANDIDATES:
                     structured_truncated[kind] = True
                     break
+                if source == "image":
+                    candidate = {**candidate, "source": "image", "confidence": "possible"}
                 bucket.append(candidate)
+
+    for page_number in range(start_page, last_page + 1):
+        scanned_through = page_number
+        try:
+            text = reader.pages[page_number - 1].extract_text() or ""
+        except (PdfReadError, ValueError, TypeError, KeyError, IndexError) as exc:
+            raise ValueError(f"Could not read page {page_number} of this PDF.") from exc
+        if text.strip():
+            text_pages += 1
+            if not text_sample:
+                text_sample = " ".join(text.split())[:900]
+            try:
+                layout_text = reader.pages[page_number - 1].extract_text(extraction_mode="layout") or text
+            except (PdfReadError, ValueError, TypeError, KeyError, IndexError):
+                layout_text = text
+            add_detected(text, layout_text, page_number, "text")
+
+        if not image_ocr_unavailable:
+            image_scan = scan_page_images(
+                reader.pages[page_number - 1], MAX_OCR_IMAGES_PER_SCAN - images_checked,
+            )
+            image_pages += int(image_scan["image_found"])
+            images_checked += image_scan["checked"]
+            image_ocr_unavailable = image_scan["unavailable"]
+            image_limit_reached |= image_scan["limit_reached"]
+            if image_scan["texts"]:
+                image_text_pages += 1
+            for image_text in image_scan["texts"]:
+                if not text_sample:
+                    text_sample = " ".join(image_text.split())[:900]
+                add_detected(image_text, image_text, page_number, "image")
         if truncated and formula_truncated and all(structured_truncated.values()):
             break
 
@@ -321,6 +349,11 @@ def _scan_pdf(upload, start_page, pages_to_scan):
         "last_page": scanned_through,
         "pages_scanned": scanned_through - start_page + 1,
         "text_pages": text_pages,
+        "image_pages": image_pages,
+        "image_text_pages": image_text_pages,
+        "images_checked": images_checked,
+        "image_ocr_unavailable": image_ocr_unavailable,
+        "image_limit_reached": image_limit_reached,
         "candidates": results,
         "formula_candidates": formula_results,
         **structured,

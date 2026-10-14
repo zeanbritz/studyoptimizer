@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>PDF learning lab - {{ subject.name }} - StudiGarden</title>
+    <title>Auto Summarize - {{ subject.name }} - StudiGarden</title>
     <link rel="icon" href="{% static 'images/favicon.png' %}">
     <link rel="stylesheet" href="{% static 'dashboard/css/sidebar.css' %}">
     <style>
@@ -94,16 +94,16 @@
         <div class="page">
             <header class="hero">
                 <div>
-                    <p class="eyebrow">Private prototype · {{ subject.name }}</p>
-                    <h1>Find learning items in a PDF</h1>
-                    <p>Upload a chapter and inspect what StudiGarden can identify before adding anything.</p>
+                    <p class="eyebrow">{{ subject.name }} · Study workspace</p>
+                    <h1>Auto Summarize</h1>
+                    <p>Upload a PDF and let StudiGarden turn its key ideas into study-ready suggestions.</p>
                 </div>
                 <a class="back-link" href="{{ back_url }}">Back to subject</a>
             </header>
 
             <section class="card" aria-labelledby="upload-title">
-                <h2 id="upload-title">Scan a PDF</h2>
-                <p class="intro">Find likely definitions, formulas, lists, steps, notes and comparisons in selectable text. Review each result before adding it.</p>
+                <h2 id="upload-title">Summarize a PDF</h2>
+                <p class="intro">Find possible definitions, formulas, lists, steps, notes and comparisons in the text and images. Review each suggestion before adding it.</p>
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="scan">
@@ -136,9 +136,9 @@
                             <input id="pdf-chapter" type="text" name="chapter" maxlength="255" value="{{ chapter }}" placeholder="e.g. Chapter 4">
                         </div>
                     </div>
-                    <button class="scan-button" type="submit">Find learning items</button>
+                    <button class="scan-button" type="submit">Summarize</button>
                     <p class="hint">Optional book and chapter labels carry into saved items; they do not change detection.</p>
-                    <p class="hint">Max {{ max_pages }} pages or {{ max_size_mb }} MB. Image-only PDFs need OCR. The PDF is not stored; results stay for 24 hours.</p>
+                    <p class="hint">Max {{ max_pages }} pages or {{ max_size_mb }} MB. Image text is checked only when an image is present, up to 8 images per scan. The PDF is not stored; results stay for 24 hours.</p>
                 </form>
                 {% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
                 {% for message in messages %}<div class="success" role="status">{{ message }}</div>{% endfor %}
@@ -156,9 +156,15 @@
                 <div class="metrics">
                     <span class="metric"><strong>{{ scan.text_pages }}</strong> pages with selectable text</span>
                     <span class="metric"><strong>{{ scan.pages_scanned }}</strong> pages scanned</span>
+                    {% if scan.image_pages %}<span class="metric"><strong>{{ scan.images_checked }}</strong> images checked</span>{% endif %}
                 </div>
-                {% if not scan.text_pages %}
-                    <p class="notice">No selectable text was found in this page range. This PDF may be scanned images; OCR will be needed.</p>
+                {% if scan.image_ocr_unavailable %}
+                    <p class="notice">This PDF contains images, but image text recognition is unavailable on this server. Selectable text was still checked.</p>
+                {% endif %}
+                {% if scan.image_limit_reached %}<p class="notice">The image-check limit was reached. Scan a smaller page range to inspect more images.</p>{% endif %}
+                {% if scan.image_text_pages %}<p class="notice">Text found in images can contain recognition mistakes. Check these suggestions carefully before saving.</p>{% endif %}
+                {% if not scan.text_pages and not scan.image_text_pages %}
+                    <p class="notice">No readable text was found in this page range. If this PDF has scanned images, a clearer copy may help.</p>
                 {% elif not scan.candidates and not scan.formula_candidates and not scan.list_candidates and not scan.step_candidates and not scan.note_candidates and not scan.comparison_candidates %}
                     <p class="notice">Text was extracted, but no clear learning items matched this first-pass detector. Check the text sample below.</p>
                 {% endif %}
@@ -180,6 +186,7 @@
                     <article class="candidate {% if item.confidence == 'possible' %}possible{% endif %}">
                         <div class="candidate-meta">
                             <span>PDF page {{ item.page }}</span>
+                            {% if item.source == 'image' %}<span>From image · check carefully</span>{% endif %}
                             <span class="confidence">{% if item.confidence == 'strong' %}Clear pattern{% else %}Possible match{% endif %}</span>
                         </div>
                         <h3>{{ item.term }}</h3>
@@ -223,6 +230,7 @@
                         <article class="candidate {% if item.confidence == 'possible' %}possible{% endif %}">
                             <div class="candidate-meta">
                                 <span>PDF page {{ item.page }}</span>
+                                {% if item.source == 'image' %}<span>From image · check carefully</span>{% endif %}
                                 <span class="confidence">{% if item.confidence == 'strong' %}Clear pattern{% else %}Possible match{% endif %}</span>
                             </div>
                             <h3>{{ item.title }}</h3>
@@ -246,7 +254,7 @@
                         {% endfor %}
                     </div>
                     {% else %}
-                    <p class="hint">No short, editable equations found in these pages. Multi-line equations and scanned images need manual entry for now.</p>
+                    <p class="hint">No short, editable equations found in these pages. Multi-line equations and unclear image text may need manual entry.</p>
                     {% endif %}
                     </div>
                 </details>

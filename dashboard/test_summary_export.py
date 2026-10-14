@@ -1,8 +1,10 @@
 import json
+from io import BytesIO
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from pypdf import PdfReader
 
 from learning.models import (
     BulletItem, BulletList, Comparison, ComparisonCell, ComparisonColumn,
@@ -50,6 +52,7 @@ class SubjectSummaryExportTests(TestCase):
                 self.assertEqual(response["Content-Type"], "application/pdf")
                 self.assertIn("attachment;", response["Content-Disposition"])
                 self.assertTrue(response.content.startswith(b"%PDF-"))
+                self.assertTrue(PdfReader(BytesIO(response.content)).pages[0].images.keys())
 
     def test_all_study_types_are_collected(self):
         definition_unit = self.add_unit(KnowledgeUnit.KnowledgeType.DEFINITION, "Energy")
@@ -126,6 +129,21 @@ class SubjectSummaryExportTests(TestCase):
             sorted(["Chapter 10", "Chapter 2", "Chapter 1"], key=_natural_sort_key),
             ["Chapter 1", "Chapter 2", "Chapter 10"],
         )
+
+    def test_obvious_chapter_number_variants_share_one_heading(self):
+        items = [
+            {"book": "Biology", "chapter": name, "title": name}
+            for name in ("2", "chapter2", "chapter 2", "Chapter 2: Cells")
+        ] + [
+            {"book": "Biology", "chapter": "Chapter 20", "title": "Other chapter"},
+            {"book": "Chemistry", "chapter": "2", "title": "Other book"},
+        ]
+        books, extra = _group_by_book_and_chapter(items)
+        self.assertEqual(extra, [])
+        self.assertEqual(len(books["Biology"]), 2)
+        self.assertEqual(len(books["Biology"]["Chapter 2: Cells"]), 4)
+        self.assertEqual(len(books["Biology"]["Chapter 20"]), 1)
+        self.assertEqual(len(books["Chemistry"]["Chapter 2"]), 1)
 
     def test_empty_subject_still_exports(self):
         response = self.client.get(self.url)

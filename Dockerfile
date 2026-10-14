@@ -7,8 +7,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Embed a Unicode font in exported study PDFs, including Greek and maths symbols.
-RUN apt-get update && apt-get install -y --no-install-recommends fonts-dejavu-core \
+# Embed a Unicode font in exported study PDFs and OCR embedded images only when present.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    fonts-dejavu-core tesseract-ocr tesseract-ocr-eng \
     && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd --system app \

@@ -1,11 +1,14 @@
 import json
 from io import BytesIO
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 from pypdf import PdfWriter
+from PIL import Image, ImageDraw
+from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
 
 from learning.models import (
@@ -210,6 +213,20 @@ class DefinitionPdfLabTests(TestCase):
         document.save()
         return SimpleUploadedFile("structured.pdf", buffer.getvalue(), content_type="application/pdf")
 
+    @staticmethod
+    def image_pdf_upload(with_text=False, small=False, pages=1):
+        buffer = BytesIO()
+        document = canvas.Canvas(buffer, pageCompression=0)
+        image = Image.new("RGB", (30, 30) if small else (900, 400), "white")
+        ImageDraw.Draw(image).text((20, 80) if not small else (2, 2), "Osmosis definition", fill="black")
+        for _ in range(pages):
+            document.drawImage(ImageReader(image), 50, 340, width=450, height=200)
+            if with_text:
+                document.drawString(50, 780, "Definition 1 Force: A push or pull that changes motion.")
+            document.showPage()
+        document.save()
+        return SimpleUploadedFile("image-page.pdf", buffer.getvalue(), content_type="application/pdf")
+
     def scan_structured(self, book_name="", chapter=""):
         response = self.client.post(self.url, {
             "pdf_file": self.structured_pdf_upload(),
@@ -258,7 +275,76 @@ class DefinitionPdfLabTests(TestCase):
             "start_page": "1", "pages_to_scan": "1",
         })
         self.assertEqual(response.context["scan"]["text_pages"], 0)
-        self.assertContains(response, "OCR will be needed")
+        self.assertContains(response, "No readable text was found")
+
+    def test_image_ocr_runs_only_for_embedded_images_and_marks_suggestions(self):
+        with patch("dashboard.pdf_image_ocr._run_ocr") as ocr:
+            self.scan_definitions()
+            ocr.assert_not_called()
+            ocr.return_value = (
+                "Definition 1 Osmosis: The movement of water through a selectively permeable membrane."
+            )
+            response = self.client.post(self.url, {
+                "pdf_file": self.image_pdf_upload(with_text=True),
+                "start_page": "1", "pages_to_scan": "1",
+            })
+        self.assertEqual(ocr.call_count, 1)
+        scan = response.context["scan"]
+        self.assertEqual(scan["image_pages"], 1)
+        self.assertEqual(scan["images_checked"], 1)
+        self.assertEqual(scan["image_text_pages"], 1)
+        self.assertEqual({item["term"] for item in scan["candidates"]}, {"Force", "Osmosis"})
+        image_item = next(item for item in scan["candidates"] if item["term"] == "Osmosis")
+        self.assertEqual(image_item["source"], "image")
+        self.assertEqual(image_item["confidence"], "possible")
+        self.assertContains(response, "From image · check carefully")
+
+    def test_small_decoration_does_not_start_ocr(self):
+        with patch("dashboard.pdf_image_ocr._run_ocr") as ocr:
+            response = self.client.post(self.url, {
+                "pdf_file": self.image_pdf_upload(small=True),
+                "start_page": "1", "pages_to_scan": "1",
+            })
+        ocr.assert_not_called()
+        self.assertEqual(response.context["scan"]["image_pages"], 1)
+        self.assertEqual(response.context["scan"]["images_checked"], 0)
+
+    def test_image_only_page_can_suggest_other_learning_types(self):
+        ocr_text = (
+            "DIFFUSION\nJ = -D (dC/dx)\n"
+            "Study note. Always check the units before applying this equation."
+        )
+        with patch("dashboard.pdf_image_ocr._run_ocr", return_value=ocr_text):
+            response = self.client.post(self.url, {
+                "pdf_file": self.image_pdf_upload(),
+                "start_page": "1", "pages_to_scan": "1",
+            })
+        scan = response.context["scan"]
+        self.assertEqual(scan["text_pages"], 0)
+        self.assertEqual(scan["image_text_pages"], 1)
+        self.assertEqual(scan["formula_candidates"][0]["source"], "image")
+        self.assertEqual(scan["note_candidates"][0]["source"], "image")
+        self.assertNotContains(response, "No readable text was found")
+
+    def test_missing_ocr_binary_is_reported_without_failing_text_scan(self):
+        with patch("dashboard.pdf_image_ocr._run_ocr", side_effect=FileNotFoundError):
+            response = self.client.post(self.url, {
+                "pdf_file": self.image_pdf_upload(with_text=True),
+                "start_page": "1", "pages_to_scan": "1",
+            })
+        self.assertContains(response, "recognition is unavailable")
+        self.assertEqual(response.context["scan"]["candidates"][0]["term"], "Force")
+        self.assertEqual(response.context["scan"]["images_checked"], 0)
+
+    def test_image_ocr_stops_at_small_scan_budget(self):
+        with patch("dashboard.pdf_image_ocr._run_ocr", return_value="") as ocr:
+            response = self.client.post(self.url, {
+                "pdf_file": self.image_pdf_upload(pages=9),
+                "start_page": "1", "pages_to_scan": "9",
+            })
+        self.assertEqual(ocr.call_count, 8)
+        self.assertEqual(response.context["scan"]["images_checked"], 8)
+        self.assertTrue(response.context["scan"]["image_limit_reached"])
 
     def test_invalid_file_and_range_show_errors(self):
         invalid = SimpleUploadedFile("notes.txt", b"not a pdf", content_type="text/plain")
@@ -302,7 +388,7 @@ class DefinitionPdfLabTests(TestCase):
         self.assertEqual(self.client.post(student_url).status_code, 404)
         page = self.client.get(reverse("subject_detail", args=[0]))
         self.assertEqual(page.status_code, 200)
-        self.assertNotContains(page, "Scan PDF for learning items")
+        self.assertNotContains(page, "Auto Summarize PDF")
 
     def test_superuser_cannot_scan_another_users_subject(self):
         response = self.client.get(reverse("definition_pdf_lab", args=[self.student_subject.pk]))
@@ -315,7 +401,7 @@ class DefinitionPdfLabTests(TestCase):
     def test_superuser_sees_button_on_subject_page(self):
         page = self.client.get(reverse("subject_detail", args=[0]))
         self.assertEqual(page.status_code, 200)
-        self.assertContains(page, "Scan PDF for learning items")
+        self.assertContains(page, "Auto Summarize PDF")
         self.assertContains(page, self.url)
 
     def test_add_one_creates_reviewable_definition_and_cannot_duplicate(self):
@@ -512,7 +598,10 @@ class DefinitionPdfLabTests(TestCase):
         self.assertContains(response, 'class="result-group kind-list"')
         self.assertContains(response, 'class="result-group kind-comparison"')
         self.assertContains(response, "1 detected")
-        self.assertContains(response, "Image-only PDFs need OCR")
+        self.assertContains(response, "up to 8 images per scan")
+        self.assertContains(response, "Auto Summarize")
+        self.assertContains(response, "Summarize a PDF")
+        self.assertNotContains(response, "Private prototype")
         self.assertNotContains(response, "For a long textbook, scan one chapter at a time")
 
     def test_structured_items_can_be_added_individually_and_in_batches(self):

@@ -4,9 +4,11 @@ import io
 import json
 import re
 from collections import defaultdict
+from functools import lru_cache
 from pathlib import Path
 from xml.sax.saxutils import escape
 
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
@@ -22,6 +24,8 @@ from reportlab.lib.units import mm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import HRFlowable, Paragraph, SimpleDocTemplate, Spacer
+from reportlab.lib.utils import ImageReader
+from PIL import Image, ImageOps
 
 from learning.models import KnowledgeUnit, Note, Subject
 
@@ -34,6 +38,38 @@ TYPE_ORDER = (
     (KnowledgeUnit.KnowledgeType.COMPARISON, "Comparisons", "comparison"),
     ("NOTE", "Notes", None),
 )
+
+
+@lru_cache(maxsize=1)
+def _watermark_png():
+    """Keep only the logo ink, at low opacity, for a page-wide watermark."""
+    path = Path(settings.BASE_DIR) / "static" / "images" / "logo.webp"
+    with Image.open(path) as original:
+        logo = original.convert("RGBA")
+    alpha = ImageOps.grayscale(logo).point(
+        lambda shade: max(0, min(48, round((248 - shade) * 0.25)))
+    )
+    logo.putalpha(alpha)
+    output = io.BytesIO()
+    logo.save(output, format="PNG")
+    return output.getvalue()
+
+
+def _chapter_identity(value):
+    """Group obvious number variants without merging different chapter numbers."""
+    label = " ".join(value.split())
+    match = re.fullmatch(
+        r"(?:(?:chapter|chap\.?|ch\.?)\s*)?0*(\d+)(?:\s*[-:]\s*(.+))?",
+        label, re.IGNORECASE,
+    )
+    if match:
+        number = int(match.group(1))
+        suffix = (match.group(2) or "").strip()
+        display = f"Chapter {number}" + (f": {suffix}" if suffix else "")
+        return ("number", number), display
+    return ("text", label.casefold()), label
+
+
 def _font_names():
     """Use an embedded Unicode font in production; keep local previews usable."""
     candidates = (
@@ -231,6 +267,7 @@ def _build_pdf(subject, mode, items):
         topMargin=28 * mm, bottomMargin=21 * mm,
         title=f"{subject.name} - Study summary", author="StudiGarden",
     )
+    watermark = ImageReader(io.BytesIO(_watermark_png()))
     story = [
         Paragraph(_safe(subject.name), styles["title"]),
         Paragraph(
@@ -258,6 +295,12 @@ def _build_pdf(subject, mode, items):
     def decorate(canvas, document):
         canvas.saveState()
         width, height = A4
+        mark_width = 160 * mm
+        mark_height = mark_width * watermark.getSize()[1] / watermark.getSize()[0]
+        canvas.drawImage(
+            watermark, (width - mark_width) / 2, (height - mark_height) / 2,
+            width=mark_width, height=mark_height, mask="auto",
+        )
         canvas.setFont(bold, 8)
         canvas.setFillColor(colors.HexColor("#398729"))
         canvas.drawString(20 * mm, height - 16 * mm, "STUDIGARDEN")
@@ -274,13 +317,23 @@ def _build_pdf(subject, mode, items):
 
 
 def _group_by_book_and_chapter(items):
-    books = defaultdict(lambda: defaultdict(list))
+    grouped = defaultdict(lambda: defaultdict(list))
+    labels = {}
     extra = []
     for item in items:
         if item["book"] and item["chapter"]:
-            books[item["book"]][item["chapter"]].append(item)
+            book = item["book"]
+            key, label = _chapter_identity(item["chapter"])
+            grouped[book][key].append(item)
+            previous = labels.get((book, key))
+            if previous is None or (":" in label and ":" not in previous):
+                labels[book, key] = label
         else:
             extra.append(item)
+    books = {
+        book: {labels[book, key]: entries for key, entries in chapters.items()}
+        for book, chapters in grouped.items()
+    }
     return books, extra
 
 
