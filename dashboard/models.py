@@ -51,6 +51,8 @@ class StudyProfile(models.Model):
         default=False
     )
 
+    subject_tour_completed = models.BooleanField(default=False)
+
     updated_at = models.DateTimeField(
         auto_now=True
     )

@@ -17,6 +17,7 @@
         href="{% static 'dashboard/css/sidebar.css' %}"
     >
     <link rel="stylesheet" href="{% static 'dashboard/css/study_availability.css' %}">
+    <link rel="stylesheet" href="{% static 'dashboard/css/subject_setup.css' %}">
 
     <style>
         :root {
@@ -1007,6 +1008,7 @@
                         <a
                             href="{% url 'subject_detail' subject_index=subject.subject_index %}"
                             class="subject"
+                            {% if not subject.name %}data-setup-subject-index="{{ subject.subject_index }}"{% endif %}
                         >
                             <div>
                                 <div class="subject-top">
@@ -1070,6 +1072,32 @@
 
 </div>
 
+<div class="subject-setup-modal" id="subject-setup-modal" hidden>
+    <div class="subject-setup-modal__backdrop" data-close-subject-setup></div>
+    <div class="subject-setup-modal__card" role="dialog" aria-modal="true" aria-labelledby="subject-setup-title">
+        <p class="subject-setup-modal__eyebrow">New subject</p>
+        <h2 id="subject-setup-title">Set up this subject</h2>
+        <p class="subject-setup-modal__intro">A few details help StudiGarden build the right plan for you.</p>
+        <form method="post" id="subject-setup-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="setup_subject">
+            <label for="setup-subject-name">Subject name</label>
+            <input id="setup-subject-name" type="text" name="name" maxlength="100" placeholder="e.g. Mathematics" required>
+            <label for="setup-target-grade">Target grade</label>
+            <div class="subject-setup-modal__grade">
+                <input id="setup-target-grade" type="number" name="target_grade" min="0" max="100" inputmode="numeric" placeholder="e.g. 80" required>
+                <span aria-hidden="true">%</span>
+            </div>
+            <label for="setup-exam-date">Exam date</label>
+            <input id="setup-exam-date" type="date" name="exam_date" required>
+            <div class="subject-setup-modal__actions">
+                <button type="button" class="subject-setup-modal__cancel" data-close-subject-setup>Cancel</button>
+                <button type="submit" class="subject-setup-modal__continue">Continue</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
     function openProfileEditor() {
         const card = document.getElementById("profile-card");
@@ -1101,6 +1129,7 @@
 
 <script src="{% static 'dashboard/js/sidebar.js' %}"></script>
 <script src="{% static 'dashboard/js/study_availability.js' %}"></script>
+<script src="{% static 'dashboard/js/subject_setup.js' %}"></script>
 
 </body>
 

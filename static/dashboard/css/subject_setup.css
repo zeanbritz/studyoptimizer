@@ -1,0 +1,38 @@
+.subject-setup-modal[hidden] { display: none; }
+.subject-setup-modal { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 20px; }
+.subject-setup-modal__backdrop { position: absolute; inset: 0; background: rgba(29, 39, 58, .64); }
+.subject-setup-modal__card {
+    position: relative;
+    width: min(100%, 490px);
+    max-height: calc(100vh - 40px);
+    overflow: auto;
+    padding: 29px;
+    border: 1px solid #d8e0e3;
+    border-bottom: 5px solid #c4cfd4;
+    border-top: 4px solid #58b82a;
+    border-radius: 16px;
+    background: #f8fafb;
+    box-shadow: 0 24px 70px rgba(22, 31, 50, .24);
+}
+.subject-setup-modal__eyebrow { margin: 0 0 7px; color: #3f8f1d; font-size: 11px; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
+.subject-setup-modal h2 { margin: 0 0 7px; color: #303a5a; font-size: 27px; letter-spacing: -.03em; }
+.subject-setup-modal__intro { margin: 0 0 20px; color: #687278; font-size: 13px; line-height: 1.5; }
+.subject-setup-modal label { display: block; margin: 15px 0 7px; color: #34393b; font-size: 12px; font-weight: 850; }
+.subject-setup-modal input {
+    width: 100%; min-height: 47px; padding: 10px 12px;
+    border: 1px solid #cbd5d9; border-bottom: 3px solid #b9c6cb;
+    border-radius: 9px; background: #fff; color: #2f3335; font: inherit;
+}
+.subject-setup-modal__grade { position: relative; }
+.subject-setup-modal__grade input { padding-right: 34px; }
+.subject-setup-modal__grade span { position: absolute; right: 15px; top: 12px; color: #687278; font-weight: 800; }
+.subject-setup-modal__actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+.subject-setup-modal__actions button {
+    min-height: 43px; padding: 9px 18px; border-radius: 9px;
+    border: 2px solid #cbd5d9; border-bottom-width: 4px;
+    background: #fff; color: #4a555a; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer;
+}
+.subject-setup-modal__actions .subject-setup-modal__continue { border-color: #3f8f1d; background: #58b82a; color: #fff; }
+.subject-setup-modal__actions .subject-setup-modal__continue:hover { background: #65c936; }
+.subject-setup-modal button:focus-visible, .subject-setup-modal input:focus-visible { outline: 3px solid #278fd3; outline-offset: 2px; }
+@media (max-width: 520px) { .subject-setup-modal__card { padding: 22px 19px; } .subject-setup-modal__actions { flex-direction: column-reverse; } .subject-setup-modal__actions button { width: 100%; } }

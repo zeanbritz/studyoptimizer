@@ -31,6 +31,7 @@ from accounts.entitlements import (
 
 from .models import (
     StudyAvailability,
+    StudyProfile,
     SubjectTextbook,
     SubjectRevisionPlan,
 )
@@ -1891,12 +1892,7 @@ def goals(request):
                 1
             )
 
-            return redirect(
-                "subject_detail",
-                subject_index=(
-                    new_subject_index
-                )
-            )
+            return redirect(f"{reverse('goals')}?setup={new_subject_index}")
 
     # ========================================================
     # REFRESH AVAILABILITY
@@ -2427,6 +2423,17 @@ def subject_detail(
             ""
         )
 
+    if request.method == "POST" and action == "complete_subject_tour":
+        if request.session.get("subject_tour_pending") != subject_index:
+            return JsonResponse({"success": False}, status=400)
+        profile_record, _ = StudyProfile.objects.get_or_create(user=request.user)
+        if not profile_record.subject_tour_completed:
+            profile_record.subject_tour_completed = True
+            profile_record.save(update_fields=["subject_tour_completed"])
+        request.session.pop("subject_tour_pending", None)
+        request.session.modified = True
+        return JsonResponse({"success": True})
+
     # ========================================================
     # DELETE SUBJECT
     # ========================================================
@@ -2512,15 +2519,35 @@ def subject_detail(
     if (
         request.method == "POST"
         and
-        action == "save_subject"
+        action in ("save_subject", "setup_subject")
     ):
 
+        if action == "setup_subject":
+            if subject_data.get("name"):
+                return redirect("subject_detail", subject_index=subject_index)
+            if not can_create_subject(request.user):
+                return redirect("pricing")
+            subject_name = request.POST.get("name", "").strip()
+            grade_text = request.POST.get("target_grade", "").strip()
+            if not subject_name or len(subject_name) > 100:
+                return HttpResponseBadRequest("Enter a subject name (up to 100 characters).")
+            try:
+                grade_number = int(grade_text)
+            except (TypeError, ValueError):
+                return HttpResponseBadRequest("Choose a target grade from 0 to 100.")
+            if not 0 <= grade_number <= 100:
+                return HttpResponseBadRequest("Choose a target grade from 0 to 100.")
+
         entered_exam_date = request.POST.get("exam_date", "").strip()
+        if action == "setup_subject" and not entered_exam_date:
+            return HttpResponseBadRequest("Choose an exam date.")
         if entered_exam_date:
             try:
                 date.fromisoformat(entered_exam_date)
             except ValueError:
                 return HttpResponseBadRequest("Choose a valid exam date.")
+
+        original_subject_data = subject_data.copy() if action == "setup_subject" else None
 
         subject_data[
             "name"
@@ -2584,7 +2611,7 @@ def subject_detail(
     # NAME FALLBACK
     # --------------------------------------------------------
 
-    if not database_subject:
+    if not database_subject and action != "setup_subject":
 
         subject_name = (
             subject_data.get(
@@ -2630,6 +2657,10 @@ def subject_detail(
             with transaction.atomic():
                 get_user_model().objects.select_for_update().get(pk=request.user.pk)
                 if not can_create_subject(request.user):
+                    if action == "setup_subject":
+                        subjects[subject_index] = original_subject_data
+                        request.session["onboarding_subjects"] = subjects
+                        request.session.modified = True
                     return redirect("pricing")
                 database_subject = Subject.objects.create(
                     user=request.user,
@@ -2696,7 +2727,7 @@ def subject_detail(
 
             request.session.modified = True
 
-    if database_subject and request.method == "POST" and action == "save_subject":
+    if database_subject and request.method == "POST" and action in ("save_subject", "setup_subject"):
         from exams.sync import update_exam_from_subject_detail
 
         exam_date_text = subject_data.get("exam_date", "")
@@ -2708,6 +2739,13 @@ def subject_detail(
             chosen_exam_date,
         )
         subject_data = request.session["onboarding_subjects"][subject_index]
+
+        if action == "setup_subject":
+            profile_record, _ = StudyProfile.objects.get_or_create(user=request.user)
+            if not profile_record.subject_tour_completed:
+                request.session["subject_tour_pending"] = subject_index
+                request.session.modified = True
+            return redirect("subject_detail", subject_index=subject_index)
 
     # ========================================================
     # NOTES TO STUDY TODAY
@@ -4279,6 +4317,13 @@ def subject_detail(
 
             "subject_index":
                 subject_index,
+
+            "show_subject_tour": (
+                request.session.get("subject_tour_pending") == subject_index
+                and not StudyProfile.objects.filter(
+                    user=request.user, subject_tour_completed=True
+                ).exists()
+            ),
 
             "database_subject":
                 database_subject,
