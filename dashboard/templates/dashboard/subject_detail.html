@@ -1127,6 +1127,10 @@
             background: #fff5f5;
         }
 
+        .delete-subject-mobile {
+            display: none;
+        }
+
         /* =========================================
            REVIEW
         ========================================= */
@@ -3133,6 +3137,16 @@
             }
         }
 
+        @media (max-width: 800px) {
+            .delete-subject-desktop {
+                display: none;
+            }
+
+            .delete-subject-mobile {
+                display: block;
+            }
+        }
+
         @media (max-width: 700px) {
             .page {
                 padding: 20px 18px 42px;
@@ -4279,7 +4293,7 @@
                     </div>
 
 
-                    <div>
+                    <div class="delete-subject-desktop">
 
 
                         <button
@@ -4672,6 +4686,17 @@
 </div>
 
 
+                    </div>
+
+
+                    <div class="delete-subject-mobile">
+                        <button
+                            type="button"
+                            class="delete-subject-button"
+                            onclick="openDeleteModal()"
+                        >
+                            🗑 Delete Subject
+                        </button>
                     </div>
 
 
