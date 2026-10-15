@@ -46,6 +46,8 @@ class NewSubjectSetupTests(TestCase):
 
         detail = self.client.get(reverse("subject_detail", args=[0]))
         self.assertContains(detail, 'id="subject-tour"')
+        self.assertContains(detail, 'id="subject-tour-backdrop"')
+        self.assertContains(detail, 'id="subject-tour-spotlight"')
         self.assertContains(detail, 'id="subject-tour-next"')
         self.assertContains(detail, 'id="subject-tour-done" hidden')
         self.assertEqual(self.client.session["subject_tour_pending"], 0)

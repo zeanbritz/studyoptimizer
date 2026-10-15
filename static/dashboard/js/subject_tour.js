@@ -6,21 +6,32 @@
 
     const editButton = document.getElementById("subject-edit-button");
     const expandButton = document.getElementById("subject-minimize-button");
-    const subjectCard = document.getElementById("subject-information");
+    const app = document.querySelector(".app");
+    const backdrop = document.getElementById("subject-tour-backdrop");
+    const spotlight = document.getElementById("subject-tour-spotlight");
+    const spotlightIcon = document.getElementById("subject-tour-spotlight-icon");
     const next = document.getElementById("subject-tour-next");
     const done = document.getElementById("subject-tour-done");
     const title = document.getElementById("subject-tour-title");
     const copy = document.getElementById("subject-tour-copy");
     const stepLabel = document.getElementById("subject-tour-step");
     const status = document.getElementById("subject-tour-status");
-    if (!editButton || !expandButton || !subjectCard) return;
+    if (!editButton || !expandButton || !app || !backdrop || !spotlight || !spotlightIcon) return;
 
     let step = 1;
+    const wasInert = app.inert;
+    app.inert = true;
 
     function activeTarget() { return step === 1 ? editButton : expandButton; }
 
     function position() {
         const rect = activeTarget().getBoundingClientRect();
+        spotlight.style.left = rect.left + "px";
+        spotlight.style.top = rect.top + "px";
+        spotlight.style.width = rect.width + "px";
+        spotlight.style.height = rect.height + "px";
+        spotlightIcon.textContent = activeTarget().textContent.trim();
+        spotlightIcon.style.fontSize = window.getComputedStyle(activeTarget()).fontSize;
         const width = tour.offsetWidth;
         const height = tour.offsetHeight;
         const left = Math.max(16, Math.min(rect.right - width, window.innerWidth - width - 16));
@@ -31,34 +42,25 @@
     }
 
     function highlight() {
-        editButton.classList.toggle("subject-tour-target", step === 1);
-        expandButton.classList.toggle("subject-tour-target", step === 2);
-        editButton.removeAttribute("aria-describedby");
-        expandButton.removeAttribute("aria-describedby");
-        activeTarget().setAttribute("aria-describedby", "subject-tour-copy");
-        activeTarget().scrollIntoView({ block: "center", behavior: "smooth" });
+        activeTarget().scrollIntoView({ block: "center", behavior: "auto" });
         window.requestAnimationFrame(position);
-        window.setTimeout(position, 300);
     }
 
     next.addEventListener("click", function () {
-        if (!subjectCard.classList.contains("minimized")) expandButton.click();
         step = 2;
         stepLabel.textContent = "Step 2 of 2";
         title.textContent = "Open the full subject workspace";
-        copy.textContent = "Click the expand button to see textbooks, revision days and more subject tools.";
+        copy.textContent = "The expand button opens textbooks, revision days and more subject tools. You can use it after this guide.";
         next.hidden = true;
-        done.hidden = true;
+        done.hidden = false;
         highlight();
-        expandButton.focus();
+        done.focus();
     });
 
-    expandButton.addEventListener("click", function () {
-        if (step !== 2 || subjectCard.classList.contains("minimized")) return;
-        copy.textContent = "That's the full workspace. You're ready to start adding study material.";
-        done.hidden = false;
-        window.requestAnimationFrame(position);
-        done.focus();
+    tour.addEventListener("keydown", function (event) {
+        if (event.key !== "Tab") return;
+        event.preventDefault();
+        (step === 1 ? next : done).focus();
     });
 
     done.addEventListener("click", async function () {
@@ -75,10 +77,9 @@
             });
             if (!response.ok || !(await response.json()).success) throw new Error("Could not save tour completion");
             tour.remove();
-            editButton.classList.remove("subject-tour-target");
-            expandButton.classList.remove("subject-tour-target");
-            editButton.removeAttribute("aria-describedby");
-            expandButton.removeAttribute("aria-describedby");
+            backdrop.remove();
+            spotlight.remove();
+            app.inert = wasInert;
             expandButton.focus();
         } catch (error) {
             status.textContent = "Could not finish the guide. Please try again.";

@@ -6013,10 +6013,14 @@
 
 
 {% if show_subject_tour %}
-<div class="subject-tour" id="subject-tour" role="dialog" aria-modal="false" aria-labelledby="subject-tour-title" data-complete-url="{% url 'subject_detail' subject_index=subject_index %}">
+<div class="subject-tour-backdrop" id="subject-tour-backdrop" aria-hidden="true"></div>
+<div class="subject-tour-spotlight" id="subject-tour-spotlight" aria-hidden="true">
+    <span class="subject-control-button" id="subject-tour-spotlight-icon">✎</span>
+</div>
+<div class="subject-tour" id="subject-tour" role="dialog" aria-modal="true" aria-labelledby="subject-tour-title" data-complete-url="{% url 'subject_detail' subject_index=subject_index %}">
     <span class="subject-tour__step" id="subject-tour-step">Step 1 of 2</span>
     <h2 id="subject-tour-title">Edit subject details</h2>
-    <p id="subject-tour-copy">Want to change the subject name, target grade or exam date later? Click the pencil here.</p>
+    <p id="subject-tour-copy">The pencil lets you change the subject name, target grade or exam date later. You can use it after this quick guide.</p>
     <div class="subject-tour__actions">
         <button type="button" id="subject-tour-next">Next</button>
         <button type="button" id="subject-tour-done" hidden>All set!</button>
