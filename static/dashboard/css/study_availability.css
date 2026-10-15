@@ -1,0 +1,157 @@
+.study-availability {
+    --availability-green: #58b82a;
+    --availability-green-dark: #3f8f1d;
+    --availability-muted: #687278;
+}
+
+.study-availability__heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 19px;
+}
+
+.study-availability__heading h2 {
+    margin: 0 0 5px;
+    color: #303a5a;
+    font-size: 20px;
+    font-weight: 850;
+}
+
+.study-availability__heading p {
+    margin: 0;
+    color: var(--availability-muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.study-availability__optional {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 3px 7px;
+    border-radius: 6px;
+    background: #e9eef1;
+    color: #5d6970;
+    font-size: 10px;
+    vertical-align: middle;
+}
+
+.study-availability__summary {
+    display: flex;
+    align-items: flex-end;
+    flex-direction: column;
+    gap: 3px;
+    flex-shrink: 0;
+    color: var(--availability-muted);
+    font-size: 11px;
+}
+
+.study-availability__summary strong {
+    padding: 7px 10px;
+    border: 1px solid #cde5c3;
+    border-radius: 9px;
+    background: #ebf6e7;
+    color: var(--availability-green-dark);
+    font-size: 13px;
+}
+
+.study-availability__grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.study-availability__day { min-width: 0; }
+
+.study-availability .day-button {
+    width: 100%;
+    min-height: 45px;
+    padding: 8px 5px;
+    border: 2px solid #cbd5d9;
+    border-bottom-width: 4px;
+    border-radius: 10px;
+    background: #e9eef0;
+    color: #667177;
+    font-size: 11px;
+    font-weight: 850;
+    cursor: pointer;
+}
+
+.study-availability .day-button.selected {
+    border-color: var(--availability-green-dark);
+    background: var(--availability-green);
+    color: #fff;
+}
+
+.study-availability .day-button:focus-visible,
+.study-availability .duration-select:focus-visible {
+    outline: 3px solid #278fd3;
+    outline-offset: 2px;
+}
+
+.study-availability__duration {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 4px;
+    margin-top: 7px;
+}
+
+.study-availability .duration-select {
+    width: 100%;
+    min-width: 0;
+    min-height: 43px;
+    padding: 6px 3px;
+    border: 1px solid #cbd5d9;
+    border-bottom: 3px solid #b9c6cb;
+    border-radius: 9px;
+    background: #fff;
+    color: #303a5a;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.study-availability .duration-select:disabled {
+    background: #e8edef;
+    color: #a0aaaf;
+    cursor: not-allowed;
+}
+
+.study-availability .duration-select.invalid {
+    border-color: #d65454;
+    background: #fff4f4;
+}
+
+.study-availability__error {
+    margin: 13px 0 0;
+    padding: 10px 12px;
+    border: 1px solid #e6b6b6;
+    border-radius: 9px;
+    background: #fff2f2;
+    color: #a93636;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.study-availability__sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+@media (max-width: 1050px) {
+    .study-availability__grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+@media (max-width: 600px) {
+    .study-availability__heading { flex-direction: column; }
+    .study-availability__summary { align-items: flex-start; }
+    .study-availability__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

@@ -34,6 +34,7 @@ from .models import (
     SubjectTextbook,
     SubjectRevisionPlan,
 )
+from .availability import availability_days, parse_availability
 from .review_planner import (
     get_daily_review_plan,
     remaining_review_ids,
@@ -1441,10 +1442,29 @@ def onboarding(request):
             ""
         )
 
-        study_hours = request.POST.get(
-            "study_hours",
-            ""
+        availability_values, availability_errors, weekly_minutes = (
+            parse_availability(request.POST)
         )
+
+        if availability_errors:
+            return render(
+                request,
+                "dashboard/onboarding.html",
+                {
+                    "error": "Choose a duration for each selected study day.",
+                    "subject_limit": FREE_SUBJECT_LIMIT if is_free_student(request.user) else 20,
+                    "is_free_student": is_free_student(request.user),
+                    "availability_days": availability_days(posted=request.POST),
+                    "hour_options": range(25),
+                    "minute_options": range(60),
+                    "availability_optional": True,
+                    "form_values": request.POST,
+                },
+                status=400,
+            )
+
+        # Keep the legacy weekly estimate in sync with the day-by-day plan.
+        study_hours = (weekly_minutes + 59) // 60 if weekly_minutes else ""
 
         subject_count = request.POST.get(
             "subject_count",
@@ -1533,6 +1553,17 @@ def onboarding(request):
 
         request.session.modified = True
 
+        availability_record = StudyAvailability.objects.filter(
+            user=request.user
+        ).first()
+        if weekly_minutes or availability_record is not None:
+            if availability_record is None:
+                availability_record = StudyAvailability(user=request.user)
+            for day, (enabled, duration) in availability_values.items():
+                setattr(availability_record, f"{day}_enabled", enabled)
+                setattr(availability_record, f"{day}_time", duration)
+            availability_record.save()
+
         return redirect(
             "goals"
         )
@@ -1543,6 +1574,12 @@ def onboarding(request):
         {
             "subject_limit": FREE_SUBJECT_LIMIT if is_free_student(request.user) else 20,
             "is_free_student": is_free_student(request.user),
+            "availability_days": availability_days(
+                StudyAvailability.objects.filter(user=request.user).first()
+            ),
+            "hour_options": range(25),
+            "minute_options": range(60),
+            "availability_optional": True,
         },
     )
 
@@ -1745,124 +1782,7 @@ def goals(request):
         # ====================================================
 
         elif action == "update_availability":
-
-            errors = {}
-
-            for day in days:
-
-                enabled = (
-                    request.POST.get(
-                        f"{day}_enabled",
-                        "0"
-                    )
-                    ==
-                    "1"
-                )
-
-                raw_time = (
-                    request.POST.get(
-                        f"{day}_time",
-                        ""
-                    )
-                    .strip()
-                )
-
-                if not enabled:
-
-                    setattr(
-                        availability_record,
-                        f"{day}_enabled",
-                        False
-                    )
-
-                    setattr(
-                        availability_record,
-                        f"{day}_time",
-                        ""
-                    )
-
-                    continue
-
-                setattr(
-                    availability_record,
-                    f"{day}_enabled",
-                    True
-                )
-
-                if raw_time == "":
-
-                    setattr(
-                        availability_record,
-                        f"{day}_time",
-                        ""
-                    )
-
-                    continue
-
-                try:
-
-                    parts = raw_time.split(
-                        ":"
-                    )
-
-                    if len(parts) != 2:
-
-                        raise ValueError
-
-                    hours = int(
-                        parts[0]
-                    )
-
-                    minutes = int(
-                        parts[1]
-                    )
-
-                    if (
-                        hours < 0
-                        or
-                        hours > 24
-                    ):
-
-                        raise ValueError
-
-                    if (
-                        minutes < 0
-                        or
-                        minutes > 59
-                    ):
-
-                        raise ValueError
-
-                    if (
-                        hours == 24
-                        and
-                        minutes != 0
-                    ):
-
-                        raise ValueError
-
-                    normalized_time = (
-                        f"{hours:02d}:"
-                        f"{minutes:02d}"
-                    )
-
-                    setattr(
-                        availability_record,
-                        f"{day}_time",
-                        normalized_time
-                    )
-
-                except (
-                    TypeError,
-                    ValueError
-                ):
-
-                    errors[
-                        day
-                    ] = (
-                        "Enter a valid time "
-                        "between 00:00 and 24:00."
-                    )
+            values, errors, weekly_minutes = parse_availability(request.POST)
 
             if errors:
 
@@ -1877,7 +1797,18 @@ def goals(request):
                     status=400,
                 )
 
+            for day, (enabled, duration) in values.items():
+                setattr(availability_record, f"{day}_enabled", enabled)
+                setattr(availability_record, f"{day}_time", duration)
             availability_record.save()
+
+            # The day-by-day schedule is authoritative for the older weekly
+            # estimate used in the study profile.
+            profile["study_hours"] = (
+                (weekly_minutes + 59) // 60 if weekly_minutes else ""
+            )
+            request.session["onboarding_profile"] = profile
+            request.session.modified = True
 
             if (
                 request.headers.get(
@@ -2099,6 +2030,11 @@ def goals(request):
 
             "study_availability":
                 study_availability,
+
+            "availability_days": availability_days(availability_record),
+            "hour_options": range(25),
+            "minute_options": range(60),
+            "availability_autosave": True,
 
             "can_add_subject": can_create_subject(
                 request.user, session_subject_count=len(subjects)

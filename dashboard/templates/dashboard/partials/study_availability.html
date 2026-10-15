@@ -1,0 +1,48 @@
+<section class="study-availability" data-study-availability data-autosave="{{ availability_autosave|yesno:'true,false' }}" aria-label="Study availability">
+    <div class="study-availability__heading">
+        <div>
+            <h2>Study Availability {% if availability_optional %}<span class="study-availability__optional">Optional</span>{% endif %}</h2>
+            <p>Pick the days you can study, then choose hours and minutes for each day.</p>
+        </div>
+        <div class="study-availability__summary">
+            <strong id="weekly-study-total">0h 00m / week</strong>
+            <span>Total study time</span>
+            {% if availability_autosave %}<span class="autosave-status" id="autosave-status" aria-live="polite"></span>{% endif %}
+        </div>
+    </div>
+
+    <div class="study-availability__grid">
+        {% for day in availability_days %}
+            <div class="study-availability__day">
+                <button type="button"
+                        class="day-button{% if day.enabled %} selected{% endif %}"
+                        id="button-{{ day.key }}"
+                        data-day="{{ day.key }}"
+                        aria-pressed="{{ day.enabled|yesno:'true,false' }}">
+                    {{ day.label }}
+                </button>
+                <div class="study-availability__duration">
+                    <label class="study-availability__sr-only" for="hours-{{ day.key }}">{{ day.label }} hours</label>
+                    <select id="hours-{{ day.key }}" class="duration-select" aria-label="{{ day.label }} hours" {% if not day.enabled %}disabled{% endif %}>
+                        <option value="">Hours</option>
+                        {% for hour in hour_options %}
+                            <option value="{{ hour }}"{% if hour == day.hours %} selected{% endif %}>{{ hour|stringformat:"02d" }} h</option>
+                        {% endfor %}
+                    </select>
+                    <label class="study-availability__sr-only" for="minutes-{{ day.key }}">{{ day.label }} minutes</label>
+                    <select id="minutes-{{ day.key }}" class="duration-select" aria-label="{{ day.label }} minutes" {% if not day.enabled %}disabled{% endif %}>
+                        <option value="">Minutes</option>
+                        {% for minute in minute_options %}
+                            <option value="{{ minute }}"{% if minute == day.minutes %} selected{% endif %}>{{ minute|stringformat:"02d" }} m</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <input type="hidden" id="enabled-{{ day.key }}" name="{{ day.key }}_enabled" value="{{ day.enabled|yesno:'1,0' }}">
+                <input type="hidden" id="time-{{ day.key }}" name="{{ day.key }}_time" value="{{ day.time }}">
+            </div>
+        {% endfor %}
+    </div>
+    <p class="study-availability__error" id="availability-error" role="alert" hidden>
+        Choose hours and minutes for each selected day. The duration must be greater than zero.
+    </p>
+</section>
