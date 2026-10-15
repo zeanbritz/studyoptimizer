@@ -1,4 +1,15 @@
 {% load static %}
+<header class="mobile-topbar">
+    <a href="{% url 'dashboard' %}" class="mobile-topbar-brand" aria-label="StudiGarden dashboard">
+        <img src="{% static 'images/logo.webp' %}" alt="StudiGarden" width="156" height="40">
+    </a>
+    <button type="button" class="mobile-menu-toggle" aria-label="Open navigation menu" aria-controls="sidebar" aria-expanded="false">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <path d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+    </button>
+</header>
+<button type="button" class="mobile-sidebar-backdrop" aria-label="Close navigation menu" hidden></button>
 <aside id="sidebar" class="sidebar">
     <div class="sidebar-top">
         <a
@@ -6,6 +17,11 @@
             class="logo"
             aria-label="StudiGarden dashboard"
         ><img src="{% static 'images/logo.webp' %}" alt="StudiGarden" width="204" height="52"></a>
+        <button type="button" class="mobile-sidebar-close" aria-label="Close navigation menu">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                <path d="M5 5l14 14M19 5L5 19"></path>
+            </svg>
+        </button>
     </div>
 
     <nav class="nav" aria-label="Main navigation">
@@ -150,3 +166,4 @@
         {% endif %}
     </div>
 </aside>
+<script src="{% static 'dashboard/js/sidebar.js' %}" defer></script>
