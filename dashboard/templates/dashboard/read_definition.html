@@ -1,4 +1,5 @@
 {% load static %}
+{% load review_navigation %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -56,10 +57,10 @@
             </article>
 
             <nav class="navigation" aria-label="Browse definitions">
-                {% if previous_url %}<a href="{{ previous_url }}">Previous</a>{% else %}<span>Previous</span>{% endif %}
-                {% if next_url %}<a href="{{ next_url }}">Next</a>{% else %}<span>Next</span>{% endif %}
+                {% if previous_url %}<a href="{{ previous_url|review_href:request }}">Previous</a>{% else %}<span>Previous</span>{% endif %}
+                {% if next_url %}<a href="{{ next_url|review_href:request }}">Next</a>{% else %}<span>Next</span>{% endif %}
             </nav>
-            <a class="back-link" href="{% url 'review_definitions' %}?mode=review">Finish Review</a>
+            <a class="back-link" href="{% review_back %}">Finish Review</a>
         </div>
     </main>
 </div>

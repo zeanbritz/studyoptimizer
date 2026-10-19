@@ -36,8 +36,8 @@ class TodaysGardenTests(TestCase):
         self.assertEqual([c["label"] for c in categories], ["Definitions", "Formulas", "Lists", "Steps", "Comparisons", "Notes"])
         self.assertEqual(len(categories[0]["leaves"]), 2)
         self.assertEqual(categories[0]["leaves"][0]["count"], 1000)
-        self.assertEqual(categories[0]["leaves"][0]["url"], reverse("definition_review_list", args=[0]))
-        self.assertEqual(categories[1]["leaves"][0]["url"], reverse("formula_review_list", args=[0]))
+        self.assertEqual(categories[0]["leaves"][0]["url"], reverse("definition_review_list", args=[0])+"?review_origin=garden")
+        self.assertEqual(categories[1]["leaves"][0]["url"], reverse("formula_review_list", args=[0])+"?review_origin=garden")
         self.assertIn(reverse("note_list", args=[self.chemistry.pk]), categories[5]["leaves"][0]["url"])
         self.assertEqual(categories[2]["leaves"], [])
         self.assertNotIn("Private subject", str(self.state(groups)))
@@ -64,6 +64,24 @@ class TodaysGardenTests(TestCase):
                 book.pages_summarized=pages
                 book.save()
                 self.assertEqual(self.state()["trees"][0]["stage"], stage)
+
+    def test_fruit_assignments_are_distinct_then_reused_and_never_reshuffled(self):
+        from learning.garden_fruit import FRUIT_CHOICES
+        initial = {tree["id"]: tree["fruit"] for tree in self.state()["trees"]}
+        self.assertNotEqual(initial[self.math.pk], initial[self.chemistry.pk])
+        for number in range(len(FRUIT_CHOICES)-2):
+            Subject.objects.create(user=self.user, name=f"Extra {number}")
+        varieties = [tree["fruit"] for tree in self.state()["trees"]]
+        self.assertEqual(len(set(varieties)), len(FRUIT_CHOICES))
+        extra = Subject.objects.create(user=self.user, name="Reused variety")
+        self.assertIn(extra.garden_fruit, dict(FRUIT_CHOICES))
+        self.math.name = "Renamed mathematics"
+        self.math.save(update_fields=["name"])
+        self.math.refresh_from_db()
+        self.assertEqual(self.math.garden_fruit, initial[self.math.pk])
+        extra.delete()
+        refreshed = {tree["id"]: tree["fruit"] for tree in self.state()["trees"]}
+        self.assertTrue(all(refreshed[pk] == fruit for pk, fruit in initial.items()))
 
     def test_real_events_belong_to_their_subject_with_status_and_detail_link(self):
         overdue = AssessmentEvent.objects.create(subject=self.math, date=self.today-timedelta(days=1), kind="exam", title="Algebra exam")

@@ -1,4 +1,5 @@
 {% load static %}
+{% load review_navigation %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -660,7 +661,7 @@
                     {% for item in notes %}
 
                         <a
-                            href="{% url 'note_detail' note_id=item.note.id %}?mode=global_review"
+                            href="{% url 'note_detail' note_id=item.note.id %}?mode=global_review&amp;review_origin=library"
                             class="review-card"
                             data-review-card
                             data-subject-name="{{ item.subject.name|escape }}"

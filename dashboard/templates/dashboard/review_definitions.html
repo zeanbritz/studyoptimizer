@@ -1,4 +1,5 @@
 {% load static %}
+{% load review_navigation %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -708,7 +709,7 @@
                     {% for item in definitions %}
 
                         <a
-                            href="{% if mode == 'test' %}{% url 'practice_definition_review' definition_id=item.definition.id %}?review_scope=global{% else %}{% url 'read_definition' definition_id=item.definition.id %}{% endif %}"
+                            href="{% if mode == 'test' %}{% url 'practice_definition_review' definition_id=item.definition.id %}?review_scope=global&amp;review_origin=library{% else %}{% url 'read_definition' definition_id=item.definition.id %}?review_origin=library{% endif %}"
                             class="review-card"
                             data-review-card
                             data-subject-name="{{ item.subject.name|escape }}"

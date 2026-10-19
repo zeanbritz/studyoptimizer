@@ -1,4 +1,5 @@
 {% load static %}
+{% load review_navigation %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -528,7 +529,7 @@
                 {% if review_scope == "all" %}
 
                     <a
-                        href="{% url 'review_comparisons' %}"
+                        href="{% review_back %}"
                         class="quit-button"
                     >
                         Quit review
@@ -537,7 +538,7 @@
                 {% elif subject_index != None %}
 
                     <a
-                        href="{% url 'comparison_review_list' subject_index=subject_index %}"
+                        href="{% review_back %}"
                         class="quit-button"
                     >
                         Quit review
@@ -546,7 +547,7 @@
                 {% else %}
 
                     <a
-                        href="{% url 'dashboard' %}"
+                        href="{% review_back %}"
                         class="quit-button"
                     >
                         Quit review
@@ -774,7 +775,7 @@
                         {% if review_scope == "all" %}
 
                             <a
-                                href="{% url 'practice_comparison_review' comparison_id=next_comparison.id %}?scope=all"
+                                href="{% url 'practice_comparison_review' comparison_id=next_comparison.id %}?scope=all{% review_query '&' %}"
                                 class="next-button"
                             >
                                 Next comparison →
@@ -783,7 +784,7 @@
                         {% else %}
 
                             <a
-                                href="{% url 'practice_comparison_review' comparison_id=next_comparison.id %}?subject_index={{ subject_index }}"
+                                href="{% url 'practice_comparison_review' comparison_id=next_comparison.id %}?subject_index={{ subject_index }}{% review_query '&' %}"
                                 class="next-button"
                             >
                                 Next comparison →
@@ -796,7 +797,7 @@
                         {% if review_scope == "all" %}
 
                             <a
-                                href="{% url 'review_comparisons' %}"
+                                href="{% review_back %}"
                                 class="next-button"
                             >
                                 Finish reviews
@@ -805,7 +806,7 @@
                         {% elif subject_index != None %}
 
                             <a
-                                href="{% url 'comparison_review_list' subject_index=subject_index %}"
+                                href="{% review_back %}"
                                 class="next-button"
                             >
                                 Finish reviews
@@ -814,7 +815,7 @@
                         {% else %}
 
                             <a
-                                href="{% url 'dashboard' %}"
+                                href="{% review_back %}"
                                 class="next-button"
                             >
                                 Finish reviews
@@ -833,7 +834,7 @@
                     id="review-form"
                 >
 
-                    {% csrf_token %}
+                    {% csrf_token %}{% review_hidden %}
 
                     <input
                         type="hidden"

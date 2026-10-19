@@ -1,5 +1,7 @@
 from django.urls import path
 
+from learning.review_navigation import review_navigation
+
 from . import views
 
 
@@ -29,13 +31,13 @@ urlpatterns = [
 
     path(
         "formulas/<int:formula_id>/review/",
-        views.review_formula,
+        review_navigation(views.review_formula),
         name="review_formula",
     ),
 
     path(
         "subjects/<int:subject_index>/formulas/review/",
-        views.formula_review_list,
+        review_navigation(views.formula_review_list),
         name="formula_review_list",
     ),
 
@@ -64,13 +66,13 @@ urlpatterns = [
 
     path(
         "subjects/<int:subject_index>/definitions/review/",
-        views.definition_review_list,
+        review_navigation(views.definition_review_list),
         name="definition_review_list",
     ),
 
     path(
         "definitions/<int:definition_id>/review/",
-        views.review_definition,
+        review_navigation(views.review_definition),
         name="review_definition",
     ),
 
@@ -112,13 +114,13 @@ urlpatterns = [
 
     path(
         "subjects/<int:subject_index>/lists/review/",
-        views.list_review_list,
+        review_navigation(views.list_review_list),
         name="list_review_list",
     ),
 
     path(
         "lists/<int:list_id>/review/",
-        views.review_list,
+        review_navigation(views.review_list),
         name="review_list",
     ),
 
@@ -142,7 +144,7 @@ urlpatterns = [
 
     path(
         "subjects/<int:subject_index>/steps/review/",
-        views.step_review_list,
+        review_navigation(views.step_review_list),
         name="step_review_list",
     ),
 
@@ -170,13 +172,13 @@ urlpatterns = [
 
     path(
         "subjects/<int:subject_id>/notes/",
-        views.note_list,
+        review_navigation(views.note_list),
         name="note_list",
     ),
 
     path(
         "notes/<int:note_id>/",
-        views.note_detail,
+        review_navigation(views.note_detail),
         name="note_detail",
     ),
 
@@ -206,7 +208,7 @@ urlpatterns = [
 
     path(
         "subjects/<int:subject_index>/comparisons/review/",
-        views.comparison_review_list,
+        review_navigation(views.comparison_review_list),
         name="comparison_review_list",
     ),
 

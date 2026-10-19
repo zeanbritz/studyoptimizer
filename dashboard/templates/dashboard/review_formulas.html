@@ -1,4 +1,5 @@
 {% load static %}
+{% load review_navigation %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -675,7 +676,7 @@
                     {% for item in formulas %}
 
                         <a
-                            href="{% if mode == 'test' %}{% url 'practice_formula' formula_id=item.formula.id %}?review_mode=global{% else %}{% url 'read_review_item' kind='formula' item_id=item.formula.id %}{% endif %}"
+                            href="{% if mode == 'test' %}{% url 'practice_formula' formula_id=item.formula.id %}?review_mode=global&amp;review_origin=library{% else %}{% url 'read_review_item' kind='formula' item_id=item.formula.id %}?review_origin=library{% endif %}"
                             class="review-card"
                             data-review-card
                             data-subject-name="{{ item.subject.name|escape }}"

@@ -1,4 +1,5 @@
 {% load static %}
+{% load review_navigation %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -665,7 +666,7 @@
                     {% for item in steps %}
 
                         <a
-                            href="{% if mode == 'test' %}{% url 'practice_step_review' step_list_id=item.step_list.id %}?scope=all{% else %}{% url 'read_review_item' kind='step' item_id=item.step_list.id %}{% endif %}"
+                            href="{% if mode == 'test' %}{% url 'practice_step_review' step_list_id=item.step_list.id %}?scope=all&amp;review_origin=library{% else %}{% url 'read_review_item' kind='step' item_id=item.step_list.id %}?review_origin=library{% endif %}"
                             class="review-card"
                             data-review-card
                             data-subject-name="{{ item.subject.name|escape }}"

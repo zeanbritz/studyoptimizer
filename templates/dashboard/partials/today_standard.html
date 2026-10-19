@@ -1,4 +1,5 @@
 {% load static %}
+{% load review_navigation %}
                 {% if onboarding_complete and review_plan %}
                     {% if review_plan.summary_shortfall_minutes %}
                         <p class="review-capacity-warning">
@@ -129,7 +130,7 @@
 
 
                                         <a
-                                            href="{% url 'definition_review_list' subject_index=item.subject_index %}"
+                                            href="{% url 'definition_review_list' subject_index=item.subject_index %}?review_origin=standard"
                                             class="plan-subject-card"
                                         >
 
@@ -219,7 +220,7 @@
 
 
                                         <a
-                                            href="{% url 'formula_review_list' subject_index=item.subject_index %}"
+                                            href="{% url 'formula_review_list' subject_index=item.subject_index %}?review_origin=standard"
                                             class="plan-subject-card"
                                         >
 
@@ -307,7 +308,7 @@
 
 
                                         <a
-                                            href="{% url 'list_review_list' subject_index=item.subject_index %}"
+                                            href="{% url 'list_review_list' subject_index=item.subject_index %}?review_origin=standard"
                                             class="plan-subject-card"
                                         >
 
@@ -401,7 +402,7 @@
 
 
                                         <a
-                                            href="{% url 'step_review_list' subject_index=item.subject_index %}"
+                                            href="{% url 'step_review_list' subject_index=item.subject_index %}?review_origin=standard"
                                             class="plan-subject-card"
                                         >
 
@@ -488,7 +489,7 @@
 
 
                                         <a
-                                            href="{% url 'comparison_review_list' subject_index=item.subject_index %}"
+                                            href="{% url 'comparison_review_list' subject_index=item.subject_index %}?review_origin=standard"
                                             class="plan-subject-card"
                                         >
 
@@ -576,7 +577,7 @@
 
 
                 <a
-                    href="{% url 'note_list' subject_id=item.subject.id %}?subject_index={{ item.subject_index }}&mode=subject_review"
+                    href="{% url 'note_list' subject_id=item.subject.id %}?subject_index={{ item.subject_index }}&mode=subject_review&amp;review_origin=standard"
                     class="plan-subject-card"
                 >
 

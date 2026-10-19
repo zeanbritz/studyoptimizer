@@ -1,4 +1,5 @@
 {% load static %}
+{% load review_navigation %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -567,9 +568,9 @@
             <div class="container">
                 <header class="header">
                     <a
-                        href="{% url 'subject_detail' subject_index=subject_index %}"
+                        href="{% review_back %}"
                         class="back-button"
-                        aria-label="Back to subject"
+                        aria-label="Back to starting page"
                     >
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                             <path d="M19 12H5"></path>
@@ -613,7 +614,7 @@
                         {% for step_list in due_steps %}
                             <article class="review-item" data-review-item>
                                 <a
-                                    href="{% url 'practice_step_review' step_list_id=step_list.id %}?subject_index={{ subject_index }}"
+                                    href="{% url 'practice_step_review' step_list_id=step_list.id %}?subject_index={{ subject_index }}{% review_query '&' %}"
                                     class="review-link"
                                 >
                                     <span class="step-icon" aria-hidden="true">
@@ -650,7 +651,7 @@
                                         data-delete-form
                                         data-step-name="{{ step_list.question|escape }}"
                                     >
-                                        {% csrf_token %}
+                                        {% csrf_token %}{% review_hidden %}
                                         <input type="hidden" name="subject_index" value="{{ subject_index }}">
 
                                         <button
@@ -681,7 +682,7 @@
                         <h2>Daily review complete!</h2>
                         <p>You have reviewed every step set due today.</p>
                         <a
-                            href="{% url 'subject_detail' subject_index=subject_index %}"
+                            href="{% review_back %}"
                             class="subject-button"
                         >Finish Review</a>
                     </section>

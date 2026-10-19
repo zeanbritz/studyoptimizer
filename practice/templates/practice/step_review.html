@@ -1,4 +1,5 @@
 {% load static %}
+{% load review_navigation %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -744,18 +745,18 @@
 
 
                     <a
-                        href="{% url 'review_steps' %}"
+                        href="{% review_back %}"
                         class="back-link"
                     >
                         ← All Steps
                     </a>
 
 
-                {% elif subject_index != None %}
+                {% else %}
 
 
                     <a
-                        href="{% url 'step_review_list' subject_index=subject_index %}"
+                        href="{% review_back %}"
                         class="back-link"
                     >
                         ← Steps to Review
@@ -966,7 +967,7 @@
 
 
                                 <a
-                                    href="{% url 'practice_step_review' step_list_id=next_step_list.id %}?scope=all"
+                                    href="{% url 'practice_step_review' step_list_id=next_step_list.id %}?scope=all{% review_query '&' %}"
                                     class="continue-button"
                                 >
                                     Continue →
@@ -977,7 +978,7 @@
 
 
                                 <a
-                                    href="{% url 'practice_step_review' step_list_id=next_step_list.id %}?subject_index={{ subject_index }}"
+                                    href="{% url 'practice_step_review' step_list_id=next_step_list.id %}?subject_index={{ subject_index }}{% review_query '&' %}"
                                     class="continue-button"
                                 >
                                     Continue →
@@ -994,18 +995,18 @@
 
 
                                 <a
-                                    href="{% url 'review_steps' %}"
+                                    href="{% review_back %}"
                                     class="continue-button"
                                 >
                                     Finish Reviews
                                 </a>
 
 
-                            {% elif subject_index != None %}
+                            {% else %}
 
 
                                 <a
-                                    href="{% url 'step_review_list' subject_index=subject_index %}"
+                                    href="{% review_back %}"
                                     class="continue-button"
                                 >
                                     Finish Reviews
@@ -1069,7 +1070,7 @@
                     <form method="POST">
 
 
-                        {% csrf_token %}
+                        {% csrf_token %}{% review_hidden %}
 
 
                         <!-- =============================

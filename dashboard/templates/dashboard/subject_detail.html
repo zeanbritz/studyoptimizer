@@ -1,4 +1,5 @@
 {% load static %}
+{% load review_navigation %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -4437,7 +4438,7 @@
     {% if due_formulas %}
 
         <a
-            href="{% url 'formula_review_list' subject_index=subject_index %}"
+            href="{% url 'formula_review_list' subject_index=subject_index %}?review_origin=subject"
             class="review-category formula-review-category"
         >
 
@@ -4477,7 +4478,7 @@
     {% if due_definitions %}
 
         <a
-            href="{% url 'definition_review_list' subject_index=subject_index %}"
+            href="{% url 'definition_review_list' subject_index=subject_index %}?review_origin=subject"
             class="review-category definition-review-category"
         >
 
@@ -4517,7 +4518,7 @@
     {% if due_bullet_lists %}
 
         <a
-            href="{% url 'list_review_list' subject_index=subject_index %}"
+            href="{% url 'list_review_list' subject_index=subject_index %}?review_origin=subject"
             class="review-category list-review-category"
         >
 
@@ -4557,7 +4558,7 @@
     {% if due_step_lists %}
 
         <a
-            href="{% url 'step_review_list' subject_index=subject_index %}"
+            href="{% url 'step_review_list' subject_index=subject_index %}?review_origin=subject"
             class="review-category step-review-category"
         >
 
@@ -4597,7 +4598,7 @@
 {% if due_comparisons %}
 
     <a
-        href="{% url 'comparison_review_list' subject_index=subject_index %}"
+        href="{% url 'comparison_review_list' subject_index=subject_index %}?review_origin=subject"
         class="review-category comparison-review-category"
     >
 
@@ -4637,7 +4638,7 @@
     {% if note_count > 0 and database_subject %}
 
         <a
-            href="{% url 'note_list' subject_id=database_subject.id %}?subject_index={{ subject_index }}&mode=subject_review"
+            href="{% url 'note_list' subject_id=database_subject.id %}?subject_index={{ subject_index }}&mode=subject_review&amp;review_origin=subject"
             class="review-category note-review-category"
         >
 

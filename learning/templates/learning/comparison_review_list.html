@@ -1,4 +1,5 @@
 {% load static %}
+{% load review_navigation %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -431,9 +432,9 @@
             <div class="container">
                 <header class="header">
                     <a
-                        href="{% url 'subject_detail' subject_index=subject_index %}"
+                        href="{% review_back %}"
                         class="back-button"
-                        aria-label="Back to subject"
+                        aria-label="Back to starting page"
                     >
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                             <path d="M19 12H5"></path>
@@ -477,7 +478,7 @@
                                 data-review-item
                             >
                                 <a
-                                    href="{% url 'practice_comparison_review' comparison_id=comparison.id %}?subject_index={{ subject_index }}"
+                                    href="{% url 'practice_comparison_review' comparison_id=comparison.id %}?subject_index={{ subject_index }}{% review_query '&' %}"
                                     class="review-link"
                                 >
                                     <span class="comparison-number">{{ forloop.counter }}</span>
@@ -516,7 +517,7 @@
                                         data-delete-form
                                         data-comparison-name="{{ comparison.name|escape }}"
                                     >
-                                        {% csrf_token %}
+                                        {% csrf_token %}{% review_hidden %}
                                         <input type="hidden" name="subject_index" value="{{ subject_index }}">
 
                                         <button
@@ -550,7 +551,7 @@
                             daily review becomes available from midnight.
                         </p>
                         <a
-                            href="{% url 'subject_detail' subject_index=subject_index %}"
+                            href="{% review_back %}"
                             class="subject-button"
                         >Finish Review</a>
                     </section>

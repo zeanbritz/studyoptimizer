@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% load review_navigation %}
 <html lang="en">
 
 <head>
@@ -607,7 +608,7 @@
 
 
             <a
-                href="{% url 'formula_list' subject_id=subject.id %}?subject_index={{ subject_index }}"
+                href="{% if request.GET.review_origin %}{% review_back %}{% else %}{% url 'formula_list' subject_id=subject.id %}?subject_index={{ subject_index }}{% endif %}"
                 class="back-button"
             >
                 ←
@@ -992,7 +993,7 @@
 
 
                 <a
-                    href="{% url 'review_formula' formula.id %}"
+                    href="{% url 'review_formula' formula.id %}{% review_query '?' %}"
                     class="action-button"
                 >
                     Review Formula
@@ -1000,7 +1001,7 @@
 
 
                 <a
-                    href="{% url 'practice_formula' formula.id %}"
+                    href="{% url 'practice_formula' formula.id %}{% review_query '?' %}"
                     class="action-button primary-button"
                 >
                     Practice Formula

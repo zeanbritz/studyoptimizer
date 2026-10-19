@@ -12,10 +12,12 @@
 .garden-legend { display: flex; flex-wrap: wrap; gap: 9px 17px; margin: 0 2px 15px; font-size: 10px; font-weight: 750; color: #63705f; }
 .garden-legend > span { display: inline-flex; align-items: center; gap: 6px; }
 .garden-legend i { display: inline-block; width: 12px; height: 12px; }
-.legend-leaf { clip-path: polygon(50% 0,65% 27%,91% 12%,79% 41%,100% 48%,76% 66%,82% 92%,57% 80%,50% 100%,40% 80%,13% 92%,22% 65%,0 48%,24% 38%,12% 10%,37% 27%); background: #427c43; }
+.legend-leaf { clip-path: polygon(50% 0,67% 47%,95% 38%,78% 78%,50% 98%,22% 78%,5% 38%,33% 47%); background: #427c43; }
 .legend-tree { border-radius: 50%; background: #679548; box-shadow: 3px 0 #80aa52, -2px 1px #4f7736; }
-.legend-exam { border-radius: 45% 45% 50% 50%; background: #edb94c; }
-.legend-assessment { border-radius: 50%; background: #789cc6; }
+.legend-exam, .legend-assessment { display: inline-grid !important; place-items: center; width: 17px !important; height: 17px !important; border-radius: 50%; background: #fff0c1; color: #68522b; font-size: 9px; font-style: normal; }
+.legend-assessment { background: #dceaf4; color: #38627b; }
+.legend-exam::after { content: "E"; }
+.legend-assessment::after { content: "A"; }
 .garden-soil { position: relative; isolation: isolate; min-height: 820px; overflow: hidden; border: 5px solid #dbc4a7; border-radius: 25px; background-color: #75503a; background-image: radial-gradient(ellipse at 45% 45%, #b68b5c55, transparent 68%), radial-gradient(circle at 10px 12px, #ddbb8b24 0 1px, transparent 1.8px), radial-gradient(circle at 20px 22px, #3f281d50 0 1px, transparent 2px), repeating-linear-gradient(168deg, transparent 0 25px, #402a202b 26px 28px, #e1bb8d12 29px 30px, transparent 33px 53px); background-size: auto, 29px 41px, 43px 31px, auto; box-shadow: inset 0 0 55px #2f211b77, 0 4px 0 #c4ad92; }
 .garden-soil::before { position: absolute; inset: 12px; z-index: -1; border: 1px solid #efd3a22b; border-radius: 13px; content: ""; pointer-events: none; }
 .garden-stems { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
@@ -28,7 +30,7 @@
 .garden-marker::after { position: absolute; top: 64px; left: calc(50% - 21px); z-index: -1; width: 42px; height: 9px; border-radius: 50%; background: #382b1e66; filter: blur(2px); content: ""; }
 .garden-marker strong { position: relative; z-index: 1; display: block; min-height: 34px; padding: 8px 11px; border: 1px solid #414e31; border-bottom: 3px solid #38462e; border-radius: 3px; background: repeating-linear-gradient(176deg,#ffffff05 0 2px,transparent 3px 7px),linear-gradient(135deg,#7c865a,#566a43); box-shadow: 1px 3px 4px #30261b55; color: #fff0c8; font-size: 12px; font-weight: 800; line-height: 1.3; text-align: center; text-shadow: 0 1px #38482d; }
 .garden-vine-label { transform: rotate(-3deg); }
-.garden-leaf { position: absolute; z-index: 2; display: flex; align-items: center; justify-content: center; width: 116px; height: 92px; padding: 27px 21px 17px; border-radius: 16px; color: #fffdf2 !important; text-decoration: none; pointer-events: auto; transform: rotate(var(--leaf-angle)); filter: drop-shadow(1px 5px 3px #1d2d1b60); transition: filter .18s, scale .18s; animation: ivy-breeze 6s ease-in-out infinite; animation-delay: var(--breeze-delay); }
+.garden-leaf { position: absolute; z-index: 2; display: flex; align-items: center; justify-content: center; width: 116px; height: 92px; padding: 27px 21px 17px; border-radius: 16px; color: #fffdf2 !important; text-decoration: none; pointer-events: auto; transform: rotate(var(--leaf-angle)); transform-origin: 50% 92%; filter: drop-shadow(1px 5px 3px #1d2d1b60); transition: filter .18s, scale .18s; animation: ivy-breeze var(--breeze-duration,13s) ease-in-out infinite; animation-delay: var(--breeze-delay); }
 .garden-leaf > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .garden-leaf > span { position: relative; display: -webkit-box; max-height: 36px; overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 11px; font-weight: 800; line-height: 1.35; text-align: center; text-shadow: 0 1px 2px #193b20; transform: rotate(calc(-1 * var(--leaf-angle))); overflow-wrap: anywhere; }
 .garden-leaf:hover, .garden-leaf:focus-visible, .garden-leaf.is-selected { z-index: 8; filter: drop-shadow(0 0 5px #f5d78d); scale: 1.07; }
@@ -36,13 +38,18 @@
 .garden-tree { position: absolute; z-index: 2; width: 200px; }
 .garden-tree-link { position: absolute; inset: 0; display: block; border-radius: 24px; text-decoration: none; }
 .garden-tree-art { position: absolute; top: 0; left: 50%; width: 200px; height: 240px; transform: translateX(-50%); overflow: visible; filter: drop-shadow(3px 5px 3px #30291d30); }
-.tree-crown { transform-box: view-box; transform-origin: 100px 190px; animation: tree-breeze 7s ease-in-out infinite; animation-delay: var(--breeze-delay); }
+.tree-sway { transform-box: view-box; transform-origin: 100px 190px; animation: tree-breeze var(--breeze-duration,14s) ease-in-out infinite; animation-delay: var(--breeze-delay); }
+.tree-crown { transform-box: view-box; transform-origin: 100px 190px; }
+.garden-vine-stem { transform-box: view-box; animation: vine-breeze var(--breeze-duration,17s) ease-in-out infinite; animation-delay: var(--breeze-delay); }
 .garden-tree-label { left: 50%; width: 174px; transform: translateX(-50%) rotate(2deg); }
 .garden-tree-label strong { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
 .garden-tree-link:hover .garden-marker strong, .garden-tree-link:focus-visible .garden-marker strong, .garden-tree-link.is-selected .garden-marker strong { background-color: #7b8b55; border-color: #a8bf79; }
 .garden-tree-link:focus-visible { outline: 3px solid #ffdfa0; outline-offset: 4px; }
 .garden-fruit { position: absolute; z-index: 5; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; color: #322d22; text-decoration: none; transition: transform .18s; filter: drop-shadow(1px 3px 2px #30291d50); }
 .garden-fruit svg { width: 36px; height: 39px; overflow: visible; }
+.garden-fruit[data-placement="tree"] { transform-origin: var(--fruit-root-x) var(--fruit-root-y); animation: tree-breeze var(--breeze-duration,14s) ease-in-out infinite; animation-delay: var(--breeze-delay); }
+.garden-fruit-kind { position: absolute; right: -1px; bottom: -1px; display: grid; place-items: center; width: 15px; height: 15px; border-radius: 50%; background: #fff0c1; color: #68522b; font-size: 9px; font-weight: 900; }
+.garden-fruit[data-kind="assessment"] .garden-fruit-kind { background: #dceaf4; color: #38627b; }
 .garden-fruit:hover, .garden-fruit:focus-visible, .garden-fruit.is-selected { transform: scale(1.15); outline: 3px solid #fff1bb; outline-offset: 1px; background: #f8e8a52b; }
 .garden-fruit[data-status="overdue"] { outline: 1px solid #a1916355; background: #47382933; }
 .garden-fruit[data-status="today"], .garden-fruit[data-status="soon"] { outline: 2px dashed #ffe3a1; }
@@ -50,11 +57,12 @@
 .garden-fruit[data-status="overdue"] .garden-fruit-status { background: #ae3d2f; color: #fff; }
 .garden-fruit-fallen { z-index: 4; filter: drop-shadow(2px 2px 1px #30251a99); }
 .garden-fruit-fallen svg { transform: rotate(-14deg) scale(.86,.77); }
-.garden-fruit-falling { animation: garden-fruit-drop 1s cubic-bezier(.35,.05,.7,1) both; }
-.garden-fruit-returning { animation: garden-fruit-return .75s ease-out both; }
+.garden-fruit-falling { animation: garden-fruit-drop 1s cubic-bezier(.35,.05,.7,1) both !important; }
+.garden-fruit-returning { animation: garden-fruit-return .75s ease-out both !important; }
 .garden-fallen-bed { position: absolute; z-index: -1; width: 180px; border-radius: 50%; background: radial-gradient(ellipse,#34291d44,transparent 72%); pointer-events: none; }
-.garden-fruit-stem { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.garden-fruit-stem path { stroke: #b2aa6c; stroke-width: 1.5; fill: none; opacity: .6; }
+.garden-drift-leaf { position: absolute; z-index: 3; width: 13px; height: 8px; opacity: 0; pointer-events: none; animation: garden-leaf-drift var(--drift-duration,49s) linear infinite; animation-delay: var(--drift-delay); }
+.garden-drift-leaf svg { display: block; width: 100%; height: 100%; }
+.garden-motion-paused *, .garden-motion-paused *::before, .garden-motion-paused *::after { animation-play-state: paused !important; }
 .garden-bottom { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 13px 3px 0; color: #6b735e; font-size: 11px; line-height: 1.5; }
 #garden-sync-status { color: #3a7343; font-weight: 800; }
 .garden-popover { position: fixed; z-index: 1550; width: min(280px, calc(100vw - 24px)); padding: 20px; border: 1px solid #cdd9bc; border-bottom: 4px solid #a8ba91; border-radius: 14px; background: #fffef5; box-shadow: 0 12px 38px #28322240; color: #30452b; }
@@ -70,8 +78,10 @@
 .garden-loading { padding: 90px 20px; color: #fff2cb; text-align: center; }
 .garden-completed-leaf { z-index: 9; pointer-events: none; animation: garden-complete .85s ease forwards !important; }
 .garden-growth { animation: garden-grow .9s ease both; }
-@keyframes ivy-breeze { 0%,100% { rotate: -1.5deg; } 50% { rotate: 1.5deg; } }
-@keyframes tree-breeze { 0%,100% { rotate: -.8deg; } 50% { rotate: .8deg; } }
+@keyframes ivy-breeze { 0%,28%,70%,100% { rotate: 0deg; } 43% { rotate: -.9deg; } 55% { rotate: .65deg; } 63% { rotate: -.3deg; } }
+@keyframes tree-breeze { 0%,23%,77%,100% { rotate: 0deg; } 41% { rotate: .7deg; } 57% { rotate: -.45deg; } 68% { rotate: .2deg; } }
+@keyframes vine-breeze { 0%,26%,74%,100% { rotate: 0deg; } 46% { rotate: .13deg; } 61% { rotate: -.1deg; } }
+@keyframes garden-leaf-drift { 0%,79% { opacity: 0; transform: translate(0,0) rotate(-12deg); } 80% { opacity: .75; } 85% { opacity: .7; transform: translate(12px,calc(var(--drift-distance)*.25)) rotate(25deg); } 91% { opacity: .6; transform: translate(-9px,calc(var(--drift-distance)*.62)) rotate(71deg); } 97%,100% { opacity: 0; transform: translate(22px,var(--drift-distance)) rotate(125deg); } }
 @keyframes garden-complete { 0% { opacity: .95; filter: drop-shadow(0 0 8px #ffe5a0); } 40% { scale: 1.12; opacity: .9; } 100% { translate: 0 -22px; scale: .5; opacity: 0; } }
 @keyframes garden-grow { from { opacity: .55; scale: .83; } to { opacity: 1; scale: 1; } }
 @keyframes garden-fruit-drop { 0% { translate: var(--fruit-from-x) var(--fruit-from-y); rotate: -10deg; } 68% { translate: 0 6px; rotate: 12deg; } 83% { translate: 0 -7px; rotate: -5deg; } 100% { translate: 0 0; rotate: 0deg; } }

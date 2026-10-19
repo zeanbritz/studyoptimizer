@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models
+from django.db import models, transaction
+
+from .garden_fruit import FRUIT_CHOICES, available_fruit
 
 
 # ============================================================
@@ -24,6 +26,10 @@ class Subject(models.Model):
         default="#2563EB",
     )
 
+    garden_fruit = models.CharField(
+        max_length=16, choices=FRUIT_CHOICES, blank=True, editable=False,
+    )
+
     target_grade = models.PositiveSmallIntegerField(
         null=True,
         blank=True,
@@ -45,6 +51,21 @@ class Subject(models.Model):
     def __str__(self):
 
         return self.name
+
+    def save(self, *args, **kwargs):
+        if self.garden_fruit or not self.user_id:
+            return super().save(*args, **kwargs)
+        # Serialize assignments per student so simultaneous subject creation
+        # does not pick the same unused variety. Existing assignments never move.
+        with transaction.atomic():
+            user_model = self._meta.get_field("user").remote_field.model
+            user_model.objects.select_for_update().get(pk=self.user_id)
+            self.garden_fruit = available_fruit(
+                type(self).objects.filter(user_id=self.user_id).exclude(pk=self.pk)
+            )
+            if kwargs.get("update_fields") is not None:
+                kwargs["update_fields"] = set(kwargs["update_fields"]) | {"garden_fruit"}
+            return super().save(*args, **kwargs)
 
 
 # ============================================================

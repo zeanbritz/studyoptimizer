@@ -56,6 +56,11 @@
         garden.hidden = activeView !== "garden";
         closeDetails();
         saveStorage(localStorage, storageKey, activeView);
+        const currentURL=new URL(location.href);
+        if(currentURL.searchParams.get("view")!==activeView) {
+            currentURL.searchParams.set("view",activeView);
+            history.replaceState(history.state,"",currentURL.pathname+currentURL.search+currentURL.hash);
+        }
         if (activeView === "garden") { render(); refresh(); }
     }
     tabs.forEach(tab => {
@@ -124,11 +129,12 @@
     });
     window.addEventListener("scroll", () => closeDetails(), { passive: true });
 
-    const ivyShape = "M60 87L45 69L24 77L30 57L7 42L33 34L24 12L49 25L60 3L72 25L97 12L88 34L114 42L90 58L96 77L75 69Z";
+    // Exactly three tips, with two deep sinuses and a softly rounded base.
+    const ivyShape = "M60 87C46 78 33 79 25 68L7 36L39 44L60 4L81 44L113 36L95 68C87 79 74 78 60 87Z";
 
     function leafArtwork(categoryIndex, id) {
         const gradient = "ivy-" + id;
-        return `<svg viewBox="0 0 120 92" aria-hidden="true"><defs><linearGradient id="${gradient}" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#699349"/><stop offset=".45" stop-color="#3d743b"/><stop offset="1" stop-color="#234e32"/></linearGradient></defs><path d="${ivyShape}" fill="url(#${gradient})" stroke="#adc17c" stroke-width="1.1"/><path d="M60 86L60 13M60 37L32 21M60 48L18 42M60 63L31 69M60 37L90 21M60 48L104 42M60 63L89 69" fill="none" stroke="#b1c786" stroke-width="1.2" opacity=".6"/><path d="M60 17L63 67L60 83" fill="none" stroke="#e0dfa1" opacity=".25"/></svg>`;
+        return `<svg viewBox="0 0 120 92" aria-hidden="true"><defs><linearGradient id="${gradient}" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#699349"/><stop offset=".45" stop-color="#3d743b"/><stop offset="1" stop-color="#234e32"/></linearGradient></defs><path d="${ivyShape}" fill="url(#${gradient})" stroke="#adc17c" stroke-width="1.1"/><path d="M60 84L60 14M60 70Q38 54 16 42M60 70Q82 54 104 42M60 56L49 45M60 56L71 45M43 58L32 60M77 58L88 60" fill="none" stroke="#b1c786" stroke-width="1.2" opacity=".55"/><path d="M60 17L62 67L60 83" fill="none" stroke="#e0dfa1" opacity=".25"/></svg>`;
     }
 
     function treeArtwork(tree) {
@@ -138,6 +144,12 @@
         const crown = crowns[stage];
         const trunkWidth = [0,2.8,4.5,7.5,10,13][stage];
         let branches = "", foliage = "";
+        if(stage===0 && tree.events.some(event=>event.status!=="overdue" && !event.completed)) {
+            // A small fruit-bearing twig keeps dates rooted even before any pages
+            // are summarized; the progress-controlled crown is still ungrown.
+            branches='<path d="M100 188Q96 174 100 158M99 173Q87 151 78 131M100 181Q112 175 124 167" fill="none" stroke="#80613c" stroke-width="3" stroke-linecap="round"/>';
+            foliage='<path d="M80 157Q68 151 71 142Q83 141 87 152ZM119 174Q128 160 136 167Q134 177 119 174Z" fill="#547d39" stroke="#95ac65" stroke-width=".8"/>';
+        }
         if (stage > 0) {
             const top = crown ? crown.cy + 8 : 156;
             branches = `<path d="M100 188Q96 165 100 ${top}" fill="none" stroke="url(#${id}-bark)" stroke-width="${trunkWidth}" stroke-linecap="round"/><path d="M98 184Q102 164 102 ${top+12}" stroke="#c19a61" stroke-width="${Math.max(1,trunkWidth*.18)}" fill="none" opacity=".65"/>`;
@@ -163,22 +175,43 @@
         const mound = stage===0
             ? '<path d="M65 191Q80 169 103 174Q124 174 139 191Q111 208 65 191Z" fill="#59402a" stroke="#ba8e5c"/><ellipse cx="101" cy="183" rx="7" ry="4" transform="rotate(-25 101 183)" fill="#ddba80"/><path d="M78 198Q102 204 126 197" fill="none" stroke="#d0a46e" opacity=".55"/>'
             : '<ellipse cx="100" cy="190" rx="25" ry="9" fill="#412d21" stroke="#a17b50"/>';
-        return `<svg class="garden-tree-art" viewBox="0 0 200 240" aria-hidden="true" data-growth-stage="${stage}"><defs><linearGradient id="${id}-bark"><stop stop-color="#593e2a"/><stop offset=".55" stop-color="#ab8051"/><stop offset="1" stop-color="#62452d"/></linearGradient><radialGradient id="${id}-shade"><stop stop-color="#2e281c" stop-opacity=".5"/><stop offset="1" stop-color="#2e281c" stop-opacity="0"/></radialGradient></defs><ellipse cx="115" cy="197" rx="${stage>1?55:36}" ry="18" transform="rotate(-9 115 197)" fill="url(#${id}-shade)"/><ellipse cx="100" cy="190" rx="44" ry="16" transform="rotate(-8 100 190)" fill="#a17b49" opacity=".28"/>${mound}${branches}<g class="tree-crown">${foliage}</g></svg>`;
+        // Extra dates occupy leafy, low boughs, not a row of floating fruit.
+        // These are one shared woody branch per cluster, never fruit tethers.
+        const attachedCount=tree.events.filter(event=>!event.completed&&event.status!=="overdue").length;
+        for(let row=0;row<Math.ceil(Math.max(0,attachedCount-6)/3);row++) {
+            const y=attachedFruitPoint(tree,6+row*3).y;
+            branches+=`<path d="M100 164Q112 ${y-19} 100 ${y-11}M100 ${y-11}Q76 ${y-21} 48 ${y-14}M100 ${y-11}Q127 ${y-22} 153 ${y-13}" fill="none" stroke="#79583a" stroke-width="5" stroke-linecap="round"/>`;
+            for(let col=0;col<Math.min(3,attachedCount-6-row*3);col++) {
+                const x=50+col*50;
+                foliage+=`<ellipse cx="${x}" cy="${y-13}" rx="29" ry="18" fill="#416e36"/><path d="M${x-21} ${y-15}Q${x} ${y-35} ${x+21} ${y-15}" fill="none" stroke="#93ac5d" stroke-width="3" opacity=".5"/>`;
+            }
+        }
+        // The soil is outside the sway group. Branches pivot at the planted root.
+        return `<svg class="garden-tree-art" viewBox="0 0 200 240" aria-hidden="true" data-growth-stage="${stage}"><defs><linearGradient id="${id}-bark"><stop stop-color="#593e2a"/><stop offset=".55" stop-color="#ab8051"/><stop offset="1" stop-color="#62452d"/></linearGradient><radialGradient id="${id}-shade"><stop stop-color="#2e281c" stop-opacity=".5"/><stop offset="1" stop-color="#2e281c" stop-opacity="0"/></radialGradient></defs><ellipse cx="115" cy="197" rx="${stage>1?55:36}" ry="18" transform="rotate(-9 115 197)" fill="url(#${id}-shade)"/><ellipse cx="100" cy="190" rx="44" ry="16" transform="rotate(-8 100 190)" fill="#a17b49" opacity=".28"/>${mound}<g class="tree-sway">${branches}<g class="tree-crown">${foliage}</g></g></svg>`;
     }
 
-    function fruitArtwork(event) {
-        const exam = event.kind === "exam", rotten = event.status === "overdue";
-        const apple = rotten
-            ? "M20 13C9 8 3 14 5 23L4 28L10 36L17 38L22 36L29 39L35 31L34 26C39 15 29 7 20 13Z"
+    function fruitArtwork(event, variety) {
+        const rotten = event.status === "overdue", pear = variety.includes("pear"), peach = variety === "peach";
+        const palettes = {
+            "red-apple": ["#ee8872", "#c63d36", "#752e29", "#724b3a"],
+            "green-apple": ["#d7e892", "#82ab43", "#4b6d29", "#59613b"],
+            "yellow-apple": ["#fff0a2", "#e7b842", "#9e7329", "#807044"],
+            "pear": ["#f2e299", "#b8bc58", "#75833b", "#6c7041"],
+            "red-pear": ["#efb16e", "#bf643b", "#7e3e2c", "#75513d"],
+            "peach": ["#ffe1a6", "#ee9d70", "#c56656", "#83644e"]
+        };
+        const [light, skin, edge, decay] = palettes[variety] || palettes["red-apple"];
+        const shape = pear
+            ? "M20 9C13 9 15 19 10 23C1 31 7 41 20 41C34 41 39 31 30 23C25 18 27 9 20 9Z"
+            : peach
+            ? "M20 14C10 7 2 16 4 28C5 38 14 43 20 40C27 43 36 37 37 27C39 15 29 8 20 14Z"
             : "M20 13C5 3 0 23 7 34C12 43 17 40 20 39C25 43 33 39 36 28C40 14 30 6 20 13Z";
-        const berry = rotten
-            ? '<path d="M7 19L14 13L23 14L32 18L34 26L30 36L22 39L12 36L6 29Z" fill="#665340" stroke="#453a2b"/>'
-            : '<circle cx="20" cy="27" r="15" fill="#7b9cc8" stroke="#456785" stroke-width="1.2"/>';
-        const skin = exam ? `<path d="${apple}" fill="${rotten?'#7c633d':'#edb84e'}" stroke="${rotten?'#483b29':'#ba8731'}" stroke-width="1.2"/>` : berry;
+        const gradient = `fruit-${event.id}`;
         const blemishes = rotten
-            ? '<ellipse cx="13" cy="23" rx="5" ry="4" fill="#302b20"/><ellipse cx="25" cy="31" rx="6" ry="4" fill="#403126"/><circle cx="24" cy="20" r="2.5" fill="#8a8b55"/><circle cx="28" cy="23" r="1.5" fill="#ada270"/><path d="M10 28L15 30L18 27M23 15L20 22L22 26M28 34L25 30" stroke="#332c21" stroke-width="1" fill="none"/>'
-            : '<path d="M10 19Q6 23 11 28" stroke="#fff1ba" opacity=".75" stroke-width="3" stroke-linecap="round" fill="none"/>';
-        return `<svg viewBox="0 0 40 44" aria-hidden="true"><path d="M20 13Q19 5 24 2" stroke="${rotten?'#51432f':'#674f2d'}" stroke-width="3" fill="none"/><path d="M21 10Q28 1 33 7Q31 13 21 10" fill="${rotten?'#65633e':'#4c792f'}"/>${skin}${blemishes}</svg>`;
+            ? '<ellipse cx="13" cy="27" rx="5" ry="4" fill="#302b20"/><ellipse cx="25" cy="33" rx="6" ry="4" fill="#403126"/><circle cx="24" cy="24" r="2.5" fill="#8a8b55"/><path d="M9 30L15 32L18 28M23 16L20 23L22 27M30 35L25 31" stroke="#332c21" stroke-width="1" fill="none"/>'
+            : '<path d="M11 20Q7 25 11 29" stroke="#fff5d6" opacity=".65" stroke-width="2.5" stroke-linecap="round" fill="none"/>';
+        const cleft = peach ? `<path d="M21 15Q27 26 20 39" fill="none" stroke="${rotten?'#4c3e31':'#cf7b66'}" opacity=".65"/>` : "";
+        return `<svg viewBox="0 0 40 44" aria-hidden="true"><defs><radialGradient id="${gradient}" cx=".3" cy=".3" r=".85"><stop stop-color="${rotten?decay:light}"/><stop offset=".65" stop-color="${rotten?decay:skin}"/><stop offset="1" stop-color="${rotten?'#493d2b':edge}"/></radialGradient></defs><path d="M20 13Q19 8 22 5" stroke="${rotten?'#51432f':'#674f2d'}" stroke-width="2.5" fill="none"/><path d="M21 10Q27 4 30 8Q28 12 21 10" fill="${rotten?'#65633e':'#4c792f'}"/><path d="${shape}" fill="url(#${gradient})" stroke="${rotten?'#483b29':edge}" stroke-width="1.1"/>${cleft}${blemishes}</svg>`;
     }
 
     function treeGeometry(tree) {
@@ -189,10 +222,13 @@
         return {attached,fallen,markerTop,height:markerTop+70+Math.ceil(fallen.length/3)*52};
     }
     function attachedFruitPoint(tree,index) {
+        const centerY=[155,149,133,106,85,70][tree.stage];
         if(index>=6) return {x:50+((index-6)%3)*50,y:208+Math.floor((index-6)/3)*50};
-        const centerY=[135,135,133,106,85,70][tree.stage];
-        const angle=(-150+index*60)*Math.PI/180;
-        return {x:100+Math.cos(angle)*62,y:centerY+Math.sin(angle)*44};
+        // Stagger the fruit within the crown, rather than hanging it on strings.
+        const count=tree.events.filter(event=>!event.completed&&event.status!=="overdue").length;
+        if(count===1) return {x:100,y:centerY+9};
+        const offsets=[[-23,-10],[23,26],[-23,44],[23,-28],[-65,8],[65,-10]];
+        return {x:100+offsets[index][0],y:centerY+offsets[index][1]};
     }
     function treeHeight(tree) { return treeGeometry(tree).height; }
 
@@ -287,7 +323,9 @@
         link.href=point.leaf.url;
         link.dataset.leafId=point.leaf.id;
         link.style.setProperty("--leaf-angle", `${point.angle}deg`);
-        link.style.setProperty("--breeze-delay", `${-(index+1)*.7}s`);
+        const seed=point.leaf.subject_id+index*7;
+        link.style.setProperty("--breeze-delay", `${-(seed%19)*.73}s`);
+        link.style.setProperty("--breeze-duration", `${11+(seed%7)*1.3}s`);
         position(link,point.x-58,point.y-46);
         link.innerHTML=leafArtwork(index,point.leaf.id+(completed?'-done':''));
         link.append(element("span","",point.leaf.subject));
@@ -319,10 +357,15 @@
             marker.append(element("strong","",vine.category.label));
             group.append(marker);
             const mainStem=svg("path",{d:smoothStem(vine.stem),class:"garden-main-stem","data-category":vine.category.id});
-            stems.append(mainStem);
-            addThorns(mainStem,stems);
+            const stemGroup=svg("g",{class:"garden-vine-stem"});
+            stemGroup.style.transformOrigin=`${vine.origin.x}px ${vine.origin.y}px`;
+            stemGroup.style.setProperty("--breeze-delay",`${-vine.i*2.3}s`);
+            stemGroup.style.setProperty("--breeze-duration",`${15+vine.i*1.7}s`);
+            stems.append(stemGroup);
+            stemGroup.append(mainStem);
+            addThorns(mainStem,stemGroup);
             vine.leaves.forEach(point=>{
-                stems.append(svg("path",{
+                stemGroup.append(svg("path",{
                     class:"garden-leaf-stalk",
                     d:`M${point.knot.x} ${point.knot.y}Q${point.base.x+8} ${point.knot.y-5} ${point.base.x} ${point.base.y}`
                 }));
@@ -350,6 +393,7 @@
             position(plant,x,y);
             plant.style.height=`${h}px`;
             plant.style.setProperty("--breeze-delay",`${-(tree.id%7)*.9}s`);
+            plant.style.setProperty("--breeze-duration",`${13+(tree.id%5)*1.7}s`);
             const link=element("a","garden-tree-link");
             link.href=tree.url;
             link.innerHTML=treeArtwork(tree);
@@ -365,8 +409,19 @@
             plant.append(link);
             const prior=previous?.trees.find(t=>t.id===tree.id);
             if(prior&&prior.progress!==tree.progress&&!reducedMotion.matches)link.querySelector(".tree-crown").classList.add("garden-growth");
-            const supports=svg("svg",{class:"garden-fruit-stem",viewBox:`0 0 200 ${h}`,"aria-hidden":"true"});
-            plant.append(supports);
+            if(tree.stage>=2) {
+                // One tiny oval (not an ivy task leaf), reused by a sparse CSS cycle.
+                // No timers, hit targets, task data, or accumulating ground nodes.
+                const drift=element("span","garden-drift-leaf");
+                drift.setAttribute("aria-hidden","true");
+                const crownY=[155,149,133,106,85,70][tree.stage];
+                position(drift,86+(tree.id%4)*9,crownY);
+                drift.style.setProperty("--drift-distance",`${180-crownY}px`);
+                drift.style.setProperty("--drift-duration",`${41+(tree.id%7)*4.7}s`);
+                drift.style.setProperty("--drift-delay",`${-(tree.id%13)*3.1}s`);
+                drift.innerHTML='<svg viewBox="0 0 18 10" focusable="false"><path d="M1 8Q3-1 17 2Q13 12 1 8Z" fill="#c6a45c"/><path d="M2 8L14 3" stroke="#796f3e" stroke-width=".7"/></svg>';
+                plant.append(drift);
+            }
             if(geometry.fallen.length) {
                 const ground=element("div","garden-fallen-bed");
                 position(ground,10,geometry.markerTop+67);
@@ -383,8 +438,13 @@
                 fruit.dataset.status=event.status;
                 fruit.dataset.eventId=event.id;
                 fruit.dataset.placement=fallen?"ground":"tree";
+                fruit.dataset.variety=tree.fruit || "red-apple";
+                fruit.dataset.kind=event.kind;
                 position(fruit,point.x-22,point.y-22);
-                fruit.innerHTML=fruitArtwork(event);
+                fruit.style.setProperty("--fruit-root-x",`${122-point.x}px`);
+                fruit.style.setProperty("--fruit-root-y",`${212-point.y}px`);
+                fruit.innerHTML=fruitArtwork(event,fruit.dataset.variety);
+                fruit.append(element("span","garden-fruit-kind",event.kind==="exam"?"E":"A"));
                 const priorEvent=prior?.events.find(e=>e.id===event.id);
                 if(fallen) {
                     currentOverdue.add(event.id);
@@ -397,7 +457,6 @@
                     }
                     fallenSeen.add(event.id);
                 } else {
-                    supports.append(svg("path",{d:`M100 174Q${point.x} ${point.y+20} ${point.x} ${point.y}`}));
                     if(priorEvent?.status==="overdue"&&!reducedMotion.matches) {
                         const oldGeometry=treeGeometry(prior);
                         const groundIndex=Math.max(0,oldGeometry.fallen.findIndex(e=>e.id===event.id));
@@ -458,7 +517,13 @@
     window.addEventListener("pageshow",event=>{if(event.persisted)refresh(true);});
     window.addEventListener("focus",()=>refresh());
     document.addEventListener("visibilitychange",()=>{if(!document.hidden)refresh();});
+    let gardenInView=true;
+    function updateMotion() { garden.classList.toggle("garden-motion-paused",document.hidden||!gardenInView); }
+    const visibilityObserver=new IntersectionObserver(entries=>{
+        gardenInView=entries[0].isIntersecting;updateMotion();
+    });visibilityObserver.observe(scene);
+    document.addEventListener("visibilitychange",updateMotion);
     setInterval(()=>refresh(),60000);
     const requested=new URL(location.href).searchParams.get("view");
-    setView(requested==='garden'?'garden':readStorage(localStorage,storageKey)||'standard');
+    setView(requested==='garden'?'garden':requested==='standard'?'standard':readStorage(localStorage,storageKey)||'standard');
 })();

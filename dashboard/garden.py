@@ -6,6 +6,8 @@ from urllib.parse import urlencode
 from django.urls import reverse
 
 from learning.models import Subject
+from learning.garden_fruit import FRUIT_CHOICES
+from learning.review_navigation import with_origin
 
 
 CATEGORIES = (
@@ -46,12 +48,12 @@ def garden_state(user, session_subjects, groups, study_subjects, today):
                 "subject_id": subject.pk,
                 "subject": owned[subject.pk].name,
                 "count": 0,
-                "url": (
+                "url": with_origin((
                     reverse(route, kwargs={"subject_id": subject.pk})
                     + "?" + urlencode({"subject_index": indexes[subject.pk], "mode": "subject_review"})
                     if key == "notes"
                     else reverse(route, kwargs={"subject_index": indexes[subject.pk]})
-                ),
+                ), "garden"),
             })
             leaf["count"] += item.get("count", 0)
         categories.append({"id": key, "label": label, "origin": origin, "leaves": list(leaves.values())})
@@ -96,6 +98,7 @@ def garden_state(user, session_subjects, groups, study_subjects, today):
             })
         trees.append({
             "id": subject.pk, "subject": subject.name,
+            "fruit": subject.garden_fruit or FRUIT_CHOICES[subject.pk % len(FRUIT_CHOICES)][0],
             "url": reverse("book_summary", kwargs={"subject_index": indexes[subject.pk]}),
             "total_pages": total, "summarized_pages": summarized,
             "progress": progress, "stage": stage,

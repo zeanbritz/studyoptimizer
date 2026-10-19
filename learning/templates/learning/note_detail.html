@@ -1,4 +1,5 @@
 {% load static %}
+{% load review_navigation %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -459,11 +460,11 @@
                 </div>
 
                 {% if is_global_review %}
-                    <a href="{% url 'review_notes' %}{% if global_subject_id %}?subject_id={{ global_subject_id }}{% endif %}" class="exit-button">← Stop Review</a>
+                    <a href="{% review_back %}" class="exit-button">← Stop Review</a>
                 {% elif is_subject_review %}
-                    <a href="{% url 'subject_detail' subject_index=subject_index %}" class="exit-button">← Exit Review</a>
+                    <a href="{% review_back %}" class="exit-button">← Exit Review</a>
                 {% else %}
-                    <a href="{% url 'note_list' subject_id=subject.id %}?subject_index={{ subject_index }}" class="exit-button">← Back to Notes</a>
+                    <a href="{% review_back %}" class="exit-button">← Back to Notes</a>
                 {% endif %}
             </header>
 
@@ -510,18 +511,18 @@
             <nav class="navigation" aria-label="Note navigation">
                 {% if previous_note %}
                     {% if is_global_review %}
-                        <a href="{% url 'note_detail' note_id=previous_note.id %}?mode=global_review{% if global_subject_id %}&amp;subject_id={{ global_subject_id }}{% endif %}" class="nav-button">← Back</a>
+                        <a href="{% url 'note_detail' note_id=previous_note.id %}?mode=global_review{% if global_subject_id %}&amp;subject_id={{ global_subject_id }}{% endif %}{% review_query '&' %}" class="nav-button">← Back</a>
                     {% elif is_subject_review %}
-                        <a href="{% url 'note_detail' note_id=previous_note.id %}?mode=subject_review&amp;subject_index={{ subject_index }}" class="nav-button">← Back</a>
+                        <a href="{% url 'note_detail' note_id=previous_note.id %}?mode=subject_review&amp;subject_index={{ subject_index }}{% review_query '&' %}" class="nav-button">← Back</a>
                     {% else %}
-                        <a href="{% url 'note_detail' note_id=previous_note.id %}?subject_index={{ subject_index }}" class="nav-button">← Back</a>
+                        <a href="{% url 'note_detail' note_id=previous_note.id %}?subject_index={{ subject_index }}{% review_query '&' %}" class="nav-button">← Back</a>
                     {% endif %}
                 {% else %}
                     <span class="nav-disabled" aria-disabled="true">← Back</span>
                 {% endif %}
 
                 <form method="post">
-                    {% csrf_token %}
+                    {% csrf_token %}{% review_hidden %}
                     <input type="hidden" name="action" value="next_note">
                     <input type="hidden" name="mode" value="{{ review_mode }}">
                     {% if global_subject_id %}<input type="hidden" name="subject_id" value="{{ global_subject_id }}">{% endif %}
@@ -547,7 +548,7 @@
         <h2 id="delete-title">Delete note?</h2>
         <p id="delete-description">Delete <strong>{{ note.title }}</strong>? This cannot be undone.</p>
         <form method="post">
-            {% csrf_token %}
+            {% csrf_token %}{% review_hidden %}
             <input type="hidden" name="action" value="delete_note">
             <input type="hidden" name="mode" value="{{ review_mode }}">
             {% if global_subject_id %}<input type="hidden" name="subject_id" value="{{ global_subject_id }}">{% endif %}
