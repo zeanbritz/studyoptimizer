@@ -9,6 +9,12 @@
 .garden-intro { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 7px 3px 18px; }
 .garden-eyebrow { color: #64745b; font-size: 10px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
 .garden-intro h3 { margin: 5px 0 0; color: #304b31; font-size: clamp(21px, 2.3vw, 28px); font-weight: 900; letter-spacing: -.04em; }
+.garden-motion-settings { max-width: 260px; }
+.garden-motion-control { display: flex; align-items: center; gap: 8px; color: #50644a; font-size: 12px; font-weight: 800; }
+.garden-motion-control select { min-height: 40px; max-width: 180px; padding: 7px 28px 7px 10px; border: 1px solid #c8d6be; border-bottom: 3px solid #b9c9ad; border-radius: 8px; background-color: #f5f8ef; color: #304b31; font: inherit; cursor: pointer; }
+.garden-motion-control select:focus-visible { outline: 3px solid #cb9c38; outline-offset: 3px; }
+.garden-motion-hint { margin: 6px 0 0; color: #63705f; font-size: 11px; line-height: 1.5; }
+.garden-motion-hint[hidden] { display: none; }
 .garden-legend { display: flex; flex-wrap: wrap; gap: 9px 17px; margin: 0 2px 15px; font-size: 10px; font-weight: 750; color: #63705f; }
 .garden-legend > span { display: inline-flex; align-items: center; gap: 6px; }
 .garden-legend i { display: inline-block; width: 12px; height: 12px; }
@@ -30,11 +36,11 @@
 .garden-marker::after { position: absolute; top: 64px; left: calc(50% - 21px); z-index: -1; width: 42px; height: 9px; border-radius: 50%; background: #382b1e66; filter: blur(2px); content: ""; }
 .garden-marker strong { position: relative; z-index: 1; display: block; min-height: 34px; padding: 8px 11px; border: 1px solid #414e31; border-bottom: 3px solid #38462e; border-radius: 3px; background: repeating-linear-gradient(176deg,#ffffff05 0 2px,transparent 3px 7px),linear-gradient(135deg,#7c865a,#566a43); box-shadow: 1px 3px 4px #30261b55; color: #fff0c8; font-size: 12px; font-weight: 800; line-height: 1.3; text-align: center; text-shadow: 0 1px #38482d; }
 .garden-vine-label { transform: rotate(-3deg); }
-.garden-leaf { position: absolute; z-index: 2; display: flex; align-items: center; justify-content: center; width: 116px; height: 92px; padding: 20px 18px; border-radius: 16px; color: #fffdf2 !important; text-decoration: none; pointer-events: auto; filter: drop-shadow(1px 5px 3px #1d2d1b60); transition: filter .18s, scale .18s; }
+.garden-leaf { position: absolute; z-index: 2; display: flex; align-items: center; justify-content: center; width: 120px; height: 92px; padding: 20px 18px; border-radius: 16px; color: #fffdf2 !important; text-decoration: none; pointer-events: auto; filter: drop-shadow(1px 5px 3px #1d2d1b60); transition: filter .18s; }
 .garden-leaf-visual { position: absolute; inset: 0; transform: rotate(var(--leaf-angle)) scale(var(--leaf-scale,.83)); transform-origin: 50% 50%; pointer-events: none; }
-.garden-leaf-visual > svg { display: block; width: 100%; height: 100%; overflow: visible; transform-origin: 50% 92%; animation: ivy-breeze var(--breeze-duration,7s) ease-in-out infinite; animation-delay: var(--breeze-delay,0s); }
+.garden-leaf-visual > svg { display: block; width: 120px; height: 92px; overflow: visible; transform-box: view-box; transform-origin: 60px 87px; animation: ivy-breeze var(--breeze-duration,7s) ease-in-out infinite; animation-delay: var(--breeze-delay,0s); }
 .garden-leaf-title { position: relative; display: -webkit-box; max-width: 70px; max-height: 36px; overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 11px; font-weight: 800; line-height: 1.35; text-align: center; text-shadow: 0 1px 2px #193b20; overflow-wrap: anywhere; }
-.garden-leaf:hover, .garden-leaf:focus-visible, .garden-leaf.is-selected { z-index: 8; filter: drop-shadow(0 0 5px #f5d78d); scale: 1.07; }
+.garden-leaf:hover, .garden-leaf:focus-visible, .garden-leaf.is-selected { z-index: 8; filter: drop-shadow(0 0 5px #f5d78d); }
 .garden-leaf:focus-visible { outline: 3px solid #ffe4a1; outline-offset: 1px; }
 .garden-tree { position: absolute; z-index: 2; width: 200px; }
 .garden-tree-link { position: absolute; inset: 0; display: block; border-radius: 24px; text-decoration: none; }
@@ -42,7 +48,8 @@
 .tree-sway { transform-box: view-box; transform-origin: 100px 190px; animation: tree-breeze var(--breeze-duration,8s) ease-in-out infinite; animation-delay: var(--breeze-delay,0s); }
 .tree-crown { transform-box: view-box; transform-origin: 100px var(--crown-pivot-y,110px); animation: foliage-breeze calc(var(--breeze-duration,8s)*.81) ease-in-out infinite; animation-delay: var(--breeze-delay,0s); }
 .tree-growth { transform-box: view-box; transform-origin: 100px var(--crown-pivot-y,110px); }
-.garden-vine-stem { transform-box: view-box; animation: vine-breeze var(--breeze-duration,10s) ease-in-out infinite; animation-delay: var(--breeze-delay,0s); }
+/* Stems and petioles stay joined; only leaf blades flutter about their base. */
+.garden-vine-stem { transform: none; }
 .garden-tree-label { left: 50%; width: 174px; transform: translateX(-50%) rotate(2deg); }
 .garden-tree-label strong { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
 .garden-tree-link:hover .garden-marker strong, .garden-tree-link:focus-visible .garden-marker strong, .garden-tree-link.is-selected .garden-marker strong { background-color: #7b8b55; border-color: #a8bf79; }
@@ -80,10 +87,9 @@
 .garden-loading { padding: 90px 20px; color: #fff2cb; text-align: center; }
 .garden-completed-leaf { z-index: 9; pointer-events: none; animation: garden-complete .85s ease forwards !important; }
 .garden-growth { animation: garden-grow .9s ease both; }
-@keyframes ivy-breeze { 0%,100% { transform: rotate(-2.3deg); } 42% { transform: rotate(2.6deg); } 72% { transform: rotate(-.3deg); } }
-@keyframes tree-breeze { 0%,100% { transform: rotate(-1.35deg); } 36% { transform: rotate(1.5deg); } 63% { transform: rotate(.25deg); } 82% { transform: rotate(-.7deg); } }
-@keyframes foliage-breeze { 0%,100% { transform: rotate(.8deg) scaleX(.995); } 48% { transform: rotate(-1.15deg) scaleX(1.015); } 77% { transform: rotate(.3deg) scaleX(1); } }
-@keyframes vine-breeze { 0%,100% { transform: rotate(-.18deg); } 46% { transform: rotate(.22deg); } 73% { transform: rotate(.02deg); } }
+@keyframes ivy-breeze { 0%,100% { transform: rotate(-4deg); } 42% { transform: rotate(4.5deg); } 72% { transform: rotate(-.5deg); } }
+@keyframes tree-breeze { 0%,100% { transform: rotate(-2.2deg); } 36% { transform: rotate(2.4deg); } 63% { transform: rotate(.4deg); } 82% { transform: rotate(-1.1deg); } }
+@keyframes foliage-breeze { 0%,100% { transform: rotate(1.2deg) scaleX(.995); } 48% { transform: rotate(-1.7deg) scaleX(1.015); } 77% { transform: rotate(.5deg) scaleX(1); } }
 @keyframes fruit-breeze { 0%,100% { transform: rotate(-1.5deg); } 44% { transform: rotate(2deg); } 72% { transform: rotate(-.25deg); } }
 @keyframes garden-leaf-drift { 0% { opacity: 0; transform: translate(0,0) rotate(-12deg); } 2% { opacity: .85; } 8% { opacity: .8; transform: translate(12px,calc(var(--drift-distance)*.25)) rotate(25deg); } 16% { opacity: .6; transform: translate(-9px,calc(var(--drift-distance)*.65)) rotate(71deg); } 24%,100% { opacity: 0; transform: translate(22px,var(--drift-distance)) rotate(125deg); } }
 @keyframes garden-complete { 0% { opacity: .95; filter: drop-shadow(0 0 8px #ffe5a0); } 40% { scale: 1.12; opacity: .9; } 100% { translate: 0 -22px; scale: .5; opacity: 0; } }
@@ -92,4 +98,5 @@
 @keyframes garden-fruit-return { from { translate: var(--fruit-from-x) var(--fruit-from-y); opacity: .65; } to { translate: 0 0; opacity: 1; } }
 @media (max-width: 800px) { .garden-intro { align-items: flex-start; flex-direction: column; gap: 10px; } }
 @media (max-width: 520px) { .today-plan .today-plan-header { flex-wrap: wrap; } .plan-view-switch { margin-left: auto; } .plan-view-switch button { padding: 5px 10px; font-size: 12px; } .garden-soil { border-width: 3px; border-radius: 17px; } .garden-vine-label { width: 130px; } .garden-vine-label strong { font-size: 11px; } .garden-legend { gap: 9px 12px; } }
-@media (prefers-reduced-motion: reduce) { .study-garden *, .study-garden *::before, .study-garden *::after { animation: none !important; transition: none !important; } }
+.study-garden[data-motion="off"] *, .study-garden[data-motion="off"] *::before, .study-garden[data-motion="off"] *::after { animation: none !important; transition: none !important; }
+@media (prefers-reduced-motion: reduce) { .study-garden:not([data-motion="on"]) *, .study-garden:not([data-motion="on"]) *::before, .study-garden:not([data-motion="on"]) *::after { animation: none !important; transition: none !important; } }

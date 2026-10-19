@@ -170,16 +170,82 @@ test("a mouse click keeps the native task link working", () => {
     assert.equal(node.emit("click", {detail: 1}).defaultPrevented, undefined);
 });
 
-test("all six leaf-tip directions remain vertical-dominant with natural variation", () => {
+test("all six vines alternate left/right tips while retaining their vertical direction", () => {
     const declaration = source.match(/    function leafAngle\(origin, index\) \{[\s\S]*?\n    \}/)[0];
     const angle = vm.runInNewContext(`(${declaration})`);
     for (const origin of ["top-left", "middle-left", "bottom-left", "bottom-right", "middle-right", "top-right"]) {
         for (let index = 0; index < 12; index++) {
             const radians = angle(origin, index) * Math.PI / 180;
             const tip = {x: Math.sin(radians), y: -Math.cos(radians)};
-            assert.equal(Math.sign(tip.x), origin.endsWith("left") ? -1 : 1, origin);
+            assert.equal(Math.sign(tip.x), index % 2 ? 1 : -1, origin);
             assert.equal(Math.sign(tip.y), origin.startsWith("bottom") ? -1 : 1, origin);
             assert.ok(Math.abs(tip.y) > Math.abs(tip.x) * 2, origin);
+        }
+    }
+});
+
+test("motion follows the device unless the student explicitly chooses On or Off", () => {
+    const declaration = source.match(/    function motionIsEnabled\(preference, prefersReduced\) \{[\s\S]*?\n    \}/)[0];
+    const enabled = vm.runInNewContext(`(${declaration})`);
+    assert.equal(enabled("auto", false), true);
+    assert.equal(enabled("auto", true), false);
+    assert.equal(enabled("on", true), true);
+    assert.equal(enabled("on", false), true);
+    assert.equal(enabled("off", true), false);
+    assert.equal(enabled("off", false), false);
+});
+
+const geometryCode = source.slice(source.indexOf("    function leafAngle("), source.indexOf("    function smoothStem("));
+const geometry = vm.runInNewContext(`const LEAF_SCALE=.83; const treeHeight=()=>352;
+    ${geometryCode}; ({layout,vineLeafPoint})`);
+const origins = ["top-left", "middle-left", "bottom-left", "bottom-right", "middle-right", "top-right"];
+function stateWithLeaves(count) {
+    return {trees: Array.from({length:6}, (_,i)=>({id:i})), categories:origins.map((origin,i)=>({
+        origin,id:String(i),leaves:Array.from({length:count},(_,j)=>({id:`${i}-${j}`})),
+    }))};
+}
+function rotate(x,y,radians) {
+    return {x:x*Math.cos(radians)-y*Math.sin(radians),y:x*Math.sin(radians)+y*Math.cos(radians)};
+}
+
+test("leaf bases remain exactly attached during the full flutter on every vine and screen size", () => {
+    for (const width of [220,238,284,319,320,390,659,660,900,1200]) {
+        for (const count of [0,1,2,7,24]) {
+            const plan=geometry.layout(stateWithLeaves(count),width);
+            for (const vine of plan.vines) {
+                assert.equal(vine.stem.length,count?count+2:2);
+                vine.leaves.forEach((point,index)=>{
+                    const side=index%2?1:-1;
+                    assert.equal(point.side,side);
+                    assert.equal(Math.sign(point.x-point.knot.x),side);
+                    assert.equal(Math.sign(point.base.x-point.knot.x),side);
+                    assert.equal(vine.stem[index+1],point.knot,"The petiole starts on the main stem");
+                    for(const flutter of [-4,0,4.5]) {
+                        // The SVG rotates at (60,87), then its wrapper rotates
+                        // and scales at (60,46). The base must never drift.
+                        const wind=rotate(0,0,flutter*Math.PI/180);
+                        const oriented=rotate(wind.x,wind.y+41,point.angle*Math.PI/180);
+                        assert.ok(Math.abs(point.base.x-(point.x+oriented.x*.83))<1e-9);
+                        assert.ok(Math.abs(point.base.y-(point.y+oriented.y*.83))<1e-9);
+                    }
+                    assert.ok(point.x>=54&&point.x<=width-54,`Leaf clipped at width ${width}`);
+                    assert.ok(point.y>90&&point.y<plan.height-90,"Leaves avoid end markers");
+                });
+            }
+        }
+    }
+});
+
+test("a long vine keeps separate clickable leaves instead of piling up subjects", () => {
+    for (const width of [220,320,390,660,1200]) {
+        const plan=geometry.layout(stateWithLeaves(24),width);
+        const leaves=plan.vines.flatMap(vine=>vine.leaves);
+        for(let i=0;i<leaves.length;i++) {
+            for(let j=i+1;j<leaves.length;j++) {
+                const a=leaves[i],b=leaves[j];
+                assert.ok(Math.abs(a.x-b.x)>=120||Math.abs(a.y-b.y)>=92,
+                    `Overlapping click targets at width ${width}: ${a.leaf.id} / ${b.leaf.id}`);
+            }
         }
     }
 });

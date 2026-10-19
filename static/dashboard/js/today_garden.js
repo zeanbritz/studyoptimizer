@@ -14,6 +14,11 @@
     const storageKey = `studigarden.plan-view.${data.student}`;
     const snapshotKey = `studigarden.garden.${data.student}.${data.date}`;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const motionControl = document.getElementById("garden-motion");
+    const motionHint = document.getElementById("garden-motion-hint");
+    const motionKey = `studigarden.garden-motion.${data.student}`;
+    let motionPreference = readStorage(localStorage, motionKey) || "auto";
+    if (!["auto", "on", "off"].includes(motionPreference)) motionPreference = "auto";
     const svgNS = "http://www.w3.org/2000/svg";
     const LEAF_SCALE = .83;
     let selected = null, pointer = "", renderedWidth = 0, refreshInFlight = false;
@@ -30,6 +35,23 @@
         catch (_) { return null; }
     }
     function saveStorage(storage, key, value) { try { storage.setItem(key, value); } catch (_) { /* Optional persistence. */ } }
+    function motionIsEnabled(preference, prefersReduced) {
+        return preference === "on" || (preference !== "off" && !prefersReduced);
+    }
+    function applyMotionPreference() {
+        // An explicit garden-only opt-in can override reduce. The default still
+        // follows the device, without changing any browser or OS preferences.
+        garden.dataset.motion = motionPreference;
+        if (motionControl) motionControl.value = motionPreference;
+        if (motionHint) motionHint.hidden = motionPreference !== "auto" || !reducedMotion.matches;
+        updateMotion();
+    }
+    motionControl?.addEventListener("change", () => {
+        motionPreference = ["on", "off"].includes(motionControl.value) ? motionControl.value : "auto";
+        saveStorage(localStorage, motionKey, motionPreference);
+        applyMotionPreference();
+    });
+    reducedMotion.addEventListener?.("change", applyMotionPreference);
     function element(tag, className, text) {
         const node = document.createElement(tag);
         if (className) node.className = className;
@@ -302,13 +324,24 @@
     function treeHeight(tree) { return treeGeometry(tree).height; }
 
     function leafAngle(origin, index) {
-        const side = origin.endsWith("left") ? -1 : 1;
+        const side = index % 2 ? 1 : -1;
         const direction = origin.startsWith("bottom") ? 22 : 158;
         return side * direction + ((index % 3) - 1) * 2;
     }
 
+    function vineLeafPoint(origin, index, stemX, y, gap, leaf) {
+        // Alternate around one continuous stem. Keep the petiole at the leaf's
+        // exact SVG base (60,87), after its rotation/scale about (60,46).
+        const side = index % 2 ? 1 : -1;
+        const x = stemX + side * gap;
+        const angle = leafAngle(origin, index), radians = angle * Math.PI / 180;
+        const base = {x:x-Math.sin(radians)*41*LEAF_SCALE, y:y+Math.cos(radians)*41*LEAF_SCALE};
+        const knot = {x:stemX, y:base.y+(origin.startsWith("bottom")?15:-15)};
+        return {leaf,x,y,angle,base,knot,side};
+    }
+
     function layout(state,width) {
-        const mobile=width<660, narrow=width<285;
+        const mobile=width<660, narrow=width<320;
         const side=mobile?width/2:Math.min(230,Math.max(172,width*.25));
         const pairs=[[0,5],[1,4],[2,3]];
         const leafSpacing=narrow?248:122;
@@ -355,14 +388,13 @@
             const origin={x:right?width-14:14,y:bottom?top+h-22-offset:top+28+offset};
             const label={x:right?width-(mobile?138:150):9,y:bottom?top+h-82-offset:top+12+offset};
             const leaves=category.leaves.map((leaf,j)=>{
-                const inward=mobile?68:Math.min(side-65,91+(j%3)*24);
+                const lane=narrow?width-24:side;
+                const gap=Math.min(48,lane/2-62);
+                const center=narrow?width/2+(right?12:-12):right?width-side/2:side/2;
+                const stemX=center+Math.sin((j+1)*.9)*4;
                 const depth=(narrow?230:144)+j*leafSpacing+(narrow&&right?124:0);
-                const y=bottom?top+h-depth:top+depth,x=right?width-inward:inward;
-                const angle=leafAngle(category.origin,j);
-                const radians=angle*Math.PI/180;
-                const base={x:x-Math.sin(radians)*41*LEAF_SCALE,y:y+Math.cos(radians)*41*LEAF_SCALE};
-                const knot={x:base.x+(right?-1:1)*(18+(j%2)*4),y:base.y+(bottom?15:-15)};
-                return {leaf,x,y,angle,base,knot};
+                const y=bottom?top+h-depth:top+depth;
+                return vineLeafPoint(category.origin,j,stemX,y,gap,leaf);
             });
             const tail=leaves.length
                 ? {x:leaves[leaves.length-1].knot.x+(right?-19:19),y:leaves[leaves.length-1].knot.y+(bottom?-24:24)}
@@ -397,12 +429,16 @@
         const link=element("a", `garden-leaf${completed?' garden-completed-leaf':''}`);
         link.href=point.leaf.url;
         link.dataset.leafId=point.leaf.id;
+        link.dataset.stemSide=point.side<0?"left":"right";
         link.style.setProperty("--leaf-angle", `${point.angle}deg`);
         link.style.setProperty("--leaf-scale",LEAF_SCALE);
         const seed=point.leaf.subject_id+index*7;
         link.style.setProperty("--breeze-delay", `${-(seed%19)*.73}s`);
         link.style.setProperty("--breeze-duration", `${5.8+(seed%7)*.47}s`);
-        position(link,point.x-58,point.y-46);
+        // No integer rounding or SVG letterboxing: the stalk and leaf share
+        // precisely the same base even while the blade flutters around it.
+        link.style.left=`${point.x-60}px`;
+        link.style.top=`${point.y-46}px`;
         const visual=element("span","garden-leaf-visual");
         visual.setAttribute("aria-hidden","true");
         visual.innerHTML=leafArtwork(index,point.leaf.id+(completed?'-done':''));
@@ -424,7 +460,9 @@
         scene.replaceChildren();
         scene.style.minHeight="0";
         scene.style.height=`${plan.height}px`;
-        const stems=svg("svg",{class:"garden-stems",viewBox:`0 0 ${width} ${plan.height}`,"aria-hidden":"true"});
+        // The soil's declared height includes its border. Use the real inner
+        // viewport, or SVG "meet" scaling pulls stalks away from HTML leaves.
+        const stems=svg("svg",{class:"garden-stems",viewBox:`0 0 ${width} ${scene.clientHeight}`,preserveAspectRatio:"none","aria-hidden":"true"});
         scene.append(stems);
         let completed=0;
         plan.vines.forEach(vine=>{
@@ -436,16 +474,14 @@
             group.append(marker);
             const mainStem=svg("path",{d:smoothStem(vine.stem),class:"garden-main-stem","data-category":vine.category.id});
             const stemGroup=svg("g",{class:"garden-vine-stem"});
-            stemGroup.style.transformOrigin=`${vine.origin.x}px ${vine.origin.y}px`;
-            stemGroup.style.setProperty("--breeze-delay",`${-vine.i*2.3}s`);
-            stemGroup.style.setProperty("--breeze-duration",`${8.5+vine.i*.7}s`);
             stems.append(stemGroup);
             stemGroup.append(mainStem);
             addThorns(mainStem,stemGroup);
             vine.leaves.forEach(point=>{
                 stemGroup.append(svg("path",{
                     class:"garden-leaf-stalk",
-                    d:`M${point.knot.x} ${point.knot.y}Q${point.base.x+8} ${point.knot.y-5} ${point.base.x} ${point.base.y}`
+                    "data-leaf-id":point.leaf.id,
+                    d:`M${point.knot.x} ${point.knot.y}Q${(point.base.x+point.knot.x)/2} ${point.knot.y} ${point.base.x} ${point.base.y}`
                 }));
                 group.append(drawLeaf(point,vine.category,vine.i));
             });
@@ -454,7 +490,7 @@
                 prior?.leaves.forEach(point=>{
                     if(!vine.category.leaves.some(leaf=>leaf.id===point.leaf.id)) {
                         completed++;
-                        if(!reducedMotion.matches)group.append(drawLeaf(point,vine.category,vine.i,true));
+                        if(motionIsEnabled(motionPreference,reducedMotion.matches))group.append(drawLeaf(point,vine.category,vine.i,true));
                     }
                 });
             }
@@ -486,7 +522,7 @@
             interactive(link,{kicker:"Study · Summarizing progress",title:tree.subject,detail,action:"Open Study"});
             plant.append(link);
             const prior=previous?.trees.find(t=>t.id===tree.id);
-            if(prior&&prior.progress!==tree.progress&&!reducedMotion.matches)link.querySelector(".tree-growth").classList.add("garden-growth");
+            if(prior&&prior.progress!==tree.progress&&motionIsEnabled(motionPreference,reducedMotion.matches))link.querySelector(".tree-growth").classList.add("garden-growth");
             if(tree.stage>=2) {
                 // One tiny oval (not an ivy task leaf), reused by a sparse CSS cycle.
                 // No timers, hit targets, task data, or accumulating ground nodes.
@@ -526,7 +562,7 @@
                 const priorEvent=prior?.events.find(e=>e.id===event.id);
                 if(fallen) {
                     currentOverdue.add(event.id);
-                    if(!fallenSeen.has(event.id)&&!reducedMotion.matches) {
+                    if(!fallenSeen.has(event.id)&&motionIsEnabled(motionPreference,reducedMotion.matches)) {
                         const priorIndex=prior?treeGeometry(prior).attached.findIndex(e=>e.id===event.id):-1;
                         const from=attachedFruitPoint(tree,Math.max(0,priorIndex));
                         fruit.style.setProperty("--fruit-from-x",`${from.x-point.x}px`);
@@ -535,7 +571,7 @@
                     }
                     fallenSeen.add(event.id);
                 } else {
-                    if(priorEvent?.status==="overdue"&&!reducedMotion.matches) {
+                    if(priorEvent?.status==="overdue"&&motionIsEnabled(motionPreference,reducedMotion.matches)) {
                         const oldGeometry=treeGeometry(prior);
                         const groundIndex=Math.max(0,oldGeometry.fallen.findIndex(e=>e.id===event.id));
                         fruit.style.setProperty("--fruit-from-x",`${50+(groundIndex%3)*50-point.x}px`);
@@ -609,6 +645,7 @@
     }
     document.addEventListener("visibilitychange",updateMotion);
     setInterval(()=>refresh(),60000);
+    applyMotionPreference();
     const requested=new URL(location.href).searchParams.get("view");
     setView(requested==='garden'?'garden':requested==='standard'?'standard':readStorage(localStorage,storageKey)||'standard');
 })();
