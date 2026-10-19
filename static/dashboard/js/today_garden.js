@@ -15,8 +15,10 @@
     const snapshotKey = `studigarden.garden.${data.student}.${data.date}`;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const svgNS = "http://www.w3.org/2000/svg";
+    const LEAF_SCALE = .83;
     let selected = null, pointer = "", renderedWidth = 0, refreshInFlight = false;
     let restoringFocus = false;
+    let hoveredTrigger = null, popoverHovered = false, keyboardInteraction = false, dismissTimer;
     let previous = readStorage(sessionStorage, snapshotKey, true);
     const fallenSeen = new Set(readStorage(sessionStorage, snapshotKey + ".fallen", true) || []);
     let activeView = "standard";
@@ -62,6 +64,7 @@
             history.replaceState(history.state,"",currentURL.pathname+currentURL.search+currentURL.hash);
         }
         if (activeView === "garden") { render(); refresh(); }
+        updateMotion();
     }
     tabs.forEach(tab => {
         tab.addEventListener("click", () => setView(tab.dataset.planView));
@@ -72,20 +75,41 @@
         });
     });
 
+    function cancelDismiss() {
+        clearTimeout(dismissTimer);
+        dismissTimer = undefined;
+    }
+    function focusWithinDetails() {
+        return keyboardInteraction && selected && (
+            selected.contains(document.activeElement) || popover.contains(document.activeElement)
+        );
+    }
+    function scheduleDismiss() {
+        cancelDismiss();
+        dismissTimer = setTimeout(() => {
+            dismissTimer = undefined;
+            if (selected && hoveredTrigger !== selected && !popoverHovered && !focusWithinDetails()) closeDetails();
+        }, 200);
+    }
     function closeDetails(returnFocus = false) {
-        if (selected) {
-            selected.classList.remove("is-selected");
-            selected.removeAttribute("aria-describedby");
-            if (returnFocus && selected.isConnected) {
+        cancelDismiss();
+        const trigger = selected;
+        selected = null;
+        hoveredTrigger = null;
+        popoverHovered = false;
+        popover.hidden = true;
+        if (trigger) {
+            trigger.classList.remove("is-selected");
+            trigger.removeAttribute("aria-describedby");
+            if (returnFocus && trigger.isConnected) {
                 restoringFocus = true;
-                selected.focus({ preventScroll: true });
+                trigger.focus({ preventScroll: true });
                 restoringFocus = false;
             }
         }
-        selected = null;
-        popover.hidden = true;
     }
     function showDetails(target, info) {
+        cancelDismiss();
         if (selected && selected !== target) {
             selected.classList.remove("is-selected");
             selected.removeAttribute("aria-describedby");
@@ -100,6 +124,9 @@
         link.textContent = info.action;
         link.href = target.href;
         popover.hidden = false;
+        positionDetails(target);
+    }
+    function positionDetails(target) {
         const rect = target.getBoundingClientRect();
         const popup = popover.getBoundingClientRect();
         const left = Math.max(12, Math.min(innerWidth - popup.width - 12, rect.left + rect.width / 2 - popup.width / 2));
@@ -108,8 +135,24 @@
         position(popover, left, Math.max(12, top));
     }
     function interactive(link, info) {
-        link.addEventListener("pointerenter", event => { if (event.pointerType === "mouse") showDetails(link, info); });
+        link.addEventListener("pointerenter", event => {
+            if (event.pointerType !== "mouse" && event.pointerType !== "pen") return;
+            hoveredTrigger = link;
+            showDetails(link, info);
+        });
+        link.addEventListener("pointerleave", event => {
+            if (event.pointerType !== "mouse" && event.pointerType !== "pen") return;
+            if (hoveredTrigger === link) hoveredTrigger = null;
+            if (selected === link) scheduleDismiss();
+        });
         link.addEventListener("focus", () => { if (!restoringFocus) showDetails(link, info); });
+        link.addEventListener("focusout", scheduleDismiss);
+        link.addEventListener("keydown", event => {
+            if (event.key === "Tab" && !event.shiftKey && selected === link && !popover.hidden) {
+                event.preventDefault();
+                popover.querySelector("button").focus();
+            }
+        });
         link.addEventListener("pointerdown", event => { pointer = event.pointerType; });
         link.addEventListener("click", event => {
             if (event.detail && pointer !== "mouse") {
@@ -119,15 +162,41 @@
             }
         });
     }
+    popover.addEventListener("pointerenter", event => {
+        if (event.pointerType !== "mouse" && event.pointerType !== "pen") return;
+        popoverHovered = true;
+        cancelDismiss();
+    });
+    popover.addEventListener("pointerleave", event => {
+        if (event.pointerType !== "mouse" && event.pointerType !== "pen") return;
+        popoverHovered = false;
+        scheduleDismiss();
+    });
+    popover.addEventListener("focusin", cancelDismiss);
+    popover.addEventListener("focusout", scheduleDismiss);
+    popover.querySelector("button").addEventListener("keydown", event => {
+        if (event.key === "Tab" && event.shiftKey && selected) {
+            event.preventDefault();
+            selected.focus();
+        }
+    });
     popover.querySelector("button").addEventListener("click", () => closeDetails(true));
     document.addEventListener("pointerdown", event => {
-        if (!popover.contains(event.target) && !event.target.closest(".garden-leaf, .garden-tree-link, .garden-fruit")) closeDetails();
-    });
-    document.addEventListener("keydown", event => { if (event.key === "Escape" && !popover.hidden) { event.preventDefault(); closeDetails(true); } });
+        keyboardInteraction = false;
+        if (selected && !popover.contains(event.target) && !selected.contains(event.target)) closeDetails();
+    }, true);
+    document.addEventListener("keydown", event => {
+        keyboardInteraction = true;
+        if (event.key === "Escape" && !popover.hidden) { event.preventDefault(); closeDetails(true); }
+    }, true);
     document.addEventListener("focusin", event => {
-        if (!popover.hidden && !popover.contains(event.target) && event.target !== selected) closeDetails();
+        if (popover.hidden) return;
+        if (popover.contains(event.target) || selected?.contains(event.target)) cancelDismiss();
+        else scheduleDismiss();
     });
-    window.addEventListener("scroll", () => closeDetails(), { passive: true });
+    // Keyboard focus can scroll its trigger into view. Keep the pop-up anchored
+    // instead of closing it during that automatic scroll.
+    window.addEventListener("scroll", () => { if (selected) positionDetails(selected); }, { passive: true });
 
     // Exactly three tips, with two deep sinuses and a softly rounded base.
     const ivyShape = "M60 87C46 78 33 79 25 68L7 36L39 44L60 4L81 44L113 36L95 68C87 79 74 78 60 87Z";
@@ -187,7 +256,7 @@
             }
         }
         // The soil is outside the sway group. Branches pivot at the planted root.
-        return `<svg class="garden-tree-art" viewBox="0 0 200 240" aria-hidden="true" data-growth-stage="${stage}"><defs><linearGradient id="${id}-bark"><stop stop-color="#593e2a"/><stop offset=".55" stop-color="#ab8051"/><stop offset="1" stop-color="#62452d"/></linearGradient><radialGradient id="${id}-shade"><stop stop-color="#2e281c" stop-opacity=".5"/><stop offset="1" stop-color="#2e281c" stop-opacity="0"/></radialGradient></defs><ellipse cx="115" cy="197" rx="${stage>1?55:36}" ry="18" transform="rotate(-9 115 197)" fill="url(#${id}-shade)"/><ellipse cx="100" cy="190" rx="44" ry="16" transform="rotate(-8 100 190)" fill="#a17b49" opacity=".28"/>${mound}<g class="tree-sway">${branches}<g class="tree-crown">${foliage}</g></g></svg>`;
+        return `<svg class="garden-tree-art" viewBox="0 0 200 240" aria-hidden="true" data-growth-stage="${stage}" style="--crown-pivot-y:${crown?crown.cy+20:160}px"><defs><linearGradient id="${id}-bark"><stop stop-color="#593e2a"/><stop offset=".55" stop-color="#ab8051"/><stop offset="1" stop-color="#62452d"/></linearGradient><radialGradient id="${id}-shade"><stop stop-color="#2e281c" stop-opacity=".5"/><stop offset="1" stop-color="#2e281c" stop-opacity="0"/></radialGradient></defs><ellipse cx="115" cy="197" rx="${stage>1?55:36}" ry="18" transform="rotate(-9 115 197)" fill="url(#${id}-shade)"/><ellipse cx="100" cy="190" rx="44" ry="16" transform="rotate(-8 100 190)" fill="#a17b49" opacity=".28"/>${mound}<g class="tree-sway">${branches}<g class="tree-crown"><g class="tree-growth">${foliage}</g></g></g></svg>`;
     }
 
     function fruitArtwork(event, variety) {
@@ -231,6 +300,12 @@
         return {x:100+offsets[index][0],y:centerY+offsets[index][1]};
     }
     function treeHeight(tree) { return treeGeometry(tree).height; }
+
+    function leafAngle(origin, index) {
+        const side = origin.endsWith("left") ? -1 : 1;
+        const direction = origin.startsWith("bottom") ? 22 : 158;
+        return side * direction + ((index % 3) - 1) * 2;
+    }
 
     function layout(state,width) {
         const mobile=width<660, narrow=width<285;
@@ -283,10 +358,10 @@
                 const inward=mobile?68:Math.min(side-65,91+(j%3)*24);
                 const depth=(narrow?230:144)+j*leafSpacing+(narrow&&right?124:0);
                 const y=bottom?top+h-depth:top+depth,x=right?width-inward:inward;
-                const angle=(right?-1:1)*(j%2?8:-7);
+                const angle=leafAngle(category.origin,j);
                 const radians=angle*Math.PI/180;
-                const base={x:x-Math.sin(radians)*38,y:y+Math.cos(radians)*38};
-                const knot={x:base.x+(j%2?-1:1)*(right?-1:1)*21,y:base.y+15};
+                const base={x:x-Math.sin(radians)*41*LEAF_SCALE,y:y+Math.cos(radians)*41*LEAF_SCALE};
+                const knot={x:base.x+(right?-1:1)*(18+(j%2)*4),y:base.y+(bottom?15:-15)};
                 return {leaf,x,y,angle,base,knot};
             });
             const tail=leaves.length
@@ -323,12 +398,15 @@
         link.href=point.leaf.url;
         link.dataset.leafId=point.leaf.id;
         link.style.setProperty("--leaf-angle", `${point.angle}deg`);
+        link.style.setProperty("--leaf-scale",LEAF_SCALE);
         const seed=point.leaf.subject_id+index*7;
         link.style.setProperty("--breeze-delay", `${-(seed%19)*.73}s`);
-        link.style.setProperty("--breeze-duration", `${11+(seed%7)*1.3}s`);
+        link.style.setProperty("--breeze-duration", `${5.8+(seed%7)*.47}s`);
         position(link,point.x-58,point.y-46);
-        link.innerHTML=leafArtwork(index,point.leaf.id+(completed?'-done':''));
-        link.append(element("span","",point.leaf.subject));
+        const visual=element("span","garden-leaf-visual");
+        visual.setAttribute("aria-hidden","true");
+        visual.innerHTML=leafArtwork(index,point.leaf.id+(completed?'-done':''));
+        link.append(visual,element("span","garden-leaf-title",point.leaf.subject));
         const itemWord=point.leaf.count===1?'item':'items';
         link.setAttribute("aria-label",`${point.leaf.subject}, ${category.label}, ${point.leaf.count} ${itemWord} to review`);
         if (!completed) interactive(link,{kicker:category.label,title:point.leaf.subject,detail:`${point.leaf.count} ${itemWord} to review today.`,action:category.id==='notes'?'Study notes':'Start review'});
@@ -360,7 +438,7 @@
             const stemGroup=svg("g",{class:"garden-vine-stem"});
             stemGroup.style.transformOrigin=`${vine.origin.x}px ${vine.origin.y}px`;
             stemGroup.style.setProperty("--breeze-delay",`${-vine.i*2.3}s`);
-            stemGroup.style.setProperty("--breeze-duration",`${15+vine.i*1.7}s`);
+            stemGroup.style.setProperty("--breeze-duration",`${8.5+vine.i*.7}s`);
             stems.append(stemGroup);
             stemGroup.append(mainStem);
             addThorns(mainStem,stemGroup);
@@ -393,7 +471,7 @@
             position(plant,x,y);
             plant.style.height=`${h}px`;
             plant.style.setProperty("--breeze-delay",`${-(tree.id%7)*.9}s`);
-            plant.style.setProperty("--breeze-duration",`${13+(tree.id%5)*1.7}s`);
+            plant.style.setProperty("--breeze-duration",`${6.8+(tree.id%5)*.63}s`);
             const link=element("a","garden-tree-link");
             link.href=tree.url;
             link.innerHTML=treeArtwork(tree);
@@ -408,7 +486,7 @@
             interactive(link,{kicker:"Study · Summarizing progress",title:tree.subject,detail,action:"Open Study"});
             plant.append(link);
             const prior=previous?.trees.find(t=>t.id===tree.id);
-            if(prior&&prior.progress!==tree.progress&&!reducedMotion.matches)link.querySelector(".tree-crown").classList.add("garden-growth");
+            if(prior&&prior.progress!==tree.progress&&!reducedMotion.matches)link.querySelector(".tree-growth").classList.add("garden-growth");
             if(tree.stage>=2) {
                 // One tiny oval (not an ivy task leaf), reused by a sparse CSS cycle.
                 // No timers, hit targets, task data, or accumulating ground nodes.
@@ -417,8 +495,8 @@
                 const crownY=[155,149,133,106,85,70][tree.stage];
                 position(drift,86+(tree.id%4)*9,crownY);
                 drift.style.setProperty("--drift-distance",`${180-crownY}px`);
-                drift.style.setProperty("--drift-duration",`${41+(tree.id%7)*4.7}s`);
-                drift.style.setProperty("--drift-delay",`${-(tree.id%13)*3.1}s`);
+                drift.style.setProperty("--drift-duration",`${27+(tree.id%7)*2.1}s`);
+                drift.style.setProperty("--drift-delay",`${2+(tree.id%11)*.55}s`);
                 drift.innerHTML='<svg viewBox="0 0 18 10" focusable="false"><path d="M1 8Q3-1 17 2Q13 12 1 8Z" fill="#c6a45c"/><path d="M2 8L14 3" stroke="#796f3e" stroke-width=".7"/></svg>';
                 plant.append(drift);
             }
@@ -515,13 +593,20 @@
         cancelAnimationFrame(resizeFrame);resizeFrame=requestAnimationFrame(render);
     });observer.observe(scene);
     window.addEventListener("pageshow",event=>{if(event.persisted)refresh(true);});
-    window.addEventListener("focus",()=>refresh());
+    window.addEventListener("focus",()=>{updateMotion();refresh();});
     document.addEventListener("visibilitychange",()=>{if(!document.hidden)refresh();});
-    let gardenInView=true;
-    function updateMotion() { garden.classList.toggle("garden-motion-paused",document.hidden||!gardenInView); }
-    const visibilityObserver=new IntersectionObserver(entries=>{
-        gardenInView=entries[0].isIntersecting;updateMotion();
-    });visibilityObserver.observe(scene);
+    function updateMotion() {
+        // A queued observer entry can describe the previously hidden tab. Check
+        // the current scene, not entries[0], so switching views never strands it.
+        const rect=scene.getBoundingClientRect();
+        const visible=activeView==="garden"&&!document.hidden&&rect.width>0&&rect.height>0&&
+            rect.bottom>0&&rect.top<innerHeight&&rect.right>0&&rect.left<innerWidth;
+        garden.classList.toggle("garden-motion-paused",!visible);
+    }
+    if ("IntersectionObserver" in window) {
+        const visibilityObserver=new IntersectionObserver(updateMotion);
+        visibilityObserver.observe(scene);
+    }
     document.addEventListener("visibilitychange",updateMotion);
     setInterval(()=>refresh(),60000);
     const requested=new URL(location.href).searchParams.get("view");
