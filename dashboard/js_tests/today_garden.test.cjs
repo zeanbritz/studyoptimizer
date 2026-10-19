@@ -184,15 +184,68 @@ test("all six vines alternate left/right tips while retaining their vertical dir
     }
 });
 
-test("motion follows the device unless the student explicitly chooses On or Off", () => {
-    const declaration = source.match(/    function motionIsEnabled\(preference, prefersReduced\) \{[\s\S]*?\n    \}/)[0];
-    const enabled = vm.runInNewContext(`(${declaration})`);
-    assert.equal(enabled("auto", false), true);
-    assert.equal(enabled("auto", true), false);
-    assert.equal(enabled("on", true), true);
-    assert.equal(enabled("on", false), true);
-    assert.equal(enabled("off", true), false);
-    assert.equal(enabled("off", false), false);
+test("garden motion starts automatically without a control or saved preference", () => {
+    const css=fs.readFileSync(path.resolve(__dirname,"../../static/dashboard/css/today_garden.css"),"utf8");
+    const template=fs.readFileSync(path.resolve(__dirname,"../../templates/dashboard/partials/today_garden.html"),"utf8");
+    assert.doesNotMatch(source,/motionPreference|motionIsEnabled|prefers-reduced-motion|studigarden\.garden-motion/);
+    assert.doesNotMatch(template,/garden-motion|<select/);
+    assert.doesNotMatch(css,/prefers-reduced-motion|data-motion/);
+    for(const animation of ["tree-breeze","foliage-breeze","ivy-breeze"]) {
+        assert.ok(css.includes(`animation: ${animation}`),`${animation} runs without opting in`);
+    }
+    assert.ok(css.includes(".garden-motion-paused"),"Hidden gardens still pause to save resources");
+});
+
+test("fruit shares the actual tree and canopy layers; ground fruit does not sway", () => {
+    class Layer {
+        constructor(tag,className) { this.tag=tag; this.className=className; this.children=[]; this.style={setProperty(){}}; }
+        append(child) {
+            if(child.parent)child.parent.children.splice(child.parent.children.indexOf(child),1);
+            child.parent=this;
+            this.children.push(child);
+        }
+    }
+    const declarations=source.slice(source.indexOf("    function addTreeMotion("),source.indexOf("    function fruitArtwork("));
+    const {addTreeMotion,attachFruit}=vm.runInNewContext(`${declarations}; ({addTreeMotion,attachFruit})`,{
+        element:(tag,className)=>new Layer(tag,className)
+    });
+    const plant=new Layer("section","garden-tree"), marker=new Layer("span","garden-marker");
+    plant.append(marker);
+    const canopy=addTreeMotion(plant,{crownPivotY:90,branches:"branches",canopy:"foliage"});
+    assert.equal(canopy.className,"garden-tree-canopy tree-crown");
+    assert.equal(canopy.parent.className,"garden-tree-motion tree-sway");
+    assert.equal(canopy.innerHTML,"foliage");
+    assert.equal(canopy.parent.innerHTML,"branches");
+    assert.equal(marker.parent,plant,"The marker stays outside both moving layers");
+    const fruit=new Layer("a","garden-fruit");
+    attachFruit(fruit,plant,canopy,false);
+    assert.equal(fruit.parent,canopy);
+    assert.equal(fruit.parent.parent.parent,plant,"Fruit and branches share one root pivot");
+    attachFruit(fruit,plant,canopy,true);
+    assert.equal(fruit.parent,plant,"Overdue fruit leaves both sway layers");
+    assert.equal(canopy.children.includes(fruit),false);
+    attachFruit(fruit,plant,canopy,false);
+    assert.equal(fruit.parent,canopy,"A rescheduled date returns to the moving canopy");
+    assert.equal(plant.children.includes(fruit),false);
+});
+
+test("all six growth stages keep soil separate from their moving branches and foliage", () => {
+    const declarations=source.slice(source.indexOf("    function treeArtwork("),source.indexOf("    function addTreeMotion("));
+    const attachedFruit=source.match(/    function attachedFruitPoint\(tree,index\) \{[\s\S]*?\n    \}/)[0];
+    const artwork=vm.runInNewContext(`${attachedFruit}; ${declarations}; treeArtwork`);
+    for(let stage=0;stage<6;stage++) {
+        for(const count of [0,1,2,9]) {
+            const tree={stage,id:stage+1,events:Array.from({length:count},(_,i)=>({id:i,status:"upcoming",completed:false}))};
+            const parts=artwork(tree);
+            assert.ok(parts.soil.includes("<ellipse"));
+            assert.ok(parts.branches.includes("-bark"));
+            assert.ok(parts.canopy.includes('class="tree-growth"'));
+            assert.doesNotMatch(parts.soil,/tree-sway|tree-crown|tree-growth/);
+            assert.doesNotMatch(parts.branches,/tree-sway|tree-crown|tree-growth/);
+            assert.ok(parts.crownPivotY>=90&&parts.crownPivotY<=160);
+            if(stage>0)assert.ok(parts.branches.includes("M100 188"),"The trunk remains anchored at the same root");
+        }
+    }
 });
 
 const geometryCode = source.slice(source.indexOf("    function leafAngle("), source.indexOf("    function smoothStem("));

@@ -13,12 +13,6 @@
     const status = document.getElementById("garden-sync-status");
     const storageKey = `studigarden.plan-view.${data.student}`;
     const snapshotKey = `studigarden.garden.${data.student}.${data.date}`;
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const motionControl = document.getElementById("garden-motion");
-    const motionHint = document.getElementById("garden-motion-hint");
-    const motionKey = `studigarden.garden-motion.${data.student}`;
-    let motionPreference = readStorage(localStorage, motionKey) || "auto";
-    if (!["auto", "on", "off"].includes(motionPreference)) motionPreference = "auto";
     const svgNS = "http://www.w3.org/2000/svg";
     const LEAF_SCALE = .83;
     let selected = null, pointer = "", renderedWidth = 0, refreshInFlight = false;
@@ -35,23 +29,6 @@
         catch (_) { return null; }
     }
     function saveStorage(storage, key, value) { try { storage.setItem(key, value); } catch (_) { /* Optional persistence. */ } }
-    function motionIsEnabled(preference, prefersReduced) {
-        return preference === "on" || (preference !== "off" && !prefersReduced);
-    }
-    function applyMotionPreference() {
-        // An explicit garden-only opt-in can override reduce. The default still
-        // follows the device, without changing any browser or OS preferences.
-        garden.dataset.motion = motionPreference;
-        if (motionControl) motionControl.value = motionPreference;
-        if (motionHint) motionHint.hidden = motionPreference !== "auto" || !reducedMotion.matches;
-        updateMotion();
-    }
-    motionControl?.addEventListener("change", () => {
-        motionPreference = ["on", "off"].includes(motionControl.value) ? motionControl.value : "auto";
-        saveStorage(localStorage, motionKey, motionPreference);
-        applyMotionPreference();
-    });
-    reducedMotion.addEventListener?.("change", applyMotionPreference);
     function element(tag, className, text) {
         const node = document.createElement(tag);
         if (className) node.className = className;
@@ -277,8 +254,32 @@
                 foliage+=`<ellipse cx="${x}" cy="${y-13}" rx="29" ry="18" fill="#416e36"/><path d="M${x-21} ${y-15}Q${x} ${y-35} ${x+21} ${y-15}" fill="none" stroke="#93ac5d" stroke-width="3" opacity=".5"/>`;
             }
         }
-        // The soil is outside the sway group. Branches pivot at the planted root.
-        return `<svg class="garden-tree-art" viewBox="0 0 200 240" aria-hidden="true" data-growth-stage="${stage}" style="--crown-pivot-y:${crown?crown.cy+20:160}px"><defs><linearGradient id="${id}-bark"><stop stop-color="#593e2a"/><stop offset=".55" stop-color="#ab8051"/><stop offset="1" stop-color="#62452d"/></linearGradient><radialGradient id="${id}-shade"><stop stop-color="#2e281c" stop-opacity=".5"/><stop offset="1" stop-color="#2e281c" stop-opacity="0"/></radialGradient></defs><ellipse cx="115" cy="197" rx="${stage>1?55:36}" ry="18" transform="rotate(-9 115 197)" fill="url(#${id}-shade)"/><ellipse cx="100" cy="190" rx="44" ry="16" transform="rotate(-8 100 190)" fill="#a17b49" opacity=".28"/>${mound}<g class="tree-sway">${branches}<g class="tree-crown"><g class="tree-growth">${foliage}</g></g></g></svg>`;
+        // Separate static soil from the moving artwork. HTML motion layers let
+        // native fruit links share the very same transforms as the branches.
+        const start=`<svg class="garden-tree-art" viewBox="0 0 200 240" aria-hidden="true" data-growth-stage="${stage}">`;
+        return {
+            crownPivotY:crown?crown.cy+20:160,
+            soil:`${start}<defs><radialGradient id="${id}-shade"><stop stop-color="#2e281c" stop-opacity=".5"/><stop offset="1" stop-color="#2e281c" stop-opacity="0"/></radialGradient></defs><ellipse cx="115" cy="197" rx="${stage>1?55:36}" ry="18" transform="rotate(-9 115 197)" fill="url(#${id}-shade)"/><ellipse cx="100" cy="190" rx="44" ry="16" transform="rotate(-8 100 190)" fill="#a17b49" opacity=".28"/>${mound}</svg>`,
+            branches:`${start}<defs><linearGradient id="${id}-bark"><stop stop-color="#593e2a"/><stop offset=".55" stop-color="#ab8051"/><stop offset="1" stop-color="#62452d"/></linearGradient></defs>${branches}</svg>`,
+            canopy:`${start}<g class="tree-growth">${foliage}</g></svg>`
+        };
+    }
+
+    function addTreeMotion(plant, artwork) {
+        const motion=element("div","garden-tree-motion tree-sway");
+        motion.style.setProperty("--crown-pivot-y",`${artwork.crownPivotY}px`);
+        motion.innerHTML=artwork.branches;
+        const canopy=element("div","garden-tree-canopy tree-crown");
+        canopy.innerHTML=artwork.canopy;
+        motion.append(canopy);
+        plant.append(motion);
+        return canopy;
+    }
+
+    function attachFruit(fruit, plant, canopy, fallen) {
+        // Attached dates inherit both tree and foliage motion. Ground fruit
+        // must remain outside those layers, including after an event is moved.
+        (fallen?plant:canopy).append(fruit);
     }
 
     function fruitArtwork(event, variety) {
@@ -490,7 +491,7 @@
                 prior?.leaves.forEach(point=>{
                     if(!vine.category.leaves.some(leaf=>leaf.id===point.leaf.id)) {
                         completed++;
-                        if(motionIsEnabled(motionPreference,reducedMotion.matches))group.append(drawLeaf(point,vine.category,vine.i,true));
+                        group.append(drawLeaf(point,vine.category,vine.i,true));
                     }
                 });
             }
@@ -510,7 +511,8 @@
             plant.style.setProperty("--breeze-duration",`${6.8+(tree.id%5)*.63}s`);
             const link=element("a","garden-tree-link");
             link.href=tree.url;
-            link.innerHTML=treeArtwork(tree);
+            const artwork=treeArtwork(tree);
+            link.innerHTML=artwork.soil;
             const marker=element("span","garden-tree-label garden-marker");
             marker.style.top=`${geometry.markerTop}px`;
             marker.append(element("strong","",tree.subject));
@@ -521,8 +523,9 @@
             link.setAttribute("aria-label",`${tree.subject}. ${detail}`);
             interactive(link,{kicker:"Study · Summarizing progress",title:tree.subject,detail,action:"Open Study"});
             plant.append(link);
+            const canopy=addTreeMotion(plant,artwork);
             const prior=previous?.trees.find(t=>t.id===tree.id);
-            if(prior&&prior.progress!==tree.progress&&motionIsEnabled(motionPreference,reducedMotion.matches))link.querySelector(".tree-growth").classList.add("garden-growth");
+            if(prior&&prior.progress!==tree.progress)canopy.querySelector(".tree-growth").classList.add("garden-growth");
             if(tree.stage>=2) {
                 // One tiny oval (not an ivy task leaf), reused by a sparse CSS cycle.
                 // No timers, hit targets, task data, or accumulating ground nodes.
@@ -555,14 +558,12 @@
                 fruit.dataset.variety=tree.fruit || "red-apple";
                 fruit.dataset.kind=event.kind;
                 position(fruit,point.x-22,point.y-22);
-                fruit.style.setProperty("--fruit-root-x",`${122-point.x}px`);
-                fruit.style.setProperty("--fruit-root-y",`${212-point.y}px`);
                 fruit.innerHTML=fruitArtwork(event,fruit.dataset.variety);
                 fruit.append(element("span","garden-fruit-kind",event.kind==="exam"?"E":"A"));
                 const priorEvent=prior?.events.find(e=>e.id===event.id);
                 if(fallen) {
                     currentOverdue.add(event.id);
-                    if(!fallenSeen.has(event.id)&&motionIsEnabled(motionPreference,reducedMotion.matches)) {
+                    if(!fallenSeen.has(event.id)) {
                         const priorIndex=prior?treeGeometry(prior).attached.findIndex(e=>e.id===event.id):-1;
                         const from=attachedFruitPoint(tree,Math.max(0,priorIndex));
                         fruit.style.setProperty("--fruit-from-x",`${from.x-point.x}px`);
@@ -571,7 +572,7 @@
                     }
                     fallenSeen.add(event.id);
                 } else {
-                    if(priorEvent?.status==="overdue"&&motionIsEnabled(motionPreference,reducedMotion.matches)) {
+                    if(priorEvent?.status==="overdue") {
                         const oldGeometry=treeGeometry(prior);
                         const groundIndex=Math.max(0,oldGeometry.fallen.findIndex(e=>e.id===event.id));
                         fruit.style.setProperty("--fruit-from-x",`${50+(groundIndex%3)*50-point.x}px`);
@@ -583,7 +584,7 @@
                 const fruitDetail=`${event.type} · ${event.date_label}\n${statusLabel(event)}${fallen?" · Fallen fruit":""}`;
                 fruit.setAttribute("aria-label",`${tree.subject}: ${event.title}. ${fruitDetail}`);
                 interactive(fruit,{kicker:`${tree.subject} · ${event.type}`,title:event.title,detail:fruitDetail,action:"Open event"});
-                plant.append(fruit);
+                attachFruit(fruit,plant,canopy,fallen);
             };
             geometry.attached.forEach((event,index)=>drawFruit(event,index,false));
             geometry.fallen.forEach((event,index)=>drawFruit(event,index,true));
@@ -645,7 +646,6 @@
     }
     document.addEventListener("visibilitychange",updateMotion);
     setInterval(()=>refresh(),60000);
-    applyMotionPreference();
     const requested=new URL(location.href).searchParams.get("view");
     setView(requested==='garden'?'garden':requested==='standard'?'standard':readStorage(localStorage,storageKey)||'standard');
 })();
