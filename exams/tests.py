@@ -318,7 +318,11 @@ class AssessmentCalendarTests(TestCase):
         self.assertNotIn(event, due_reminders(self.user, event.date))
         with patch("django.utils.timezone.localdate", return_value=today + timedelta(days=1)):
             response = self.client.get(reverse("dashboard"))
-        self.assertNotContains(response, "Paper 1")
+        self.assertNotContains(response, f'data-complete-event-id="{event.pk}"')
+        self.assertNotIn(event, response.context["due_assessment_events"])
+        fruit = response.context["garden_state"]["trees"][0]["events"][0]
+        self.assertEqual(fruit["id"], event.pk)
+        self.assertTrue(fruit["completed"])
 
     def test_dashboard_groups_event_cards_above_review(self):
         today = timezone.localdate()

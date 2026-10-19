@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.views.decorators.http import require_GET
 from django.utils import timezone
@@ -36,6 +37,7 @@ from .models import (
     SubjectRevisionPlan,
 )
 from .availability import availability_days, parse_availability
+from .garden import garden_state
 from .review_planner import (
     get_daily_review_plan,
     remaining_review_ids,
@@ -1142,10 +1144,15 @@ def dashboard(request):
     # RENDER
     # ========================================================
 
-    return render(
-        request,
-        "dashboard/dashboard.html",
-        {
+    garden = garden_state(
+        request.user, session_subjects,
+        {"definitions": due_definition_subjects, "formulas": due_formula_subjects,
+         "lists": due_list_subjects, "steps": due_step_subjects,
+         "comparisons": due_comparison_subjects, "notes": note_subjects},
+        book_summary_subjects, today,
+    )
+    context = {
+            "garden_state": garden,
             "beta_feedback_enabled": settings.BETA_FEEDBACK_ENABLED,
 
             # --------------------------------------------
@@ -1234,7 +1241,14 @@ def dashboard(request):
             "book_summary_total":
                 book_summary_total,
         }
-    )
+    if request.GET.get("garden_state") == "1":
+        response = JsonResponse({
+            "garden": garden,
+            "standard_html": render_to_string("dashboard/partials/today_standard.html", context, request=request),
+        })
+        response["Cache-Control"] = "private, no-store"
+        return response
+    return render(request, "dashboard/dashboard.html", context)
     
 # ============================================================
 # REVIEW
