@@ -73,9 +73,29 @@ class TodaysGardenTests(TestCase):
         self.assertEqual([e["id"] for e in trees[0]["events"]], [overdue.pk])
         self.assertEqual(trees[0]["events"][0]["status"], "overdue")
         self.assertEqual(trees[0]["events"][0]["url"], reverse("exams:calendar")+f"?edit={overdue.pk}")
-        self.assertTrue(trees[1]["events"][0]["completed"])
-        self.assertEqual(trees[1]["events"][0]["id"], complete.pk)
+        self.assertTrue(trees[0]["events"][0]["grounded"])
+        self.assertEqual(trees[1]["events"], [])
+        self.assertTrue(AssessmentEvent.objects.filter(pk=complete.pk).exists())
         self.assertNotIn("Private exam", str(trees))
+
+    def test_rescheduling_returns_fallen_fruit_and_completion_removes_it(self):
+        event = AssessmentEvent.objects.create(
+            subject=self.math, date=self.today-timedelta(days=2),
+            kind="assessment", title="Project",
+        )
+        fruit = self.state()["trees"][0]["events"][0]
+        self.assertTrue(fruit["grounded"])
+        self.assertEqual(fruit["status"], "overdue")
+        event.date = self.today + timedelta(days=10)
+        event.save(update_fields=["date"])
+        fruit = self.state()["trees"][0]["events"][0]
+        self.assertFalse(fruit["grounded"])
+        self.assertEqual(fruit["status"], "upcoming")
+        self.assertEqual(fruit["url"], reverse("exams:calendar")+f"?edit={event.pk}")
+        event.date = self.today-timedelta(days=2)
+        event.completed_at = timezone.now()
+        event.save(update_fields=["date", "completed_at"])
+        self.assertEqual(self.state()["trees"][0]["events"], [])
 
     def test_student_can_toggle_inline_without_standalone_navigation(self):
         response=self.client.get(reverse("dashboard"))

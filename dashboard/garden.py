@@ -79,8 +79,9 @@ def garden_state(user, session_subjects, groups, study_subjects, today):
             stage = 5
         events = []
         for event in subject.assessment_events.all():
+            if event.completed_at is not None:
+                continue
             status = (
-                "completed" if event.completed_at else
                 "overdue" if event.date < today else
                 "today" if event.date == today else
                 "soon" if event.date <= today + timedelta(days=7) else "upcoming"
@@ -90,6 +91,7 @@ def garden_state(user, session_subjects, groups, study_subjects, today):
                 "kind": event.kind, "type": event.get_kind_display(),
                 "date": event.date.isoformat(), "date_label": event.date.strftime("%d %B %Y"),
                 "status": status, "completed": event.completed_at is not None,
+                "grounded": status == "overdue",
                 "url": reverse("exams:calendar") + "?" + urlencode({"edit": event.pk}),
             })
         trees.append({
