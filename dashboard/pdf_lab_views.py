@@ -1,4 +1,4 @@
-"""Superuser-only experiment for inspecting learning items in uploaded PDFs."""
+"""PDF study suggestions for Grow and Bloom, with monthly page accounting."""
 
 import json
 from pathlib import Path
@@ -11,6 +11,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 from accounts.entitlements import can_use_pdf_summarizer
+from accounts.pdf_usage import get_pdf_usage, monthly_pdf_allowance
 from pypdf import PdfReader
 from pypdf.errors import PdfReadError
 
@@ -237,7 +238,7 @@ def _subject_back_url(request, subject):
     return reverse("subject_detail", args=[index]) if index is not None else reverse("goals")
 
 
-def _scan_pdf(upload, start_page, pages_to_scan):
+def _scan_pdf(upload, start_page, pages_to_scan, *, allowance):
     upload.seek(0)
     reader = PdfReader(upload, strict=False)
     if reader.is_encrypted:
@@ -249,6 +250,8 @@ def _scan_pdf(upload, start_page, pages_to_scan):
         raise ValueError(f"Start page must be between 1 and {total_pages}.")
 
     last_page = min(total_pages, start_page + pages_to_scan - 1)
+    # Check actual PDF pages before extraction or OCR, rather than trusting POST.
+    allowance.check_summary_pages(last_page - start_page + 1)
     results, formula_results = [], []
     seen, seen_formulas = set(), set()
     structured = {KIND_KEYS[kind][0]: [] for kind in KINDS}
@@ -344,6 +347,7 @@ def _scan_pdf(upload, start_page, pages_to_scan):
         if truncated and formula_truncated and all(structured_truncated.values()):
             break
 
+    allowance.add_summary_pages(scanned_through - start_page + 1)
     return {
         "total_pages": total_pages,
         "start_page": start_page,
@@ -371,6 +375,8 @@ def definition_pdf_lab(request, subject_id):
     if not can_use_pdf_summarizer(request.user):
         return redirect("pricing")
     subject = get_object_or_404(Subject, pk=subject_id, user=request.user)
+    usage = get_pdf_usage(request.user)
+    remaining = usage["pages_remaining"]
     context = {
         "subject": subject,
         "back_url": _subject_back_url(request, subject),
@@ -378,7 +384,8 @@ def definition_pdf_lab(request, subject_id):
         "max_pages": MAX_PAGES_PER_SCAN,
         "max_size_mb": MAX_UPLOAD_BYTES // (1024 * 1024),
         "start_page": 1,
-        "pages_to_scan": 25,
+        "pages_to_scan": min(25, max(1, remaining)) if remaining is not None else 25,
+        "pdf_usage": usage,
         "textbooks": SubjectTextbook.objects.filter(subject=subject).order_by("created", "id"),
         "selected_book": "",
         "chapter": "",
@@ -457,17 +464,24 @@ def definition_pdf_lab(request, subject_id):
                     )
                 if b"%PDF-" not in upload.read(1024):
                     raise ValueError("This file does not look like a valid PDF.")
-                state = save_scan(
-                    request, subject.pk, _scan_pdf(upload, start_page, pages_to_scan),
-                    Path(upload.name).name,
-                    context["selected_book"], context["chapter"],
-                )
+                with monthly_pdf_allowance(request.user) as allowance:
+                    scan = _scan_pdf(upload, start_page, pages_to_scan, allowance=allowance)
+                    state = save_scan(
+                        request, subject.pk, scan, Path(upload.name).name,
+                        context["selected_book"], context["chapter"],
+                    )
             except (PdfReadError, ValueError, OSError, IndexError) as exc:
                 context["error"] = str(exc) or "Could not read this PDF."
         else:
             context["error"] = "Choose a valid action."
 
     _display_scan(context, state)
+    context["pdf_usage"] = get_pdf_usage(request.user)
+    remaining = context["pdf_usage"]["pages_remaining"]
+    if remaining is not None:
+        context["max_pages"] = max(1, min(MAX_PAGES_PER_SCAN, remaining))
+        if "error" not in context:
+            context["pages_to_scan"] = min(int(context["pages_to_scan"]), context["max_pages"])
     return render(request, "dashboard/definition_pdf_lab.html", context)
 
 

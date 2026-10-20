@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import BetaInvite, StudyMembership
+from .models import BetaInvite, StudyMembership, StudyTier
 
 
 class MyPlanPageTests(TestCase):
@@ -41,6 +41,7 @@ class MyPlanPageTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Invited beta access")
         self.assertContains(response, "permanent free access")
+        self.assertContains(response, "Bloom without a monthly payment")
 
     def test_claimed_invite_sees_beta_access_even_without_flag(self):
         invite = BetaInvite.objects.get(slot=1)
@@ -56,6 +57,7 @@ class MyPlanPageTests(TestCase):
     def test_monthly_member_sees_plan_and_status(self):
         StudyMembership.objects.create(
             user=self.user,
+            tier=StudyTier.GROW,
             plan=StudyMembership.Plan.MONTHLY,
             status=StudyMembership.Status.ACTIVE,
             paid_until=timezone.now() + timedelta(days=30),
@@ -65,8 +67,8 @@ class MyPlanPageTests(TestCase):
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Monthly plan")
-        self.assertContains(response, "R99 per month")
+        self.assertContains(response, "Grow plan")
+        self.assertContains(response, "R35 per month")
         self.assertContains(response, "Active")
         self.assertContains(response, "Paid access until")
 
@@ -82,8 +84,8 @@ class MyPlanPageTests(TestCase):
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Yearly plan")
-        self.assertContains(response, "R999 for 12 months")
+        self.assertContains(response, "Bloom plan")
+        self.assertContains(response, "Prepaid access for 12 months")
         self.assertContains(response, "does not renew automatically")
 
     def test_expired_member_sees_free_plan_without_losing_data_message(self):
@@ -97,3 +99,27 @@ class MyPlanPageTests(TestCase):
         response = self.client.get(self.url)
         self.assertContains(response, "Free account")
         self.assertContains(response, "saved subjects and learning items remain available")
+
+    def test_bloom_member_sees_bloom_monthly_price(self):
+        StudyMembership.objects.create(
+            user=self.user,
+            tier=StudyTier.BLOOM,
+            plan=StudyMembership.Plan.MONTHLY,
+            status=StudyMembership.Status.ACTIVE,
+            paid_until=timezone.now() + timedelta(days=30),
+        )
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        self.assertContains(response, "Bloom plan")
+        self.assertContains(response, "R90 per month")
+        self.assertNotContains(response, "R35 per month")
+
+    def test_pending_membership_keeps_free_account_until_payment_is_confirmed(self):
+        StudyMembership.objects.create(
+            user=self.user, tier=StudyTier.GROW, plan=StudyMembership.Plan.MONTHLY,
+            paid_until=timezone.now() + timedelta(days=30),
+        )
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        self.assertContains(response, "Free account")
+        self.assertContains(response, "Grow plan is awaiting confirmed payment")

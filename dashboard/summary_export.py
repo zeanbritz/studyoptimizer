@@ -9,6 +9,7 @@ from pathlib import Path
 from xml.sax.saxutils import escape
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
@@ -30,6 +31,7 @@ from PIL import Image, ImageOps
 
 from learning.models import KnowledgeUnit, Note, Subject
 from accounts.entitlements import can_export_subject_summary
+from accounts.pdf_usage import PDFLimitExceeded, monthly_pdf_allowance
 
 
 TYPE_ORDER = (
@@ -348,7 +350,13 @@ def download_subject_summary(request, subject_id):
     if mode not in {"regular", "books"}:
         return HttpResponseBadRequest("Invalid summary organization.")
     subject = get_object_or_404(Subject, pk=subject_id, user=request.user)
-    pdf = _build_pdf(subject, mode, _collect_items(subject))
+    try:
+        with monthly_pdf_allowance(request.user) as allowance:
+            allowance.add_export()
+            pdf = _build_pdf(subject, mode, _collect_items(subject))
+    except PDFLimitExceeded as exc:
+        messages.error(request, str(exc))
+        return redirect("my_plan")
     response = HttpResponse(pdf, content_type="application/pdf")
     name = slugify(subject.name)[:60] or "subject"
     response["Content-Disposition"] = (

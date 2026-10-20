@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
 from django.test import TestCase
 
-from .models import StudyMembership, StudyPayment
+from .models import StudyMembership, StudyPayment, StudyTier
 
 
 class StudyPaymentModelTests(TestCase):
@@ -17,9 +17,10 @@ class StudyPaymentModelTests(TestCase):
     def make_payment(self, **overrides):
         values = {
             "user": self.user,
+            "tier": StudyTier.BLOOM,
             "plan": StudyMembership.Plan.MONTHLY,
             "mode": StudyPayment.Mode.TEST,
-            "expected_amount_cents": 9900,
+            "expected_amount_cents": 9000,
         }
         values.update(overrides)
         return StudyPayment.objects.create(**values)

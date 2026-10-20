@@ -104,6 +104,9 @@
             <section class="card" aria-labelledby="upload-title">
                 <h2 id="upload-title">Summarize a PDF</h2>
                 <p class="intro">Find possible definitions, formulas, lists, steps, notes and comparisons in the text and images. Review each suggestion before adding it.</p>
+                {% if pdf_usage.pages_remaining != None %}
+                    <p class="notice">{{ pdf_usage.pages_remaining }} Auto Summarize pages remaining this month, shared across all subjects. Resets on {{ pdf_usage.resets_on|date:"j F Y" }}.</p>
+                {% endif %}
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="scan">
@@ -136,7 +139,7 @@
                             <input id="pdf-chapter" type="text" name="chapter" maxlength="255" value="{{ chapter }}" placeholder="e.g. Chapter 4">
                         </div>
                     </div>
-                    <button class="scan-button" type="submit">Summarize</button>
+                    <button class="scan-button" type="submit" {% if pdf_usage.pages_remaining == 0 %}disabled{% endif %}>Summarize</button>
                     <p class="hint">Optional book and chapter labels carry into saved items; they do not change detection.</p>
                     <p class="hint">Max {{ max_pages }} pages or {{ max_size_mb }} MB. Image text is checked only when an image is present, up to 8 images per scan. The PDF is not stored; results stay for 24 hours.</p>
                 </form>

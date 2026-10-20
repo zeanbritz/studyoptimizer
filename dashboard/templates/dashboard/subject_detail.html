@@ -4025,10 +4025,12 @@
                                 </div>
                                 {% if database_subject %}
                                     <div class="summary-header-actions">
+                                        {% if can_auto_summarize %}
                                         <a class="pdf-lab-button"
                                            href="{% url 'definition_pdf_lab' subject_id=database_subject.id %}">
                                             Auto Summarize PDF
                                         </a>
+                                        {% endif %}
                                         {% if can_export_pdf %}
                                         <button type="button" class="download-summary-button"
                                                 id="download-summary-button"

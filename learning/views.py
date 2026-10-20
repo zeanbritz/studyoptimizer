@@ -36,7 +36,7 @@ from dashboard.models import (
 )
 from dashboard.review_planner import get_daily_review_plan, remaining_review_ids
 from dashboard.pdf_lab_session import get_candidate, get_scan, mark_saved
-from accounts.entitlements import free_learning_item_limit
+from accounts.entitlements import can_use_pdf_summarizer, free_learning_item_limit
 
 
 # ============================================================
@@ -322,7 +322,7 @@ def create_formula(
         else request.GET.get("pdf_formula_index")
     )
     pdf_formula_candidate = None
-    if pdf_scan_id and pdf_formula_index not in (None, "") and request.user.is_superuser:
+    if pdf_scan_id and pdf_formula_index not in (None, "") and can_use_pdf_summarizer(request.user):
         pdf_formula_candidate = get_candidate(
             request, subject.pk, pdf_scan_id, pdf_formula_index, kind="formula",
         )
@@ -1094,7 +1094,7 @@ def create_definition(
         else request.GET.get("pdf_candidate_index")
     )
     pdf_candidate = None
-    if pdf_scan_id and pdf_candidate_index not in (None, "") and request.user.is_superuser:
+    if pdf_scan_id and pdf_candidate_index not in (None, "") and can_use_pdf_summarizer(request.user):
         pdf_candidate = get_candidate(
             request, subject.pk, pdf_scan_id, pdf_candidate_index,
         )

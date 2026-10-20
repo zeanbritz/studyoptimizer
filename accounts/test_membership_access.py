@@ -151,10 +151,10 @@ class FreePlanEntitlementTests(TestCase):
         self.add_units(98)
         Note.objects.create(subject=self.subject, title="Extra", content="Study note")
         self.assertEqual(learning_item_count(self.user), 99)
-        self.assertTrue(can_create_learning_item(self.user))
+        self.assertTrue(can_create_learning_item(self.user, subject=self.subject))
         Note.objects.create(subject=self.subject, title="Last", content="Study note")
         self.assertEqual(learning_item_count(self.user), 100)
-        self.assertFalse(can_create_learning_item(self.user))
+        self.assertFalse(can_create_learning_item(self.user, subject=self.subject))
 
     def test_second_subject_allowed_and_third_blocked(self):
         self.assertTrue(can_create_subject(self.user, session_subject_count=1))
@@ -232,7 +232,7 @@ class FreePlanEntitlementTests(TestCase):
         self.assertTrue(can_create_subject(self.user))
         self.assertTrue(can_create_learning_item(self.user))
         self.assertTrue(can_export_subject_summary(self.user))
-        self.assertFalse(can_use_pdf_summarizer(self.user))
+        self.assertTrue(can_use_pdf_summarizer(self.user))
 
         self.user.beta_lifetime_access = False
         self.user.save(update_fields=["beta_lifetime_access"])
@@ -243,7 +243,7 @@ class FreePlanEntitlementTests(TestCase):
         )
         self.assertTrue(can_create_subject(self.user))
         self.assertTrue(can_create_learning_item(self.user))
-        self.assertFalse(can_export_subject_summary(self.user))
+        self.assertTrue(can_export_subject_summary(self.user))
 
     def test_expired_member_keeps_data_under_free_limits(self):
         self.add_units(100)
@@ -252,5 +252,5 @@ class FreePlanEntitlementTests(TestCase):
             status=StudyMembership.Status.EXPIRED,
             paid_until=timezone.now() - timedelta(days=1),
         )
-        self.assertFalse(can_create_learning_item(self.user))
+        self.assertFalse(can_create_learning_item(self.user, subject=self.subject))
         self.assertEqual(learning_item_count(self.user), 100)

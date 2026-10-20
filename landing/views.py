@@ -1,12 +1,19 @@
 from django.shortcuts import render
 
+from accounts.entitlements import FREE_LEARNING_ITEM_LIMIT, FREE_SUBJECT_LIMIT
+from accounts.plans import PAID_STUDY_PLANS
+
 
 def home(request):
     return render(request, "landing/home.html")
 
 
 def pricing(request):
-    return render(request, "landing/pricing.html")
+    return render(request, "landing/pricing.html", {
+        "paid_plans": PAID_STUDY_PLANS,
+        "free_subject_limit": FREE_SUBJECT_LIMIT,
+        "free_learning_item_limit": FREE_LEARNING_ITEM_LIMIT,
+    })
 
 
 def privacy_policy(request):
@@ -22,7 +29,7 @@ def cookie_policy(request):
 
 
 def billing_policy(request):
-    return render(request, "landing/legal/billing.html")
+    return render(request, "landing/legal/billing.html", {"paid_plans": PAID_STUDY_PLANS})
 
 
 def contact(request):

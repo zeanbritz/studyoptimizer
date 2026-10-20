@@ -1,24 +1,21 @@
 from allauth.account.models import EmailAddress
+from django.conf import settings
 
 from .access import has_permanent_free_access
-from .models import StudyMembership, StudyPayment
-
-
-PLAN_AMOUNTS_CENTS = {
-    StudyMembership.Plan.MONTHLY: 9900,
-    StudyMembership.Plan.YEARLY: 99900,
-}
+from .models import StudyMembership, StudyPayment, StudyTier
+from .plans import STUDY_PLANS
 
 
 class CheckoutNotAllowed(ValueError):
     """The account or selected plan cannot start checkout."""
 
 
-def create_test_checkout_attempt(*, user, plan):
+def create_test_checkout_attempt(*, user, tier, plan=StudyMembership.Plan.MONTHLY):
     """
     Record a test-mode checkout attempt without contacting Paystack.
 
-    The amount and mode are selected here, never supplied by the browser.
+    The price, Paystack plan code, currency and mode are selected here. This
+    only records an attempt; it never charges a card or grants membership.
     """
     if (
         user is None
@@ -38,16 +35,23 @@ def create_test_checkout_attempt(*, user, plan):
     ).exists():
         raise CheckoutNotAllowed("A verified email address is required.")
 
-    try:
-        amount_cents = PLAN_AMOUNTS_CENTS[plan]
-    except (KeyError, TypeError):
-        raise CheckoutNotAllowed("Unknown study plan.") from None
+    if not isinstance(tier, str) or tier not in {StudyTier.GROW, StudyTier.BLOOM}:
+        raise CheckoutNotAllowed("Choose Grow or Bloom for paid checkout.")
+
+    if plan != StudyMembership.Plan.MONTHLY:
+        raise CheckoutNotAllowed("Only monthly billing is currently offered.")
+
+    plan_code = settings.PAYSTACK_TEST_PLAN_CODES.get(tier, "").strip()
+    if not plan_code.startswith("PLN_") or len(plan_code) <= 4:
+        raise CheckoutNotAllowed("The selected test plan is not configured.")
 
     return StudyPayment.objects.create(
         user=user,
+        tier=tier,
         plan=plan,
+        paystack_plan_code=plan_code,
         mode=StudyPayment.Mode.TEST,
         source=StudyPayment.Source.CHECKOUT,
-        expected_amount_cents=amount_cents,
+        expected_amount_cents=STUDY_PLANS[tier].monthly_amount_cents,
         currency="ZAR",
     )

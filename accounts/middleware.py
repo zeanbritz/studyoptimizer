@@ -217,7 +217,7 @@ class WorkspaceSessionPersistenceMiddleware:
             else cls._parse_integer(
                 profile_data.get("subject_count"),
                 0,
-                20,
+                2147483647,
             ) or 0
         )
 
@@ -239,7 +239,7 @@ class WorkspaceSessionPersistenceMiddleware:
                     1,
                     168,
                 ),
-                "subject_count": min(subject_count, 20),
+                "subject_count": subject_count,
                 "onboarding_complete": onboarding_complete,
             }
             profile_changed = created
@@ -287,10 +287,16 @@ class WorkspaceSessionPersistenceMiddleware:
                 ).order_by("created", "id").first()
 
             if subject is None:
-                subject = Subject.objects.create(
-                    user=request.user,
-                    name=subject_name,
-                )
+                from django.contrib.auth import get_user_model
+                from django.db import transaction
+                from .entitlements import can_create_subject
+
+                with transaction.atomic():
+                    account = get_user_model().objects.select_for_update().get(pk=request.user.pk)
+                    # Recheck after locking: session persistence must not bypass quotas.
+                    if not can_create_subject(account):
+                        continue
+                    subject = Subject.objects.create(user=account, name=subject_name)
 
             target_grade = cls._parse_integer(
                 entry.get("target_grade"),

@@ -144,7 +144,7 @@
                     <div class="field">
                         <label for="subject-count">Subjects to start with</label>
                         <input id="subject-count" type="number" name="subject_count" value="{{ form_values.subject_count|default:'' }}" min="1" max="{{ subject_limit }}" placeholder="e.g. 2" required>
-                        {% if is_free_student %}<p class="field-note">Free includes two subjects. <a href="{% url 'pricing' %}">See plans</a></p>{% endif %}
+                        {% if plan_subject_limit %}<p class="field-note">Your plan includes up to {{ plan_subject_limit }} subjects. <a href="{% url 'pricing' %}">See plans</a></p>{% endif %}
                     </div>
                 </div>
             </section>

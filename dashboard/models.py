@@ -39,11 +39,10 @@ class StudyProfile(models.Model):
         ],
     )
 
-    subject_count = models.PositiveSmallIntegerField(
+    subject_count = models.PositiveIntegerField(
         default=0,
         validators=[
             MinValueValidator(0),
-            MaxValueValidator(20),
         ],
     )
 

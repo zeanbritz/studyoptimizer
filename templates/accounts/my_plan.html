@@ -182,6 +182,8 @@
             line-height: 1.65;
         }
 
+        .plan-features { margin: 20px 0 0; padding-left: 20px; color: #58646a; font-size: 14px; line-height: 1.8; }
+
         .details {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -257,6 +259,7 @@
         </header>
 
         <main>
+            {% for message in messages %}<p class="notice" role="status">{{ message }}</p>{% endfor %}
             <section class="intro" aria-labelledby="page-title">
                 <span class="eyebrow">Your account</span>
                 <h1 id="page-title">Profile</h1>
@@ -275,23 +278,28 @@
                 {% elif is_beta_member %}
                     <h2 id="current-plan-title">Invited beta access</h2>
                     <p class="plan-description">
-                        You have permanent free access to StudiGarden’s standard study features
+                        You have permanent free access to all StudiGarden study tools
                         as a thank-you for helping us improve. No subscription or payment details are needed.
                     </p>
+                    <p class="notice">Your account is recognised as Bloom without a monthly payment.</p>
 
                 {% elif membership and has_paid_access %}
                     <h2 id="current-plan-title">
-                        {{ membership.get_plan_display }} plan
+                        {{ current_plan.name }} plan
                     </h2>
                     <p class="plan-description">
                         {% if membership.plan == "monthly" %}
-                            R99 per month. Monthly renewals will be managed here once payments launch.
+                            R{{ current_plan.monthly_price|floatformat:0 }} per month. Monthly renewals will be managed here once payments launch.
                         {% else %}
-                            R999 for 12 months. This plan does not renew automatically.
+                            Prepaid access for 12 months. This plan does not renew automatically.
                         {% endif %}
                     </p>
 
                     <dl class="details">
+                        <div class="detail">
+                            <dt>Billing period</dt>
+                            <dd>{{ membership.get_plan_display }}</dd>
+                        </div>
                         <div class="detail">
                             <dt>Status</dt>
                             <dd>{{ membership.get_status_display }}</dd>
@@ -321,13 +329,33 @@
                 {% else %}
                     <h2 id="current-plan-title">Free account</h2>
                     <p class="plan-description">
-                        Create up to 2 subjects and 100 learning items in total. You can review
+                        Create up to {{ free_subject_limit }} subjects and {{ free_learning_item_limit }} learning items per subject. You can review
                         your saved material as often as you like. PDF export and Auto Summarize
                         are not included. No payment details are needed.
                     </p>
                     {% if membership %}
-                        <p class="notice">Your previous paid plan is not active. Your saved subjects and learning items remain available.</p>
+                        {% if membership.status == "pending" %}
+                            <p class="notice">Your {{ membership.get_tier_display }} plan is awaiting confirmed payment. Your account stays on Free until payment is verified.</p>
+                        {% else %}
+                            <p class="notice">Your previous paid plan is not active. Your saved subjects and learning items remain available.</p>
+                        {% endif %}
                     {% endif %}
+                {% endif %}
+                <ul class="plan-features">
+                    {% for feature in current_plan.features %}<li>{{ feature }}</li>{% endfor %}
+                </ul>
+                {% if current_plan.tier == "grow" %}
+                    <dl class="details">
+                        <div class="detail">
+                            <dt>PDF exports this month</dt>
+                            <dd>{{ pdf_usage.pdf_exports }} / {{ current_plan.monthly_pdf_exports }}</dd>
+                        </div>
+                        <div class="detail">
+                            <dt>Auto Summarize pages this month</dt>
+                            <dd>{{ pdf_usage.summary_pages }} / {{ current_plan.monthly_summary_pages }}</dd>
+                        </div>
+                    </dl>
+                    <p class="notice">Your PDF allowances are shared across all subjects and reset on {{ pdf_usage.resets_on|date:"j F Y" }}.</p>
                 {% endif %}
             </section>
 

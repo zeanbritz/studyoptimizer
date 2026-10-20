@@ -23,9 +23,10 @@ from learning.models import (
 )
 from exams.reminders import due_reminders
 from accounts.entitlements import (
-    FREE_SUBJECT_LIMIT,
     can_export_subject_summary,
+    can_use_pdf_summarizer,
     can_create_subject,
+    get_subject_limit,
     free_learning_item_limit,
     is_free_student,
 )
@@ -1442,6 +1443,12 @@ def review(request):
 @login_required
 def onboarding(request):
 
+    plan_subject_limit = get_subject_limit(request.user)
+    remaining_subjects = (
+        max(0, plan_subject_limit - Subject.objects.filter(user=request.user).count())
+        if plan_subject_limit is not None else 20
+    )
+
     if request.method == "POST":
 
         workspace_name = (
@@ -1467,7 +1474,8 @@ def onboarding(request):
                 "dashboard/onboarding.html",
                 {
                     "error": "Choose a duration for each selected study day.",
-                    "subject_limit": FREE_SUBJECT_LIMIT if is_free_student(request.user) else 20,
+                    "subject_limit": min(20, remaining_subjects),
+                    "plan_subject_limit": plan_subject_limit,
                     "is_free_student": is_free_student(request.user),
                     "availability_days": availability_days(posted=request.POST),
                     "hour_options": range(25),
@@ -1507,9 +1515,9 @@ def onboarding(request):
             )
         )
 
-        if is_free_student(request.user) and (
-            subject_count > FREE_SUBJECT_LIMIT
-            or Subject.objects.filter(user=request.user).count() + subject_count > FREE_SUBJECT_LIMIT
+        if plan_subject_limit is not None and (
+            subject_count > plan_subject_limit
+            or Subject.objects.filter(user=request.user).count() + subject_count > plan_subject_limit
         ):
             return redirect("pricing")
 
@@ -1587,7 +1595,8 @@ def onboarding(request):
         request,
         "dashboard/onboarding.html",
         {
-            "subject_limit": FREE_SUBJECT_LIMIT if is_free_student(request.user) else 20,
+            "subject_limit": min(20, remaining_subjects),
+            "plan_subject_limit": plan_subject_limit,
             "is_free_student": is_free_student(request.user),
             "availability_days": availability_days(
                 StudyAvailability.objects.filter(user=request.user).first()
@@ -1852,12 +1861,6 @@ def goals(request):
 
             if not can_create_subject(request.user, session_subject_count=len(subjects)):
                 return redirect("pricing")
-
-            if len(subjects) >= 20:
-
-                return redirect(
-                    "goals"
-                )
 
             new_subject = {
 
@@ -4343,6 +4346,7 @@ def subject_detail(
                 database_subject,
 
             "can_export_pdf": can_export_subject_summary(request.user),
+            "can_auto_summarize": can_use_pdf_summarizer(request.user),
 
             "subject_id":
                 (

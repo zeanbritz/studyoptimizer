@@ -192,7 +192,7 @@
             background: #f8fafb;
         }
 
-        .plan.yearly,
+        .plan.bloom,
         .plan.free { border-top-color: var(--green); }
 
         .plan-heading {
@@ -363,7 +363,7 @@
             <section class="intro" aria-labelledby="pricing-title">
                 <span class="eyebrow">StudiGarden plans</span>
                 <h1 id="pricing-title">Simple pricing for your studies</h1>
-                <p>Start studying for free. We are designing additional paid tiers, including a higher tier for PDF tools, but checkout is not open yet.</p>
+                <p>Start with Free, grow your study workspace with Grow, or unlock all study tools with Bloom. Paid checkout is coming soon.</p>
             </section>
 
             <section class="plans" aria-label="Pricing plans">
@@ -374,12 +374,12 @@
 
                     <p class="price">R0</p>
                     <p class="billing-note">
-                        Get started with StudiGarden while we develop the paid plans. No payment details needed.
+                        Your everyday study essentials. No payment details needed.
                     </p>
 
                     <ul>
-                        <li>Create up to 2 subjects</li>
-                        <li>Create up to 100 learning items across those subjects</li>
+                        <li>Create up to {{ free_subject_limit }} subjects</li>
+                        <li>Create up to {{ free_learning_item_limit }} learning items per subject</li>
                         <li>Use Today's Plan, exams and unlimited reviews of your saved items</li>
                         <li>Track your progress; PDF export and Auto Summarize are not included</li>
                     </ul>
@@ -391,48 +391,30 @@
                     {% endif %}
                 </article>
 
-                <article class="plan">
+                {% for plan in paid_plans %}
+                <article class="plan {{ plan.tier }}">
                     <div class="plan-heading">
-                        <h2 class="plan-name">Monthly</h2>
+                        <h2 class="plan-name">{{ plan.name }}</h2>
+                        {% if plan.tier == "bloom" %}
+                            <span class="saving-badge">Top plan</span>
+                        {% endif %}
                     </div>
 
-                    <p class="price">R99 <span>/ month</span></p>
+                    <p class="price">R{{ plan.monthly_price|floatformat:0 }} <span>/ month</span></p>
                     <p class="billing-note">
-                        Planned as an automatically renewing monthly subscription. You will be able to cancel future renewals.
+                        Billed monthly when paid plans launch. Cancel future renewals whenever you choose.
                     </p>
 
                     <ul>
-                        <li>Plan and organise your subjects</li>
-                        <li>Create study material</li>
-                        <li>Review and track your progress</li>
+                        {% for feature in plan.features %}<li>{{ feature }}</li>{% endfor %}
                     </ul>
 
                     <button type="button" class="button button-unavailable" disabled>
-                        Checkout not yet available
+                        {{ plan.name }} coming soon
                     </button>
                 </article>
 
-                <article class="plan yearly">
-                    <div class="plan-heading">
-                        <h2 class="plan-name">Yearly</h2>
-                        <span class="saving-badge">Save R189</span>
-                    </div>
-
-                    <p class="price">R999 <span>/ 12 months</span></p>
-                    <p class="billing-note">
-                        One payment for 12 months of access. It will not renew automatically; you can choose whether to pay for another year.
-                    </p>
-
-                    <ul>
-                        <li>Plan and organise your subjects</li>
-                        <li>Create study material</li>
-                        <li>Review and track your progress</li>
-                    </ul>
-
-                    <button type="button" class="button button-unavailable" disabled>
-                        Checkout not yet available
-                    </button>
-                </article>
+                {% endfor %}
             </section>
 
             <aside class="beta-note" aria-label="Existing beta members">
@@ -441,7 +423,7 @@
             </aside>
 
             <p class="billing-disclaimer">
-                Paid prices and features are still being planned. No payment can be made on this page, and creating a free account will not start a subscription.
+                Grow’s PDF allowances are shared across all subjects and reset on the first of each calendar month. Paid checkout is not open yet, and creating a free account does not start a subscription.
             </p>
         </main>
 

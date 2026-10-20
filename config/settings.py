@@ -254,6 +254,14 @@ ACCOUNT_LOGOUT_ON_GET = False
 BETA_FEEDBACK_ENABLED = env_bool("BETA_FEEDBACK_ENABLED", default=True)
 
 
+# Paystack test plans. These plan identifiers are public; no API key is stored here.
+# Live checkout is not enabled by these settings.
+PAYSTACK_TEST_PLAN_CODES = {
+    "grow": os.getenv("PAYSTACK_TEST_GROW_PLAN_CODE", "PLN_glgi3r3klhjabz6").strip(),
+    "bloom": os.getenv("PAYSTACK_TEST_BLOOM_PLAN_CODE", "PLN_zo1y9g6fw3mbxje").strip(),
+}
+
+
 # Email
 
 EMAIL_BACKEND = os.getenv(

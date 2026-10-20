@@ -40,6 +40,28 @@ class LandingHomeTests(TestCase):
         self.assertNotContains(response, "Use an invite")
         self.assertNotContains(response, "Invite-only beta")
 
+    def test_pricing_shows_free_grow_and_bloom_with_checkout_closed(self):
+        response = self.client.get(reverse("pricing"))
+        self.assertContains(response, '>Free</h2>')
+        self.assertContains(response, '>Grow</h2>')
+        self.assertContains(response, '>Bloom</h2>')
+        for price in ("R0", "R35", "R90"):
+            self.assertContains(response, price)
+        self.assertContains(response, "Create up to 2 subjects")
+        self.assertContains(response, "Create up to 100 learning items")
+        self.assertContains(response, "Grow coming soon")
+        self.assertContains(response, "Bloom coming soon")
+        self.assertContains(response, "class=\"button button-unavailable\" disabled", count=2)
+        self.assertNotContains(response, "R99")
+        self.assertNotContains(response, "Yearly")
+
+    def test_billing_page_uses_the_new_monthly_prices(self):
+        response = self.client.get(reverse("billing_policy"))
+        self.assertContains(response, "Free at R0")
+        self.assertContains(response, "Grow at R35 per month")
+        self.assertContains(response, "Bloom at R90 per month")
+        self.assertNotContains(response, "R99")
+
     def test_signed_in_student_has_dashboard_route(self):
         user = get_user_model().objects.create_user(
             username="landing_student", password="sample-password"

@@ -44,8 +44,19 @@ class BetaInvite(models.Model):
         return f"Beta invite {self.slot}"
 
 
+class StudyTier(models.TextChoices):
+    FREE = "free", "Free"
+    GROW = "grow", "Grow"
+    BLOOM = "bloom", "Bloom"
+
+
+PAID_TIER_CHOICES = [
+    choice for choice in StudyTier.choices if choice[0] != StudyTier.FREE
+]
+
+
 class StudyMembership(models.Model):
-    """Paid access for either a recurring month or a prepaid year."""
+    """A paid tier and its billing period, including earlier prepaid years."""
 
     class Plan(models.TextChoices):
         MONTHLY = "monthly", "Monthly"
@@ -62,6 +73,12 @@ class StudyMembership(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="study_membership",
+    )
+    # Keep earlier full-access memberships on Bloom. Checkout sets this explicitly.
+    tier = models.CharField(
+        max_length=10,
+        choices=PAID_TIER_CHOICES,
+        default=StudyTier.BLOOM,
     )
     plan = models.CharField(max_length=10, choices=Plan.choices)
     status = models.CharField(
@@ -87,10 +104,18 @@ class StudyMembership(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(tier__in=[StudyTier.GROW, StudyTier.BLOOM]),
+                name="study_membership_paid_tier",
+            ),
+        ]
+
     def __str__(self):
         return (
             f"{self.user_id}: "
-            f"{self.get_plan_display()} "
+            f"{self.get_tier_display()} / {self.get_plan_display()} "
             f"({self.get_status_display()})"
         )
 
@@ -125,10 +150,17 @@ class StudyPayment(models.Model):
         default=new_study_payment_reference,
         editable=False,
     )
+    tier = models.CharField(
+        max_length=10,
+        choices=PAID_TIER_CHOICES,
+        default=StudyTier.BLOOM,
+    )
     plan = models.CharField(
         max_length=10,
         choices=StudyMembership.Plan.choices,
     )
+    # Snapshot the Paystack plan selected for this payment; legacy records are blank.
+    paystack_plan_code = models.CharField(max_length=100, blank=True)
     mode = models.CharField(max_length=4, choices=Mode.choices)
     source = models.CharField(
         max_length=10,
@@ -137,7 +169,7 @@ class StudyPayment(models.Model):
     )
 
     # Store the expected amount at the time the payment is created.
-    # R99 = 9900 cents; R999 = 99900 cents.
+    # Grow = 3500 cents; Bloom = 9000 cents. Never reprice historical payments.
     expected_amount_cents = models.PositiveIntegerField()
     currency = models.CharField(max_length=3, default="ZAR")
 
@@ -159,6 +191,10 @@ class StudyPayment(models.Model):
         ordering = ["-created_at"]
         constraints = [
             models.CheckConstraint(
+                condition=models.Q(tier__in=[StudyTier.GROW, StudyTier.BLOOM]),
+                name="study_payment_paid_tier",
+            ),
+            models.CheckConstraint(
                 condition=models.Q(expected_amount_cents__gt=0),
                 name="study_payment_positive_amount",
             ),
@@ -171,3 +207,22 @@ class StudyPayment(models.Model):
 
     def __str__(self):
         return f"{self.reference} ({self.get_status_display()})"
+
+
+class StudyMonthlyUsage(models.Model):
+    """Successful PDF exports and processed pages for one calendar month."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+        related_name="monthly_study_usage",
+    )
+    period_start = models.DateField()
+    pdf_exports = models.PositiveIntegerField(default=0)
+    summary_pages = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "period_start"], name="study_usage_user_month",
+            ),
+        ]
