@@ -54,4 +54,5 @@ def create_test_checkout_attempt(*, user, tier, plan=StudyMembership.Plan.MONTHL
         source=StudyPayment.Source.CHECKOUT,
         expected_amount_cents=STUDY_PLANS[tier].monthly_amount_cents,
         currency="ZAR",
+        checkout_email=user.email,
     )

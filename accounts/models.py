@@ -58,6 +58,10 @@ PAID_TIER_CHOICES = [
 class StudyMembership(models.Model):
     """A paid tier and its billing period, including earlier prepaid years."""
 
+    class PaymentMode(models.TextChoices):
+        TEST = "test", "Test"
+        LIVE = "live", "Live"
+
     class Plan(models.TextChoices):
         MONTHLY = "monthly", "Monthly"
         YEARLY = "yearly", "Yearly"
@@ -81,6 +85,9 @@ class StudyMembership(models.Model):
         default=StudyTier.BLOOM,
     )
     plan = models.CharField(max_length=10, choices=Plan.choices)
+    payment_mode = models.CharField(
+        max_length=4, choices=PaymentMode.choices, default=PaymentMode.LIVE,
+    )
     status = models.CharField(
         max_length=20,
         choices=Status.choices,
@@ -161,6 +168,8 @@ class StudyPayment(models.Model):
     )
     # Snapshot the Paystack plan selected for this payment; legacy records are blank.
     paystack_plan_code = models.CharField(max_length=100, blank=True)
+    checkout_email = models.EmailField(blank=True)
+    authorization_url = models.URLField(max_length=500, blank=True)
     mode = models.CharField(max_length=4, choices=Mode.choices)
     source = models.CharField(
         max_length=10,

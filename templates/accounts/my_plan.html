@@ -227,7 +227,14 @@
             line-height: 1.6;
         }
 
-        a:focus-visible {
+        .checkout-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+        .checkout-actions button { font: inherit; font-size: 13px; cursor: pointer; }
+        .cancel-plan { margin-top: 18px; }
+        .cancel-plan summary { width: fit-content; cursor: pointer; color: #9c3232; border: 1px solid #d8b9b9; }
+        .cancel-confirmation { display: flex; align-items: flex-start; gap: 10px; margin: 18px 0; font-size: 14px; line-height: 1.5; }
+        .cancel-confirmation input { margin-top: 4px; }
+
+        a:focus-visible, button:focus-visible {
             outline: 3px solid rgba(39, 143, 211, 0.35);
             outline-offset: 3px;
         }
@@ -263,7 +270,7 @@
             <section class="intro" aria-labelledby="page-title">
                 <span class="eyebrow">Your account</span>
                 <h1 id="page-title">Profile</h1>
-                <p>See how your StudiGarden access is set up. This page does not start, change, or cancel a payment.</p>
+                <p>See how your StudiGarden access is set up.{% if test_checkout_enabled %} Local test mode is enabled; no real money will be charged.{% else %} This page does not start, change, or cancel a payment.{% endif %}</p>
             </section>
 
             <section class="plan-card" aria-labelledby="current-plan-title">
@@ -289,7 +296,7 @@
                     </h2>
                     <p class="plan-description">
                         {% if membership.plan == "monthly" %}
-                            R{{ current_plan.monthly_price|floatformat:0 }} per month. Monthly renewals will be managed here once payments launch.
+                            R{{ current_plan.monthly_price|floatformat:0 }} per month. {% if membership.status == "non_renewing" %}Future renewals are stopped.{% elif membership.payment_mode == "test" %}You can stop future test renewals below.{% else %}Monthly renewals will be managed here once payments launch.{% endif %}
                         {% else %}
                             Prepaid access for 12 months. This plan does not renew automatically.
                         {% endif %}
@@ -344,6 +351,9 @@
                 <ul class="plan-features">
                     {% for feature in current_plan.features %}<li>{{ feature }}</li>{% endfor %}
                 </ul>
+                {% if membership.payment_mode == "test" %}
+                    <p class="notice">Sandbox membership only. It does not grant paid access on the live site. Renewal-payment notifications are not connected yet.</p>
+                {% endif %}
                 {% if current_plan.tier == "grow" %}
                     <dl class="details">
                         <div class="detail">
@@ -359,9 +369,68 @@
                 {% endif %}
             </section>
 
+            {% if test_checkout_enabled %}
+            <section class="plan-card" aria-labelledby="cancel-plan-title">
+                <h2 id="cancel-plan-title">Plan cancellation</h2>
+                {% if test_renewals_cancelled %}
+                    <p class="notice">Future renewals are stopped. Your plan will not renew automatically.</p>
+                    {% if is_beta_member or user.is_superuser %}
+                    <p class="plan-description">Your permanent free access remains in place. Cancelling a test subscription does not remove it.</p>
+                    {% elif test_paid_access_remaining %}
+                    <p class="plan-description">Your {{ membership.get_tier_display }} access continues until {{ membership.paid_until|date:"j F Y" }}. After that, Free limits apply. Your saved study material is not deleted.</p>
+                    {% else %}
+                    <p class="plan-description">Your paid period has ended. Your saved study material remains available under Free access.</p>
+                    {% endif %}
+                {% elif can_cancel_test_membership %}
+                    <p class="plan-description">Stop future renewals whenever you choose. Any already-paid access continues until {{ membership.paid_until|date:"j F Y" }}. Cancelling does not delete your subjects or study material.</p>
+                    <details class="cancel-plan">
+                        <summary class="header-link">Cancel plan</summary>
+                        <p class="notice">Confirm below to ask Paystack to stop future renewals for your {{ membership.get_tier_display }} test subscription. Your paid-through date will not change.</p>
+                        <form method="post" action="{% url 'cancel_test_membership' %}">
+                            {% csrf_token %}
+                            <label class="cancel-confirmation">
+                                <input type="checkbox" name="confirm_cancel" value="yes" required>
+                                <span>I want to stop future renewals for this test plan.</span>
+                            </label>
+                            <button type="submit" class="dashboard-link">Confirm cancellation</button>
+                        </form>
+                    </details>
+                {% else %}
+                    <p class="plan-description">There is no verified paid test plan to cancel. Free and beta access do not renew. After a successful test purchase, your Cancel plan button will appear here.</p>
+                    {% if pending_test_payment %}<p class="notice">Already completed payment? Use Check payment status below to verify it and load your plan controls.</p>{% endif %}
+                {% endif %}
+            </section>
+
+            <section class="plan-card" aria-labelledby="test-checkout-title">
+                <h2 id="test-checkout-title">Local test checkout</h2>
+                <p class="plan-description">Use Paystack's test payment options only, not a real card. Monthly subscriptions are being tested; real payments remain disabled.</p>
+                {% if can_start_test_checkout %}
+                <div class="checkout-actions">
+                    {% for plan in paid_plans %}
+                    <form method="post" action="{% url 'start_test_checkout' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="tier" value="{{ plan.tier }}">
+                        <button type="submit" class="dashboard-link">Test {{ plan.name }} — R{{ plan.monthly_price|floatformat:0 }}/month</button>
+                    </form>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="notice">Administrator and beta accounts keep their free access. To test a purchase, use a separate local Free account with a verified email address.</p>
+                {% endif %}
+                {% if pending_test_payment %}
+                <p class="notice">A {{ pending_test_payment.get_tier_display }} test checkout is awaiting confirmation. <a href="{% url 'test_checkout_return' %}?reference={{ pending_test_payment.reference|urlencode }}">Check payment status</a>. You can resume the same plan's checkout using its test button.</p>
+                {% endif %}
+            </section>
+            {% endif %}
+
             <p class="notice">
-                Paid checkout and plan management are still being prepared. This page is
+                {% if test_checkout_enabled %}
+                Local test purchases and cancellation are available here. Renewal-payment
+                notifications are not connected yet, and live payments remain disabled.
+                {% else %}
+                Live paid checkout and plan management are still being prepared. This page is
                 informational and does not change your current access.
+                {% endif %}
             </p>
         </main>
 

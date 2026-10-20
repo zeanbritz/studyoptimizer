@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.utils import timezone
 
 from .models import BetaInvite, StudyMembership, StudyTier
@@ -31,6 +32,12 @@ def get_study_tier(user):
 
     membership = StudyMembership.objects.filter(user_id=user.pk).first()
     if membership is None or membership.paid_until is None:
+        return StudyTier.FREE
+
+    # Sandbox purchases must never unlock paid tools on a production deployment.
+    if membership.payment_mode == StudyMembership.PaymentMode.TEST and not (
+        settings.DEBUG and getattr(settings, "PAYSTACK_TEST_CHECKOUT_ENABLED", False)
+    ):
         return StudyTier.FREE
 
     if membership.tier not in {StudyTier.GROW, StudyTier.BLOOM}:

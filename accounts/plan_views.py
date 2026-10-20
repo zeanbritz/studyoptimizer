@@ -4,7 +4,8 @@ from django.shortcuts import render
 from .access import get_study_tier
 from .entitlements import FREE_LEARNING_ITEM_LIMIT, FREE_SUBJECT_LIMIT
 from .models import BetaInvite, StudyMembership, StudyTier
-from .plans import STUDY_PLANS
+from .plans import PAID_STUDY_PLANS, STUDY_PLANS
+from .paystack_checkout import checkout_page_context
 from .pdf_usage import get_pdf_usage
 
 
@@ -24,6 +25,8 @@ def my_plan(request):
         request,
         "accounts/my_plan.html",
         {
+            **checkout_page_context(request),
+            "paid_plans": PAID_STUDY_PLANS,
             "is_beta_member": is_beta_member,
             "membership": membership,
             "has_paid_access": tier in {StudyTier.GROW, StudyTier.BLOOM},

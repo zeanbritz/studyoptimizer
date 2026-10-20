@@ -2,9 +2,13 @@ from allauth.account import views as account_views
 from django.urls import path
 
 from .plan_views import my_plan
+from .checkout_views import cancel_test_membership, start_test_checkout, test_checkout_return
 
 
 urlpatterns = [
+    path("payments/paystack/test/start/", start_test_checkout, name="start_test_checkout"),
+    path("payments/paystack/test/return/", test_checkout_return, name="test_checkout_return"),
+    path("payments/paystack/test/cancel/", cancel_test_membership, name="cancel_test_membership"),
     path(
         "login/",
         account_views.LoginView.as_view(),

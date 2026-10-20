@@ -261,6 +261,14 @@ PAYSTACK_TEST_PLAN_CODES = {
     "bloom": os.getenv("PAYSTACK_TEST_BLOOM_PLAN_CODE", "PLN_zo1y9g6fw3mbxje").strip(),
 }
 
+# Local sandbox only. Pass the ignored secret file with Docker --env-file;
+# never read it into a build or commit it. Production checkout remains disabled.
+PAYSTACK_TEST_SECRET_KEY = os.getenv("PAYSTACK_TEST_SECRET_KEY", "").strip()
+PAYSTACK_TEST_CHECKOUT_ENABLED = env_bool("PAYSTACK_TEST_CHECKOUT_ENABLED", default=False)
+PAYSTACK_TEST_CALLBACK_BASE_URL = os.getenv(
+    "PAYSTACK_TEST_CALLBACK_BASE_URL", "http://localhost:8000"
+).rstrip("/")
+
 
 # Email
 
