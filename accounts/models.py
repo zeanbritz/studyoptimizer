@@ -235,3 +235,25 @@ class StudyMonthlyUsage(models.Model):
                 fields=["user", "period_start"], name="study_usage_user_month",
             ),
         ]
+
+
+class PaystackWebhookReceipt(models.Model):
+    """Signed, sanitized notification inbox; receipt alone never grants access."""
+
+    mode = models.CharField(max_length=4, choices=StudyPayment.Mode.choices)
+    event_type = models.CharField(max_length=64)
+    payload_sha256 = models.CharField(max_length=64)
+    snapshot = models.JSONField(default=dict)
+    received_at = models.DateTimeField(auto_now_add=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-received_at", "-pk"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["mode", "payload_sha256"], name="paystack_webhook_payload_once",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.mode}: {self.event_type} ({self.pk})"

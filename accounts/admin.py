@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import BetaInvite
+from .models import BetaInvite, PaystackWebhookReceipt
 
 
 @admin.register(BetaInvite)
@@ -39,6 +39,34 @@ class BetaInviteAdmin(admin.ModelAdmin):
         if not obj.is_active:
             return "Paused"
         return "Unused (legacy)"
+
+    def has_module_permission(self, request):
+        return request.user.is_active and request.user.is_superuser
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_active and request.user.is_superuser
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(PaystackWebhookReceipt)
+class PaystackWebhookReceiptAdmin(admin.ModelAdmin):
+    list_display = ("event_type", "mode", "received_at", "processing_state")
+    list_filter = ("mode", "event_type")
+    readonly_fields = ("mode", "event_type", "payload_sha256", "snapshot", "received_at", "processed_at", "processing_state")
+    fields = readonly_fields
+    actions = None
+
+    @admin.display(description="Processing")
+    def processing_state(self, obj):
+        return "Processed" if obj.processed_at else "Received only - membership updates not connected yet"
 
     def has_module_permission(self, request):
         return request.user.is_active and request.user.is_superuser
