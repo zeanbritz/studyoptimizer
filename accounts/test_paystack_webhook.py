@@ -226,4 +226,4 @@ class PaystackWebhookTests(TestCase):
             self.assertFalse(model_admin.has_change_permission(request))
             self.assertFalse(model_admin.has_delete_permission(request))
         self.signed_post()
-        self.assertIn("membership updates not connected", model_admin.processing_state(PaystackWebhookReceipt.objects.get()))
+        self.assertEqual("Waiting for processing", model_admin.processing_state(PaystackWebhookReceipt.objects.get()))

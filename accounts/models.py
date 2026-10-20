@@ -240,12 +240,24 @@ class StudyMonthlyUsage(models.Model):
 class PaystackWebhookReceipt(models.Model):
     """Signed, sanitized notification inbox; receipt alone never grants access."""
 
+    class ProcessingStatus(models.TextChoices):
+        RECEIVED = "received", "Waiting for processing"
+        PROCESSED = "processed", "Processed"
+        RETRY = "retry", "Waiting to retry"
+        IGNORED = "ignored", "Ignored safely"
+
     mode = models.CharField(max_length=4, choices=StudyPayment.Mode.choices)
     event_type = models.CharField(max_length=64)
     payload_sha256 = models.CharField(max_length=64)
     snapshot = models.JSONField(default=dict)
     received_at = models.DateTimeField(auto_now_add=True)
     processed_at = models.DateTimeField(null=True, blank=True)
+    processing_status = models.CharField(
+        max_length=16, choices=ProcessingStatus.choices, default=ProcessingStatus.RECEIVED,
+    )
+    attempt_count = models.PositiveIntegerField(default=0)
+    next_attempt_at = models.DateTimeField(null=True, blank=True)
+    last_result = models.CharField(max_length=64, blank=True)
 
     class Meta:
         ordering = ["-received_at", "-pk"]
