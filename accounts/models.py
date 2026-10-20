@@ -152,7 +152,7 @@ class StudyPayment(models.Model):
         related_name="study_payments",
     )
     reference = models.CharField(
-        max_length=40,
+        max_length=100,
         unique=True,
         default=new_study_payment_reference,
         editable=False,
@@ -193,6 +193,13 @@ class StudyPayment(models.Model):
     )
     verified_at = models.DateTimeField(null=True, blank=True)
 
+    # Renewal invoice identity and absolute service period. Never add a month
+    # merely because another webhook arrived for the same charge or invoice.
+    paystack_invoice_code = models.CharField(max_length=100, null=True, blank=True)
+    paystack_subscription_code = models.CharField(max_length=100, blank=True)
+    period_start = models.DateTimeField(null=True, blank=True)
+    period_end = models.DateTimeField(null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -211,6 +218,11 @@ class StudyPayment(models.Model):
                 fields=["mode", "paystack_transaction_id"],
                 condition=models.Q(paystack_transaction_id__isnull=False),
                 name="study_payment_unique_transaction_per_mode",
+            ),
+            models.UniqueConstraint(
+                fields=["mode", "paystack_invoice_code"],
+                condition=models.Q(paystack_invoice_code__isnull=False),
+                name="study_payment_unique_invoice_per_mode",
             ),
         ]
 

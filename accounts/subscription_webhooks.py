@@ -39,6 +39,9 @@ class _Subscription:
     plan_code: str
     status: str
     created_at: datetime | None
+    object_id: int | None = None
+    customer_id: int | None = None
+    latest_invoice: dict | None = None
 
 
 def _code(value, prefix):
@@ -122,7 +125,10 @@ def _canonical_subscription(client, snapshot):
             created = None
     except (TypeError, ValueError):
         created = None
-    return _Subscription(response["subscription_code"], customer_code, plan_code, status, created)
+    return _Subscription(
+        response["subscription_code"], customer_code, plan_code, status, created,
+        response.get("id"), customer.get("id"), response.get("most_recent_invoice"),
+    )
 
 
 def _proof(membership, subscription):
