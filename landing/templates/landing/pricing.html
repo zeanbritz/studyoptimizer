@@ -363,7 +363,7 @@
             <section class="intro" aria-labelledby="pricing-title">
                 <span class="eyebrow">StudiGarden plans</span>
                 <h1 id="pricing-title">Simple pricing for your studies</h1>
-                <p>Start with Free, grow your study workspace with Grow, or unlock all study tools with Bloom. {% if test_checkout_enabled %}Local test checkout is enabled. No real money will be charged.{% else %}Paid checkout is coming soon.{% endif %}</p>
+                <p>Start with Free, grow your study workspace with Grow, or unlock all study tools with Bloom. {% if test_checkout_enabled %}Local test checkout is enabled. No real money will be charged.{% elif live_checkout_enabled %}Choose a monthly plan from your Profile. Cancel future renewals whenever you choose.{% else %}Paid checkout is coming soon.{% endif %}</p>
             </section>
 
             <section class="plans" aria-label="Pricing plans">
@@ -402,14 +402,20 @@
 
                     <p class="price">R{{ plan.monthly_price|floatformat:0 }} <span>/ month</span></p>
                     <p class="billing-note">
-                        Billed monthly when paid plans launch. Cancel future renewals whenever you choose.
+                        {% if live_checkout_enabled %}Billed monthly until cancelled.{% else %}Billed monthly when paid plans launch.{% endif %} Cancel future renewals whenever you choose.
                     </p>
 
                     <ul>
                         {% for feature in plan.features %}<li>{{ feature }}</li>{% endfor %}
                     </ul>
 
-                    {% if can_start_test_checkout %}
+                    {% if live_checkout_enabled %}
+                        {% if user.is_authenticated %}
+                        <a href="{% url 'my_plan' %}" class="button button-green">Choose {{ plan.name }}</a>
+                        {% else %}
+                        <a href="{% url 'register' %}?next={% url 'my_plan' %}" class="button button-green">Sign up to choose {{ plan.name }}</a>
+                        {% endif %}
+                    {% elif can_start_test_checkout %}
                     <form method="post" action="{% url 'start_test_checkout' %}">
                         {% csrf_token %}
                         <input type="hidden" name="tier" value="{{ plan.tier }}">
@@ -437,7 +443,7 @@
             </aside>
 
             <p class="billing-disclaimer">
-                Grow’s PDF allowances are shared across all subjects and reset on the first of each calendar month. Live paid checkout is not open yet, and creating a free account does not start a subscription.
+                Grow’s PDF allowances are shared across all subjects and reset on the first of each calendar month. {% if not live_checkout_enabled %}Live paid checkout is not open yet.{% endif %} Creating a free account does not start a subscription.
             </p>
         </main>
 

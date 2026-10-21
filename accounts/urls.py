@@ -3,14 +3,23 @@ from django.urls import path
 
 from .plan_views import my_plan
 from .checkout_views import cancel_test_membership, start_test_checkout, test_checkout_return
-from .webhook_views import paystack_test_webhook
+from .webhook_views import paystack_test_webhook, paystack_live_webhook
+from .live_checkout_views import start_live_checkout, live_checkout_return, cancel_live_plan
+from .preview_relay_views import local_preview_webhook
+from .refund_views import request_live_refund
 
 
 urlpatterns = [
+    path("payments/paystack/refund/", request_live_refund, name="request_live_refund"),
+    path("payments/paystack/start/", start_live_checkout, name="start_live_checkout"),
+    path("payments/paystack/return/", live_checkout_return, name="live_checkout_return"),
+    path("payments/paystack/cancel/", cancel_live_plan, name="cancel_live_plan"),
+    path("payments/paystack/webhook/", paystack_live_webhook, name="paystack_live_webhook"),
     path("payments/paystack/test/start/", start_test_checkout, name="start_test_checkout"),
     path("payments/paystack/test/return/", test_checkout_return, name="test_checkout_return"),
     path("payments/paystack/test/cancel/", cancel_test_membership, name="cancel_test_membership"),
     path("payments/paystack/test/webhook/", paystack_test_webhook, name="paystack_test_webhook"),
+    path("payments/paystack/test/local-relay/", local_preview_webhook, name="local_preview_webhook"),
     path(
         "login/",
         account_views.LoginView.as_view(),

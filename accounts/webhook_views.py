@@ -1,4 +1,4 @@
-"""Capture authenticated TEST notifications; membership processing comes next.
+"""Capture authenticated notifications into separate TEST and LIVE inboxes.
 
 https://paystack.com/docs/payments/webhooks/#verify-event-origin
 No provider API calls, raw payload storage, or entitlement changes happen here.
@@ -21,7 +21,7 @@ from django.views.decorators.debug import sensitive_variables
 from django.views.decorators.http import require_POST
 
 from .models import PaystackWebhookReceipt, StudyPayment
-from .paystack_client import test_checkout_enabled
+from .paystack_client import test_checkout_enabled, live_billing_enabled
 
 
 MAX_WEBHOOK_BYTES = 256 * 1024
@@ -65,18 +65,18 @@ def _code(prefix, *values):
     return next(iter(codes), None)
 
 
-def _snapshot(event_type, data):
-    if data.get("domain") != "test":
+def _snapshot(event_type, data, mode="test"):
+    if data.get("domain") != mode:
         raise ValueError("Test-mode notifications only")
     # Embedded customer domain can be omitted by Paystack, but an explicit
     # live-mode object must never be accepted into this sandbox inbox.
     for name in ("customer", "plan", "plan_object", "subscription", "transaction"):
-        if isinstance(data.get(name), dict) and data[name].get("domain") not in (None, "test"):
+        if isinstance(data.get(name), dict) and data[name].get("domain") not in (None, mode):
             raise ValueError("Mixed payment modes")
     if event_type not in INBOX_EVENTS:
         return None
 
-    result = {"schema_version": 1, "domain": "test"}
+    result = {"schema_version": 1, "domain": mode}
     if object_id := _positive_id(data.get("id")):
         result["object_id"] = object_id
     for name, prefix in (("customer", "CUS_"), ("plan", "PLN_"), ("subscription", "SUB_"), ("invoice", "INV_")):
@@ -131,6 +131,21 @@ def _snapshot(event_type, data):
 def paystack_test_webhook(request):
     if not test_checkout_enabled():
         return HttpResponse(status=404)
+    return _receive_webhook(request, "test", settings.PAYSTACK_TEST_SECRET_KEY)
+
+
+@csrf_exempt
+@never_cache
+@require_POST
+def paystack_live_webhook(request):
+    if (not live_billing_enabled() or not request.is_secure()
+            or request.get_host().lower() != "studigarden.com"):
+        return HttpResponse(status=404)
+    return _receive_webhook(request, "live", settings.PAYSTACK_LIVE_SECRET_KEY)
+
+
+@sensitive_variables("body", "signature", "expected_signature", "payload", "key")
+def _receive_webhook(request, mode, key):
     if request.content_type != "application/json":
         return HttpResponse(status=415)
     try:
@@ -156,7 +171,7 @@ def paystack_test_webhook(request):
     if len(body) > body_limit:
         return HttpResponse(status=413)
     expected_signature = hmac.new(
-        settings.PAYSTACK_TEST_SECRET_KEY.encode("utf-8"), body, hashlib.sha512,
+        key.encode("utf-8"), body, hashlib.sha512,
     ).hexdigest()
     if not hmac.compare_digest(expected_signature, signature.lower()):
         return HttpResponse(status=403)
@@ -167,7 +182,7 @@ def paystack_test_webhook(request):
         event_type = payload.get("event")
         if not isinstance(event_type, str) or not 1 <= len(event_type) <= 64:
             raise ValueError
-        snapshot = _snapshot(event_type, payload["data"])
+        snapshot = _snapshot(event_type, payload["data"], mode)
     except (UnicodeError, ValueError, TypeError, RecursionError):
         return HttpResponse(status=400)
     if snapshot is None:
@@ -175,7 +190,7 @@ def paystack_test_webhook(request):
     try:
         with transaction.atomic():
             _, created = PaystackWebhookReceipt.objects.get_or_create(
-                mode=StudyPayment.Mode.TEST, payload_sha256=hashlib.sha256(body).hexdigest(),
+                mode=mode, payload_sha256=hashlib.sha256(body).hexdigest(),
                 defaults={"event_type": event_type, "snapshot": snapshot},
             )
     except DatabaseError:

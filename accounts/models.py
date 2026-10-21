@@ -3,6 +3,7 @@ import uuid
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils import timezone
 
 
 def new_study_payment_reference():
@@ -228,6 +229,48 @@ class StudyPayment(models.Model):
 
     def __str__(self):
         return f"{self.reference} ({self.get_status_display()})"
+
+
+class StudyRefund(models.Model):
+    """One self-service first-purchase guarantee per account, with a durable outbox."""
+
+    class Status(models.TextChoices):
+        REQUESTED = "requested", "Checking eligibility"
+        APPROVED = "approved", "Approved automatically"
+        SUBMITTING = "submitting", "Confirming refund submission"
+        PROCESSING = "processing", "Paystack is processing the refund"
+        COMPLETED = "completed", "Refund completed"
+        INELIGIBLE = "ineligible", "Outside the automatic refund guarantee"
+        ATTENTION = "attention", "Refund needs attention"
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="study_refund")
+    payment = models.OneToOneField(StudyPayment, on_delete=models.PROTECT, related_name="refund_request")
+    mode = models.CharField(max_length=4, choices=StudyPayment.Mode.choices, default=StudyPayment.Mode.LIVE)
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.REQUESTED)
+    amount_cents = models.PositiveIntegerField()
+    currency = models.CharField(max_length=3, default="ZAR")
+    requested_at = models.DateTimeField(default=timezone.now, editable=False)
+    paid_at = models.DateTimeField(null=True, blank=True)
+    approved_at = models.DateTimeField(null=True, blank=True)
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    paystack_refund_id = models.PositiveBigIntegerField(null=True, blank=True)
+    cancelled_subscription_code = models.CharField(max_length=100, blank=True)
+    next_attempt_at = models.DateTimeField(null=True, blank=True)
+    attempt_count = models.PositiveIntegerField(default=0)
+    last_result = models.CharField(max_length=64, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["requested_at", "pk"]
+        constraints = [
+            models.CheckConstraint(condition=models.Q(amount_cents__gt=0), name="study_refund_positive_amount"),
+            models.UniqueConstraint(fields=["mode", "paystack_refund_id"],
+                condition=models.Q(paystack_refund_id__isnull=False), name="study_refund_provider_once"),
+        ]
+
+    def __str__(self):
+        return f"Refund {self.pk}: {self.get_status_display()}"
 
 
 class StudyMonthlyUsage(models.Model):

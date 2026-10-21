@@ -270,7 +270,7 @@
             <section class="intro" aria-labelledby="page-title">
                 <span class="eyebrow">Your account</span>
                 <h1 id="page-title">Profile</h1>
-                <p>See how your StudiGarden access is set up.{% if test_checkout_enabled %} Local test mode is enabled; no real money will be charged.{% else %} This page does not start, change, or cancel a payment.{% endif %}</p>
+                <p>See how your StudiGarden access is set up.{% if test_checkout_enabled %} Local test mode is enabled; no real money will be charged.{% elif live_billing_enabled %} Manage your monthly membership and stop renewals here.{% else %} This page does not start, change, or cancel a payment.{% endif %}</p>
             </section>
 
             <section class="plan-card" aria-labelledby="current-plan-title">
@@ -296,7 +296,7 @@
                     </h2>
                     <p class="plan-description">
                         {% if membership.plan == "monthly" %}
-                            R{{ current_plan.monthly_price|floatformat:0 }} per month. {% if membership.status == "non_renewing" %}Future renewals are stopped.{% elif membership.payment_mode == "test" %}You can stop future test renewals below.{% else %}Monthly renewals will be managed here once payments launch.{% endif %}
+                            R{{ current_plan.monthly_price|floatformat:0 }} per month. {% if membership.status == "non_renewing" %}Future renewals are stopped.{% elif membership.payment_mode == "test" %}You can stop future test renewals below.{% elif live_billing_enabled %}Renews monthly until cancelled. You can stop future renewals below.{% else %}Monthly renewals will be managed here once payments launch.{% endif %}
                         {% else %}
                             Prepaid access for 12 months. This plan does not renew automatically.
                         {% endif %}
@@ -369,6 +369,81 @@
                 {% endif %}
             </section>
 
+            {% if can_request_refund or refund_request %}
+            <section class="plan-card" aria-labelledby="refund-title">
+                <h2 id="refund-title">7-day first-payment refund</h2>
+                {% if refund_request %}
+                    <p class="notice" role="status">{{ refund_request.get_status_display }}</p>
+                    {% if refund_request.status == "completed" %}
+                    <p class="plan-description">Paystack has confirmed your full refund. The refunded paid access has ended; Free limits apply unless you have another entitlement. Your saved study material is not deleted. Your bank may take additional time to display the credit.</p>
+                    {% elif refund_request.status == "ineligible" %}
+                    <p class="plan-description">This request falls outside the automatic first-payment guarantee. This is not a rejection of any statutory refund rights. See the <a href="{% url 'billing_policy' %}">refund policy</a> for other requests.</p>
+                    {% elif refund_request.status == "attention" %}
+                    <p class="plan-description">This refund needs attention because it could not be completed automatically. It is visible to the administrator. Please use <a href="{% url 'contact' %}">support</a> if you need help; do not submit another refund for the same payment.</p>
+                    {% else %}
+                    <p class="plan-description">Your request is being handled automatically. Eligible requests need no reason or manual approval. Renewal cancellation and Paystack processing must be confirmed before we report completion. You do not need to submit it again.</p>
+                    {% endif %}
+                {% else %}
+                    <p class="plan-description">Request a full refund of your first paid purchase within 7 days of payment, with no reason required. We verify the payment and deadline automatically. This guarantee is once per account and does not apply automatically to monthly renewal payments.</p>
+                    <details class="cancel-plan">
+                        <summary class="header-link">Request first-payment refund</summary>
+                        <form method="post" action="{% url 'request_live_refund' %}">
+                            {% csrf_token %}
+                            <label class="cancel-confirmation"><input type="checkbox" name="confirm_refund" value="yes" required><span>Request a full refund and stop future renewals. Once Paystack confirms the refund, the refunded paid access ends and Free limits apply. My saved material will not be deleted.</span></label>
+                            <button type="submit" class="dashboard-link">Check eligibility and request refund</button>
+                        </form>
+                    </details>
+                {% endif %}
+            </section>
+            {% endif %}
+
+            {% if live_billing_enabled %}
+            <section class="plan-card" aria-labelledby="live-cancel-title">
+                <h2 id="live-cancel-title">Plan cancellation</h2>
+                {% if live_renewals_cancelled %}
+                <p class="notice">Future renewals are stopped. Already-paid access continues until {{ membership.paid_until|date:"j F Y" }}. Your study material is not deleted.</p>
+                {% elif can_cancel_live_membership %}
+                <p class="plan-description">Cancel future monthly renewals at any time. Your paid-through date stays {{ membership.paid_until|date:"j F Y" }}. Cancellation is not a refund and does not delete your study material.</p>
+                <details class="cancel-plan">
+                    <summary class="header-link">Cancel plan</summary>
+                    <form method="post" action="{% url 'cancel_live_plan' %}">
+                        {% csrf_token %}
+                        <label class="cancel-confirmation"><input type="checkbox" name="confirm_cancel" value="yes" required><span>Stop future renewals for my {{ membership.get_tier_display }} plan.</span></label>
+                        <button type="submit" class="dashboard-link">Confirm cancellation</button>
+                    </form>
+                </details>
+                {% else %}
+                <p class="plan-description">Free and permanent beta access do not renew. If you have just paid, check payment status below to load your subscription controls.</p>
+                {% endif %}
+            </section>
+            {% if live_checkout_enabled or pending_live_payment %}
+            <section class="plan-card" aria-labelledby="live-checkout-title">
+                <h2 id="live-checkout-title">Choose your monthly plan</h2>
+                <p class="plan-description">Payments are securely handled by Paystack. Grow is R35/month and Bloom is R90/month. Your selected plan renews automatically each month until cancelled from Profile.</p>
+                {% if can_start_live_checkout %}
+                <div class="checkout-actions">
+                    {% for plan in paid_plans %}
+                    <form method="post" action="{% url 'start_live_checkout' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="tier" value="{{ plan.tier }}">
+                        <label class="cancel-confirmation"><input type="checkbox" name="confirm_subscription" value="yes" required><span>I agree to R{{ plan.monthly_price|floatformat:0 }} monthly automatic renewal for {{ plan.name }} until I cancel.</span></label>
+                        <button type="submit" class="dashboard-link">Subscribe to {{ plan.name }} — R{{ plan.monthly_price|floatformat:0 }}/month</button>
+                    </form>
+                    {% endfor %}
+                </div>
+                {% elif is_beta_member or user.is_superuser %}
+                <p class="notice">You already have permanent free access. No payment is needed.</p>
+                {% else %}
+                <p class="notice">You cannot open a replacement subscription here. Please contact support to change or restart an existing plan, so you are not billed twice.</p>
+                {% endif %}
+                {% if pending_live_payment %}
+                <p class="notice">A {{ pending_live_payment.get_tier_display }} checkout is awaiting confirmation. <a href="{% url 'live_checkout_return' %}?reference={{ pending_live_payment.reference|urlencode }}">Check payment status</a> before making another payment.</p>
+                {% endif %}
+                <p class="notice"><a href="{% url 'billing_policy' %}">Refund and cancellation policy</a>. Your card details are not stored by StudiGarden.</p>
+            </section>
+            {% endif %}
+            {% endif %}
+
             {% if test_checkout_enabled %}
             <section class="plan-card" aria-labelledby="cancel-plan-title">
                 <h2 id="cancel-plan-title">Plan cancellation</h2>
@@ -427,6 +502,8 @@
                 {% if test_checkout_enabled %}
                 Local test purchases and cancellation are available here. Renewal-payment
                 notifications are not connected yet, and live payments remain disabled.
+                {% elif live_billing_enabled %}
+                Paid access changes only after server-side payment verification. Cancelling stops future renewals; your already-paid time and saved material remain.
                 {% else %}
                 Live paid checkout and plan management are still being prepared. This page is
                 informational and does not change your current access.

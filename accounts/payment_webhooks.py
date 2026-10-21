@@ -1,4 +1,4 @@
-"""Local TEST billing reconciliation; all Paystack requests are GETs.
+"""Mode-isolated billing reconciliation; all Paystack requests are GETs.
 
 An unknown charge alone is not proof of a subscription renewal. Require its
 signed invoice, the subscription's current invoice, and transaction verification.
@@ -16,8 +16,8 @@ from django.utils.dateparse import parse_datetime
 
 from .models import PaystackWebhookReceipt, StudyMembership, StudyPayment
 from .payment_service import CheckoutNotAllowed
-from .paystack_checkout import PaymentNotFound, verify_test_checkout
-from .paystack_client import PaystackError, PaystackTestClient
+from .paystack_checkout import PaymentNotFound, verify_test_checkout, verify_live_checkout
+from .paystack_client import PaystackError, PaystackTestClient, PaystackLiveClient
 from .subscription_service import STOPPED_STATUSES
 from .subscription_webhooks import (
     State, _Ignore, _Retry, _canonical_subscription, _code, _due, _finish,
@@ -38,7 +38,7 @@ def _datetime(value):
 
 def _initial_payment(member, subscription):
     payment = StudyPayment.objects.filter(
-        user_id=member.user_id, mode="test", source="checkout", status="succeeded",
+        user_id=member.user_id, mode=subscription.mode, source="checkout", status="succeeded",
         tier=member.tier, plan="monthly", paystack_plan_code=subscription.plan_code,
         verified_at__isnull=False, paystack_transaction_id__isnull=False,
     ).first()
@@ -53,7 +53,7 @@ def _invoice(subscription, snapshot, initial):
         # No undocumented invoice endpoint or guessing from email/plan. An old
         # invoice no longer available at Paystack requires later reconciliation.
         raise _Retry("provider_invoice_unavailable")
-    if invoice.get("domain") != "test":
+    if invoice.get("domain") != subscription.mode:
         raise _Ignore("provider_mode_mismatch")
     if "object_id" in snapshot and (
         not _positive_id(snapshot["object_id"]) or type(invoice.get("id")) is not int
@@ -108,15 +108,15 @@ def _verified_charge(client, snapshot, invoice, initial, subscription, start, en
     for value in (result.get("plan"), result.get("plan_object")):
         if value:
             codes.append(value.get("plan_code") if isinstance(value, dict) else value)
-        if isinstance(value, dict) and value.get("domain") not in (None, "test"):
+        if isinstance(value, dict) and value.get("domain") not in (None, subscription.mode):
             raise _Ignore("transaction_mode_mismatch")
     if (
-        result.get("domain") != "test" or result.get("reference") != reference
+        result.get("domain") != subscription.mode or result.get("reference") != reference
         or not _positive_id(result.get("id"))
         or type(result.get("amount")) is not int or result["amount"] != initial.expected_amount_cents
         or result.get("currency") != "ZAR"
         or not codes or any(code != subscription.plan_code for code in codes)
-        or not isinstance(customer, dict) or customer.get("domain") not in (None, "test")
+        or not isinstance(customer, dict) or customer.get("domain") not in (None, subscription.mode)
         or customer.get("customer_code") != subscription.customer_code
         or not isinstance(customer.get("email"), str)
         or customer["email"].casefold() != initial.checkout_email.casefold()
@@ -137,6 +137,7 @@ def _verified_charge(client, snapshot, invoice, initial, subscription, start, en
 
 
 def _apply_invoice(receipt_id, member, subscription, initial, start, end, successful, charge):
+    mode = subscription.mode
     with transaction.atomic():
         user = get_user_model().objects.select_for_update().get(pk=member.user_id)
         receipt = PaystackWebhookReceipt.objects.select_for_update().get(pk=receipt_id)
@@ -147,7 +148,7 @@ def _apply_invoice(receipt_id, member, subscription, initial, start, end, succes
         if _initial_payment(current, subscription).pk != initial.pk:
             raise _Retry("membership_changed")
         invoice_code = receipt.snapshot["invoice_code"]
-        payment = StudyPayment.objects.select_for_update().filter(mode="test", paystack_invoice_code=invoice_code).first()
+        payment = StudyPayment.objects.select_for_update().filter(mode=mode, paystack_invoice_code=invoice_code).first()
         if payment and (
             payment.user_id != user.pk or payment.source != "renewal"
             or payment.tier != current.tier or payment.plan != "monthly" or payment.currency != "ZAR"
@@ -163,11 +164,11 @@ def _apply_invoice(receipt_id, member, subscription, initial, start, end, succes
             return _finish_locked(receipt, State.PROCESSED, "payment_already_recorded")
         if charge:
             existing = StudyPayment.objects.filter(
-                Q(reference=charge["reference"]) | Q(mode="test", paystack_transaction_id=charge["id"]),
+                Q(reference=charge["reference"]) | Q(mode=mode, paystack_transaction_id=charge["id"]),
             ).exclude(pk=payment.pk if payment else None).first()
             if existing:
                 if (
-                    existing.user_id == user.pk and existing.mode == "test"
+                    existing.user_id == user.pk and existing.mode == mode
                     and existing.reference == charge["reference"] and existing.paystack_transaction_id == charge["id"]
                     and existing.status == "succeeded"
                     and (existing.source == "checkout" or existing.paystack_invoice_code == invoice_code)
@@ -176,7 +177,7 @@ def _apply_invoice(receipt_id, member, subscription, initial, start, end, succes
                 raise _Ignore("transaction_already_owned")
         if payment is None:
             payment = StudyPayment(
-                user=user, mode="test", source="renewal", tier=current.tier, plan="monthly",
+                user=user, mode=mode, source="renewal", tier=current.tier, plan="monthly",
                 paystack_plan_code=subscription.plan_code, checkout_email=initial.checkout_email,
                 paystack_invoice_code=invoice_code, paystack_subscription_code=subscription.code,
                 expected_amount_cents=initial.expected_amount_cents, currency="ZAR",
@@ -200,7 +201,7 @@ def _apply_invoice(receipt_id, member, subscription, initial, start, end, succes
                 current.paid_until = end
                 fields.append("paid_until")
             newer_failure = StudyPayment.objects.filter(
-                user=user, mode="test", source="renewal", paystack_subscription_code=subscription.code,
+                user=user, mode=mode, source="renewal", paystack_subscription_code=subscription.code,
                 status="failed", period_end__gt=end,
             ).exists()
             if stopped:
@@ -230,7 +231,7 @@ def _charge_receipt(receipt):
     reference = receipt.snapshot.get("transaction_reference")
     if not isinstance(reference, str) or not re.fullmatch(r"[A-Za-z0-9._=-]{1,100}", reference):
         raise _Ignore("invalid_transaction_reference")
-    payment = StudyPayment.objects.filter(reference=reference, mode="test").first()
+    payment = StudyPayment.objects.filter(reference=reference, mode=receipt.mode).first()
     if not payment:
         raise _Retry("awaiting_verified_invoice")
     if payment.source == "renewal":
@@ -240,7 +241,8 @@ def _charge_receipt(receipt):
             raise _Ignore("transaction_mismatch")
         return _finish(receipt.pk, State.PROCESSED, "payment_already_recorded")
     try:
-        payment = verify_test_checkout(user=payment.user, reference=reference)
+        verify = verify_live_checkout if receipt.mode == "live" else verify_test_checkout
+        payment = verify(user=payment.user, reference=reference)
     except (CheckoutNotAllowed, PaymentNotFound):
         raise _Retry("checkout_not_ready") from None
     if payment.status != "succeeded":
@@ -249,10 +251,17 @@ def _charge_receipt(receipt):
 
 
 def process_test_payment_receipt(receipt_id):
-    client = PaystackTestClient()
+    return _process_payment_receipt(receipt_id, PaystackTestClient(), "test")
+
+
+def process_live_payment_receipt(receipt_id):
+    return _process_payment_receipt(receipt_id, PaystackLiveClient(), "live")
+
+
+def _process_payment_receipt(receipt_id, client, mode):
     if not _positive_id(receipt_id):
         raise ValueError("A valid stored receipt ID is required.")
-    receipt = PaystackWebhookReceipt.objects.filter(pk=receipt_id, mode="test", event_type__in=PAYMENT_EVENTS).first()
+    receipt = PaystackWebhookReceipt.objects.filter(pk=receipt_id, mode=mode, event_type__in=PAYMENT_EVENTS).first()
     if receipt is None:
         raise ValueError("Only stored test payment notifications can be processed here.")
     if not _due(receipt):
@@ -261,7 +270,7 @@ def process_test_payment_receipt(receipt_id):
         snapshot = receipt.snapshot
         if (
             not isinstance(snapshot, dict) or type(snapshot.get("schema_version")) is not int
-            or snapshot["schema_version"] != 1 or snapshot.get("domain") != "test"
+            or snapshot["schema_version"] != 1 or snapshot.get("domain") != mode
         ):
             raise _Ignore("invalid_receipt")
         if receipt.event_type == "charge.success":

@@ -5,8 +5,9 @@ from .access import get_study_tier
 from .entitlements import FREE_LEARNING_ITEM_LIMIT, FREE_SUBJECT_LIMIT
 from .models import BetaInvite, StudyMembership, StudyTier
 from .plans import PAID_STUDY_PLANS, STUDY_PLANS
-from .paystack_checkout import checkout_page_context
+from .paystack_checkout import checkout_page_context, live_checkout_page_context
 from .pdf_usage import get_pdf_usage
+from .refund_service import refund_page_context
 
 
 @login_required
@@ -26,6 +27,8 @@ def my_plan(request):
         "accounts/my_plan.html",
         {
             **checkout_page_context(request),
+            **live_checkout_page_context(request),
+            **refund_page_context(request),
             "paid_plans": PAID_STUDY_PLANS,
             "is_beta_member": is_beta_member,
             "membership": membership,

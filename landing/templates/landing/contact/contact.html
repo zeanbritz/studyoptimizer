@@ -3,8 +3,15 @@
 {% block page_title %}Contact us — StudiGarden{% endblock %}
 {% block eyebrow %}Support{% endblock %}
 {% block heading %}Contact us{% endblock %}
-{% block intro %}Contact details will be added here.{% endblock %}
+{% block intro %}{% if support_email %}Questions, billing help, and exceptional refund problems.{% else %}Support contact setup is in progress. Paid checkout has not launched.{% endif %}{% endblock %}
 
 {% block content %}
-<div class="blank-panel" aria-label="Contact details not yet available"></div>
+{% if support_email %}
+<h2>Email support</h2>
+<p><a href="mailto:{{ support_email }}">{{ support_email }}</a></p>
+<p>Eligible first-payment refunds can be requested automatically from <a href="{% url 'my_plan' %}">Profile</a> within seven days of payment. See our <a href="{% url 'billing_policy' %}">billing and refund policy</a>.</p>
+<p>StudiGarden is operated by STRATOCK (Pty) Ltd.</p>
+{% else %}
+<p>A working support email address will be published here before paid checkout opens.</p>
+{% endif %}
 {% endblock %}

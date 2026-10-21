@@ -1,4 +1,4 @@
-"""Small, test-key-only Paystack client. Never logs credentials or API bodies."""
+"""Mode-isolated Paystack clients. Never log credentials or API bodies."""
 
 import json
 import re
@@ -58,6 +58,32 @@ def valid_authorization_url(value):
         return False
 
 
+def live_billing_enabled():
+    return bool(
+        not settings.DEBUG
+        and getattr(settings, "PAYSTACK_LIVE_ENABLED", False)
+        and re.fullmatch(r"sk_live_[A-Za-z0-9]+", getattr(settings, "PAYSTACK_LIVE_SECRET_KEY", ""))
+        and getattr(settings, "PAYSTACK_LIVE_BASE_URL", "") == "https://studigarden.com"
+    )
+
+
+def live_checkout_enabled():
+    codes = getattr(settings, "PAYSTACK_LIVE_PLAN_CODES", {})
+    return bool(
+        live_billing_enabled() and getattr(settings, "PAYSTACK_LIVE_CHECKOUT_ENABLED", False)
+        and isinstance(codes, dict)
+        and all(isinstance(codes.get(tier), str) and re.fullmatch(r"PLN_[A-Za-z0-9]{1,96}", codes[tier])
+                for tier in ("grow", "bloom"))
+        and codes["grow"] != codes["bloom"]
+    )
+
+
+def live_callback_url():
+    if not live_billing_enabled():
+        raise PaystackError("Live payments are not available right now.")
+    return settings.PAYSTACK_LIVE_BASE_URL + "/payments/paystack/return/"
+
+
 class _NoRedirects(HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         # Never forward an Authorization header to another URL.
@@ -65,6 +91,8 @@ class _NoRedirects(HTTPRedirectHandler):
 
 
 class PaystackTestClient:
+    mode = "test"
+
     def __init__(self):
         if not test_checkout_enabled():
             raise PaystackError("Local test checkout is not enabled.")
@@ -96,8 +124,7 @@ class PaystackTestClient:
             return result
         except (HTTPError, URLError, OSError, ValueError, TypeError):
             raise PaystackError(
-                "Paystack could not complete this test request. Check the test key "
-                "and plan settings, then try again."
+                "Paystack could not complete this request. Please check its status before trying again."
             ) from None
 
     def fetch_plan(self, code):
@@ -117,7 +144,7 @@ class PaystackTestClient:
 
     def list_customer_subscriptions(self, customer_id):
         if type(customer_id) is not int or customer_id <= 0:
-            raise PaystackError("A valid Paystack test customer is required.")
+            raise PaystackError("A valid Paystack customer is required.")
         return self._request(
             "GET", f"/subscription?customer={customer_id}&perPage=100&page=1", expect_list=True,
         )
@@ -128,3 +155,30 @@ class PaystackTestClient:
             "POST", "/subscription/disable", {"code": code, "token": token},
             allow_empty_data=True,
         )
+
+
+class PaystackLiveClient(PaystackTestClient):
+    mode = "live"
+
+    def __init__(self):
+        if not live_billing_enabled():
+            raise PaystackError("Live payments are not available right now.")
+        self._key = settings.PAYSTACK_LIVE_SECRET_KEY
+
+    def list_refunds(self, transaction_id):
+        if type(transaction_id) is not int or transaction_id <= 0:
+            raise PaystackError("A verified transaction is required.")
+        return self._request("GET", f"/refund?transaction={transaction_id}&perPage=100&page=1", expect_list=True)
+
+    def fetch_refund(self, refund_id):
+        if type(refund_id) is not int or refund_id <= 0:
+            raise PaystackError("A valid refund identifier is required.")
+        return self._request("GET", f"/refund/{refund_id}")
+
+    def create_full_refund(self, transaction_id, amount_cents, note):
+        # Called only by the durable refund outbox after eligibility and renewal
+        # cancellation are confirmed. Never automatically repeat this POST.
+        return self._request("POST", "/refund", {
+            "transaction": transaction_id, "amount": amount_cents, "currency": "ZAR",
+            "merchant_note": note, "customer_note": "StudiGarden 7-day first-payment refund",
+        })

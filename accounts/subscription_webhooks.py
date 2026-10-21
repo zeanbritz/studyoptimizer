@@ -1,4 +1,4 @@
-"""Reconcile stored TEST subscription events using the provider's current state.
+"""Reconcile mode-isolated subscription events using the provider's current state.
 
 Only GET is used at Paystack. This step links subscriptions and mirrors stopped
 renewals; it never records a payment, extends paid access or reactivates a plan.
@@ -15,7 +15,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
 from .models import PaystackWebhookReceipt, StudyMembership, StudyPayment
-from .paystack_client import PaystackError, PaystackTestClient
+from .paystack_client import PaystackError, PaystackTestClient, PaystackLiveClient
 from .subscription_service import RENEWING_STATUSES, STOPPED_STATUSES, _matches_subscription
 
 
@@ -42,6 +42,7 @@ class _Subscription:
     object_id: int | None = None
     customer_id: int | None = None
     latest_invoice: dict | None = None
+    mode: str = "test"
 
 
 def _code(value, prefix):
@@ -83,9 +84,10 @@ def _finish(receipt_id, state, code):
 
 
 def _canonical_subscription(client, snapshot):
+    mode = client.mode
     if (
         not isinstance(snapshot, dict) or type(snapshot.get("schema_version")) is not int
-        or snapshot["schema_version"] != 1 or snapshot.get("domain") != "test"
+        or snapshot["schema_version"] != 1 or snapshot.get("domain") != mode
     ):
         raise _Ignore("invalid_receipt")
     code = snapshot.get("subscription_code")
@@ -95,7 +97,7 @@ def _canonical_subscription(client, snapshot):
     if not code and not _positive_id(object_id):
         raise _Ignore("missing_subscription_identifier")
     response = client.fetch_subscription(code or str(object_id))
-    if response.get("domain") == "live":
+    if response.get("domain") != mode:
         raise _Ignore("provider_mode_mismatch")
     customer = response.get("customer")
     plan = response.get("plan")
@@ -104,7 +106,7 @@ def _canonical_subscription(client, snapshot):
     customer_code, plan_code = customer.get("customer_code"), plan.get("plan_code")
     if not (
         _code(customer_code, "CUS_") and _code(plan_code, "PLN_")
-        and _matches_subscription(response, customer_code, plan_code)
+        and _matches_subscription(response, customer_code, plan_code, mode)
     ):
         raise _Retry("provider_ownership_invalid")
     if (
@@ -127,13 +129,13 @@ def _canonical_subscription(client, snapshot):
         created = None
     return _Subscription(
         response["subscription_code"], customer_code, plan_code, status, created,
-        response.get("id"), customer.get("id"), response.get("most_recent_invoice"),
+        response.get("id"), customer.get("id"), response.get("most_recent_invoice"), mode,
     )
 
 
 def _proof(membership, subscription):
     if (
-        membership.payment_mode != StudyMembership.PaymentMode.TEST
+        membership.payment_mode != subscription.mode
         or membership.plan != StudyMembership.Plan.MONTHLY
         or membership.paystack_customer_code != subscription.customer_code
     ):
@@ -141,7 +143,7 @@ def _proof(membership, subscription):
     if membership.paystack_subscription_code not in (None, "", subscription.code):
         raise _Ignore("not_current_subscription")
     payment = StudyPayment.objects.filter(
-        user_id=membership.user_id, tier=membership.tier, mode=StudyPayment.Mode.TEST,
+        user_id=membership.user_id, tier=membership.tier, mode=subscription.mode,
         plan=StudyMembership.Plan.MONTHLY, source=StudyPayment.Source.CHECKOUT,
         status=StudyPayment.Status.SUCCEEDED, verified_at__isnull=False,
         paystack_plan_code=subscription.plan_code,
@@ -162,7 +164,7 @@ def _owner(subscription):
         _proof(linked, subscription)
         return linked
     candidates = StudyMembership.objects.filter(
-        payment_mode=StudyMembership.PaymentMode.TEST, plan=StudyMembership.Plan.MONTHLY,
+        payment_mode=subscription.mode, plan=StudyMembership.Plan.MONTHLY,
         paystack_customer_code=subscription.customer_code,
     ).filter(Q(paystack_subscription_code__isnull=True) | Q(paystack_subscription_code=""))
     matched = []
@@ -178,7 +180,7 @@ def _owner(subscription):
         raise _Retry("ambiguous_membership")
     if not matched:
         if not candidates.exists() and StudyMembership.objects.filter(
-            payment_mode=StudyMembership.PaymentMode.TEST,
+            payment_mode=subscription.mode,
             paystack_customer_code=subscription.customer_code,
         ).exists():
             raise _Ignore("not_current_subscription")
@@ -217,11 +219,18 @@ def _apply(receipt_id, membership, subscription):
 
 
 def process_test_subscription_receipt(receipt_id):
-    client = PaystackTestClient()  # DEBUG + enabled sandbox + sk_test_ only.
+    return _process_subscription_receipt(receipt_id, PaystackTestClient(), "test")
+
+
+def process_live_subscription_receipt(receipt_id):
+    return _process_subscription_receipt(receipt_id, PaystackLiveClient(), "live")
+
+
+def _process_subscription_receipt(receipt_id, client, mode):
     if not _positive_id(receipt_id):
         raise ValueError("A valid stored receipt ID is required.")
     receipt = PaystackWebhookReceipt.objects.filter(
-        pk=receipt_id, mode=StudyPayment.Mode.TEST, event_type__in=SUBSCRIPTION_EVENTS,
+        pk=receipt_id, mode=mode, event_type__in=SUBSCRIPTION_EVENTS,
     ).first()
     if receipt is None:
         raise ValueError("Only stored test subscription notifications can be processed here.")

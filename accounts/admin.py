@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import BetaInvite, PaystackWebhookReceipt
+from .models import BetaInvite, PaystackWebhookReceipt, StudyRefund
 
 
 @admin.register(BetaInvite)
@@ -82,3 +82,12 @@ class PaystackWebhookReceiptAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(StudyRefund)
+class StudyRefundAdmin(PaystackWebhookReceiptAdmin):
+    list_display = ("id", "user", "payment", "status", "amount_cents", "requested_at", "last_result")
+    list_filter = ("mode", "status")
+    readonly_fields = tuple(field.name for field in StudyRefund._meta.fields)
+    fields = readonly_fields
+    list_select_related = ("user", "payment")

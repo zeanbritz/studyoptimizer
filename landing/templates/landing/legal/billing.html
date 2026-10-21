@@ -3,21 +3,38 @@
 {% block page_title %}Billing and refunds — StudiGarden{% endblock %}
 {% block eyebrow %}Legal{% endblock %}
 {% block heading %}Billing &amp; refunds{% endblock %}
-{% block intro %}Current plan information and the status of subscriptions.{% endblock %}
+{% block intro %}Monthly billing, cancellation, and the first-payment refund guarantee.{% endblock %}
 
 {% block content %}
-<div class="draft-notice">
-    Subscriptions are not active yet. This is not a final cancellation or refund policy. Complete and review it before accepting any payment.
-</div>
+{% if not support_email %}
+<div class="draft-notice">Paid checkout has not launched. Support contact details and the final legal review must be completed before accepting payments.</div>
+{% elif not live_checkout_enabled %}
+<div class="draft-notice">New paid checkout is not currently open. Creating a Free account does not start a subscription.</div>
+{% endif %}
 
 <h2>Displayed plans</h2>
-<p>The <a href="{% url 'pricing' %}">pricing page</a> shows Free at R0, {% for plan in paid_plans %}{{ plan.name }} at R{{ plan.monthly_price|floatformat:0 }} per month{% if not forloop.last %} and {% endif %}{% endfor %}. Plan features and monthly allowances are listed there. Checkout is not open.</p>
+<p>StudiGarden is operated by STRATOCK (Pty) Ltd. The <a href="{% url 'pricing' %}">pricing page</a> shows Free at R0, {% for plan in paid_plans %}{{ plan.name }} at R{{ plan.monthly_price|floatformat:0 }} per month{% if not forloop.last %} and {% endif %}{% endfor %}. Plan features and monthly allowances are listed there. Paid checkout charges the displayed plan amount in South African rand. StudiGarden does not add a separate checkout fee.</p>
 
-<h2>Current payment status</h2>
-<p>Registration does not choose a paid plan or collect payment. No subscription starts merely by creating an account through the current website.</p>
+<h2>Starting a paid subscription</h2>
+<p>Registration does not choose a paid plan or collect payment. A paid subscription starts only when you select a plan, agree to monthly automatic renewal, and complete payment through Paystack. The selected plan renews monthly until cancelled. Access is activated only after payment is verified.</p>
 
-<h2>Before subscriptions launch</h2>
-<p>The final checkout and policy must clearly explain the full payable price, any applicable taxes, the payment method, renewal timing, how to cancel, when access ends, how refunds are handled, and how to contact the operator about a charge. These terms must be checked against applicable South African consumer law before billing is enabled.</p>
+<h2>Cancel future renewals</h2>
+<p>You can stop future renewals from <a href="{% url 'my_plan' %}">Profile</a> by choosing Cancel plan and confirming. Ordinary cancellation is not a refund: your already-paid access continues until its end date. There is no StudiGarden cancellation penalty. Free and permanent beta access do not renew.</p>
 
-<p>The <a href="{% url 'contact' %}">contact page</a> will hold the support details once they are available.</p>
+<h2>Automatic 7-day first-payment refund</h2>
+<p>We offer a voluntary full-refund guarantee on your first paid purchase, once per account. Request it from Profile within seven days of the time payment was made. No reason is required, and using the study tools does not disqualify you. This automatic guarantee does not apply to monthly renewal payments.</p>
+<p>Choose Request first-payment refund and confirm. We check your payment and the server-recorded request time automatically. A qualifying request needs no manual approval. Requests submitted on time remain eligible if processing is delayed. Duplicate clicks do not create additional refunds.</p>
+<p>We stop future renewals before submitting the full refund to Paystack. Once Paystack confirms the refund is completed, the refunded paid access ends and Free limits apply unless you have another entitlement. Your saved study material is not deleted. Cancelling a plan and requesting a refund are separate actions.</p>
+
+<h2>Refund progress and exceptional problems</h2>
+<p>Profile shows whether a request is being checked, approved, processed, completed, or needs attention. Submission is not the same as money appearing in your bank account. Paystack and the payment processor control completion and banking times. A failed refund, missing bank details, or an uncertain provider response may need support intervention; we will not describe an unconfirmed refund as completed.</p>
+
+<h2>Other refunds and your legal rights</h2>
+<p>The automatic guarantee is additional to, and does not limit, applicable South African consumer rights. A request outside the guarantee is not automatically a rejection of any legal right to a refund. Contact support about billing mistakes, service problems, renewal charges, or other refund grounds. Applicable statutory rights take precedence over this voluntary policy.</p>
+
+{% if support_email %}
+<p>For support and exceptional refund requests, email <a href="mailto:{{ support_email }}">{{ support_email }}</a> from your account email address. Include the payment reference if available; never send your password or full card details.</p>
+{% else %}
+<p>A working support address will be published on the <a href="{% url 'contact' %}">contact page</a> before paid checkout opens. No unconfigured email address is advertised here.</p>
+{% endif %}
 {% endblock %}

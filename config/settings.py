@@ -269,6 +269,20 @@ PAYSTACK_TEST_CALLBACK_BASE_URL = os.getenv(
     "PAYSTACK_TEST_CALLBACK_BASE_URL", "http://localhost:8000"
 ).rstrip("/")
 
+# Keep billing updates running if only new sales are paused. Both default off.
+PAYSTACK_LIVE_ENABLED = env_bool("PAYSTACK_LIVE_ENABLED", default=False)
+PAYSTACK_LIVE_CHECKOUT_ENABLED = env_bool("PAYSTACK_LIVE_CHECKOUT_ENABLED", default=False)
+PAYSTACK_LIVE_REFUNDS_ENABLED = env_bool("PAYSTACK_LIVE_REFUNDS_ENABLED", default=False)
+PAYSTACK_LIVE_SECRET_KEY = os.getenv("PAYSTACK_LIVE_SECRET_KEY", "").strip()
+PAYSTACK_LIVE_BASE_URL = "https://studigarden.com"
+PAYSTACK_LIVE_PLAN_CODES = {
+    "grow": os.getenv("PAYSTACK_LIVE_GROW_PLAN_CODE", "").strip(),
+    "bloom": os.getenv("PAYSTACK_LIVE_BLOOM_PLAN_CODE", "").strip(),
+}
+# Temporary public support contact, approved by the operator. This is separate
+# from the Mailgun sender used for verification and password-reset emails.
+STUDIGARDEN_SUPPORT_EMAIL = os.getenv("STUDIGARDEN_SUPPORT_EMAIL", "zd.britz@icloud.com").strip()
+
 
 # Email
 
