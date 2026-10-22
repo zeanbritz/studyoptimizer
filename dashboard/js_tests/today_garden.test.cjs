@@ -248,6 +248,64 @@ test("all six growth stages keep soil separate from their moving branches and fo
     }
 });
 
+const fruitCode=source.slice(source.indexOf("    function fruitVisualState("),source.indexOf("    function treeGeometry("));
+const {fruitVisualState,fruitArtwork}=vm.runInNewContext(`${fruitCode}; ({fruitVisualState,fruitArtwork})`);
+const ripeSkins={"red-apple":"#c63d36","green-apple":"#82ab43","yellow-apple":"#e7b842",pear:"#b8bc58","red-pear":"#bf643b",peach:"#ee9d70"};
+
+test("exam buds start tiny and green, then continuously grow into each assigned variety", () => {
+    for(const [variety,ripeSkin] of Object.entries(ripeSkins)) {
+        let lastScale=0;
+        const colours=new Set();
+        for(let step=0;step<=28;step++) {
+            const ripeness=step/28;
+            const visual=fruitVisualState({kind:"exam",status:"upcoming",fruit_ripeness:ripeness},variety);
+            assert.ok(visual.scale>lastScale);
+            assert.equal(visual.ripeness,ripeness);
+            lastScale=visual.scale;
+            colours.add(visual.skin);
+            if(step===0) { assert.equal(visual.skin,"#5f962f"); assert.equal(visual.scale,.22); }
+            if(step===28) { assert.equal(visual.skin,ripeSkin); assert.equal(visual.scale,1); }
+        }
+        assert.ok(colours.size>=20,`${variety} blends through intermediate colours instead of switching suddenly`);
+    }
+});
+
+test("ripening changes colour and size without changing apple, pear, or peach silhouettes", () => {
+    for(const variety of Object.keys(ripeSkins)) {
+        const paths=ripeness=>[...fruitArtwork({id:1,kind:"exam",status:"upcoming",fruit_ripeness:ripeness},variety).matchAll(/<path d="([^"]+)"/g)].map(match=>match[1]);
+        assert.deepEqual(paths(0),paths(.5));
+        assert.deepEqual(paths(.5),paths(1));
+    }
+});
+
+test("assessment fruit remains full-size with its existing ripe colour", () => {
+    for(const [variety,ripeSkin] of Object.entries(ripeSkins)) {
+        const visual=fruitVisualState({kind:"assessment",status:"upcoming",fruit_ripeness:0},variety);
+        assert.equal(visual.scale,1);
+        assert.equal(visual.skin,ripeSkin);
+    }
+});
+
+test("overdue exams stay full-size and rotten, not tiny green buds", () => {
+    for(const variety of Object.keys(ripeSkins)) {
+        const event={id:2,kind:"exam",status:"overdue",fruit_ripeness:0};
+        const visual=fruitVisualState(event,variety);
+        assert.equal(visual.scale,1);
+        assert.equal(visual.ripeness,1);
+        const html=fruitArtwork(event,variety);
+        assert.ok(html.includes(visual.decay));
+        assert.ok(html.includes('fill="#302b20"'),"Rotten fruit retains its blemishes");
+    }
+});
+
+test("missing or invalid cached ripeness stays safe and valid ages are clamped", () => {
+    for(const value of [undefined,null,NaN,Infinity,"0.5"]) {
+        assert.equal(fruitVisualState({kind:"exam",fruit_ripeness:value},"pear").scale,1);
+    }
+    assert.equal(fruitVisualState({kind:"exam",fruit_ripeness:-1},"pear").scale,.22);
+    assert.equal(fruitVisualState({kind:"exam",fruit_ripeness:2},"pear").scale,1);
+});
+
 const geometryCode = source.slice(source.indexOf("    function leafAngle("), source.indexOf("    function smoothStem("));
 const geometry = vm.runInNewContext(`const LEAF_SCALE=.83; const treeHeight=()=>352;
     ${geometryCode}; ({layout,vineLeafPoint})`);

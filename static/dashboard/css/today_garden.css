@@ -52,6 +52,7 @@
 .garden-tree-link:focus-visible { outline: 3px solid #ffdfa0; outline-offset: 4px; }
 .garden-fruit { position: absolute; z-index: 5; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; color: #322d22; text-decoration: none; transition: transform .18s; filter: drop-shadow(1px 3px 2px #30291d50); pointer-events: auto; }
 .garden-fruit svg { width: 36px; height: 39px; overflow: visible; }
+.garden-fruit-visual { position: relative; display: grid; place-items: center; width: 44px; height: 44px; transform: scale(var(--fruit-scale,1)); transform-origin: 50% 12%; pointer-events: none; }
 .garden-fruit-kind { position: absolute; right: -1px; bottom: -1px; display: grid; place-items: center; width: 15px; height: 15px; border-radius: 50%; background: #fff0c1; color: #68522b; font-size: 9px; font-weight: 900; }
 .garden-fruit[data-kind="assessment"] .garden-fruit-kind { background: #dceaf4; color: #38627b; }
 .garden-fruit:hover, .garden-fruit:focus-visible, .garden-fruit.is-selected { transform: scale(1.15); outline: 3px solid #fff1bb; outline-offset: 1px; background: #f8e8a52b; }

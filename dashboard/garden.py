@@ -5,6 +5,7 @@ from urllib.parse import urlencode
 
 from django.urls import reverse
 
+from exams.models import AssessmentEvent
 from learning.models import Subject
 from learning.garden_fruit import FRUIT_CHOICES
 from learning.review_navigation import with_origin
@@ -18,6 +19,8 @@ CATEGORIES = (
     ("comparisons", "Comparisons", "comparison_review_list", "middle-right"),
     ("notes", "Notes", "note_list", "top-right"),
 )
+
+EXAM_FRUIT_GROWTH_DAYS = 7
 
 
 def garden_state(user, session_subjects, groups, study_subjects, today):
@@ -83,19 +86,40 @@ def garden_state(user, session_subjects, groups, study_subjects, today):
         for event in subject.assessment_events.all():
             if event.completed_at is not None:
                 continue
+            is_exam = event.kind == AssessmentEvent.Kind.EXAM
+            if is_exam:
+                # Standard view uses reminder_date, not a fixed seven-day lead.
+                # Its query also caps the horizon at 365 days; match that even
+                # for legacy records with an out-of-range reminder value.
+                ripe_date = max(event.reminder_date, event.date - timedelta(days=365))
+                growth_start = ripe_date - timedelta(days=EXAM_FRUIT_GROWTH_DAYS)
+                if today < growth_start:
+                    continue
+                ripeness = min(1.0, (today - growth_start).days / EXAM_FRUIT_GROWTH_DAYS)
+                needs_attention = today >= ripe_date
+            else:
+                # Assessment fruit keeps its existing visibility and timing.
+                needs_attention = event.date <= today + timedelta(days=7)
             status = (
                 "overdue" if event.date < today else
                 "today" if event.date == today else
-                "soon" if event.date <= today + timedelta(days=7) else "upcoming"
+                "soon" if needs_attention else "upcoming"
             )
-            events.append({
+            fruit = {
                 "id": event.pk, "title": event.title or event.get_kind_display(),
                 "kind": event.kind, "type": event.get_kind_display(),
                 "date": event.date.isoformat(), "date_label": event.date.strftime("%d %B %Y"),
                 "status": status, "completed": event.completed_at is not None,
                 "grounded": status == "overdue",
                 "url": reverse("exams:calendar") + "?" + urlencode({"edit": event.pk}),
-            })
+            }
+            if is_exam:
+                fruit.update({
+                    "fruit_ripeness": ripeness,
+                    "fruit_growth_start": growth_start.isoformat(),
+                    "fruit_ripe_date": ripe_date.isoformat(),
+                })
+            events.append(fruit)
         trees.append({
             "id": subject.pk, "subject": subject.name,
             "fruit": subject.garden_fruit or FRUIT_CHOICES[subject.pk % len(FRUIT_CHOICES)][0],

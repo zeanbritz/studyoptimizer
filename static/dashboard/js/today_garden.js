@@ -42,6 +42,7 @@
     }
     function position(node, x, y) { node.style.left = `${Math.round(x)}px`; node.style.top = `${Math.round(y)}px`; }
     function statusLabel(event) {
+        if (event.kind === "exam" && event.fruit_ripeness < 1 && event.status !== "overdue") return "Growing preview";
         return { completed: "Completed", overdue: "Overdue", today: "Due today", soon: "Coming up soon", upcoming: "Upcoming" }[event.status];
     }
 
@@ -282,8 +283,7 @@
         (fallen?plant:canopy).append(fruit);
     }
 
-    function fruitArtwork(event, variety) {
-        const rotten = event.status === "overdue", pear = variety.includes("pear"), peach = variety === "peach";
+    function fruitVisualState(event, variety) {
         const palettes = {
             "red-apple": ["#ee8872", "#c63d36", "#752e29", "#724b3a"],
             "green-apple": ["#d7e892", "#82ab43", "#4b6d29", "#59613b"],
@@ -292,7 +292,25 @@
             "red-pear": ["#efb16e", "#bf643b", "#7e3e2c", "#75513d"],
             "peach": ["#ffe1a6", "#ee9d70", "#c56656", "#83644e"]
         };
-        const [light, skin, edge, decay] = palettes[variety] || palettes["red-apple"];
+        const ripe = palettes[variety] || palettes["red-apple"];
+        // Dates use Django's same local study day as Today's Plan.
+        // Never use time since page load: return visits must show the right age.
+        const ripeness = event.kind === "exam" && event.status !== "overdue" && Number.isFinite(event.fruit_ripeness)
+            ? Math.max(0, Math.min(1, event.fruit_ripeness)) : 1;
+        const blend = (green, colour) => "#" + [1,3,5].map(offset => {
+            const from = parseInt(green.slice(offset,offset+2),16), to = parseInt(colour.slice(offset,offset+2),16);
+            return Math.round(from+(to-from)*ripeness).toString(16).padStart(2,"0");
+        }).join("");
+        return {
+            ripeness, scale:.22+.78*ripeness,
+            light:blend("#a8ce76",ripe[0]), skin:blend("#5f962f",ripe[1]), edge:blend("#365f2e",ripe[2]),
+            decay:ripe[3], cleft:blend("#4e7134","#cf7b66")
+        };
+    }
+
+    function fruitArtwork(event, variety) {
+        const rotten = event.status === "overdue", pear = variety.includes("pear"), peach = variety === "peach";
+        const {light,skin,edge,decay,cleft:cleftColour} = fruitVisualState(event,variety);
         const shape = pear
             ? "M20 9C13 9 15 19 10 23C1 31 7 41 20 41C34 41 39 31 30 23C25 18 27 9 20 9Z"
             : peach
@@ -302,7 +320,7 @@
         const blemishes = rotten
             ? '<ellipse cx="13" cy="27" rx="5" ry="4" fill="#302b20"/><ellipse cx="25" cy="33" rx="6" ry="4" fill="#403126"/><circle cx="24" cy="24" r="2.5" fill="#8a8b55"/><path d="M9 30L15 32L18 28M23 16L20 23L22 27M30 35L25 31" stroke="#332c21" stroke-width="1" fill="none"/>'
             : '<path d="M11 20Q7 25 11 29" stroke="#fff5d6" opacity=".65" stroke-width="2.5" stroke-linecap="round" fill="none"/>';
-        const cleft = peach ? `<path d="M21 15Q27 26 20 39" fill="none" stroke="${rotten?'#4c3e31':'#cf7b66'}" opacity=".65"/>` : "";
+        const cleft = peach ? `<path d="M21 15Q27 26 20 39" fill="none" stroke="${rotten?'#4c3e31':cleftColour}" opacity=".65"/>` : "";
         return `<svg viewBox="0 0 40 44" aria-hidden="true"><defs><radialGradient id="${gradient}" cx=".3" cy=".3" r=".85"><stop stop-color="${rotten?decay:light}"/><stop offset=".65" stop-color="${rotten?decay:skin}"/><stop offset="1" stop-color="${rotten?'#493d2b':edge}"/></radialGradient></defs><path d="M20 13Q19 8 22 5" stroke="${rotten?'#51432f':'#674f2d'}" stroke-width="2.5" fill="none"/><path d="M21 10Q27 4 30 8Q28 12 21 10" fill="${rotten?'#65633e':'#4c792f'}"/><path d="${shape}" fill="url(#${gradient})" stroke="${rotten?'#483b29':edge}" stroke-width="1.1"/>${cleft}${blemishes}</svg>`;
     }
 
@@ -558,8 +576,15 @@
                 fruit.dataset.variety=tree.fruit || "red-apple";
                 fruit.dataset.kind=event.kind;
                 position(fruit,point.x-22,point.y-22);
-                fruit.innerHTML=fruitArtwork(event,fruit.dataset.variety);
-                fruit.append(element("span","garden-fruit-kind",event.kind==="exam"?"E":"A"));
+                const appearance=fruitVisualState(event,fruit.dataset.variety);
+                fruit.dataset.ripeness=appearance.ripeness;
+                fruit.dataset.phase=fallen?"rotten":appearance.ripeness<1?"growing":"ripe";
+                fruit.style.setProperty("--fruit-scale",appearance.scale);
+                // Keep a 44px native link even when the visible fruit is a tiny bud.
+                const visual=element("span","garden-fruit-visual");
+                visual.innerHTML=fruitArtwork(event,fruit.dataset.variety);
+                visual.append(element("span","garden-fruit-kind",event.kind==="exam"?"E":"A"));
+                fruit.append(visual);
                 const priorEvent=prior?.events.find(e=>e.id===event.id);
                 if(fallen) {
                     currentOverdue.add(event.id);
