@@ -110,10 +110,12 @@
             font-size: 13px;
             font-weight: 850;
             text-align: center;
+            cursor: pointer;
             transition: background 0.15s ease, transform 0.15s ease;
         }
 
-        a.button:hover { transform: translateY(-1px); }
+        a.button:hover,
+        button.button:not(:disabled):hover { transform: translateY(-1px); }
 
         .button-green {
             border-color: var(--green-dark);
@@ -121,7 +123,8 @@
             color: white;
         }
 
-        a.button-green:hover { background: #64c735; }
+        a.button-green:hover,
+        button.button-green:not(:disabled):hover { background: #64c735; }
 
         .button-light {
             border-color: #cbd3d7;
@@ -194,6 +197,12 @@
 
         .plan.bloom,
         .plan.free { border-top-color: var(--green); }
+
+        .plan-selected {
+            outline: 3px solid var(--green);
+            outline-offset: 3px;
+            scroll-margin-top: 24px;
+        }
 
         .plan-heading {
             display: flex;
@@ -273,6 +282,44 @@
             margin-top: auto;
         }
 
+        .plan-checkout-form,
+        .plan-signup-actions {
+            margin-top: auto;
+        }
+
+        .plan-confirmation {
+            display: flex;
+            align-items: flex-start;
+            gap: 9px;
+            margin-bottom: 14px;
+            color: #455057;
+            font-size: 12px;
+            line-height: 1.5;
+            cursor: pointer;
+        }
+
+        .plan-confirmation input {
+            flex: 0 0 18px;
+            width: 18px;
+            height: 18px;
+            margin: 1px 0 0;
+            accent-color: var(--green-dark);
+        }
+
+        .plan-auth-note {
+            margin: 12px 0 0;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.5;
+            text-align: center;
+        }
+
+        .plan-auth-note a {
+            color: #176f9f;
+            font-weight: 800;
+            text-decoration: underline;
+        }
+
         .beta-note,
         .billing-disclaimer {
             margin: 20px 0 0;
@@ -309,7 +356,9 @@
             color: #3f5867;
         }
 
-        a:focus-visible {
+        a:focus-visible,
+        button:focus-visible,
+        input:focus-visible {
             outline: 3px solid rgba(39, 143, 211, 0.35);
             outline-offset: 3px;
         }
@@ -363,7 +412,7 @@
             <section class="intro" aria-labelledby="pricing-title">
                 <span class="eyebrow">StudiGarden plans</span>
                 <h1 id="pricing-title">Simple pricing for your studies</h1>
-                <p>Start with Free, grow your study workspace with Grow, or unlock all study tools with Bloom. {% if test_checkout_enabled %}Local test checkout is enabled. No real money will be charged.{% elif live_checkout_enabled %}Choose a monthly plan from your Profile. Cancel future renewals whenever you choose.{% else %}Paid checkout is coming soon.{% endif %}</p>
+                <p>Start with Free, grow your study workspace with Grow, or unlock all study tools with Bloom. {% if test_checkout_enabled %}Local test checkout is enabled. No real money will be charged.{% elif live_checkout_enabled %}Choose a monthly plan below. Manage your subscription and cancel future renewals from Profile.{% else %}Paid checkout is coming soon.{% endif %}</p>
             </section>
 
             <section class="plans" aria-label="Pricing plans">
@@ -391,10 +440,14 @@
                     {% endif %}
                 </article>
 
-                {% for plan in paid_plans %}
-                <article class="plan {{ plan.tier }}">
+                {% for card in pricing_cards %}
+                {% with plan=card.plan %}
+                <article class="plan {{ plan.tier }}{% if selected_tier == plan.tier %} plan-selected{% endif %}" id="plan-{{ plan.tier }}" aria-labelledby="plan-{{ plan.tier }}-title">
                     <div class="plan-heading">
-                        <h2 class="plan-name">{{ plan.name }}</h2>
+                        <h2 class="plan-name" id="plan-{{ plan.tier }}-title">{{ plan.name }}</h2>
+                        {% if selected_tier == plan.tier %}
+                            <span class="saving-badge">Selected plan</span>
+                        {% endif %}
                         {% if plan.tier == "bloom" %}
                             <span class="saving-badge">Top plan</span>
                         {% endif %}
@@ -410,10 +463,23 @@
                     </ul>
 
                     {% if live_checkout_enabled %}
-                        {% if user.is_authenticated %}
-                        <a href="{% url 'my_plan' %}" class="button button-green">Choose {{ plan.name }}</a>
+                        {% if can_start_live_checkout %}
+                        <form method="post" action="{% url 'start_live_checkout' %}" class="plan-checkout-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="tier" value="{{ plan.tier }}">
+                            <label class="plan-confirmation">
+                                <input type="checkbox" name="confirm_subscription" value="yes" required>
+                                <span>I agree to R{{ plan.monthly_price|floatformat:0 }} monthly automatic renewal for {{ plan.name }} until I cancel.</span>
+                            </label>
+                            <button type="submit" class="button button-green">Choose {{ plan.name }}</button>
+                        </form>
+                        {% elif user.is_authenticated %}
+                        <a href="{% url 'my_plan' %}" class="button button-light">Manage current access</a>
                         {% else %}
-                        <a href="{% url 'register' %}?next={% url 'my_plan' %}" class="button button-green">Sign up to choose {{ plan.name }}</a>
+                        <div class="plan-signup-actions">
+                            <a href="{{ card.signup_url }}" class="button button-green">Sign up to choose {{ plan.name }}</a>
+                            <p class="plan-auth-note">Already have an account? <a href="{{ card.login_url }}">Log in for {{ plan.name }}</a></p>
+                        </div>
                         {% endif %}
                     {% elif can_start_test_checkout %}
                     <form method="post" action="{% url 'start_test_checkout' %}">
@@ -433,7 +499,7 @@
                     </button>
                     {% endif %}
                 </article>
-
+                {% endwith %}
                 {% endfor %}
             </section>
 
@@ -443,7 +509,7 @@
             </aside>
 
             <p class="billing-disclaimer">
-                Grow’s PDF allowances are shared across all subjects and reset on the first of each calendar month. {% if not live_checkout_enabled %}Live paid checkout is not open yet.{% endif %} Creating a free account does not start a subscription.
+                Grow’s PDF allowances are shared across all subjects and reset on the first of each calendar month. {% if live_checkout_enabled %}Paid checkout is handled by Paystack. See the <a href="{% url 'billing_policy' %}">refund and cancellation policy</a>.{% else %}Live paid checkout is not open yet.{% endif %} Creating a free account does not start a subscription.
             </p>
         </main>
 

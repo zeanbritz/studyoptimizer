@@ -334,7 +334,7 @@
 
                 <p class="register-link">
                     Don’t have an account?
-                    <a href="{% url 'register' %}">
+                    <a href="{% url 'register' %}{% if redirect_field_value %}?{{ redirect_field_name }}={{ redirect_field_value|urlencode }}{% endif %}">
                         Create one
                     </a>
                 </p>

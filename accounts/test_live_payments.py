@@ -4,11 +4,14 @@ import hashlib
 import hmac
 import io
 import json
+import re
 from datetime import timedelta
 from unittest.mock import Mock, patch
+from urllib.parse import parse_qs, quote, urlsplit
 
 from allauth.account.models import EmailAddress
 from django.contrib.auth import get_user_model
+from django.core import mail
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import Client, SimpleTestCase, TestCase, override_settings
@@ -163,11 +166,19 @@ class LiveCheckoutTests(TestCase):
         self.initialize.assert_called_once()
         self.assertEqual(StudyPayment.objects.count(), 1)
 
-    def test_pricing_live_buttons_send_users_to_profile_for_consent(self):
+    def test_pricing_live_buttons_post_directly_to_checkout_with_consent(self):
         response = self.client.get(reverse("pricing"), secure=True)
         self.assertContains(response, "Choose Grow")
         self.assertContains(response, "Choose Bloom")
         self.assertNotContains(response, "Grow coming soon")
+        self.assertContains(
+            response,
+            f'method="post" action="{reverse("start_live_checkout")}"',
+            count=2,
+        )
+        self.assertContains(response, 'name="confirm_subscription" value="yes" required', count=2)
+        self.assertContains(response, "R35 monthly automatic renewal for Grow")
+        self.assertContains(response, "R90 monthly automatic renewal for Bloom")
         self.initialize.assert_not_called()
 
     def test_beta_and_unverified_accounts_are_not_charged(self):
@@ -272,3 +283,166 @@ class LiveCheckoutTests(TestCase):
         call_command("check_paystack_live", stdout=io.StringIO())
         self.initialize.assert_not_called()
         self.assertFalse(StudyPayment.objects.exists())
+
+    def test_pricing_form_with_valid_csrf_goes_straight_to_paystack(self):
+        browser = Client(enforce_csrf_checks=True, HTTP_HOST="studigarden.com")
+        browser.force_login(self.user)
+        page = browser.get(reverse("pricing"), secure=True)
+        self.assertEqual(page.status_code, 200)
+        self.assertContains(page, 'name="csrfmiddlewaretoken"')
+        self.initialize.assert_not_called()
+        response = browser.post(
+            reverse("start_live_checkout"),
+            {
+                "tier": "grow",
+                "confirm_subscription": "yes",
+                "csrfmiddlewaretoken": browser.cookies["csrftoken"].value,
+            },
+            secure=True,
+            HTTP_ORIGIN="https://studigarden.com",
+        )
+        self.assertRedirects(
+            response,
+            "https://checkout.paystack.com/liveContract",
+            fetch_redirect_response=False,
+        )
+        self.initialize.assert_called_once()
+        self.assertEqual(self.initialize.call_args.args[0]["amount"], 3500)
+        self.assertEqual(StudyPayment.objects.get().tier, "grow")
+        self.assertFalse(StudyMembership.objects.exists())
+
+    def test_bloom_pricing_post_uses_the_bloom_plan_and_server_price(self):
+        self.plan.update(plan_code="PLN_bloomLive", amount=9000)
+        response = self.client.post(
+            reverse("start_live_checkout"),
+            {"tier": "bloom", "confirm_subscription": "yes", "amount": "1"},
+            secure=True,
+        )
+        self.assertRedirects(
+            response,
+            "https://checkout.paystack.com/liveContract",
+            fetch_redirect_response=False,
+        )
+        self.assertEqual(self.initialize.call_args.args[0]["amount"], 9000)
+        self.assertEqual(self.initialize.call_args.args[0]["plan"], "PLN_bloomLive")
+        self.assertEqual(StudyPayment.objects.get().tier, "bloom")
+
+    def test_signed_out_plan_links_return_to_selected_pricing_card(self):
+        self.client.logout()
+        page = self.client.get(reverse("pricing"), secure=True)
+        self.assertEqual(page.status_code, 200)
+        self.assertNotContains(page, 'action="' + reverse("start_live_checkout") + '"')
+        for card in page.context["pricing_cards"]:
+            tier = card["plan"].tier
+            expected = f"{reverse('pricing')}?plan={tier}#plan-{tier}"
+            for key, route in (("signup_url", "register"), ("login_url", "login")):
+                with self.subTest(tier=tier, action=key):
+                    url = urlsplit(card[key])
+                    self.assertEqual(url.path, reverse(route))
+                    self.assertEqual(parse_qs(url.query)["next"], [expected])
+                    self.assertContains(page, f'href="{card[key]}"')
+        self.initialize.assert_not_called()
+        self.assertFalse(StudyPayment.objects.exists())
+
+    def test_login_and_signup_cross_links_keep_the_selected_plan(self):
+        self.client.logout()
+        next_url = f"{reverse('pricing')}?plan=bloom#plan-bloom"
+        encoded_next = quote(next_url, safe="/")
+        for route, other in (("register", "login"), ("login", "register")):
+            with self.subTest(route=route):
+                page = self.client.get(
+                    reverse(route), {"next": next_url}, secure=True,
+                )
+                self.assertEqual(page.status_code, 200)
+                self.assertContains(page, f'href="{reverse(other)}?next={encoded_next}"')
+                self.assertContains(page, f'value="{next_url}"')
+        self.initialize.assert_not_called()
+
+    def test_login_returns_to_selected_pricing_without_initializing_payment(self):
+        password = "A-safe-plan-routing-password-783!"
+        self.user.set_password(password)
+        self.user.save(update_fields=["password"])
+        self.client.logout()
+        next_url = f"{reverse('pricing')}?plan=grow#plan-grow"
+        response = self.client.post(
+            reverse("login"),
+            {"login": self.user.username, "password": password, "next": next_url},
+            secure=True,
+        )
+        self.assertRedirects(response, next_url, fetch_redirect_response=False)
+        page = self.client.get(reverse("pricing"), {"plan": "grow"}, secure=True)
+        self.assertEqual(page.context["selected_tier"], "grow")
+        self.assertContains(page, 'class="plan grow plan-selected"')
+        self.assertContains(page, "Choose Grow")
+        self.initialize.assert_not_called()
+        self.assertFalse(StudyPayment.objects.exists())
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_signup_and_email_confirmation_return_to_selected_pricing(self):
+        self.client.logout()
+        next_url = f"{reverse('pricing')}?plan=bloom#plan-bloom"
+        response = self.client.post(
+            reverse("register"),
+            {
+                "username": "new-routing-student",
+                "email": "new-routing-student@example.com",
+                "password1": "A-safe-signup-routing-password-694!",
+                "password2": "A-safe-signup-routing-password-694!",
+                "age_confirmed": "on",
+                "next": next_url,
+            },
+            secure=True,
+        )
+        self.assertRedirects(
+            response, reverse("account_email_verification_sent"),
+            fetch_redirect_response=False,
+        )
+        self.assertNotIn("_auth_user_id", self.client.session)
+        address = EmailAddress.objects.get(email="new-routing-student@example.com")
+        self.assertFalse(address.verified)
+        self.assertEqual(len(mail.outbox), 1)
+        link = re.search(r"https?://[^\s]+/accounts/confirm-email/[^\s]+", mail.outbox[0].body)
+        self.assertIsNotNone(link)
+        confirmation_path = urlsplit(link.group(0)).path
+        self.client.get(confirmation_path, secure=True)
+        address.refresh_from_db()
+        self.assertFalse(address.verified)
+        response = self.client.post(confirmation_path, secure=True)
+        self.assertRedirects(response, next_url, fetch_redirect_response=False)
+        address.refresh_from_db()
+        self.assertTrue(address.verified)
+        self.initialize.assert_not_called()
+        self.assertFalse(StudyPayment.objects.exists())
+
+    def test_beta_and_paid_accounts_are_not_offered_replacement_checkout(self):
+        self.user.beta_lifetime_access = True
+        self.user.save(update_fields=["beta_lifetime_access"])
+        page = self.client.get(reverse("pricing"), secure=True)
+        self.assertContains(page, "Manage current access")
+        self.assertNotContains(page, 'action="' + reverse("start_live_checkout") + '"')
+        self.user.beta_lifetime_access = False
+        self.user.save(update_fields=["beta_lifetime_access"])
+        self.confirm(self.start())
+        self.initialize.reset_mock()
+        page = self.client.get(reverse("pricing"), secure=True)
+        self.assertContains(page, "Manage current access")
+        self.assertNotContains(page, 'action="' + reverse("start_live_checkout") + '"')
+        self.initialize.assert_not_called()
+
+    def test_selected_plan_query_never_initializes_or_redirects_checkout(self):
+        for selection in ("grow", "bloom", "https://evil.example", "free", "invalid"):
+            with self.subTest(selection=selection):
+                page = self.client.get(reverse("pricing"), {"plan": selection}, secure=True)
+                self.assertEqual(page.status_code, 200)
+                expected = selection if selection in {"grow", "bloom"} else ""
+                self.assertEqual(page.context["selected_tier"], expected)
+        self.initialize.assert_not_called()
+        self.assertFalse(StudyPayment.objects.exists())
+
+    def test_pausing_sales_hides_direct_pricing_forms(self):
+        with override_settings(PAYSTACK_LIVE_CHECKOUT_ENABLED=False):
+            page = self.client.get(reverse("pricing"), secure=True)
+        self.assertContains(page, "Grow coming soon")
+        self.assertContains(page, "Bloom coming soon")
+        self.assertNotContains(page, 'action="' + reverse("start_live_checkout") + '"')
+        self.initialize.assert_not_called()

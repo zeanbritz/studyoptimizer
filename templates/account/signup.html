@@ -358,7 +358,7 @@
 
                 <p class="login-link">
                     Already have an account?
-                    <a href="{% url 'login' %}">
+                    <a href="{% url 'login' %}{% if redirect_field_value %}?{{ redirect_field_name }}={{ redirect_field_value|urlencode }}{% endif %}">
                         Log in
                     </a>
                 </p>

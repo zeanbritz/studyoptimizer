@@ -1,6 +1,10 @@
+from html.parser import HTMLParser
+
+from django.contrib.auth.models import AnonymousUser
 from django.contrib.auth import get_user_model
 from django.contrib.staticfiles import finders
-from django.test import TestCase
+from django.template.loader import render_to_string
+from django.test import RequestFactory, SimpleTestCase, TestCase
 from django.urls import reverse
 
 
@@ -87,3 +91,38 @@ class LandingHomeTests(TestCase):
         ):
             with self.subTest(asset=asset):
                 self.assertIsNotNone(finders.find(asset))
+
+
+class SidebarLogoTests(SimpleTestCase):
+    def test_desktop_and_mobile_brand_links_open_the_landing_page(self):
+        class LinkParser(HTMLParser):
+            def __init__(self):
+                super().__init__()
+                self.links = []
+
+            def handle_starttag(self, tag, attrs):
+                if tag == "a":
+                    self.links.append(dict(attrs))
+
+        request = RequestFactory().get("/dashboard/")
+        request.user = AnonymousUser()
+        markup = render_to_string(
+            "partials/sidebar.html",
+            {"user": request.user, "active_page": "dashboard"},
+            request=request,
+        )
+        parser = LinkParser()
+        parser.feed(markup)
+        brand_links = [
+            link for link in parser.links
+            if {"logo", "mobile-topbar-brand"}.intersection(link.get("class", "").split())
+        ]
+        self.assertEqual(len(brand_links), 2)
+        for link in brand_links:
+            self.assertEqual(link["href"], reverse("landing"))
+            self.assertEqual(link["aria-label"], "StudiGarden home")
+        self.assertTrue(any(
+            link.get("href") == reverse("dashboard")
+            and "nav-link" in link.get("class", "").split()
+            for link in parser.links
+        ))

@@ -1,6 +1,6 @@
 {% load static %}
 <header class="mobile-topbar">
-    <a href="{% url 'dashboard' %}" class="mobile-topbar-brand" aria-label="StudiGarden dashboard">
+    <a href="{% url 'landing' %}" class="mobile-topbar-brand" aria-label="StudiGarden home">
         <img src="{% static 'images/logo.webp' %}" alt="StudiGarden" width="210" height="48">
     </a>
     <button type="button" class="mobile-menu-toggle" aria-label="Open navigation menu" aria-controls="sidebar" aria-expanded="false">
@@ -13,9 +13,9 @@
 <aside id="sidebar" class="sidebar">
     <div class="sidebar-top">
         <a
-            href="{% url 'dashboard' %}"
+            href="{% url 'landing' %}"
             class="logo"
-            aria-label="StudiGarden dashboard"
+            aria-label="StudiGarden home"
         ><img src="{% static 'images/logo.webp' %}" alt="StudiGarden" width="204" height="52"></a>
         <button type="button" class="mobile-sidebar-close" aria-label="Close navigation menu">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
