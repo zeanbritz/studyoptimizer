@@ -158,6 +158,33 @@
             margin: 0 0 16px;
         }
 
+        .age-confirmation {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            min-height: 44px;
+            padding: 10px 0;
+            color: var(--ink);
+            font-size: 13px;
+            font-weight: 750;
+            line-height: 1.5;
+            cursor: pointer;
+        }
+
+        .age-confirmation input {
+            flex: 0 0 18px;
+            width: 18px;
+            height: 18px;
+            margin: 1px 0 0;
+            accent-color: var(--green-dark);
+        }
+
+        .age-confirmation:focus-within {
+            border-radius: 6px;
+            outline: 2px solid #78b8dd;
+            outline-offset: 4px;
+        }
+
         .legal-note {
             margin: 3px 0 18px;
             color: var(--muted);
@@ -306,6 +333,17 @@
                         value="{{ redirect_field_value }}"
                     >
                 {% endif %}
+
+                <label class="age-confirmation" for="{{ form.age_confirmed.id_for_label }}">
+                    {{ form.age_confirmed }}
+                    <span>{{ form.age_confirmed.label }}</span>
+                </label>
+                <div id="age-confirmation-errors">
+                    {{ form.age_confirmed.errors }}
+                </div>
+                <p class="legal-note" id="age-confirmation-help">
+                    {{ form.age_confirmed.help_text }}
+                </p>
 
                 <p class="legal-note">
                     By creating an account, you agree to the

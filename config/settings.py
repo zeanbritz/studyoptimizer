@@ -242,6 +242,10 @@ ACCOUNT_SIGNUP_FIELDS = [
     "password2*",
 ]
 
+ACCOUNT_FORMS = {
+    "signup": "accounts.forms.AdultSignupForm",
+}
+
 ACCOUNT_UNIQUE_EMAIL = True
 
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"

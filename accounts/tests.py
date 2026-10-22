@@ -9,6 +9,7 @@ from django.core import mail
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
+from accounts.forms import AdultSignupForm
 from accounts.models import BetaInvite
 from dashboard.models import StudyProfile
 from learning.models import Subject
@@ -194,6 +195,7 @@ class PublicSignupTests(TestCase):
             "email": f"{username}@example.com",
             "password1": self.password,
             "password2": self.password,
+            "age_confirmed": "on",
         }
 
     def test_both_signup_urls_open_without_invitation(self):
@@ -307,3 +309,120 @@ class PublicSignupTests(TestCase):
         invite.refresh_from_db()
         self.assertFalse(user.beta_lifetime_access)
         self.assertIsNone(invite.claimed_by)
+
+
+@override_settings(
+    EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+    ACCOUNT_RATE_LIMITS={},
+)
+class AdultSignupTests(TestCase):
+    error_message = "You must confirm you are 18 or older to create an account."
+
+    def signup_data(self, username):
+        return {
+            "username": username,
+            "email": f"{username}@example.com",
+            "password1": "A-long-safe-student-password-486!",
+            "password2": "A-long-safe-student-password-486!",
+        }
+
+    def test_both_signup_pages_have_an_unchecked_required_confirmation(self):
+        for route in ("register", "account_signup"):
+            with self.subTest(route=route):
+                response = self.client.get(reverse(route))
+                self.assertEqual(response.status_code, 200)
+                form = response.context["form"]
+                self.assertIsInstance(form, AdultSignupForm)
+                self.assertTrue(form.fields["age_confirmed"].required)
+                self.assertFalse(form["age_confirmed"].value())
+                self.assertIn("required", str(form["age_confirmed"]))
+                self.assertNotIn("checked", str(form["age_confirmed"]))
+                self.assertContains(response, 'name="age_confirmed"')
+                self.assertContains(response, "I confirm I am 18 years or older.")
+                self.assertContains(response, 'id="age-confirmation-help"')
+                self.assertContains(response, 'href="/terms/"')
+                self.assertContains(response, 'href="/privacy/"')
+
+    def test_missing_confirmation_is_rejected_server_side_on_both_routes(self):
+        for index, route in enumerate(("register", "account_signup")):
+            with self.subTest(route=route):
+                username = f"missing_age_{index}"
+                response = self.client.post(reverse(route), self.signup_data(username))
+                self.assertEqual(response.status_code, 200)
+                self.assertFormError(
+                    response.context["form"], "age_confirmed", self.error_message,
+                )
+                self.assertContains(response, self.error_message)
+                self.assertFalse(
+                    get_user_model().objects.filter(username=username).exists()
+                )
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_false_confirmation_is_rejected_server_side_on_both_routes(self):
+        for index, route in enumerate(("register", "account_signup")):
+            with self.subTest(route=route):
+                username = f"false_age_{index}"
+                response = self.client.post(
+                    reverse(route),
+                    {**self.signup_data(username), "age_confirmed": "false"},
+                )
+                self.assertEqual(response.status_code, 200)
+                self.assertFormError(
+                    response.context["form"], "age_confirmed", self.error_message,
+                )
+                self.assertFalse(
+                    get_user_model().objects.filter(username=username).exists()
+                )
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_confirmed_adult_on_each_route_still_has_to_verify_email(self):
+        for index, route in enumerate(("register", "account_signup")):
+            with self.subTest(route=route):
+                username = f"confirmed_adult_{index}"
+                response = self.client.post(
+                    reverse(route),
+                    {**self.signup_data(username), "age_confirmed": "on"},
+                )
+                self.assertRedirects(
+                    response,
+                    reverse("account_email_verification_sent"),
+                    fetch_redirect_response=False,
+                )
+                user = get_user_model().objects.get(username=username)
+                address = EmailAddress.objects.get(user=user)
+                self.assertTrue(address.primary)
+                self.assertFalse(address.verified)
+                self.assertFalse(user.beta_lifetime_access)
+                self.assertNotIn("_auth_user_id", self.client.session)
+                self.assertIn(user.email, mail.outbox[-1].to)
+        self.assertEqual(len(mail.outbox), 2)
+
+    def test_confirmation_stays_checked_after_an_unrelated_validation_error(self):
+        response = self.client.post(
+            reverse("register"),
+            {
+                **self.signup_data("invalid_adult"),
+                "age_confirmed": "on",
+                "password2": "A-different-password-578!",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["form"]["age_confirmed"].value())
+        self.assertNotIn("age_confirmed", response.context["form"].errors)
+        self.assertFalse(
+            get_user_model().objects.filter(username="invalid_adult").exists()
+        )
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_terms_and_privacy_explain_adult_only_access(self):
+        terms = self.client.get(reverse("terms_of_use"))
+        privacy = self.client.get(reverse("privacy_policy"))
+        self.assertContains(terms, "You must be at least 18 years old")
+        self.assertContains(privacy, "StudiGarden is for people aged 18 or older")
+        self.assertContains(
+            privacy, "signup does not request a date of birth or an identity document",
+        )
+        # Other operator/privacy details still need approval before paid launch.
+        self.assertContains(terms, "Draft for review before launch")
+        self.assertContains(privacy, "Draft for review before launch")
