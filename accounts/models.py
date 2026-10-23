@@ -272,6 +272,8 @@ class StudyPlanChange(models.Model):
     previous_payment = models.ForeignKey(StudyPayment, on_delete=models.PROTECT, related_name="replacement_changes")
     to_subscription_code = models.CharField(max_length=100, null=True, blank=True, unique=True)
     subscription_baseline = models.JSONField(default=list, blank=True)
+    # Only a one-way identity fingerprint, never the reusable card authorisation.
+    authorization_fingerprint = models.CharField(max_length=64, blank=True, editable=False)
     subscription_posted_at = models.DateTimeField(null=True, blank=True)
     old_stopped_at = models.DateTimeField(null=True, blank=True)
     cancel_requested = models.BooleanField(default=False)

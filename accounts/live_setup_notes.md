@@ -174,3 +174,25 @@ consent/status controls, and public policy text still need implementation and
 testing before enabling customer switches. No new migration is needed beyond
 0018 for this upgrade-backend checkpoint. No real payment/refund was submitted
 while implementing or testing it.
+
+## Scheduled downgrade scheduler checkpoint (still disabled)
+
+Apply migration 0019 before this scheduler is used. It adds a one-way identity
+fingerprint to plan-change records, not a reusable authorisation or a card token.
+Existing records receive a blank fingerprint and are not silently approved for
+new recurring billing. A paid downgrade records the exact previously charged
+card, target plan/price and first-debit date. The worker processor confirms the
+old renewal is stopped while preserving its paid-through time, commits submission
+intent, and creates the lower subscription with that explicit future start date.
+An ambiguous POST is GET-reconciled against customer, plan, amount, start date,
+authorisation fingerprint, creation time and the pre-submission subscription
+baseline. It is never automatically repeated. Ambiguous or incomplete matches
+require attention. No subscription-create request is made for Free.
+
+The downgrade processor is NOT registered in the live worker or customer routes
+at this checkpoint. First-debit reconciliation, safe cancellation/resumption of
+scheduled billing, and refund/account-change cleanup must be connected before it
+can run for real customers. Merely creating a subscription never grants Grow
+access. Leave PAYSTACK_LIVE_PLAN_CHANGES_ENABLED=False; do not call the backend
+from a production shell. Existing live checkout and cancellation remain unchanged.
+All scheduling tests use a fake provider; no actual subscription was created.
