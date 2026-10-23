@@ -271,7 +271,7 @@ def reconcile_upgrade_checkout(payment, client):
     from .models import StudyPlanChange
 
     if (payment.mode != "live" or payment.source != "checkout"
-            or not StudyPlanChange.objects.filter(payment=payment, kind="upgrade", user_id=payment.user_id).exists()):
+            or not StudyPlanChange.objects.filter(payment=payment, kind__in=("upgrade", "restart"), user_id=payment.user_id).exists()):
         raise ValueError("A stored LIVE upgrade checkout is required.")
     if payment.status in {"succeeded", "reversed"}:
         return payment
@@ -285,7 +285,7 @@ def _record_checkout_result(user, payment, result, mode):
             locked_user = get_user_model().objects.select_for_update().get(pk=user.pk)
             payment = StudyPayment.objects.select_for_update().get(pk=payment.pk)
             from .models import StudyPlanChange
-            upgrade = StudyPlanChange.objects.filter(payment=payment, kind="upgrade").first() if mode == "live" else None
+            upgrade = StudyPlanChange.objects.filter(payment=payment, kind__in=("upgrade", "restart")).first() if mode == "live" else None
             if not locked_user.is_active and not (mode == "live" and (payment.discarded_at or upgrade)):
                 raise CheckoutNotAllowed("An active account is required.")
             if payment.status == StudyPayment.Status.SUCCEEDED:
@@ -318,6 +318,9 @@ def _record_checkout_result(user, payment, result, mode):
                 })
                 return payment
             if upgrade:
+                if upgrade.kind == "restart":
+                    from .reactivation_service import record_verified_restart
+                    return record_verified_restart(locked_user, payment, result, paid_at, upgrade)
                 from .upgrade_service import record_verified_upgrade
 
                 return record_verified_upgrade(locked_user, payment, result, paid_at, upgrade)
@@ -433,7 +436,7 @@ def live_checkout_page_context(request):
     from .models import StudyPlanChange
     from .plan_changes import OPEN_CHANGE_STATES
     proof = membership_payment(member) if member else None
-    scheduled = StudyPlanChange.objects.filter(user=user, kind="downgrade", state__in=OPEN_CHANGE_STATES).first()
+    scheduled = StudyPlanChange.objects.filter(user=user, kind__in=("downgrade", "resume", "restart"), state__in=OPEN_CHANGE_STATES).first()
     previous = StudyPayment.objects.filter(user=user, mode="live", status="succeeded", discarded_at__isnull=True).exists()
     context.update({
         "can_start_live_checkout": bool(checkout and user.is_active and get_study_tier(user) == StudyTier.FREE
@@ -442,7 +445,7 @@ def live_checkout_page_context(request):
         "pending_live_payment": StudyPayment.objects.filter(
             user=user, mode="live", source="checkout", discarded_at__isnull=True,
         ).exclude(status__in=("succeeded", "reversed")).first(),
-        "can_cancel_live_membership": bool(member and proof and (member.status != "non_renewing" or scheduled)),
+        "can_cancel_live_membership": bool(member and (proof or scheduled) and (member.status != "non_renewing" or scheduled)),
         "live_renewals_cancelled": bool(member and member.status == "non_renewing" and not scheduled),
         "pending_plan_change": scheduled,
     })

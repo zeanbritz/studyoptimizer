@@ -114,6 +114,11 @@ def _retired_from_change(subscription, start, end):
         return change if end > change.effective_at else None
     if change.kind == "downgrade" and change.old_stopped_at and start >= change.effective_at - timedelta(seconds=1):
         return change
+    if change.kind == "restart" and change.old_stopped_at and start >= min(change.from_paid_until, change.requested_at):
+        return change
+    if (change.kind == "resume" and change.cancel_requested and change.old_stopped_at
+            and change.cancel_requested_at and start >= change.cancel_requested_at):
+        return change
     return None
 
 
@@ -241,6 +246,11 @@ def retired_refund_change(refund):
             valid = bool(valid and upgraded and upgraded.user_id == change.user_id and upgraded.mode == "live"
                          and upgraded.status in {"succeeded", "reversed"} and upgraded.verified_at
                          and not upgraded.discarded_at and payment.period_end > change.effective_at)
+        elif change.kind == "restart":
+            valid = valid and payment.period_start >= min(change.from_paid_until, change.requested_at)
+        elif change.kind == "resume":
+            valid = bool(valid and change.cancel_requested and change.cancel_requested_at
+                         and payment.period_start >= change.cancel_requested_at)
     else:
         valid = (change.kind == "downgrade" and change.cancel_requested
                  and payment.paystack_subscription_code == change.to_subscription_code
@@ -267,7 +277,8 @@ def stop_retired_refund_subscription(client, refund):
     from .refund_service import _Attention
     change = retired_refund_change(refund)
     current = StudyMembership.objects.filter(paystack_subscription_code=refund.payment.paystack_subscription_code).first()
-    if current and (current.user_id != change.user_id or current.status not in {"non_renewing", "expired"}):
+    expired_restart = bool(current and change.kind == "restart" and current.paid_until and current.paid_until <= timezone.now())
+    if current and (current.user_id != change.user_id or (current.status not in {"non_renewing", "expired"} and not expired_restart)):
         raise _Attention("retired_subscription_became_current")
     try:
         return stop_change_subscription(client, change, refund.payment.paystack_subscription_code)

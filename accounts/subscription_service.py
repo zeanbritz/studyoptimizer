@@ -8,7 +8,7 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
-from .models import StudyMembership, StudyPayment
+from .models import StudyMembership, StudyPayment, StudyPlanChange
 from .payment_service import CheckoutNotAllowed
 from .paystack_client import PaystackError, PaystackTestClient, PaystackLiveClient
 
@@ -80,10 +80,13 @@ def _find_subscription(client, membership, payment):
             "Paystack has not returned one matching subscription yet. "
             "Try cancellation again shortly; if this continues, contact support."
         )
-    if mode == "live" and StudyPayment.objects.filter(
-        user_id=payment.user_id, mode="live", source="checkout",
-        paystack_plan_code=payment.paystack_plan_code, discarded_at__isnull=False,
-    ).exists():
+    needs_exact_link = mode == "live" and (
+        StudyPayment.objects.filter(
+            user_id=payment.user_id, mode="live", source="checkout",
+            paystack_plan_code=payment.paystack_plan_code, discarded_at__isnull=False,
+        ).exists() or StudyPlanChange.objects.filter(payment=payment, kind="restart").exists()
+    )
+    if needs_exact_link:
         from .discarded_checkouts import invoice_transaction_ids
         canonical = client.fetch_subscription(matches[0]["subscription_code"])
         if (not _matches_subscription(canonical, customer_code, payment.paystack_plan_code, mode)
@@ -106,6 +109,12 @@ def _cancel_membership(*, user, client, mode, allow_inactive=False):
     if not user or not user.is_authenticated or (not user.is_active and not allow_inactive) or not user.pk:
         raise CheckoutNotAllowed("An active account is required.")
     if mode == "live":
+        from .reactivation_service import request_reactivation_cancellation, process_reactivation_change
+        reactivation = request_reactivation_cancellation(user=user)
+        if reactivation:
+            reactivation = process_reactivation_change(reactivation.pk)
+            if not reactivation.cancelled_at:
+                raise PaystackError("Renewal cancellation is still being confirmed. Check Profile before assuming billing has stopped.")
         from .downgrade_cancellation import request_schedule_cancellation
         from .downgrade_service import process_downgrade_change
         change = request_schedule_cancellation(user=user, restore_current=False, allow_inactive=allow_inactive)

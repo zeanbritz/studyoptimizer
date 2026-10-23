@@ -57,23 +57,20 @@ def plan_controls_context(request):
     if StudyRefund.objects.filter(user=user, mode="live").exclude(status__in=("completed", "ineligible")).exists():
         context["plan_change_wait_for_refund"] = True
         return context
-    if pending and not (pending.kind == "upgrade" and pending.state == "checkout" and not pending.cancel_requested):
+    if pending and not (pending.kind in {"upgrade", "restart"} and pending.state == "checkout" and not pending.cancel_requested):
         return context
     for tier in ("free", "grow", "bloom"):
-        if pending and tier != "bloom":
+        if pending and tier != pending.to_tier:
             continue
         try:
             quote = quote_plan_change(user=user, tier=tier)
         except CheckoutNotAllowed:
             continue
-        # These routes intentionally do not bypass the existing guards for an
-        # expired paid account or silently enable a same-tier stopped subscription.
-        if quote.kind not in {"upgrade", "downgrade"}:
-            context["paid_restart_not_available"] = True
-            continue
         context["plan_actions"][tier] = {
             "url": reverse("change_live_plan", args=[tier]),
-            "label": ("Continue Bloom checkout" if pending else
+            "label": (f"Continue {tier.title()} checkout" if pending else
+                      f"Restart {tier.title()}" if quote.kind == "restart" else
+                      f"Resume {tier.title()} renewals" if quote.kind == "resume" else
                       "Upgrade to Bloom" if quote.kind == "upgrade" else
                       "Switch to Free at period end" if tier == "free" else "Switch to Grow at renewal"),
         }

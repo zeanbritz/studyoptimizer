@@ -418,7 +418,7 @@
                     <summary class="header-link">Cancel plan</summary>
                     <form method="post" action="{% url 'cancel_live_plan' %}">
                         {% csrf_token %}
-                        <label class="cancel-confirmation"><input type="checkbox" name="confirm_cancel" value="yes" required><span>Stop future renewals for my {{ membership.get_tier_display }} plan.</span></label>
+                        <label class="cancel-confirmation"><input type="checkbox" name="confirm_cancel" value="yes" required><span>Stop future renewals for my {{ membership.get_tier_display }} plan{% if open_customer_plan_change %}, including any pending renewal resumption or scheduled replacement. Discard an unpaid restart checkout{% endif %}.</span></label>
                         <button type="submit" class="dashboard-link">Confirm cancellation</button>
                     </form>
                 </details>
@@ -437,7 +437,7 @@
                 <p class="notice">A plan change is already being handled. See its status above before starting another payment.</p>
                 {% elif plan_actions %}
                 <p class="notice">Choose a plan card to review the amount, billing date and effect on your subjects before confirming.</p>
-                {% elif not can_start_live_checkout and not paid_restart_not_available %}
+                {% elif not can_start_live_checkout %}
                 <p class="notice">You cannot open a replacement subscription here. Please contact support to change or restart an existing plan, so you are not billed twice.</p>
                 {% endif %}
                 <p class="notice"><a href="{% url 'billing_policy' %}">Refund and cancellation policy</a>. Your card details are not stored by StudiGarden.</p>

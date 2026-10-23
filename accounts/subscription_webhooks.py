@@ -14,7 +14,7 @@ from django.db.models import Q
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
-from .models import PaystackWebhookReceipt, StudyMembership, StudyPayment
+from .models import PaystackWebhookReceipt, StudyMembership, StudyPayment, StudyPlanChange
 from .paystack_client import PaystackError, PaystackTestClient, PaystackLiveClient
 from .subscription_service import RENEWING_STATUSES, STOPPED_STATUSES, _matches_subscription
 
@@ -149,6 +149,9 @@ def _proof(membership, subscription):
     payment = membership_payment(membership, subscription.plan_code)
     if payment is None:
         raise _Retry("checkout_not_verified")
+    restart = StudyPlanChange.objects.filter(payment=payment, kind="restart").first() if subscription.mode == "live" else None
+    if restart and subscription.code == restart.from_subscription_code:
+        raise _Ignore("retired_restart_subscription")
     if subscription.mode == "live" and not membership.paystack_subscription_code and StudyPayment.objects.filter(
         user_id=membership.user_id, mode="live", source="checkout",
         paystack_plan_code=subscription.plan_code, discarded_at__isnull=False,
@@ -156,6 +159,8 @@ def _proof(membership, subscription):
         # A delayed subscription.create from a discarded same-tier checkout
         # must not be attached to the replacement's membership.
         raise _Retry("awaiting_exact_checkout_subscription_link")
+    if restart and not membership.paystack_subscription_code and payment.paystack_transaction_id not in subscription.invoice_transaction_ids:
+        raise _Retry("awaiting_exact_restart_subscription_link")
     if not membership.paystack_subscription_code and (
         subscription.created_at is None
         or subscription.created_at < payment.created_at - timedelta(minutes=5)

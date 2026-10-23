@@ -141,6 +141,11 @@ def _apply_invoice(receipt_id, member, subscription, initial, start, end, succes
         if not _due(receipt):
             return receipt
         if mode == "live":
+            if StudyPlanChange.objects.filter(
+                user=user, kind="resume", from_subscription_code=subscription.code,
+                state__in=("queued", "submitting", "attention"),
+            ).exists():
+                raise _Retry("resume_confirmation_pending")
             from .plan_change_payments import _retired_from_change
             if _retired_from_change(subscription, start, end):
                 # Another worker may have retired this renewal after the first
@@ -247,7 +252,7 @@ def _charge_receipt(receipt):
         verify = verify_live_checkout if receipt.mode == "live" else verify_test_checkout
         if receipt.mode == "live" and payment.discarded_at:
             payment = reconcile_discarded_checkout(payment, PaystackLiveClient())
-        elif receipt.mode == "live" and StudyPlanChange.objects.filter(payment=payment, kind="upgrade").exists():
+        elif receipt.mode == "live" and StudyPlanChange.objects.filter(payment=payment, kind__in=("upgrade", "restart")).exists():
             payment = reconcile_upgrade_checkout(payment, PaystackLiveClient())
         else:
             payment = verify(user=payment.user, reference=reference)

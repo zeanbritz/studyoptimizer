@@ -262,3 +262,38 @@ paid restart after expiry. Those choices cannot bypass the old-subscription and
 payment-history guards. Finish their backend/customer controls and verify real
 provider response shapes/end-to-end behaviour before rollout. Automated tests use
 fake providers and disposable databases, not actual cards or subscriptions.
+
+## Resume and restart controls (no new migration)
+
+Standalone resumption and expired-plan restart are now connected to the same
+signed consent routes. This supersedes the unsupported-resume/restart note above.
+Keep PAYSTACK_LIVE_PLAN_CHANGES_ENABLED=False until provider-shape/end-to-end
+verification and an explicitly approved rollout. No keys/flags/deployments were
+changed, and no real provider account was mutated during implementation.
+
+Resumption records a durable queued instruction for the SAME subscription. It
+adds no payment or paid time. The worker confirms the exact price and next debit
+before/after enable; a timeout is GET-reconciled, never a new subscription create.
+Expired dates, refunded funding and ambiguous ownership fail closed. Pending
+renewal invoices wait for the accepted resume to reconcile. Accepted work may
+finish when NEW switching/sales is paused; global live billing must remain on.
+
+Restart requires canonical history/ownership, an expired funded period and no
+unfinished payment/refund/change. Refunded history requires its completed refund
+and is ownership proof ONLY, never entitlement or a fresh refund guarantee. The
+previous subscription is confirmed stopped durably before opening checkout with
+one unique reference. New paid access comes only from verified full-price payment,
+with absolute new-month dates. Generic Free checkout guards were not weakened.
+New same-tier subscription linkage requires an exact canonical invoice/TX link;
+delayed metadata cannot attach the retired subscription to the new membership.
+
+Cancel plan retires pending resume/restart instructions under the same user lock,
+stops the previous renewal, and discards an unpaid restart's ledger reference.
+A late payment on that reference is refunded separately, not applied as access.
+Retired old renewal charges enter recovery without cancelling the chosen new plan.
+Inactive/beta/conflicting accounts never gain access from a restart payment.
+Profile and billing copy distinguish accepted requests, confirmation and paid time.
+
+Tests still use fake provider responses/disposable databases. The remaining
+rollout check must verify actual provider response shapes and the full enabled
+customer flow before these new controls are advertised or enabled.

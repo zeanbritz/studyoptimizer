@@ -183,9 +183,9 @@ class PlanControlsTests(TestCase):
         self.assertEqual(self.get(self.url()).status_code, 302)
         self.f.verify.assert_not_called()
 
-    def test_expired_or_same_plan_resume_are_not_sent_to_unimplemented_checkout(self):
+    def test_expired_plan_only_shows_confirmation_without_initializing_checkout(self):
         StudyMembership.objects.filter(pk=self.member.pk).update(paid_until=timezone.now() - timedelta(days=1), status="expired")
-        self.assertEqual(self.get(self.url()).status_code, 302)
+        self.assertEqual(self.get(self.url()).status_code, 200)
         self.assertFalse(StudyPlanChange.objects.exists())
         self.f.initialize.assert_not_called()
 

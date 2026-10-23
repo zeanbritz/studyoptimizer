@@ -91,7 +91,9 @@
     {% endfor %}
 </section>
 {% if pending_live_payment %}
-{% if open_customer_plan_change.kind == 'upgrade' %}
+{% if open_customer_plan_change.kind == 'restart' %}
+<p class="plan-checkout-notice">Continue the same {{ pending_live_payment.get_tier_display }} restart checkout from its card. Do not pay through older links. If already paid, <a href="{% url 'live_checkout_return' %}?reference={{ pending_live_payment.reference|urlencode }}">Check restart payment status</a>. Cancelling this request from Profile retires its unpaid checkout; a later verified payment is handled separately for refund.</p>
+{% elif open_customer_plan_change.kind == 'upgrade' %}
 <p class="plan-checkout-notice">Your unfinished Bloom upgrade can be continued from its plan card. Existing paid access is unchanged until payment is verified. If you already paid, <a href="{% url 'live_checkout_return' %}?reference={{ pending_live_payment.reference|urlencode }}">Check upgrade payment status</a>. Do not pay through an older link.</p>
 {% else %}
 <p class="plan-checkout-notice">Your unfinished {{ pending_live_payment.get_tier_display }} checkout will be replaced when you choose a plan. Do not pay through an old link. If an old checkout is paid later, its payment will be handled separately for refund and its renewals stopped once confirmed. If you already paid, <a href="{% url 'live_checkout_return' %}?reference={{ pending_live_payment.reference|urlencode }}">Check payment status</a>.</p>

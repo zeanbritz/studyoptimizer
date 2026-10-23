@@ -40,7 +40,7 @@ def quote_snapshot(user, quote):
         "from": quote.from_tier, "to": quote.to_tier,
         "now": quote.amount_due_now_cents, "monthly": quote.next_monthly_amount_cents,
         # Immediate upgrades use the actual verified payment time, not a GET time.
-        "effective": quote.effective_at.isoformat() if quote.kind == "downgrade" and quote.effective_at > timezone.now() else None,
+        "effective": quote.effective_at.isoformat() if quote.kind in {"downgrade", "resume"} and quote.effective_at > timezone.now() else None,
         "membership": _membership_fingerprint(user),
     }
 

@@ -3,26 +3,42 @@
     <h2 id="plan-change-title">Plan changes</h2>
     {% with change=plan_change_status %}
     {% if change %}
-        <p class="notice" role="status">{{ change.get_from_tier_display }} to {{ change.get_to_tier_display }} — {{ change.get_state_display }}</p>
+        <p class="notice" role="status">{% if change.kind == 'resume' %}Resume {{ change.get_to_tier_display }}{% elif change.kind == 'restart' %}Restart {{ change.get_to_tier_display }}{% else %}{{ change.get_from_tier_display }} to {{ change.get_to_tier_display }}{% endif %} — {% if change.state == 'checkout' %}Awaiting payment{% else %}{{ change.get_state_display }}{% endif %}</p>
         {% if change.state == 'attention' %}
         <p class="plan-description">We could not safely confirm this billing change. Please <a href="{% url 'contact' %}">contact support</a>. Do not open another paid subscription. Your paid-through date has not been shortened by this request.</p>
         {% elif change.cancel_requested and not change.cancelled_at %}
-        <p class="plan-description">Your cancellation request is saved. {% if change.restore_current %}We are confirming that the scheduled replacement is stopped and the previous {{ change.get_from_tier_display }} renewal can safely continue.{% else %}We are confirming that both the previous and scheduled replacement subscriptions will not renew.{% endif %} Billing changes are not yet confirmed. No further request is needed.</p>
+        <p class="plan-description">Your cancellation request is saved. {% if change.kind == 'resume' %}We are confirming that the existing subscription will not renew.{% elif change.kind == 'restart' %}We are confirming that the previous subscription is stopped and retiring the unpaid restart checkout. A later verified payment is handled separately for refund.{% elif change.restore_current %}We are confirming that the scheduled replacement is stopped and the previous {{ change.get_from_tier_display }} renewal can safely continue.{% else %}We are confirming that both the previous and scheduled replacement subscriptions will not renew.{% endif %} Billing changes are not yet confirmed. No further request is needed.</p>
         {% elif change.state == 'checkout' %}
+        {% if change.kind == 'restart' %}
+        <p class="plan-description">Your restart payment has not been verified. Use the {{ change.get_to_tier_display }} card below to continue the same checkout, or check payment status if you already paid. Historical payments do not grant another paid month.</p>
+        {% else %}
         <p class="plan-description">Your Bloom upgrade has not been verified as paid. Existing paid access is unchanged. Use the Bloom card below to continue this same checkout, or check the payment if you already paid.</p>
+        {% endif %}
         {% elif change.state == 'queued' or change.state == 'submitting' %}
+        {% if change.kind == 'resume' or change.kind == 'restart' %}
+        <p class="plan-description">Your billing request is saved and awaiting Paystack confirmation. {% if change.cancel_requested %}We are stopping the matching previous renewal and retiring any unpaid restart checkout.{% else %}Resuming the existing renewal does not charge or grant an extra month now. Its price and next debit date must be confirmed.{% endif %}</p>
+        {% else %}
         <p class="plan-description">Your request is saved; renewal changes are awaiting Paystack confirmation. Keep {{ change.get_from_tier_display }} until {{ change.from_paid_until|date:"j F Y, H:i T" }}. No payment is due now for this downgrade.</p>
+        {% endif %}
         {% elif change.state == 'scheduled' %}
         <p class="plan-description">The previous renewal is stopped. Keep {{ change.get_from_tier_display }} until {{ change.effective_at|date:"j F Y, H:i T" }}. {% if change.to_tier == 'free' %}Free applies after paid access ends; there is no new debit.{% else %}Grow is scheduled at R35/month from that date, until cancelled. Lower paid access requires a verified payment.{% endif %}</p>
         {% elif change.state == 'settling' %}
         <p class="plan-description">Your payment was verified. We are confirming that the replaced subscription's renewals are stopped{% if change.kind == 'upgrade' %} and checking the current Grow payment for its separate credit{% endif %}. Do not start another subscription.</p>
         {% elif change.state == 'cancelled' %}
+        {% if change.kind == 'resume' or change.kind == 'restart' %}
+        <p class="plan-description">This resumption or restart request is closed. {% if change.cancelled_at %}The matching previous renewal is confirmed stopped. Already-paid time is preserved.{% else %}Check your current access and any separate payment recovery status below.{% endif %} Any payment later verified on a discarded restart checkout is handled separately for refund.</p>
+        {% else %}
         <p class="plan-description">{% if change.cancelled_at %}{% if change.restore_current %}The scheduled change was cancelled and the previous {{ change.get_from_tier_display }} monthly renewal was confirmed resumed.{% else %}The scheduled change was cancelled and future renewals on both matching subscriptions were confirmed stopped. Already-paid access is preserved.{% endif %}{% else %}This change was cancelled. Check your current membership and any refund progress below; cancellation of this change alone is not confirmation that all billing has stopped.{% endif %}</p>
+        {% endif %}
         {% elif change.state == 'applied' %}
+        {% if change.kind == 'resume' %}
+        <p class="plan-description">Your existing {{ change.get_to_tier_display }} renewal was confirmed resumed. The paid-through date was not extended by resumption; another month requires a verified renewal payment.</p>
+        {% else %}
         <p class="plan-description">This plan change has taken effect. Your current access is shown above. {% if change.kind == 'upgrade' %}Any Grow credit is shown separately below; applied does not mean the bank has credited your refund.{% endif %}</p>
         {% endif %}
+        {% endif %}
         {% if change.payment and change.state == 'checkout' %}
-        <p class="notice"><a href="{% url 'live_checkout_return' %}?reference={{ change.payment.reference|urlencode }}">Check upgrade payment status</a></p>
+        <p class="notice"><a href="{% url 'live_checkout_return' %}?reference={{ change.payment.reference|urlencode }}">Check {% if change.kind == 'restart' %}restart{% else %}upgrade{% endif %} payment status</a></p>
         {% endif %}
     {% elif plan_switching_enabled %}
         <p class="plan-description">Choose a plan below to review its price and timing before confirming. An upgrade charges the new plan now; a downgrade starts after your paid period ends.</p>
@@ -37,7 +53,6 @@
     </p>
     {% endif %}
     {% if plan_change_wait_for_refund %}<p class="notice">A refund is still being handled. New plan changes are paused until it is resolved; stopping future billing remains available.</p>{% endif %}
-    {% if paid_restart_not_available %}<p class="notice">Paid restart and resuming a cancelled plan are not available in these controls yet. You can still cancel future billing or <a href="{% url 'contact' %}">contact support</a>.</p>{% endif %}
 </section>
 {% endif %}
 {% for recovery in plan_switch_refunds %}

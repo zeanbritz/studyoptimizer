@@ -20,6 +20,7 @@ from .plan_changes import (
 from .plan_controls import can_keep_current
 from .plans import STUDY_PLANS
 from .upgrade_service import prepare_live_upgrade
+from .reactivation_service import prepare_live_restart, request_live_resume
 
 
 SALT = "studigarden.plan-confirmation.v1"
@@ -46,22 +47,24 @@ def change_live_plan(request, tier):
         raise Http404
     try:
         quote = quote_plan_change(user=request.user, tier=tier)
-        if quote.kind not in {"upgrade", "downgrade"}:
-            raise CheckoutNotAllowed("Paid restart and same-plan resumption are not available here yet. Your current access is unchanged.")
         pending = StudyPlanChange.objects.filter(user=request.user, state__in=OPEN_CHANGE_STATES).first()
-        if pending and not (quote.kind == "upgrade" and pending.kind == "upgrade" and pending.state == "checkout" and not pending.cancel_requested):
+        if pending and not (quote.kind in {"upgrade", "restart"} and pending.kind == quote.kind and pending.to_tier == tier and pending.state == "checkout" and not pending.cancel_requested):
             raise CheckoutNotAllowed("A plan change is already being handled. Check its status in Profile first.")
         snapshot = quote_snapshot(request.user, quote)
         if request.method == "POST":
             saved = _confirmation(request, snapshot)
-            if quote.kind == "upgrade":
-                payment = prepare_live_upgrade(user=request.user, expected_quote=saved)
+            if quote.kind in {"upgrade", "restart"}:
+                payment = (prepare_live_upgrade(user=request.user, expected_quote=saved) if quote.kind == "upgrade" else
+                           prepare_live_restart(user=request.user, tier=tier, expected_quote=saved))
                 if payment.status == StudyPayment.Status.SUCCEEDED:
-                    messages.info(request, "The upgrade payment is already verified. Check its progress in Profile; no new checkout was opened.")
+                    messages.info(request, "This payment is already verified. Check its progress in Profile; no new checkout was opened.")
                 else:
                     response = redirect(payment.authorization_url)
                     response["Referrer-Policy"] = "no-referrer"
                     return response
+            elif quote.kind == "resume":
+                request_live_resume(user=request.user, tier=tier, expected_quote=saved)
+                messages.info(request, "Your renewal-resumption request is saved. We are confirming the existing price and next debit date. No additional paid month has been granted or charged by this request.")
             else:
                 request_live_downgrade(user=request.user, tier=tier, expected_quote=saved)
                 messages.info(request, "Your plan-change request is saved. Profile will show when the renewal change is confirmed. Your already-paid access is unchanged.")

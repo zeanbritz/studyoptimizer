@@ -5,7 +5,8 @@ from datetime import timedelta
 from .models import StudyPayment, StudyPlanChange
 
 
-def membership_payment(member, plan_code=None):
+def membership_payment(member, plan_code=None, *, allow_refunded_history=False):
+    statuses = ("succeeded", "reversed") if allow_refunded_history else ("succeeded",)
     if member.payment_mode == "live" and member.paystack_subscription_code:
         change = StudyPlanChange.objects.filter(
             user_id=member.user_id, kind="downgrade", from_tier="bloom", to_tier=member.tier,
@@ -16,7 +17,7 @@ def membership_payment(member, plan_code=None):
             payment = change.payment
             if (payment.user_id == member.user_id and payment.mode == "live"
                     and payment.tier == change.to_tier and payment.plan == "monthly" and payment.source == "renewal"
-                    and payment.status == "succeeded" and payment.verified_at and payment.paystack_transaction_id
+                    and payment.status in statuses and payment.verified_at and payment.paystack_transaction_id
                     and not payment.discarded_at and payment.paystack_subscription_code == change.to_subscription_code
                     and payment.paystack_plan_code == change.to_plan_code
                     and payment.expected_amount_cents == change.monthly_amount_cents
@@ -29,7 +30,7 @@ def membership_payment(member, plan_code=None):
             return None
     payments = StudyPayment.objects.filter(
         user_id=member.user_id, mode=member.payment_mode, tier=member.tier, plan="monthly", source="checkout",
-        status="succeeded", verified_at__isnull=False, discarded_at__isnull=True,
+        status__in=statuses, verified_at__isnull=False, discarded_at__isnull=True,
     ).exclude(paystack_plan_code="")
     if plan_code is not None:
         payments = payments.filter(paystack_plan_code=plan_code)
