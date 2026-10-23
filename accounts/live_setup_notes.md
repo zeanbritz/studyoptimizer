@@ -141,3 +141,19 @@ the same existing no-blind-retry rules. Exceptional cases are visible in Profile
 the read-only refund admin (filter by reason/status), and worker logs; there is
 no claim of zero manual intervention. Keep the live webhook and billing worker
 running. No extra scheduled service is required.
+
+# Plan changes: foundation only, not customer-enabled yet
+
+`PAYSTACK_LIVE_PLAN_CHANGES_ENABLED` defaults to `False`. Leave it disabled.
+The saved change records and quotes do not start a checkout, modify a provider
+subscription, refund money, or change membership access. Customer routes and the
+worker integration must be implemented and tested before this flag is enabled.
+
+Agreed policy: an upgrade charges the full new monthly price and starts its new
+billing period after verified payment; refund the lower plan's verified payment
+funding the current billing period, once. A downgrade keeps the already-paid
+higher access until its paid-through date, then bills the lower monthly amount.
+Free has no future debit. Dates are billing periods, not calendar-month resets.
+The old subscription must be stopped safely, and ambiguous financial requests
+must be reconciled before any further submission. Do not guess ownership or
+blindly repeat a subscription-create or refund POST after a timeout.

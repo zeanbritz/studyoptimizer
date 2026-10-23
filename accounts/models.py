@@ -234,12 +234,91 @@ class StudyPayment(models.Model):
         return f"{self.reference} ({self.get_status_display()})"
 
 
+class StudyPlanChange(models.Model):
+    """Durable, user-authorised billing changes; no card tokens are stored here."""
+
+    class Kind(models.TextChoices):
+        UPGRADE = "upgrade", "Upgrade now"
+        DOWNGRADE = "downgrade", "Downgrade at renewal"
+        RESTART = "restart", "Restart paid access"
+        RESUME = "resume", "Resume current renewals"
+
+    class State(models.TextChoices):
+        CHECKOUT = "checkout", "Awaiting upgrade payment"
+        QUEUED = "queued", "Preparing change"
+        SUBMITTING = "submitting", "Confirming new subscription"
+        SCHEDULED = "scheduled", "Scheduled for renewal"
+        SETTLING = "settling", "Stopping previous renewals"
+        APPLIED = "applied", "Applied"
+        CANCELLED = "cancelled", "Change cancelled"
+        ATTENTION = "attention", "Needs attention"
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="study_plan_changes")
+    kind = models.CharField(max_length=10, choices=Kind.choices)
+    from_tier = models.CharField(max_length=10, choices=PAID_TIER_CHOICES)
+    to_tier = models.CharField(max_length=10, choices=StudyTier.choices)
+    state = models.CharField(max_length=16, choices=State.choices, default=State.QUEUED)
+    from_subscription_code = models.CharField(max_length=100)
+    from_plan_code = models.CharField(max_length=100)
+    to_plan_code = models.CharField(max_length=100, blank=True)
+    amount_due_now_cents = models.PositiveIntegerField(default=0)
+    monthly_amount_cents = models.PositiveIntegerField(default=0)
+    currency = models.CharField(max_length=3, default="ZAR")
+    customer_code = models.CharField(max_length=100)
+    billing_email = models.EmailField()
+    from_paid_until = models.DateTimeField()
+    effective_at = models.DateTimeField()
+    payment = models.OneToOneField(StudyPayment, on_delete=models.PROTECT, null=True, blank=True, related_name="plan_change")
+    previous_payment = models.ForeignKey(StudyPayment, on_delete=models.PROTECT, related_name="replacement_changes")
+    to_subscription_code = models.CharField(max_length=100, null=True, blank=True, unique=True)
+    subscription_baseline = models.JSONField(default=list, blank=True)
+    subscription_posted_at = models.DateTimeField(null=True, blank=True)
+    old_stopped_at = models.DateTimeField(null=True, blank=True)
+    cancel_requested = models.BooleanField(default=False)
+    restore_current = models.BooleanField(default=False)
+    requested_at = models.DateTimeField(auto_now_add=True)
+    applied_at = models.DateTimeField(null=True, blank=True)
+    attempt_count = models.PositiveIntegerField(default=0)
+    next_attempt_at = models.DateTimeField(null=True, blank=True)
+    last_result = models.CharField(max_length=64, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-requested_at", "-pk"]
+        constraints = [
+            models.UniqueConstraint(fields=["user"], condition=models.Q(state__in=[
+                "checkout", "queued", "submitting", "scheduled", "settling", "attention",
+            ]), name="study_plan_change_one_open"),
+            models.CheckConstraint(condition=(
+                models.Q(kind="upgrade", from_tier="grow", to_tier="bloom")
+                | models.Q(kind="downgrade", from_tier="bloom", to_tier__in=["grow", "free"])
+                | models.Q(kind="downgrade", from_tier="grow", to_tier="free")
+                | models.Q(kind="restart", from_tier__in=["grow", "bloom"], to_tier__in=["grow", "bloom"])
+                | models.Q(kind="resume", from_tier="grow", to_tier="grow")
+                | models.Q(kind="resume", from_tier="bloom", to_tier="bloom")
+            ), name="study_plan_change_valid_direction"),
+            models.CheckConstraint(condition=(
+                models.Q(to_tier="free", to_plan_code="", monthly_amount_cents=0)
+                | (models.Q(to_tier__in=["grow", "bloom"], monthly_amount_cents__gt=0)
+                   & ~models.Q(to_plan_code=""))
+            ) & models.Q(currency="ZAR"), name="study_plan_change_price_snapshot"),
+            models.CheckConstraint(condition=(
+                models.Q(kind__in=["upgrade", "restart"], amount_due_now_cents=models.F("monthly_amount_cents"))
+                | models.Q(kind__in=["downgrade", "resume"], amount_due_now_cents=0)
+            ), name="study_plan_change_initial_charge"),
+        ]
+
+    def __str__(self):
+        return f"Plan change {self.pk}: {self.get_state_display()}"
+
+
 class StudyRefund(models.Model):
     """Durable refunds; discarded checkouts do not consume the purchase guarantee."""
 
     class Reason(models.TextChoices):
         FIRST_PAYMENT = "first_payment", "7-day first-payment guarantee"
         DISCARDED_CHECKOUT = "discarded_checkout", "Payment on a discarded checkout"
+        UPGRADE = "upgrade", "Lower-plan refund after upgrade"
 
     class Status(models.TextChoices):
         REQUESTED = "requested", "Checking eligibility"
@@ -251,7 +330,7 @@ class StudyRefund(models.Model):
         ATTENTION = "attention", "Refund needs attention"
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="study_refunds")
-    payment = models.OneToOneField(StudyPayment, on_delete=models.PROTECT, related_name="refund_request")
+    payment = models.ForeignKey(StudyPayment, on_delete=models.PROTECT, related_name="refund_requests")
     reason = models.CharField(max_length=20, choices=Reason.choices, default=Reason.FIRST_PAYMENT)
     mode = models.CharField(max_length=4, choices=StudyPayment.Mode.choices, default=StudyPayment.Mode.LIVE)
     status = models.CharField(max_length=16, choices=Status.choices, default=Status.REQUESTED)
@@ -277,6 +356,8 @@ class StudyRefund(models.Model):
                 condition=models.Q(paystack_refund_id__isnull=False), name="study_refund_provider_once"),
             models.UniqueConstraint(fields=["user"], condition=models.Q(reason="first_payment"),
                 name="study_refund_first_guarantee_once"),
+            models.UniqueConstraint(fields=["payment"], condition=~models.Q(status="ineligible"),
+                name="study_refund_one_financial_request"),
         ]
 
     def __str__(self):

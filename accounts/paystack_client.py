@@ -156,6 +156,17 @@ class PaystackTestClient:
             allow_empty_data=True,
         )
 
+    def enable_subscription(self, code, token):
+        return self._request(
+            "POST", "/subscription/enable", {"code": code, "token": token}, allow_empty_data=True,
+        )
+
+    def create_subscription(self, *, customer_code, plan_code, authorization_code, start_date):
+        return self._request("POST", "/subscription", {
+            "customer": customer_code, "plan": plan_code,
+            "authorization": authorization_code, "start_date": start_date.isoformat(),
+        })
+
 
 class PaystackLiveClient(PaystackTestClient):
     mode = "live"

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import BetaInvite, PaystackWebhookReceipt, StudyRefund
+from .models import BetaInvite, PaystackWebhookReceipt, StudyPlanChange, StudyRefund
 
 
 @admin.register(BetaInvite)
@@ -91,3 +91,12 @@ class StudyRefundAdmin(PaystackWebhookReceiptAdmin):
     readonly_fields = tuple(field.name for field in StudyRefund._meta.fields)
     fields = readonly_fields
     list_select_related = ("user", "payment")
+
+
+@admin.register(StudyPlanChange)
+class StudyPlanChangeAdmin(PaystackWebhookReceiptAdmin):
+    list_display = ("id", "user", "kind", "from_tier", "to_tier", "state", "effective_at", "last_result")
+    list_filter = ("kind", "state", "from_tier", "to_tier")
+    readonly_fields = tuple(field.name for field in StudyPlanChange._meta.fields)
+    fields = readonly_fields
+    list_select_related = ("user", "payment", "previous_payment")
