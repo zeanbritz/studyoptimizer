@@ -80,6 +80,17 @@ def _find_subscription(client, membership, payment):
             "Paystack has not returned one matching subscription yet. "
             "Try cancellation again shortly; if this continues, contact support."
         )
+    if mode == "live" and StudyPayment.objects.filter(
+        user_id=payment.user_id, mode="live", source="checkout",
+        paystack_plan_code=payment.paystack_plan_code, discarded_at__isnull=False,
+    ).exists():
+        from .discarded_checkouts import invoice_transaction_ids
+        canonical = client.fetch_subscription(matches[0]["subscription_code"])
+        if (not _matches_subscription(canonical, customer_code, payment.paystack_plan_code, mode)
+                or canonical.get("subscription_code") != matches[0]["subscription_code"]
+                or payment.paystack_transaction_id not in invoice_transaction_ids(canonical)):
+            raise PaystackError("The current subscription could not be distinguished safely from a replaced checkout. Nothing was cancelled.")
+        return canonical
     return matches[0]
 
 
@@ -111,6 +122,7 @@ def _cancel_membership(*, user, client, mode, allow_inactive=False):
                 user=locked_user, tier=membership.tier, mode=mode,
                 plan=StudyMembership.Plan.MONTHLY, source=StudyPayment.Source.CHECKOUT,
                 status=StudyPayment.Status.SUCCEEDED, verified_at__isnull=False,
+                discarded_at__isnull=True,
             ).exclude(paystack_plan_code="").first()
             if payment is None:
                 raise CheckoutNotAllowed("Verify the payment before cancelling its subscription.")

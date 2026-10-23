@@ -86,8 +86,8 @@ class PaystackWebhookReceiptAdmin(admin.ModelAdmin):
 
 @admin.register(StudyRefund)
 class StudyRefundAdmin(PaystackWebhookReceiptAdmin):
-    list_display = ("id", "user", "payment", "status", "amount_cents", "requested_at", "last_result")
-    list_filter = ("mode", "status")
+    list_display = ("id", "user", "payment", "reason", "status", "amount_cents", "requested_at", "last_result")
+    list_filter = ("mode", "reason", "status")
     readonly_fields = tuple(field.name for field in StudyRefund._meta.fields)
     fields = readonly_fields
     list_select_related = ("user", "payment")

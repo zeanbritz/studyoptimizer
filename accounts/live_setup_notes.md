@@ -113,3 +113,31 @@ legal/operator details and review all public terms before launch.
 The other draft terms still need their operator/account/dispute details completed
 and reviewed. No live key, real refund, deployment, or external setting was used
 while implementing/testing this feature.
+
+## Replacing an unfinished checkout
+
+Apply migration 0017 before starting this version. Profile and Pricing share one
+card template and stylesheet. Their POST forms identify the unfinished checkout
+the customer saw. Choosing a plan reconciles that reference first, then marks
+an unpaid attempt discarded and opens a new reference. In-flight or unverifiable
+payments remain protected; stale forms/double clicks do not discard the new
+replacement. Never delete the old payment records or assume their provider links
+have been voided.
+
+A later verified charge on a discarded reference creates a separate durable
+StudyRefund with reason discarded_checkout. The existing live billing worker
+stops only the proven old subscription and submits its full refund. It never
+applies the discarded charge to membership, changes the chosen plan, or consumes
+the account's once-only first-payment guarantee. This recovery continues even
+when new checkout or new voluntary refund requests are paused.
+
+Canonical invoice transaction IDs distinguish same-plan subscriptions. Only when
+no competing checkout for that customer/plan exists may a single canonical
+subscription created near the verified payment time be used. Never guess between
+subscriptions or cancel any subscription currently linked to a membership.
+Ambiguous/provider-unavailable matches retry, then require attention after 24
+hours. Partial refunds, uncertain refund POSTs and bank-detail failures follow
+the same existing no-blind-retry rules. Exceptional cases are visible in Profile,
+the read-only refund admin (filter by reason/status), and worker logs; there is
+no claim of zero manual intervention. Keep the live webhook and billing worker
+running. No extra scheduled service is required.

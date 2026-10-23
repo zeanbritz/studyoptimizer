@@ -7,6 +7,7 @@
     <title>Profile — StudiGarden</title>
     <link rel="stylesheet" href="{% static 'landing/css/footer.css' %}">
     <link rel="stylesheet" href="{% static 'css/brand-logo.css' %}">
+    <link rel="stylesheet" href="{% static 'landing/css/plan_cards.css' %}">
 
     <style>
         :root {
@@ -31,7 +32,7 @@
         a { text-decoration: none; }
 
         .shell {
-            width: min(1080px, calc(100% - 40px));
+            width: min(1180px, calc(100% - 40px));
             margin: 0 auto;
         }
 
@@ -174,6 +175,12 @@
             letter-spacing: -0.6px;
         }
 
+        .plan-card.plan-selection {
+            padding: 0;
+            border: 0;
+            background: transparent;
+        }
+
         .plan-description {
             max-width: 720px;
             margin: 0;
@@ -244,7 +251,7 @@
         }
 
         @media (max-width: 520px) {
-            .shell { width: min(100% - 28px, 1080px); }
+            .shell { width: min(100% - 28px, 1180px); }
             .site-header { align-items: flex-start; flex-direction: column; }
             .intro { padding: 29px 22px; }
             .plan-card { padding: 21px; }
@@ -417,27 +424,14 @@
                 {% endif %}
             </section>
             {% if live_checkout_enabled or pending_live_payment %}
-            <section class="plan-card" aria-labelledby="live-checkout-title">
+            <section class="plan-card plan-selection" aria-labelledby="live-checkout-title">
                 <h2 id="live-checkout-title">Choose your monthly plan</h2>
                 <p class="plan-description">Payments are securely handled by Paystack. Grow is R35/month and Bloom is R90/month. Your selected plan renews automatically each month until cancelled from Profile.</p>
-                {% if can_start_live_checkout %}
-                <div class="checkout-actions">
-                    {% for plan in paid_plans %}
-                    <form method="post" action="{% url 'start_live_checkout' %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="tier" value="{{ plan.tier }}">
-                        <label class="cancel-confirmation"><input type="checkbox" name="confirm_subscription" value="yes" required><span>I agree to R{{ plan.monthly_price|floatformat:0 }} monthly automatic renewal for {{ plan.name }} until I cancel.</span></label>
-                        <button type="submit" class="dashboard-link">Subscribe to {{ plan.name }} — R{{ plan.monthly_price|floatformat:0 }}/month</button>
-                    </form>
-                    {% endfor %}
-                </div>
-                {% elif is_beta_member or user.is_superuser %}
+                {% include 'landing/partials/plan_cards.html' %}
+                {% if is_beta_member or user.is_superuser %}
                 <p class="notice">You already have permanent free access. No payment is needed.</p>
-                {% else %}
+                {% elif not can_start_live_checkout %}
                 <p class="notice">You cannot open a replacement subscription here. Please contact support to change or restart an existing plan, so you are not billed twice.</p>
-                {% endif %}
-                {% if pending_live_payment %}
-                <p class="notice">A {{ pending_live_payment.get_tier_display }} checkout is awaiting confirmation. <a href="{% url 'live_checkout_return' %}?reference={{ pending_live_payment.reference|urlencode }}">Check payment status</a> before making another payment.</p>
                 {% endif %}
                 <p class="notice"><a href="{% url 'billing_policy' %}">Refund and cancellation policy</a>. Your card details are not stored by StudiGarden.</p>
             </section>
@@ -497,6 +491,21 @@
                 {% endif %}
             </section>
             {% endif %}
+
+            {% for recovery in discarded_checkout_refunds %}
+            <section class="plan-card" aria-labelledby="discarded-refund-{{ recovery.pk }}">
+                <h2 id="discarded-refund-{{ recovery.pk }}">Replaced checkout refund</h2>
+                <p class="plan-description">A payment used an old {{ recovery.payment.get_tier_display }} checkout. It does not change your chosen plan or use your 7-day first-payment guarantee.</p>
+                <p class="notice" role="status">{{ recovery.get_status_display }}</p>
+                {% if recovery.status == 'completed' %}
+                <p class="plan-description">Paystack confirmed the refund and the old subscription's renewals are stopped. Your bank may take additional time to show the credit.</p>
+                {% elif recovery.status == 'attention' %}
+                <p class="plan-description">We could not safely finish this automatically. The administrator has been flagged; please <a href="{% url 'contact' %}">contact support</a>. Your chosen plan has not been changed.</p>
+                {% else %}
+                <p class="plan-description">We are confirming the old subscription and returning its payment. No further request is needed. Your chosen plan is unchanged.</p>
+                {% endif %}
+            </section>
+            {% endfor %}
 
             <p class="notice">
                 {% if test_checkout_enabled %}

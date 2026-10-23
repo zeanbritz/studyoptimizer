@@ -43,6 +43,7 @@ class _Subscription:
     customer_id: int | None = None
     latest_invoice: dict | None = None
     mode: str = "test"
+    invoice_transaction_ids: frozenset = frozenset()
 
 
 def _code(value, prefix):
@@ -127,9 +128,11 @@ def _canonical_subscription(client, snapshot):
             created = None
     except (TypeError, ValueError):
         created = None
+    from .discarded_checkouts import invoice_transaction_ids
     return _Subscription(
         response["subscription_code"], customer_code, plan_code, status, created,
         response.get("id"), customer.get("id"), response.get("most_recent_invoice"), mode,
+        frozenset(invoice_transaction_ids(response)) if mode == "live" else frozenset(),
     )
 
 
@@ -146,10 +149,18 @@ def _proof(membership, subscription):
         user_id=membership.user_id, tier=membership.tier, mode=subscription.mode,
         plan=StudyMembership.Plan.MONTHLY, source=StudyPayment.Source.CHECKOUT,
         status=StudyPayment.Status.SUCCEEDED, verified_at__isnull=False,
+        discarded_at__isnull=True,
         paystack_plan_code=subscription.plan_code,
     ).first()
     if payment is None:
         raise _Retry("checkout_not_verified")
+    if subscription.mode == "live" and not membership.paystack_subscription_code and StudyPayment.objects.filter(
+        user_id=membership.user_id, mode="live", source="checkout",
+        paystack_plan_code=subscription.plan_code, discarded_at__isnull=False,
+    ).exists() and payment.paystack_transaction_id not in subscription.invoice_transaction_ids:
+        # A delayed subscription.create from a discarded same-tier checkout
+        # must not be attached to the replacement's membership.
+        raise _Retry("awaiting_exact_checkout_subscription_link")
     if not membership.paystack_subscription_code and (
         subscription.created_at is None
         or subscription.created_at < payment.created_at - timedelta(minutes=5)

@@ -2,6 +2,9 @@
 
 from dataclasses import dataclass
 from decimal import Decimal
+from urllib.parse import urlencode
+
+from django.urls import reverse
 
 from .models import StudyTier
 
@@ -52,3 +55,23 @@ STUDY_PLANS = {
 PAID_STUDY_PLANS = tuple(
     plan for tier, plan in STUDY_PLANS.items() if tier != StudyTier.FREE
 )
+
+
+def plan_selection_context(request):
+    """Use the same cards and selected-plan return links on Pricing and Profile."""
+    cards = []
+    for plan in PAID_STUDY_PLANS:
+        return_url = (
+            f"{reverse('pricing')}?{urlencode({'plan': plan.tier})}"
+            f"#plan-{plan.tier}"
+        )
+        next_query = urlencode({"next": return_url})
+        cards.append({
+            "plan": plan,
+            "signup_url": f"{reverse('register')}?{next_query}",
+            "login_url": f"{reverse('login')}?{next_query}",
+        })
+    selected_tier = request.GET.get("plan", "")
+    if selected_tier not in {plan.tier for plan in PAID_STUDY_PLANS}:
+        selected_tier = ""
+    return {"pricing_cards": cards, "selected_tier": selected_tier}

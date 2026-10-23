@@ -175,10 +175,10 @@ class PaystackLiveClient(PaystackTestClient):
             raise PaystackError("A valid refund identifier is required.")
         return self._request("GET", f"/refund/{refund_id}")
 
-    def create_full_refund(self, transaction_id, amount_cents, note):
+    def create_full_refund(self, transaction_id, amount_cents, note, *, customer_note="StudiGarden 7-day first-payment refund"):
         # Called only by the durable refund outbox after eligibility and renewal
         # cancellation are confirmed. Never automatically repeat this POST.
         return self._request("POST", "/refund", {
             "transaction": transaction_id, "amount": amount_cents, "currency": "ZAR",
-            "merchant_note": note, "customer_note": "StudiGarden 7-day first-payment refund",
+            "merchant_note": note, "customer_note": customer_note,
         })

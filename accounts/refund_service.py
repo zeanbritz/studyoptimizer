@@ -40,18 +40,22 @@ def _first_payment(user_id):
     return StudyPayment.objects.filter(
         user_id=user_id, mode="live", source="checkout", status__in=("succeeded", "reversed"),
         verified_at__isnull=False, paystack_transaction_id__isnull=False,
+        discarded_at__isnull=True,
     ).order_by("created_at", "pk").first()
 
 
 def refund_page_context(request):
     if not request.user.is_authenticated:
         return {}
-    refund = StudyRefund.objects.filter(user=request.user, mode="live").first()
+    refund = StudyRefund.objects.filter(user=request.user, mode="live", reason="first_payment").first()
     enabled = refunds_enabled() and request.is_secure() and request.get_host().lower() == "studigarden.com"
     payment = _first_payment(request.user.pk) if enabled and not refund else None
     return {
         "refund_request": refund,
         "can_request_refund": bool(payment and payment.status == "succeeded"),
+        "discarded_checkout_refunds": StudyRefund.objects.filter(
+            user=request.user, mode="live", reason="discarded_checkout",
+        ).select_related("payment"),
     }
 
 
@@ -65,7 +69,7 @@ def request_first_payment_refund(user):
         locked = get_user_model().objects.select_for_update().get(pk=user.pk)
         if not locked.is_active:
             raise RefundNotAllowed("An active account is required to submit a request here.")
-        existing = StudyRefund.objects.filter(user=locked).first()
+        existing = StudyRefund.objects.filter(user=locked, reason="first_payment").first()
         if existing:
             return existing
         payment = _first_payment(locked.pk)
@@ -95,11 +99,17 @@ def _scope(refund):
     if not (
         refund.mode == payment.mode == "live" and payment.user_id == refund.user_id
         and payment.source == "checkout" and payment.plan == "monthly"
-        and first and first.pk == payment.pk and payment.verified_at
+        and payment.status in {"succeeded", "reversed"}
+        and payment.verified_at
         and _positive_integer(payment.paystack_transaction_id)
         and refund.amount_cents == payment.expected_amount_cents
         and refund.currency == payment.currency == "ZAR"
     ):
+        raise _Attention("payment_scope_changed")
+    if refund.reason == StudyRefund.Reason.DISCARDED_CHECKOUT:
+        if not payment.discarded_at:
+            raise _Attention("checkout_not_discarded")
+    elif refund.reason != StudyRefund.Reason.FIRST_PAYMENT or not first or first.pk != payment.pk or payment.discarded_at:
         raise _Attention("payment_scope_changed")
     return payment
 
@@ -125,10 +135,13 @@ def _assess(client, refund):
     result = client.verify(payment.reference)
     paid_at = _validate_transaction(result, payment)
     member = StudyMembership.objects.filter(user_id=refund.user_id, payment_mode="live").first()
+    discarded = refund.reason == StudyRefund.Reason.DISCARDED_CHECKOUT
     if not (
         result.get("status") == "success" and result.get("id") == payment.paystack_transaction_id
-        and paid_at and member and member.tier == payment.tier
-        and member.paystack_customer_code == result["customer"]["customer_code"]
+        and paid_at and (discarded or (
+            member and member.tier == payment.tier
+            and member.paystack_customer_code == result["customer"]["customer_code"]
+        ))
     ):
         raise _Attention("transaction_not_refundable")
     with transaction.atomic():
@@ -139,7 +152,7 @@ def _assess(client, refund):
         refund.paid_at = paid_at
         # Use the server-recorded request time, NOT processing time. A request
         # arriving before the deadline stays eligible through outages or queues.
-        if not paid_at <= refund.requested_at <= paid_at + timedelta(days=7):
+        if not discarded and not paid_at <= refund.requested_at <= paid_at + timedelta(days=7):
             refund.status = Status.INELIGIBLE
             refund.last_result = "outside_seven_day_guarantee"
         else:
@@ -193,8 +206,10 @@ def _apply(refund, result):
             member = StudyMembership.objects.select_for_update().filter(user_id=refund.user_id).first()
             other_paid = StudyPayment.objects.filter(
                 user_id=refund.user_id, mode="live", status="succeeded", verified_at__isnull=False,
+                discarded_at__isnull=True,
             ).exclude(pk=payment.pk).exists()
-            if (member and member.payment_mode == "live" and member.tier == payment.tier
+            if (refund.reason == StudyRefund.Reason.FIRST_PAYMENT
+                    and member and member.payment_mode == "live" and member.tier == payment.tier
                     and member.paystack_subscription_code == refund.cancelled_subscription_code and not other_paid):
                 member.status = "expired"
                 member.paid_until = min(member.paid_until, timezone.now()) if member.paid_until else timezone.now()
@@ -246,12 +261,17 @@ def process_live_refund(refund_id):
         if refund.status == Status.APPROVED:
             # A later account deactivation does not invalidate an accepted money
             # return request. Only this approved workflow permits inactive users.
-            member = _cancel_membership(user=refund.user, client=client, mode="live", allow_inactive=True)
+            if refund.reason == StudyRefund.Reason.DISCARDED_CHECKOUT:
+                from .discarded_checkouts import cancel_discarded_subscription
+                cancelled_code = cancel_discarded_subscription(client, refund)
+            else:
+                member = _cancel_membership(user=refund.user, client=client, mode="live", allow_inactive=True)
+                cancelled_code = member.paystack_subscription_code
             with transaction.atomic():
                 refund = _locked(refund)
                 if refund.status != Status.APPROVED:
                     return refund
-                refund.cancelled_subscription_code = member.paystack_subscription_code
+                refund.cancelled_subscription_code = cancelled_code
                 refund.save(update_fields=["cancelled_subscription_code", "updated_at"])
             existing = _find_existing(client, refund)
             if existing:
@@ -268,9 +288,16 @@ def process_live_refund(refund_id):
                 refund.save(update_fields=["status", "submitted_at", "last_result", "next_attempt_at", "updated_at"])
             # The intent is durably committed. NO automatic path repeats this
             # POST after a crash/timeout, even if a later GET returns no refund.
-            result = client.create_full_refund(
-                refund.payment.paystack_transaction_id, refund.amount_cents, f"StudiGarden guarantee request {refund.pk}",
-            )
+            if refund.reason == StudyRefund.Reason.DISCARDED_CHECKOUT:
+                result = client.create_full_refund(
+                    refund.payment.paystack_transaction_id, refund.amount_cents,
+                    f"StudiGarden discarded checkout refund {refund.pk}",
+                    customer_note="Refund for a replaced StudiGarden checkout; your chosen plan is unchanged.",
+                )
+            else:
+                result = client.create_full_refund(
+                    refund.payment.paystack_transaction_id, refund.amount_cents, f"StudiGarden guarantee request {refund.pk}",
+                )
             _validate_refund(result, refund.payment)
             return _apply(refund, result)
         if refund.paystack_refund_id is not None:
@@ -293,6 +320,10 @@ def process_live_refund(refund_id):
             return _defer(refund, "submission_confirmation_pending")
         return _defer(refund, str(exc), attention=True)
     except (PaystackError, CheckoutNotAllowed):
+        if (refund.reason == StudyRefund.Reason.DISCARDED_CHECKOUT
+                and refund.status in {Status.REQUESTED, Status.APPROVED}
+                and refund.requested_at < timezone.now() - timedelta(hours=24)):
+            return _defer(refund, "discarded_subscription_needs_attention", attention=True)
         return _defer(refund, "provider_confirmation_pending")
     except IntegrityError:
         return _defer(refund, "refund_identity_conflict", attention=True)

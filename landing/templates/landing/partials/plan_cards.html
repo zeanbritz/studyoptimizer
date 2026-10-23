@@ -1,0 +1,91 @@
+<section class="study-plan-picker" aria-label="Pricing plans">
+    <article class="plan free">
+        <div class="plan-heading">
+            <h2 class="plan-name">Free</h2>
+        </div>
+
+        <p class="price">R0</p>
+        <p class="billing-note">
+            Your everyday study essentials. No payment details needed.
+        </p>
+
+        <ul>
+            <li>Create up to {{ free_subject_limit }} subjects</li>
+            <li>Create up to {{ free_learning_item_limit }} learning items per subject</li>
+            <li>Use Today's Plan, exams and unlimited reviews of your saved items</li>
+            <li>Track your progress; PDF export and Auto Summarize are not included</li>
+        </ul>
+
+        {% if user.is_authenticated %}
+            <a href="{% url 'dashboard' %}" class="button button-green">Open dashboard</a>
+        {% else %}
+            <a href="{% url 'register' %}" class="button button-green">Sign up for free</a>
+        {% endif %}
+    </article>
+
+    {% for card in pricing_cards %}
+    {% with plan=card.plan %}
+    <article class="plan {{ plan.tier }}{% if selected_tier == plan.tier %} plan-selected{% endif %}" id="plan-{{ plan.tier }}" aria-labelledby="plan-{{ plan.tier }}-title">
+        <div class="plan-heading">
+            <h2 class="plan-name" id="plan-{{ plan.tier }}-title">{{ plan.name }}</h2>
+            {% if selected_tier == plan.tier %}
+                <span class="saving-badge">Selected plan</span>
+            {% endif %}
+            {% if plan.tier == "bloom" %}
+                <span class="saving-badge">Top plan</span>
+            {% endif %}
+        </div>
+
+        <p class="price">R{{ plan.monthly_price|floatformat:0 }} <span>/ month</span></p>
+        <p class="billing-note">
+            {% if live_checkout_enabled %}Billed monthly until cancelled.{% else %}Billed monthly when paid plans launch.{% endif %} Cancel future renewals whenever you choose.
+        </p>
+
+        <ul>
+            {% for feature in plan.features %}<li>{{ feature }}</li>{% endfor %}
+        </ul>
+
+        {% if live_checkout_enabled %}
+            {% if can_start_live_checkout %}
+            <form method="post" action="{% url 'start_live_checkout' %}" class="plan-checkout-form">
+                {% csrf_token %}
+                <input type="hidden" name="tier" value="{{ plan.tier }}">
+                <input type="hidden" name="replace_reference" value="{{ pending_live_payment.reference|default:'' }}">
+                <label class="plan-confirmation">
+                    <input type="checkbox" name="confirm_subscription" value="yes" required>
+                    <span>I agree to R{{ plan.monthly_price|floatformat:0 }} monthly automatic renewal for {{ plan.name }} until I cancel.</span>
+                </label>
+                <button type="submit" class="button button-green">Choose {{ plan.name }}</button>
+            </form>
+            {% elif user.is_authenticated %}
+            <a href="{% url 'my_plan' %}" class="button button-light">Manage current access</a>
+            {% else %}
+            <div class="plan-signup-actions">
+                <a href="{{ card.signup_url }}" class="button button-green">Sign up to choose {{ plan.name }}</a>
+                <p class="plan-auth-note">Already have an account? <a href="{{ card.login_url }}">Log in for {{ plan.name }}</a></p>
+            </div>
+            {% endif %}
+        {% elif can_start_test_checkout %}
+        <form method="post" action="{% url 'start_test_checkout' %}" class="plan-checkout-form">
+            {% csrf_token %}
+            <input type="hidden" name="tier" value="{{ plan.tier }}">
+            <button type="submit" class="button button-green">Test {{ plan.name }} checkout</button>
+        </form>
+        {% elif test_checkout_enabled %}
+            {% if user.is_authenticated %}
+            <a href="{% url 'my_plan' %}" class="button button-light">View your current access</a>
+            {% else %}
+            <a href="{% url 'login' %}?next={% url 'pricing' %}" class="button button-light">Log in to test checkout</a>
+            {% endif %}
+        {% else %}
+        <button type="button" class="button button-unavailable" disabled>
+            {{ plan.name }} coming soon
+        </button>
+        {% endif %}
+    </article>
+    {% endwith %}
+    {% endfor %}
+</section>
+{% if pending_live_payment %}
+<p class="plan-checkout-notice">Your unfinished {{ pending_live_payment.get_tier_display }} checkout will be replaced when you choose a plan. Do not pay through an old link. If an old checkout is paid later, its payment will be handled separately for refund and its renewals stopped once confirmed. If you already paid, <a href="{% url 'live_checkout_return' %}?reference={{ pending_live_payment.reference|urlencode }}">Check payment status</a>.</p>
+{% endif %}

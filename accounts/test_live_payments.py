@@ -15,6 +15,7 @@ from django.core import mail
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import Client, SimpleTestCase, TestCase, override_settings
+from django.templatetags.static import static
 from django.urls import reverse
 from django.utils import timezone
 
@@ -247,7 +248,8 @@ class LiveCheckoutTests(TestCase):
 
     def test_profile_shows_live_actions_and_no_test_buttons(self):
         response = self.client.get(reverse("my_plan"), secure=True)
-        self.assertContains(response, "Subscribe to Grow")
+        self.assertContains(response, "Choose Grow")
+        self.assertContains(response, "Choose Bloom")
         self.assertContains(response, "Refund and cancellation policy")
         self.assertNotContains(response, "Local test checkout")
         self.assertNotContains(response, LIVE["PAYSTACK_LIVE_SECRET_KEY"])
@@ -255,7 +257,7 @@ class LiveCheckoutTests(TestCase):
     def test_disabled_production_configuration_hides_controls(self):
         with override_settings(PAYSTACK_LIVE_ENABLED=False):
             response = self.client.get(reverse("my_plan"), secure=True)
-            self.assertNotContains(response, "Subscribe to Grow")
+            self.assertNotContains(response, "Choose Grow")
             self.assertEqual(self.client.post(reverse("start_live_checkout"), secure=True).status_code, 404)
 
     def test_cancellation_works_with_sales_off_and_preserves_paid_time(self):
@@ -283,6 +285,86 @@ class LiveCheckoutTests(TestCase):
         call_command("check_paystack_live", stdout=io.StringIO())
         self.initialize.assert_not_called()
         self.assertFalse(StudyPayment.objects.exists())
+
+    def _assert_shared_plan_cards(self):
+        from django.contrib.staticfiles import finders
+
+        self.assertIsNotNone(finders.find("landing/css/plan_cards.css"))
+        cards = []
+        for name in ("pricing", "my_plan"):
+            response = self.client.get(reverse(name), secure=True)
+            self.assertTemplateUsed(response, "landing/partials/plan_cards.html")
+            self.assertContains(
+                response, f'href="{static("landing/css/plan_cards.css")}"', count=1,
+            )
+            for feature in (
+                "Create up to 2 subjects", "Create up to 100 learning items",
+                "Up to 7 subjects", "2 PDF exports per month",
+                "Auto Summarize up to 5 PDF pages per month",
+                "Unlimited subjects", "Unlimited PDF exports",
+            ):
+                self.assertContains(response, feature)
+            markup = re.search(
+                r'<section class="study-plan-picker".*?</section>',
+                response.content.decode(), re.DOTALL,
+            ).group()
+            # Django intentionally masks the CSRF token separately on each render.
+            cards.append(re.sub(
+                r'name="csrfmiddlewaretoken" value="[^"]+"',
+                'name="csrfmiddlewaretoken" value="MASKED"', markup,
+            ))
+        self.assertEqual(cards[0], cards[1])
+        self.initialize.assert_not_called()
+        self.verify.assert_not_called()
+        self.assertFalse(StudyPayment.objects.exists())
+
+    def test_profile_and_pricing_use_the_same_cards_styles_and_features(self):
+        self._assert_shared_plan_cards()
+
+    def test_shared_cards_support_fingerprinted_stylesheet_urls(self):
+        def fingerprint(name, *args, **kwargs):
+            stem, extension = name.rsplit(".", 1)
+            return f"/static/{stem}.a1b2c3d4e5f6.{extension}"
+
+        with patch("django.contrib.staticfiles.storage.staticfiles_storage.url", side_effect=fingerprint):
+            self.assertEqual(
+                static("landing/css/plan_cards.css"),
+                "/static/landing/css/plan_cards.a1b2c3d4e5f6.css",
+            )
+            self._assert_shared_plan_cards()
+
+    def test_profile_cards_submit_directly_with_csrf_and_renewal_consent(self):
+        browser = Client(enforce_csrf_checks=True, HTTP_HOST="studigarden.com")
+        browser.force_login(self.user)
+        page = browser.get(reverse("my_plan"), secure=True)
+        self.assertContains(page, 'name="confirm_subscription" value="yes" required', count=2)
+        self.assertContains(page, 'name="csrfmiddlewaretoken"', count=2)
+        response = browser.post(
+            reverse("start_live_checkout"),
+            {
+                "tier": "grow", "confirm_subscription": "yes",
+                "csrfmiddlewaretoken": browser.cookies["csrftoken"].value,
+            },
+            secure=True, HTTP_ORIGIN="https://studigarden.com",
+        )
+        self.assertRedirects(
+            response, "https://checkout.paystack.com/liveContract",
+            fetch_redirect_response=False,
+        )
+        self.initialize.assert_called_once()
+        self.assertEqual(self.initialize.call_args.args[0]["amount"], 3500)
+        self.assertFalse(StudyMembership.objects.exists())
+
+    def test_profile_cards_do_not_remove_pending_payment_or_duplicate_a_checkout(self):
+        payment = self.start()
+        response = self.client.get(reverse("my_plan"), secure=True)
+        self.assertTemplateUsed(response, "landing/partials/plan_cards.html")
+        self.assertContains(response, "Check payment status")
+        payment.refresh_from_db()
+        self.assertEqual(payment.status, StudyPayment.Status.PENDING)
+        self.assertEqual(StudyPayment.objects.count(), 1)
+        self.initialize.assert_called_once()
+        self.verify.assert_not_called()
 
     def test_pricing_form_with_valid_csrf_goes_straight_to_paystack(self):
         browser = Client(enforce_csrf_checks=True, HTTP_HOST="studigarden.com")

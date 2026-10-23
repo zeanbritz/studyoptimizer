@@ -193,6 +193,9 @@ class StudyPayment(models.Model):
         blank=True,
     )
     verified_at = models.DateTimeField(null=True, blank=True)
+    # Local retirement is not a provider-side void. Late payments are refunded,
+    # never applied to access. Retain the original reference for reconciliation.
+    discarded_at = models.DateTimeField(null=True, blank=True, db_index=True, editable=False)
 
     # Renewal invoice identity and absolute service period. Never add a month
     # merely because another webhook arrived for the same charge or invoice.
@@ -232,7 +235,11 @@ class StudyPayment(models.Model):
 
 
 class StudyRefund(models.Model):
-    """One self-service first-purchase guarantee per account, with a durable outbox."""
+    """Durable refunds; discarded checkouts do not consume the purchase guarantee."""
+
+    class Reason(models.TextChoices):
+        FIRST_PAYMENT = "first_payment", "7-day first-payment guarantee"
+        DISCARDED_CHECKOUT = "discarded_checkout", "Payment on a discarded checkout"
 
     class Status(models.TextChoices):
         REQUESTED = "requested", "Checking eligibility"
@@ -243,8 +250,9 @@ class StudyRefund(models.Model):
         INELIGIBLE = "ineligible", "Outside the automatic refund guarantee"
         ATTENTION = "attention", "Refund needs attention"
 
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="study_refund")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="study_refunds")
     payment = models.OneToOneField(StudyPayment, on_delete=models.PROTECT, related_name="refund_request")
+    reason = models.CharField(max_length=20, choices=Reason.choices, default=Reason.FIRST_PAYMENT)
     mode = models.CharField(max_length=4, choices=StudyPayment.Mode.choices, default=StudyPayment.Mode.LIVE)
     status = models.CharField(max_length=16, choices=Status.choices, default=Status.REQUESTED)
     amount_cents = models.PositiveIntegerField()
@@ -267,6 +275,8 @@ class StudyRefund(models.Model):
             models.CheckConstraint(condition=models.Q(amount_cents__gt=0), name="study_refund_positive_amount"),
             models.UniqueConstraint(fields=["mode", "paystack_refund_id"],
                 condition=models.Q(paystack_refund_id__isnull=False), name="study_refund_provider_once"),
+            models.UniqueConstraint(fields=["user"], condition=models.Q(reason="first_payment"),
+                name="study_refund_first_guarantee_once"),
         ]
 
     def __str__(self):

@@ -7,6 +7,7 @@
     <title>Pricing — StudiGarden</title>
     <link rel="stylesheet" href="{% static 'landing/css/footer.css' %}">
     <link rel="stylesheet" href="{% static 'css/brand-logo.css' %}">
+    <link rel="stylesheet" href="{% static 'landing/css/plan_cards.css' %}">
 
     <style>
         :root {
@@ -176,150 +177,6 @@
             line-height: 1.6;
         }
 
-        .plans {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 18px;
-            margin-top: 22px;
-        }
-
-        .plan {
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-            padding: 26px;
-            border: 1px solid #d8e0e3;
-            border-top: 3px solid #8b84c4;
-            border-bottom: 4px solid #c4cfd4;
-            border-radius: 16px;
-            background: #f8fafb;
-        }
-
-        .plan.bloom,
-        .plan.free { border-top-color: var(--green); }
-
-        .plan-selected {
-            outline: 3px solid var(--green);
-            outline-offset: 3px;
-            scroll-margin-top: 24px;
-        }
-
-        .plan-heading {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 16px;
-        }
-
-        .plan-name {
-            margin: 0;
-            color: #59646a;
-            font-size: 12px;
-            font-weight: 900;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-        }
-
-        .saving-badge {
-            padding: 7px 10px;
-            border-radius: 999px;
-            background: #e6f4df;
-            color: #367c19;
-            font-size: 12px;
-            font-weight: 850;
-        }
-
-        .price {
-            margin: 0;
-            font-size: clamp(35px, 4vw, 48px);
-            font-weight: 900;
-            letter-spacing: -1.3px;
-            line-height: 1;
-        }
-
-        .price span {
-            color: var(--muted);
-            font-size: 15px;
-            font-weight: 700;
-            letter-spacing: 0;
-        }
-
-        .billing-note {
-            min-height: 62px;
-            margin: 12px 0 20px;
-            color: var(--muted);
-            font-size: 13px;
-            line-height: 1.5;
-        }
-
-        .plan ul {
-            margin: 0 0 22px;
-            padding: 20px 0 0;
-            border-top: 1px solid #dfe5e7;
-            list-style: none;
-        }
-
-        .plan li {
-            display: flex;
-            gap: 9px;
-            margin-bottom: 12px;
-            color: #455057;
-            font-size: 13px;
-            font-weight: 700;
-        }
-
-        .plan li::before {
-            content: "✓";
-            flex: 0 0 auto;
-            color: var(--green-dark);
-            font-weight: 900;
-        }
-
-        .plan .button {
-            width: 100%;
-            margin-top: auto;
-        }
-
-        .plan-checkout-form,
-        .plan-signup-actions {
-            margin-top: auto;
-        }
-
-        .plan-confirmation {
-            display: flex;
-            align-items: flex-start;
-            gap: 9px;
-            margin-bottom: 14px;
-            color: #455057;
-            font-size: 12px;
-            line-height: 1.5;
-            cursor: pointer;
-        }
-
-        .plan-confirmation input {
-            flex: 0 0 18px;
-            width: 18px;
-            height: 18px;
-            margin: 1px 0 0;
-            accent-color: var(--green-dark);
-        }
-
-        .plan-auth-note {
-            margin: 12px 0 0;
-            color: var(--muted);
-            font-size: 12px;
-            line-height: 1.5;
-            text-align: center;
-        }
-
-        .plan-auth-note a {
-            color: #176f9f;
-            font-weight: 800;
-            text-decoration: underline;
-        }
-
         .beta-note,
         .billing-disclaimer {
             margin: 20px 0 0;
@@ -366,12 +223,6 @@
         @media (max-width: 820px) {
             .site-header { flex-wrap: wrap; }
             .header-actions { width: 100%; }
-            .plans { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-        }
-
-        @media (max-width: 650px) {
-            .plans { grid-template-columns: 1fr; }
-            .billing-note { min-height: 0; }
         }
 
         @media (max-width: 520px) {
@@ -379,7 +230,6 @@
             .site-header { align-items: flex-start; flex-direction: column; }
             .header-actions .button { flex: 1; }
             .intro { padding: 29px 22px; }
-            .plan { padding: 21px; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -415,93 +265,7 @@
                 <p>Start with Free, grow your study workspace with Grow, or unlock all study tools with Bloom. {% if test_checkout_enabled %}Local test checkout is enabled. No real money will be charged.{% elif live_checkout_enabled %}Choose a monthly plan below. Manage your subscription and cancel future renewals from Profile.{% else %}Paid checkout is coming soon.{% endif %}</p>
             </section>
 
-            <section class="plans" aria-label="Pricing plans">
-                <article class="plan free">
-                    <div class="plan-heading">
-                        <h2 class="plan-name">Free</h2>
-                    </div>
-
-                    <p class="price">R0</p>
-                    <p class="billing-note">
-                        Your everyday study essentials. No payment details needed.
-                    </p>
-
-                    <ul>
-                        <li>Create up to {{ free_subject_limit }} subjects</li>
-                        <li>Create up to {{ free_learning_item_limit }} learning items per subject</li>
-                        <li>Use Today's Plan, exams and unlimited reviews of your saved items</li>
-                        <li>Track your progress; PDF export and Auto Summarize are not included</li>
-                    </ul>
-
-                    {% if user.is_authenticated %}
-                        <a href="{% url 'dashboard' %}" class="button button-green">Open dashboard</a>
-                    {% else %}
-                        <a href="{% url 'register' %}" class="button button-green">Sign up for free</a>
-                    {% endif %}
-                </article>
-
-                {% for card in pricing_cards %}
-                {% with plan=card.plan %}
-                <article class="plan {{ plan.tier }}{% if selected_tier == plan.tier %} plan-selected{% endif %}" id="plan-{{ plan.tier }}" aria-labelledby="plan-{{ plan.tier }}-title">
-                    <div class="plan-heading">
-                        <h2 class="plan-name" id="plan-{{ plan.tier }}-title">{{ plan.name }}</h2>
-                        {% if selected_tier == plan.tier %}
-                            <span class="saving-badge">Selected plan</span>
-                        {% endif %}
-                        {% if plan.tier == "bloom" %}
-                            <span class="saving-badge">Top plan</span>
-                        {% endif %}
-                    </div>
-
-                    <p class="price">R{{ plan.monthly_price|floatformat:0 }} <span>/ month</span></p>
-                    <p class="billing-note">
-                        {% if live_checkout_enabled %}Billed monthly until cancelled.{% else %}Billed monthly when paid plans launch.{% endif %} Cancel future renewals whenever you choose.
-                    </p>
-
-                    <ul>
-                        {% for feature in plan.features %}<li>{{ feature }}</li>{% endfor %}
-                    </ul>
-
-                    {% if live_checkout_enabled %}
-                        {% if can_start_live_checkout %}
-                        <form method="post" action="{% url 'start_live_checkout' %}" class="plan-checkout-form">
-                            {% csrf_token %}
-                            <input type="hidden" name="tier" value="{{ plan.tier }}">
-                            <label class="plan-confirmation">
-                                <input type="checkbox" name="confirm_subscription" value="yes" required>
-                                <span>I agree to R{{ plan.monthly_price|floatformat:0 }} monthly automatic renewal for {{ plan.name }} until I cancel.</span>
-                            </label>
-                            <button type="submit" class="button button-green">Choose {{ plan.name }}</button>
-                        </form>
-                        {% elif user.is_authenticated %}
-                        <a href="{% url 'my_plan' %}" class="button button-light">Manage current access</a>
-                        {% else %}
-                        <div class="plan-signup-actions">
-                            <a href="{{ card.signup_url }}" class="button button-green">Sign up to choose {{ plan.name }}</a>
-                            <p class="plan-auth-note">Already have an account? <a href="{{ card.login_url }}">Log in for {{ plan.name }}</a></p>
-                        </div>
-                        {% endif %}
-                    {% elif can_start_test_checkout %}
-                    <form method="post" action="{% url 'start_test_checkout' %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="tier" value="{{ plan.tier }}">
-                        <button type="submit" class="button button-green">Test {{ plan.name }} checkout</button>
-                    </form>
-                    {% elif test_checkout_enabled %}
-                        {% if user.is_authenticated %}
-                        <a href="{% url 'my_plan' %}" class="button button-light">View your current access</a>
-                        {% else %}
-                        <a href="{% url 'login' %}?next={% url 'pricing' %}" class="button button-light">Log in to test checkout</a>
-                        {% endif %}
-                    {% else %}
-                    <button type="button" class="button button-unavailable" disabled>
-                        {{ plan.name }} coming soon
-                    </button>
-                    {% endif %}
-                </article>
-                {% endwith %}
-                {% endfor %}
-            </section>
+            {% include 'landing/partials/plan_cards.html' %}
 
             <aside class="beta-note" aria-label="Existing beta members">
                 <strong>Already joined during the invited beta?</strong>

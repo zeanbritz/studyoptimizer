@@ -30,9 +30,15 @@ def start_live_checkout(request):
         messages.error(request, "Please confirm the monthly price and automatic renewal before continuing.")
         return redirect("my_plan")
     try:
-        payment = initialize_live_checkout(user=request.user, tier=request.POST.get("tier"))
+        payment = initialize_live_checkout(
+            user=request.user, tier=request.POST.get("tier"),
+            replace_reference=request.POST.get("replace_reference", ""),
+        )
     except (CheckoutNotAllowed, PaystackError) as exc:
         messages.error(request, str(exc))
+        return redirect("my_plan")
+    if payment.status == StudyPayment.Status.SUCCEEDED:
+        messages.success(request, "Your previous payment was already completed. Your paid plan is ready; no new checkout was opened.")
         return redirect("my_plan")
     response = redirect(payment.authorization_url)
     response["Referrer-Policy"] = "no-referrer"
@@ -51,7 +57,12 @@ def live_checkout_return(request):
     except (CheckoutNotAllowed, PaystackError) as exc:
         messages.error(request, str(exc))
     else:
-        if payment.status == StudyPayment.Status.SUCCEEDED:
+        if payment.discarded_at:
+            if payment.status in {StudyPayment.Status.SUCCEEDED, StudyPayment.Status.REVERSED}:
+                messages.info(request, "This payment used a discarded checkout. Its refund is being handled separately; your chosen plan is unchanged. See Profile for the refund status.")
+            else:
+                messages.info(request, "This checkout was replaced. Please use the latest checkout from Pricing or Profile, not the old payment link.")
+        elif payment.status == StudyPayment.Status.SUCCEEDED:
             messages.success(request, "Payment verified. Your paid plan is ready.")
         elif payment.status in {StudyPayment.Status.FAILED, StudyPayment.Status.ABANDONED}:
             messages.warning(request, "Payment was not completed. Your access has not changed.")

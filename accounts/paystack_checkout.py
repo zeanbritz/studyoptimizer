@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
 from .access import get_study_tier, has_permanent_free_access
-from .models import StudyMembership, StudyPayment, StudyTier
+from .models import StudyMembership, StudyPayment, StudyRefund, StudyTier
 from .payment_service import CheckoutNotAllowed, create_checkout_attempt, create_test_checkout_attempt
 from .paystack_client import (
     PaystackError, PaystackTestClient, checkout_callback_url,
@@ -253,12 +253,25 @@ def _verify_checkout(*, user, reference, client, mode):
     # Browser query parameters are never evidence of payment. Only this
     # authenticated server-to-server response is considered.
     result = client.verify(payment.reference)
+    return _record_checkout_result(user, payment, result, mode)
+
+
+def reconcile_discarded_checkout(payment, client):
+    """Worker-only recovery, including payments whose owner was deactivated."""
+    if payment.mode != "live" or payment.source != "checkout" or not payment.discarded_at:
+        raise ValueError("A discarded LIVE checkout is required.")
+    if payment.status in {"succeeded", "reversed"}:
+        return payment
+    return _record_checkout_result(payment.user, payment, client.verify(payment.reference), "live")
+
+
+def _record_checkout_result(user, payment, result, mode):
     _validate_transaction(result, payment)
     try:
         with transaction.atomic():
             locked_user = get_user_model().objects.select_for_update().get(pk=user.pk)
             payment = StudyPayment.objects.select_for_update().get(pk=payment.pk)
-            if not locked_user.is_active:
+            if not locked_user.is_active and not (mode == "live" and payment.discarded_at):
                 raise CheckoutNotAllowed("An active account is required.")
             if payment.status == StudyPayment.Status.SUCCEEDED:
                 return payment
@@ -278,6 +291,17 @@ def _verify_checkout(*, user, reference, client, mode):
                 mode=mode, paystack_transaction_id=result["id"],
             ).exclude(pk=payment.pk).exists():
                 raise PaystackError("That transaction has already been recorded.")
+            if mode == "live" and payment.discarded_at:
+                payment.status = StudyPayment.Status.SUCCEEDED
+                payment.paystack_transaction_id = result["id"]
+                payment.verified_at = timezone.now()
+                payment.save(update_fields=["status", "paystack_transaction_id", "verified_at", "updated_at"])
+                StudyRefund.objects.get_or_create(payment=payment, defaults={
+                    "user": locked_user, "mode": "live",
+                    "reason": StudyRefund.Reason.DISCARDED_CHECKOUT,
+                    "amount_cents": payment.expected_amount_cents, "currency": payment.currency,
+                })
+                return payment
             membership = StudyMembership.objects.filter(user=locked_user).first()
             if membership and (
                 membership.paystack_subscription_code
@@ -306,13 +330,15 @@ def _verify_checkout(*, user, reference, client, mode):
         raise PaystackError("That payment could not be applied safely. Please check its status again.") from None
 
 
-def initialize_live_checkout(*, user, tier):
-    """Retain one durable reference across timeouts; never open a second charge."""
+def initialize_live_checkout(*, user, tier, replace_reference=None):
+    """Retire an explicitly replaced unpaid attempt; stale/double clicks resume."""
     if not live_checkout_enabled():
         raise PaystackError("New subscriptions are not available right now.")
     client = PaystackLiveClient()
     if not user or not user.is_authenticated or not user.is_active or not user.pk:
         raise CheckoutNotAllowed("An active account is required.")
+    if tier not in {StudyTier.GROW, StudyTier.BLOOM}:
+        raise CheckoutNotAllowed("Choose Grow or Bloom for paid checkout.")
     # Commit BEFORE the provider POST. A timed-out checkout must not disappear
     # locally: another click uses the same provider-unique reference.
     with transaction.atomic():
@@ -321,16 +347,30 @@ def initialize_live_checkout(*, user, tier):
             raise CheckoutNotAllowed("Your account cannot start paid checkout.")
         member = StudyMembership.objects.filter(user=user).first()
         if (get_study_tier(user) != StudyTier.FREE or (member and member.paystack_subscription_code)
-                or StudyPayment.objects.filter(user=user, mode="live", status="succeeded").exists()):
+                or StudyPayment.objects.filter(user=user, mode="live", status="succeeded", discarded_at__isnull=True).exists()):
             raise CheckoutNotAllowed(
                 "An existing subscription cannot be replaced by checkout. "
                 "Contact support to change or restart a previous plan; this prevents duplicate billing."
             )
         payment = StudyPayment.objects.filter(
-            user=user, mode="live", source="checkout",
+            user=user, mode="live", source="checkout", discarded_at__isnull=True,
         ).exclude(status__in=("succeeded", "reversed")).first()
-        if payment and payment.tier != tier:
-            raise CheckoutNotAllowed("You have another checkout awaiting confirmation. Check its status first.")
+        if payment and replace_reference == payment.reference:
+            # The form names the checkout the user actually saw, so a repeated
+            # POST cannot retire the newly-created replacement. Reconcile first:
+            # a charge already paid must activate, not trigger another purchase.
+            result = client.verify(payment.reference)
+            _validate_transaction(result, payment)
+            if result["status"] in {"processing", "ongoing", "queued"}:
+                raise CheckoutNotAllowed("Paystack is still processing your payment. Check its status shortly before switching plans.")
+            payment = _record_checkout_result(user, payment, result, "live")
+            if payment.status == "succeeded":
+                return payment
+            payment.discarded_at = timezone.now()
+            payment.save(update_fields=["discarded_at", "updated_at"])
+            payment = None
+        elif payment and payment.tier != tier:
+            raise CheckoutNotAllowed("Your checkout changed in another tab. Refresh this page to choose a different plan.")
         if payment is None:
             payment = create_checkout_attempt(user=user, tier=tier, mode="live")
     with transaction.atomic():
@@ -338,6 +378,10 @@ def initialize_live_checkout(*, user, tier):
         if not current_user.is_active or has_permanent_free_access(current_user):
             raise CheckoutNotAllowed("Your account cannot start paid checkout.")
         payment = StudyPayment.objects.select_for_update().get(pk=payment.pk)
+        if payment.discarded_at:
+            raise CheckoutNotAllowed("This checkout was replaced in another tab. Refresh the page to continue.")
+        if StudyPayment.objects.filter(user=user, mode="live", status="succeeded", discarded_at__isnull=True).exists():
+            return StudyPayment.objects.filter(user=user, mode="live", status="succeeded", discarded_at__isnull=True).first()
         if payment.status in {"pending", "failed", "abandoned"} and valid_authorization_url(payment.authorization_url):
             return payment
         if payment.status != "created":
@@ -366,14 +410,14 @@ def live_checkout_page_context(request):
     if not billing or not user.is_authenticated:
         return context
     member = StudyMembership.objects.filter(user=user, payment_mode="live", plan="monthly").first()
-    proof = StudyPayment.objects.filter(user=user, mode="live", source="checkout", status="succeeded", verified_at__isnull=False)
-    previous = StudyPayment.objects.filter(user=user, mode="live", status="succeeded").exists()
+    proof = StudyPayment.objects.filter(user=user, mode="live", source="checkout", status="succeeded", verified_at__isnull=False, discarded_at__isnull=True)
+    previous = StudyPayment.objects.filter(user=user, mode="live", status="succeeded", discarded_at__isnull=True).exists()
     context.update({
         "can_start_live_checkout": bool(checkout and user.is_active and get_study_tier(user) == StudyTier.FREE
                                         and not has_permanent_free_access(user) and not previous
                                         and not (member and member.paystack_subscription_code)),
         "pending_live_payment": StudyPayment.objects.filter(
-            user=user, mode="live", source="checkout",
+            user=user, mode="live", source="checkout", discarded_at__isnull=True,
         ).exclude(status__in=("succeeded", "reversed")).first(),
         "can_cancel_live_membership": bool(member and proof.filter(tier=member.tier).exclude(paystack_plan_code="").exists()
                                            and member.status != "non_renewing"),

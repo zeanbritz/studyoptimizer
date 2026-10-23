@@ -16,7 +16,7 @@ from django.utils.dateparse import parse_datetime
 
 from .models import PaystackWebhookReceipt, StudyMembership, StudyPayment
 from .payment_service import CheckoutNotAllowed
-from .paystack_checkout import PaymentNotFound, verify_test_checkout, verify_live_checkout
+from .paystack_checkout import PaymentNotFound, reconcile_discarded_checkout, verify_test_checkout, verify_live_checkout
 from .paystack_client import PaystackError, PaystackTestClient, PaystackLiveClient
 from .subscription_service import STOPPED_STATUSES
 from .subscription_webhooks import (
@@ -41,6 +41,7 @@ def _initial_payment(member, subscription):
         user_id=member.user_id, mode=subscription.mode, source="checkout", status="succeeded",
         tier=member.tier, plan="monthly", paystack_plan_code=subscription.plan_code,
         verified_at__isnull=False, paystack_transaction_id__isnull=False,
+        discarded_at__isnull=True,
     ).first()
     if not payment or not payment.checkout_email or payment.currency != "ZAR":
         raise _Retry("checkout_not_verified")
@@ -242,9 +243,15 @@ def _charge_receipt(receipt):
         return _finish(receipt.pk, State.PROCESSED, "payment_already_recorded")
     try:
         verify = verify_live_checkout if receipt.mode == "live" else verify_test_checkout
-        payment = verify(user=payment.user, reference=reference)
+        payment = (
+            reconcile_discarded_checkout(payment, PaystackLiveClient())
+            if receipt.mode == "live" and payment.discarded_at
+            else verify(user=payment.user, reference=reference)
+        )
     except (CheckoutNotAllowed, PaymentNotFound):
         raise _Retry("checkout_not_ready") from None
+    if payment.discarded_at and payment.status in {"succeeded", "reversed"}:
+        return _finish(receipt.pk, State.PROCESSED, "discarded_payment_refund_queued")
     if payment.status != "succeeded":
         raise _Retry("transaction_not_successful")
     return _finish(receipt.pk, State.PROCESSED, "checkout_verified")

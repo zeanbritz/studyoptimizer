@@ -1,0 +1,227 @@
+/* The same plan-card layout on Pricing and Profile. */
+.plan-checkout-notice {
+    margin: 20px 0 0;
+    padding: 16px 18px;
+    border: 1px solid #c9dce9;
+    border-left: 5px solid #278fd3;
+    border-radius: 11px;
+    background: #eaf5fc;
+    color: #3f5867;
+    font-size: 13px;
+    line-height: 1.6;
+}
+.plan-checkout-notice a { color: #176f9f; text-decoration: underline; }
+.study-plan-picker .button {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 18px 7px;
+    border: 2px solid transparent;
+    border-bottom-width: 4px;
+    border-radius: 11px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 850;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.study-plan-picker a.button:hover,
+.study-plan-picker button.button:not(:disabled):hover {
+    transform: translateY(-1px);
+}
+
+.study-plan-picker .button-green {
+    border-color: var(--green-dark);
+    background: var(--green);
+    color: white;
+}
+
+.study-plan-picker a.button-green:hover,
+.study-plan-picker button.button-green:not(:disabled):hover {
+    background: #64c735;
+}
+
+.study-plan-picker .button-light {
+    border-color: #cbd3d7;
+    background: white;
+    color: #455057;
+}
+
+.study-plan-picker a.button-light:hover {
+    background: #f5f8f9;
+}
+
+.study-plan-picker .button-unavailable {
+    border-color: #cbd3d7;
+    background: #e9eef0;
+    color: #687278;
+    cursor: not-allowed;
+}
+
+.study-plan-picker {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    margin-top: 22px;
+}
+
+.study-plan-picker .plan {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 26px;
+    border: 1px solid #d8e0e3;
+    border-top: 3px solid #8b84c4;
+    border-bottom: 4px solid #c4cfd4;
+    border-radius: 16px;
+    background: #f8fafb;
+}
+
+.study-plan-picker .plan.bloom,
+.study-plan-picker .plan.free {
+    border-top-color: var(--green);
+}
+
+.study-plan-picker .plan-selected {
+    outline: 3px solid var(--green);
+    outline-offset: 3px;
+    scroll-margin-top: 24px;
+}
+
+.study-plan-picker .plan-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.study-plan-picker .plan-name {
+    margin: 0;
+    color: #59646a;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.study-plan-picker .saving-badge {
+    padding: 7px 10px;
+    border-radius: 999px;
+    background: #e6f4df;
+    color: #367c19;
+    font-size: 12px;
+    font-weight: 850;
+}
+
+.study-plan-picker .price {
+    margin: 0;
+    font-size: clamp(35px, 4vw, 48px);
+    font-weight: 900;
+    letter-spacing: -1.3px;
+    line-height: 1;
+}
+
+.study-plan-picker .price span {
+    color: var(--muted);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+.study-plan-picker .billing-note {
+    min-height: 62px;
+    margin: 12px 0 20px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.study-plan-picker .plan ul {
+    margin: 0 0 22px;
+    padding: 20px 0 0;
+    border-top: 1px solid #dfe5e7;
+    list-style: none;
+}
+
+.study-plan-picker .plan li {
+    display: flex;
+    gap: 9px;
+    margin-bottom: 12px;
+    color: #455057;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.study-plan-picker .plan li::before {
+    content: "✓";
+    flex: 0 0 auto;
+    color: var(--green-dark);
+    font-weight: 900;
+}
+
+.study-plan-picker .plan .button {
+    width: 100%;
+    margin-top: auto;
+}
+
+.study-plan-picker .plan-checkout-form,
+.study-plan-picker .plan-signup-actions {
+    margin-top: auto;
+}
+
+.study-plan-picker .plan-confirmation {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    margin-bottom: 14px;
+    color: #455057;
+    font-size: 12px;
+    line-height: 1.5;
+    cursor: pointer;
+}
+
+.study-plan-picker .plan-confirmation input {
+    flex: 0 0 18px;
+    width: 18px;
+    height: 18px;
+    margin: 1px 0 0;
+    accent-color: var(--green-dark);
+}
+
+.study-plan-picker .plan-auth-note {
+    margin: 12px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+    text-align: center;
+}
+
+.study-plan-picker .plan-auth-note a {
+    color: #176f9f;
+    font-weight: 800;
+    text-decoration: underline;
+}
+
+.study-plan-picker :is(a, button, input):focus-visible {
+    outline: 3px solid rgba(39, 143, 211, 0.35);
+    outline-offset: 3px;
+}
+
+@media (max-width: 820px) {
+    .study-plan-picker { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 650px) {
+    .study-plan-picker { grid-template-columns: 1fr; }
+    .study-plan-picker .billing-note { min-height: 0; }
+}
+@media (max-width: 520px) {
+    .study-plan-picker .plan { padding: 21px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .study-plan-picker .button { transition: none; }
+}
