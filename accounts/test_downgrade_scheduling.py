@@ -314,7 +314,7 @@ class DowngradeSchedulingTests(TestCase):
     def test_pending_refund_prevents_a_new_future_debit(self):
         change = self.request()
         StudyRefund.objects.create(user=self.user, payment=self.payment, mode="live", amount_cents=9000)
-        self.assertEqual(self.process(change).last_result, "scheduled_billing_cleanup_required")
+        self.assertEqual(self.process(change).last_result, "refund_eligibility_pending")
         self.create.assert_not_called()
 
     def test_inactive_and_permanent_free_accounts_never_schedule_a_new_debit(self):
@@ -324,8 +324,13 @@ class DowngradeSchedulingTests(TestCase):
                 get_user_model().objects.filter(pk=self.user.pk).update(**{
                     "is_active": True, "beta_lifetime_access": False, **values,
                 })
-                StudyPlanChange.objects.filter(pk=change.pk).update(state="queued", next_attempt_at=None)
-                self.assertEqual(self.process(change).last_result, "scheduled_billing_cleanup_required")
+                StudyPlanChange.objects.filter(pk=change.pk).update(
+                    state="queued", next_attempt_at=None, cancelled_at=None,
+                    cancel_requested=False, cancel_requested_at=None,
+                )
+                result = self.process(change)
+                self.assertEqual((result.state, result.last_result), ("cancelled", "scheduled_renewals_stopped"))
+                self.assertIsNotNone(result.cancelled_at)
         self.create.assert_not_called()
 
     def test_new_plan_wrong_price_is_rejected_before_old_renewals_are_stopped(self):
@@ -454,7 +459,9 @@ class DowngradeSchedulingTests(TestCase):
     def test_cancel_requested_never_submits_a_new_subscription(self):
         change = self.request()
         StudyPlanChange.objects.filter(pk=change.pk).update(cancel_requested=True)
-        self.assertEqual(self.process(change).last_result, "scheduled_billing_cleanup_required")
+        result = self.process(change)
+        self.assertEqual((result.state, result.last_result), ("cancelled", "scheduled_renewals_stopped"))
+        self.assertIsNotNone(result.cancelled_at)
         self.create.assert_not_called()
 
     def test_ambiguous_submission_unresolved_for_a_day_is_visible_for_attention(self):

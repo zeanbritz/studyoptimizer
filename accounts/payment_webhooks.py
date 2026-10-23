@@ -37,12 +37,8 @@ def _datetime(value):
 
 
 def _initial_payment(member, subscription):
-    payment = StudyPayment.objects.filter(
-        user_id=member.user_id, mode=subscription.mode, source="checkout", status="succeeded",
-        tier=member.tier, plan="monthly", paystack_plan_code=subscription.plan_code,
-        verified_at__isnull=False, paystack_transaction_id__isnull=False,
-        discarded_at__isnull=True,
-    ).first()
+    from .membership_proof import membership_payment
+    payment = membership_payment(member, subscription.plan_code)
     if not payment or not payment.checkout_email or payment.currency != "ZAR":
         raise _Retry("checkout_not_verified")
     return payment
@@ -144,6 +140,12 @@ def _apply_invoice(receipt_id, member, subscription, initial, start, end, succes
         receipt = PaystackWebhookReceipt.objects.select_for_update().get(pk=receipt_id)
         if not _due(receipt):
             return receipt
+        if mode == "live":
+            from .plan_change_payments import _retired_from_change
+            if _retired_from_change(subscription, start, end):
+                # Another worker may have retired this renewal after the first
+                # lookup. Reprocess through recovery; never extend the old tier.
+                raise _Retry("plan_change_reconciliation_required")
         current = StudyMembership.objects.select_for_update().get(pk=member.pk)
         _proof(current, subscription)
         if _initial_payment(current, subscription).pk != initial.pk:
@@ -295,6 +297,11 @@ def _process_payment_receipt(receipt_id, client, mode):
         if "subscription_id" in snapshot:
             hint["object_id"] = snapshot["subscription_id"]
         subscription = _canonical_subscription(client, hint)
+        if mode == "live":
+            from .plan_change_payments import process_plan_change_invoice
+            result = process_plan_change_invoice(receipt, client, subscription)
+            if result is not None:
+                return result
         member = _owner(subscription)
         initial = _initial_payment(member, subscription)
         invoice, start, end, successful = _invoice(subscription, snapshot, initial)

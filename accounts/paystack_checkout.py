@@ -429,7 +429,11 @@ def live_checkout_page_context(request):
     if not billing or not user.is_authenticated:
         return context
     member = StudyMembership.objects.filter(user=user, payment_mode="live", plan="monthly").first()
-    proof = StudyPayment.objects.filter(user=user, mode="live", source="checkout", status="succeeded", verified_at__isnull=False, discarded_at__isnull=True)
+    from .membership_proof import membership_payment
+    from .models import StudyPlanChange
+    from .plan_changes import OPEN_CHANGE_STATES
+    proof = membership_payment(member) if member else None
+    scheduled = StudyPlanChange.objects.filter(user=user, kind="downgrade", state__in=OPEN_CHANGE_STATES).first()
     previous = StudyPayment.objects.filter(user=user, mode="live", status="succeeded", discarded_at__isnull=True).exists()
     context.update({
         "can_start_live_checkout": bool(checkout and user.is_active and get_study_tier(user) == StudyTier.FREE
@@ -438,8 +442,8 @@ def live_checkout_page_context(request):
         "pending_live_payment": StudyPayment.objects.filter(
             user=user, mode="live", source="checkout", discarded_at__isnull=True,
         ).exclude(status__in=("succeeded", "reversed")).first(),
-        "can_cancel_live_membership": bool(member and proof.filter(tier=member.tier).exclude(paystack_plan_code="").exists()
-                                           and member.status != "non_renewing"),
-        "live_renewals_cancelled": bool(member and member.status == "non_renewing"),
+        "can_cancel_live_membership": bool(member and proof and (member.status != "non_renewing" or scheduled)),
+        "live_renewals_cancelled": bool(member and member.status == "non_renewing" and not scheduled),
+        "pending_plan_change": scheduled,
     })
     return context

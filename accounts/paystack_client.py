@@ -136,6 +136,11 @@ class PaystackTestClient:
     def verify(self, reference):
         return self._request("GET", "/transaction/verify/" + quote(reference, safe=""))
 
+    def fetch_transaction(self, transaction_id):
+        if type(transaction_id) is not int or transaction_id <= 0:
+            raise PaystackError("A verified transaction identifier is required.")
+        return self._request("GET", f"/transaction/{transaction_id}")
+
     def fetch_customer(self, code):
         return self._request("GET", "/customer/" + quote(code, safe=""))
 

@@ -38,11 +38,8 @@ def _pending_guarantee(user_id):
 def _initial_payment(member):
     # The future scheduled-downgrade path must provide equivalent explicit
     # payment/subscription proof before a renewed Grow plan can upgrade again.
-    payment = StudyPayment.objects.filter(
-        user_id=member.user_id, mode="live", tier="grow", plan="monthly", source="checkout",
-        status="succeeded", verified_at__isnull=False, paystack_transaction_id__isnull=False,
-        discarded_at__isnull=True,
-    ).exclude(paystack_plan_code="").first()
+    from .membership_proof import membership_payment
+    payment = membership_payment(member)
     if not payment:
         raise CheckoutNotAllowed("The current subscription payment must be verified first.")
     return payment

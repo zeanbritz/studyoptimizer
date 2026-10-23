@@ -82,10 +82,11 @@ def request_first_payment_refund(user):
         if not member or member.tier != payment.tier or payment.refund_requests.exclude(status="ineligible").exists():
             raise RefundNotAllowed("This first payment has already been replaced or is being refunded. Check your Profile for its status.")
         # No amount, payment ID, timestamp or approval flag comes from the form.
-        return StudyRefund.objects.create(
+        refund = StudyRefund.objects.create(
             user=locked, payment=payment, mode="live",
             amount_cents=payment.expected_amount_cents, currency=payment.currency, requested_at=received_at,
         )
+        return refund
 
 
 def _due(refund):
@@ -104,7 +105,9 @@ def _scope(refund):
     first = _first_payment(refund.user_id)
     if not (
         refund.mode == payment.mode == "live" and payment.user_id == refund.user_id
-        and (payment.source == "checkout" or (refund.reason == "upgrade" and payment.source == "renewal"))
+        and (payment.source == "checkout" or (
+            refund.reason in {"upgrade", "retired_subscription"} and payment.source == "renewal"
+        ))
         and payment.plan == "monthly"
         and payment.status in {"succeeded", "reversed"}
         and payment.verified_at
@@ -113,7 +116,10 @@ def _scope(refund):
         and refund.currency == payment.currency == "ZAR"
     ):
         raise _Attention("payment_scope_changed")
-    if refund.reason == StudyRefund.Reason.UPGRADE:
+    if refund.reason == StudyRefund.Reason.RETIRED_SUBSCRIPTION:
+        from .plan_change_payments import retired_refund_change
+        retired_refund_change(refund)
+    elif refund.reason == StudyRefund.Reason.UPGRADE:
         from .upgrade_service import UpgradeAttention, upgrade_refund_change
         try:
             upgrade_refund_change(refund)
@@ -150,6 +156,10 @@ def _assess(client, refund):
     member = StudyMembership.objects.filter(user_id=refund.user_id, payment_mode="live").first()
     discarded = refund.reason == StudyRefund.Reason.DISCARDED_CHECKOUT
     upgrade = refund.reason == StudyRefund.Reason.UPGRADE
+    retired = refund.reason == StudyRefund.Reason.RETIRED_SUBSCRIPTION
+    if retired:
+        from .plan_change_payments import assess_retired_refund
+        paid_at = assess_retired_refund(client, refund)
     if upgrade:
         from .upgrade_service import UpgradeAttention, upgrade_refund_change, validate_upgrade_credit
         try:
@@ -159,7 +169,7 @@ def _assess(client, refund):
             raise _Attention(str(exc)) from None
     if not (
         result.get("status") == "success" and result.get("id") == payment.paystack_transaction_id
-        and paid_at and (discarded or upgrade or (
+        and paid_at and (discarded or upgrade or retired or (
             member and member.tier == payment.tier
             and member.paystack_customer_code == result["customer"]["customer_code"]
         ))
@@ -173,7 +183,7 @@ def _assess(client, refund):
         refund.paid_at = paid_at
         # Use the server-recorded request time, NOT processing time. A request
         # arriving before the deadline stays eligible through outages or queues.
-        if not (discarded or upgrade) and not paid_at <= refund.requested_at <= paid_at + timedelta(days=7):
+        if not (discarded or upgrade or retired) and not paid_at <= refund.requested_at <= paid_at + timedelta(days=7):
             refund.status = Status.INELIGIBLE
             refund.last_result = "outside_seven_day_guarantee"
         else:
@@ -285,6 +295,9 @@ def process_live_refund(refund_id):
             if refund.reason == StudyRefund.Reason.DISCARDED_CHECKOUT:
                 from .discarded_checkouts import cancel_discarded_subscription
                 cancelled_code = cancel_discarded_subscription(client, refund)
+            elif refund.reason == StudyRefund.Reason.RETIRED_SUBSCRIPTION:
+                from .plan_change_payments import stop_retired_refund_subscription
+                cancelled_code = stop_retired_refund_subscription(client, refund)
             elif refund.reason == StudyRefund.Reason.UPGRADE:
                 from .upgrade_service import UpgradeAttention, stop_previous_upgrade_subscription, upgrade_refund_change
                 try:
@@ -292,6 +305,9 @@ def process_live_refund(refund_id):
                 except UpgradeAttention as exc:
                     raise _Attention(str(exc)) from None
             else:
+                from .downgrade_cancellation import request_schedule_cancellation
+                request_schedule_cancellation(user=refund.user, restore_current=False, allow_inactive=True,
+                                              received_at=refund.requested_at)
                 member = _cancel_membership(user=refund.user, client=client, mode="live", allow_inactive=True)
                 cancelled_code = member.paystack_subscription_code
             with transaction.atomic():
@@ -327,6 +343,12 @@ def process_live_refund(refund_id):
                     f"StudiGarden upgrade credit {refund.pk}",
                     customer_note="Refund of the lower plan's payment for the billing period replaced by your StudiGarden upgrade. Your upgraded plan is unchanged.",
                 )
+            elif refund.reason == StudyRefund.Reason.RETIRED_SUBSCRIPTION:
+                result = client.create_full_refund(
+                    refund.payment.paystack_transaction_id, refund.amount_cents,
+                    f"StudiGarden stopped-billing recovery {refund.pk}",
+                    customer_note="Returned a payment on cancelled or replaced StudiGarden billing. Your chosen plan is unchanged.",
+                )
             else:
                 result = client.create_full_refund(
                     refund.payment.paystack_transaction_id, refund.amount_cents, f"StudiGarden guarantee request {refund.pk}",
@@ -353,11 +375,12 @@ def process_live_refund(refund_id):
             return _defer(refund, "submission_confirmation_pending")
         return _defer(refund, str(exc), attention=True)
     except (PaystackError, CheckoutNotAllowed):
-        if (refund.reason in {StudyRefund.Reason.DISCARDED_CHECKOUT, StudyRefund.Reason.UPGRADE}
+        if (refund.reason in {StudyRefund.Reason.DISCARDED_CHECKOUT, StudyRefund.Reason.UPGRADE, StudyRefund.Reason.RETIRED_SUBSCRIPTION}
                 and refund.status in {Status.REQUESTED, Status.APPROVED}
                 and refund.requested_at < timezone.now() - timedelta(hours=24)):
-            code = ("upgrade_refund_needs_attention" if refund.reason == StudyRefund.Reason.UPGRADE
-                    else "discarded_subscription_needs_attention")
+            code = ("upgrade_refund_needs_attention" if refund.reason == StudyRefund.Reason.UPGRADE else
+                    "retired_refund_needs_attention" if refund.reason == StudyRefund.Reason.RETIRED_SUBSCRIPTION else
+                    "discarded_subscription_needs_attention")
             return _defer(refund, code, attention=True)
         return _defer(refund, "provider_confirmation_pending")
     except IntegrityError:

@@ -105,6 +105,14 @@ def cancel_live_membership(*, user):
 def _cancel_membership(*, user, client, mode, allow_inactive=False):
     if not user or not user.is_authenticated or (not user.is_active and not allow_inactive) or not user.pk:
         raise CheckoutNotAllowed("An active account is required.")
+    if mode == "live":
+        from .downgrade_cancellation import request_schedule_cancellation
+        from .downgrade_service import process_downgrade_change
+        change = request_schedule_cancellation(user=user, restore_current=False, allow_inactive=allow_inactive)
+        if change:
+            change = process_downgrade_change(change.pk)
+            if not change.cancelled_at:
+                raise PaystackError("Cancellation is being confirmed. Check your Profile before assuming future billing has stopped.")
     try:
         with transaction.atomic():
             locked_user = get_user_model().objects.select_for_update().get(pk=user.pk)
@@ -118,12 +126,8 @@ def _cancel_membership(*, user, client, mode, allow_inactive=False):
                 raise CheckoutNotAllowed("There is no verified paid plan to cancel. Free and beta access do not renew.")
             if membership.status == StudyMembership.Status.NON_RENEWING and membership.paystack_subscription_code:
                 return membership
-            payment = StudyPayment.objects.filter(
-                user=locked_user, tier=membership.tier, mode=mode,
-                plan=StudyMembership.Plan.MONTHLY, source=StudyPayment.Source.CHECKOUT,
-                status=StudyPayment.Status.SUCCEEDED, verified_at__isnull=False,
-                discarded_at__isnull=True,
-            ).exclude(paystack_plan_code="").first()
+            from .membership_proof import membership_payment
+            payment = membership_payment(membership)
             if payment is None:
                 raise CheckoutNotAllowed("Verify the payment before cancelling its subscription.")
             subscription = _find_subscription(client, membership, payment)

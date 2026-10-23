@@ -145,13 +145,8 @@ def _proof(membership, subscription):
         raise _Ignore("membership_scope_mismatch")
     if membership.paystack_subscription_code not in (None, "", subscription.code):
         raise _Ignore("not_current_subscription")
-    payment = StudyPayment.objects.filter(
-        user_id=membership.user_id, tier=membership.tier, mode=subscription.mode,
-        plan=StudyMembership.Plan.MONTHLY, source=StudyPayment.Source.CHECKOUT,
-        status=StudyPayment.Status.SUCCEEDED, verified_at__isnull=False,
-        discarded_at__isnull=True,
-        paystack_plan_code=subscription.plan_code,
-    ).first()
+    from .membership_proof import membership_payment
+    payment = membership_payment(membership, subscription.plan_code)
     if payment is None:
         raise _Retry("checkout_not_verified")
     if subscription.mode == "live" and not membership.paystack_subscription_code and StudyPayment.objects.filter(
@@ -249,6 +244,11 @@ def _process_subscription_receipt(receipt_id, client, mode):
         return receipt
     try:
         subscription = _canonical_subscription(client, receipt.snapshot)
+        if mode == "live":
+            from .plan_change_payments import scheduled_subscription_metadata
+            result = scheduled_subscription_metadata(receipt, subscription)
+            if result is not None:
+                return result
         return _apply(receipt.pk, _owner(subscription), subscription)
     except _Ignore as outcome:
         return _finish(receipt.pk, State.IGNORED, str(outcome))

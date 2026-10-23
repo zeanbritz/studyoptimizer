@@ -196,3 +196,37 @@ can run for real customers. Merely creating a subscription never grants Grow
 access. Leave PAYSTACK_LIVE_PLAN_CHANGES_ENABLED=False; do not call the backend
 from a production shell. Existing live checkout and cancellation remain unchanged.
 All scheduling tests use a fake provider; no actual subscription was created.
+
+## Verified lower payments and cancellation (migration 0020)
+
+Migration 0020 adds cancellation request/completion timestamps and links recovery
+refunds to their saved plan changes. The live worker NOW processes accepted
+downgrades, superseding the disconnected-worker note above. Customer plan-switch
+entry points remain disconnected. Leave PAYSTACK_LIVE_PLAN_CHANGES_ENABLED=False;
+do not deploy this checkpoint alone or call the backend from a production shell.
+
+Subscription metadata never grants Grow. The canonical invoice and verified
+transaction must agree on mode, customer, plan, price, IDs and absolute billing
+period. Only a successful debit replaces Bloom; failures preserve remaining paid
+higher access. The first scheduled debit becomes explicit proof for subsequent
+renewals, cancellation, upgrades and a later move to Free. Replays never add time.
+
+Cancellation records the server request time and confirms BOTH the old and
+scheduled renewals have stopped. An uncertain subscription-create POST is GET-
+reconciled, never blindly repeated. Explicitly cancelling a switch can instead
+resume the higher plan while its paid month and next debit date are confirmed.
+Default cancellation never silently resumes paid billing. The normal Cancel plan
+button also handles scheduled replacements; Profile must not report all renewals
+stopped while a replacement is pending. Ownership/confirmation failures need attention.
+
+A debit before cancellation keeps its funded month even if its notification is
+delayed. Debits after cancellation, early scheduled charges and verified renewals
+on replaced billing enter the durable full-refund recovery outbox, without
+overwriting or cancelling the chosen plan. Only one financial request per payment
+is allowed. Ambiguous refund POSTs are never repeated. Guarantee eligibility checks
+pause a switch without cancelling it; approved guarantees stop replacement billing
+before submitting the refund. No reusable card or cancellation token is persisted.
+
+Remaining work: customer consent/status/switch controls, paid-plan restart/resume
+controls, matching policy text and a final end-to-end check. All checks so far
+use a fake provider and disposable database. No live financial changes were made.

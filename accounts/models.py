@@ -277,6 +277,8 @@ class StudyPlanChange(models.Model):
     subscription_posted_at = models.DateTimeField(null=True, blank=True)
     old_stopped_at = models.DateTimeField(null=True, blank=True)
     cancel_requested = models.BooleanField(default=False)
+    cancel_requested_at = models.DateTimeField(null=True, blank=True, editable=False)
+    cancelled_at = models.DateTimeField(null=True, blank=True, editable=False)
     restore_current = models.BooleanField(default=False)
     requested_at = models.DateTimeField(auto_now_add=True)
     applied_at = models.DateTimeField(null=True, blank=True)
@@ -321,6 +323,7 @@ class StudyRefund(models.Model):
         FIRST_PAYMENT = "first_payment", "7-day first-payment guarantee"
         DISCARDED_CHECKOUT = "discarded_checkout", "Payment on a discarded checkout"
         UPGRADE = "upgrade", "Lower-plan refund after upgrade"
+        RETIRED_SUBSCRIPTION = "retired_subscription", "Charge on stopped or replaced billing"
 
     class Status(models.TextChoices):
         REQUESTED = "requested", "Checking eligibility"
@@ -333,6 +336,9 @@ class StudyRefund(models.Model):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="study_refunds")
     payment = models.ForeignKey(StudyPayment, on_delete=models.PROTECT, related_name="refund_requests")
+    plan_change = models.ForeignKey(
+        StudyPlanChange, on_delete=models.PROTECT, related_name="recovery_refunds", null=True, blank=True,
+    )
     reason = models.CharField(max_length=20, choices=Reason.choices, default=Reason.FIRST_PAYMENT)
     mode = models.CharField(max_length=4, choices=StudyPayment.Mode.choices, default=StudyPayment.Mode.LIVE)
     status = models.CharField(max_length=16, choices=Status.choices, default=Status.REQUESTED)

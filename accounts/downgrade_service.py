@@ -54,11 +54,8 @@ def _pending_refund(user_id):
 
 
 def _funding_payment(member):
-    initial = StudyPayment.objects.filter(
-        user_id=member.user_id, mode="live", tier=member.tier, plan="monthly", source="checkout",
-        status="succeeded", verified_at__isnull=False, paystack_transaction_id__isnull=False,
-        discarded_at__isnull=True,
-    ).exclude(paystack_plan_code="").first()
+    from .membership_proof import membership_payment
+    initial = membership_payment(member)
     if not initial:
         raise CheckoutNotAllowed("Verify the current subscription payment before changing its renewal.")
     funding = StudyPayment.objects.filter(
@@ -235,7 +232,7 @@ def _matches_new(subscription, change):
     )
 
 
-def _attach_new(client, change, code):
+def _attach_new(client, change, code, *, allow_stopped=False):
     subscription = client.fetch_subscription(code)
     if subscription.get("subscription_code") != code or not _matches_new(subscription, change):
         raise ScheduleAttention("scheduled_subscription_proof_mismatch")
@@ -243,7 +240,7 @@ def _attach_new(client, change, code):
         raise ScheduleAttention("scheduled_subscription_is_current")
     if StudyPlanChange.objects.filter(to_subscription_code=code).exclude(pk=change.pk).exists():
         raise ScheduleAttention("scheduled_subscription_owned_elsewhere")
-    if subscription.get("status") in STOPPED_STATUSES:
+    if subscription.get("status") in STOPPED_STATUSES and not allow_stopped:
         raise ScheduleAttention("lower_subscription_already_stopped")
     change.to_subscription_code = code
     change.state, change.last_result = "scheduled", "lower_renewal_scheduled"
@@ -252,7 +249,7 @@ def _attach_new(client, change, code):
     return change
 
 
-def _recover_submission(client, change):
+def _recover_submission(client, change, *, allow_stopped=False):
     matches = []
     for item in _listed_subscriptions(client, change):
         code = item["subscription_code"]
@@ -269,14 +266,14 @@ def _recover_submission(client, change):
         raise ScheduleAttention("scheduled_subscription_ambiguous")
     if not matches:
         raise PaystackError("The subscription submission is awaiting confirmation. Do not submit another.")
-    return _attach_new(client, change, matches[0])
+    return _attach_new(client, change, matches[0], allow_stopped=allow_stopped)
 
 
 def _defer(change, code, *, attention=False):
     with transaction.atomic():
         get_user_model().objects.select_for_update().get(pk=change.user_id)
         current = StudyPlanChange.objects.select_for_update().get(pk=change.pk)
-        if current.state != change.state or current.state not in {"queued", "submitting", "scheduled"}:
+        if current.state != change.state or current.state not in {"queued", "submitting", "scheduled", "settling"}:
             return current
         current.state = "attention" if attention else current.state
         current.attempt_count = min(current.attempt_count + 1, 2_147_483_647)
@@ -289,21 +286,36 @@ def _defer(change, code, *, attention=False):
 def process_downgrade_change(change_id):
     client = PaystackLiveClient()
     change = StudyPlanChange.objects.select_related("previous_payment").get(pk=change_id, kind="downgrade")
-    if (change.state not in {"queued", "submitting", "scheduled"}
+    if (change.state not in {"queued", "submitting", "scheduled", "settling"}
             or (change.next_attempt_at and change.next_attempt_at > timezone.now())):
         return change
+    attempted_state = change.state
     try:
         authorization = None
         with transaction.atomic():
             user = get_user_model().objects.select_for_update().get(pk=change.user_id)
             change = StudyPlanChange.objects.select_for_update().select_related("previous_payment").get(pk=change.pk)
-            if (change.state not in {"queued", "submitting", "scheduled"}
+            if (change.state not in {"queued", "submitting", "scheduled", "settling"}
                     or (change.next_attempt_at and change.next_attempt_at > timezone.now())):
                 return change
             member = StudyMembership.objects.select_for_update().get(user=user)
+            first_refund = StudyRefund.objects.filter(user=user, mode="live", reason="first_payment").exclude(
+                status__in=("completed", "ineligible"),
+            ).first()
+            if first_refund and (first_refund.status == "requested" or (
+                    first_refund.status == "attention" and not first_refund.approved_at)):
+                return _defer(change, "refund_eligibility_pending")
+            guarantee = bool(first_refund)
+            if (change.cancel_requested or guarantee or not user.is_active or has_permanent_free_access(user)
+                    or change.previous_payment.status == "reversed"):
+                from .downgrade_cancellation import cancel_scheduled_change
+                change.cancel_requested = True
+                change.cancel_requested_at = change.cancel_requested_at or timezone.now()
+                if guarantee or not user.is_active or has_permanent_free_access(user):
+                    change.restore_current = False
+                change.save(update_fields=["cancel_requested", "cancel_requested_at", "restore_current", "updated_at"])
+                return cancel_scheduled_change(client, change)
             _scope(change, member)
-            if change.cancel_requested or _pending_refund(user.pk) or not user.is_active or has_permanent_free_access(user):
-                raise ScheduleAttention("scheduled_billing_cleanup_required")
             if change.state == "submitting":
                 # Even when its desired date has passed, GET-reconcile an
                 # uncertain submission. Never retry the create POST blindly.
@@ -353,6 +365,7 @@ def process_downgrade_change(change_id):
             change.save()
         # Submission intent has committed. Lock against another worker while
         # POSTing, but a DB rollback cannot erase that earlier durable intent.
+        attempted_state = change.state
         with transaction.atomic():
             user = get_user_model().objects.select_for_update().get(pk=change.user_id)
             change = StudyPlanChange.objects.select_for_update().select_related("previous_payment").get(pk=change.pk)
@@ -371,20 +384,23 @@ def process_downgrade_change(change_id):
                 raise PaystackError("The subscription response needs confirmation before continuing.")
             return _attach_new(client, change, code)
     except ScheduleAttention as exc:
+        change.state = attempted_state
         return _defer(change, str(exc), attention=True)
     except PaystackError:
+        change.state = attempted_state
         since = change.subscription_posted_at or change.requested_at
         if since < timezone.now() - timedelta(hours=24):
             return _defer(change, "lower_subscription_needs_attention", attention=True)
         return _defer(change, "lower_provider_confirmation_pending")
     except IntegrityError:
+        change.state = attempted_state
         return _defer(change, "lower_subscription_identity_conflict", attention=True)
 
 
 def process_downgrade_batch(limit=5):
     if not live_billing_enabled():
         raise PaystackError("Live billing is disabled.")
-    due = StudyPlanChange.objects.filter(kind="downgrade", state__in=("queued", "submitting", "scheduled")).filter(
+    due = StudyPlanChange.objects.filter(kind="downgrade", state__in=("queued", "submitting", "scheduled", "settling")).filter(
         Q(next_attempt_at__isnull=True) | Q(next_attempt_at__lte=timezone.now()),
     ).order_by("requested_at", "pk").values_list("pk", flat=True)[:limit]
     outcomes = []
