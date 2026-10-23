@@ -230,3 +230,35 @@ before submitting the refund. No reusable card or cancellation token is persiste
 Remaining work: customer consent/status/switch controls, paid-plan restart/resume
 controls, matching policy text and a final end-to-end check. All checks so far
 use a fake provider and disposable database. No live financial changes were made.
+
+## Customer plan-change controls (after migration 0020; no new migration)
+
+Profile and the shared Pricing cards now link funded paid members to explicit
+upgrade/downgrade confirmations. This supersedes the disconnected-entry-point
+note above, but NOT the rollout restriction: leave
+PAYSTACK_LIVE_PLAN_CHANGES_ENABLED=False. Nothing was deployed or enabled here.
+
+GET only renders server-derived terms, without gateway calls or billing records.
+POST needs CSRF, explicit consent and a signed 15-minute confirmation bound to
+the owned membership, email, configured plans, target, price and billing date.
+The services recheck the snapshot under the user lock before billing actions.
+Grow -> Bloom continues one unique checkout; Bloom -> Grow and paid -> Free
+record worker instructions and never report unconfirmed scheduling as complete.
+
+Scheduled-change cancellation has separate, owned confirmations: stop both future
+renewals, or explicitly keep the original plan renewing while the funded period
+and canonical price/date are still valid. Stopping accepted billing remains
+available if new sales/switching is paused. Keeping paid renewal requires the
+switching and checkout gates. The worker rechecks price/date before and after
+enable and refuses refunded funding. Provider details/tokens are not rendered.
+
+Profile displays upgrade credits/recovery refunds separately from the first-
+payment guarantee. Public policy text describes the same upgrade, downgrade,
+freeze and confirmation rules, and says switching is not enabled while paused.
+Legacy/new Free checkout and cancellation routes retain their existing gates.
+
+Still intentionally unsupported: a standalone resumption after cancellation and
+paid restart after expiry. Those choices cannot bypass the old-subscription and
+payment-history guards. Finish their backend/customer controls and verify real
+provider response shapes/end-to-end behaviour before rollout. Automated tests use
+fake providers and disposable databases, not actual cards or subscriptions.

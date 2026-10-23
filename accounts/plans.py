@@ -59,6 +59,8 @@ PAID_STUDY_PLANS = tuple(
 
 def plan_selection_context(request):
     """Use the same cards and selected-plan return links on Pricing and Profile."""
+    from .plan_controls import plan_controls_context
+    controls = plan_controls_context(request)
     cards = []
     for plan in PAID_STUDY_PLANS:
         return_url = (
@@ -68,10 +70,11 @@ def plan_selection_context(request):
         next_query = urlencode({"next": return_url})
         cards.append({
             "plan": plan,
+            "change_action": controls["plan_actions"].get(plan.tier),
             "signup_url": f"{reverse('register')}?{next_query}",
             "login_url": f"{reverse('login')}?{next_query}",
         })
     selected_tier = request.GET.get("plan", "")
     if selected_tier not in {plan.tier for plan in PAID_STUDY_PLANS}:
         selected_tier = ""
-    return {"pricing_cards": cards, "selected_tier": selected_tier}
+    return {**controls, "pricing_cards": cards, "selected_tier": selected_tier}

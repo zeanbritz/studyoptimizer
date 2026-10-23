@@ -303,7 +303,7 @@
                     </h2>
                     <p class="plan-description">
                         {% if membership.plan == "monthly" %}
-                            R{{ current_plan.monthly_price|floatformat:0 }} per month. {% if membership.status == "non_renewing" %}Future renewals are stopped.{% elif membership.payment_mode == "test" %}You can stop future test renewals below.{% elif live_billing_enabled %}Renews monthly until cancelled. You can stop future renewals below.{% else %}Monthly renewals will be managed here once payments launch.{% endif %}
+                            R{{ current_plan.monthly_price|floatformat:0 }} per month. {% if pending_plan_change %}A renewal change is in progress; see Plan changes below.{% elif membership.status == "non_renewing" %}Future renewals are stopped.{% elif membership.payment_mode == "test" %}You can stop future test renewals below.{% elif live_billing_enabled %}Renews monthly until cancelled. You can stop future renewals below.{% else %}Monthly renewals will be managed here once payments launch.{% endif %}
                         {% else %}
                             Prepaid access for 12 months. This plan does not renew automatically.
                         {% endif %}
@@ -377,6 +377,8 @@
                 {% endif %}
             </section>
 
+            {% include 'accounts/partials/plan_change_status.html' %}
+
             {% if can_request_refund or refund_request %}
             <section class="plan-card" aria-labelledby="refund-title">
                 <h2 id="refund-title">7-day first-payment refund</h2>
@@ -431,7 +433,11 @@
                 {% include 'landing/partials/plan_cards.html' %}
                 {% if is_beta_member or user.is_superuser %}
                 <p class="notice">You already have permanent free access. No payment is needed.</p>
-                {% elif not can_start_live_checkout %}
+                {% elif open_customer_plan_change %}
+                <p class="notice">A plan change is already being handled. See its status above before starting another payment.</p>
+                {% elif plan_actions %}
+                <p class="notice">Choose a plan card to review the amount, billing date and effect on your subjects before confirming.</p>
+                {% elif not can_start_live_checkout and not paid_restart_not_available %}
                 <p class="notice">You cannot open a replacement subscription here. Please contact support to change or restart an existing plan, so you are not billed twice.</p>
                 {% endif %}
                 <p class="notice"><a href="{% url 'billing_policy' %}">Refund and cancellation policy</a>. Your card details are not stored by StudiGarden.</p>

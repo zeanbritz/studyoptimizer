@@ -16,7 +16,9 @@
             <li>Track your progress; PDF export and Auto Summarize are not included</li>
         </ul>
 
-        {% if user.is_authenticated %}
+        {% if free_plan_change %}
+            <a href="{{ free_plan_change.url }}" class="button button-light">{{ free_plan_change.label }}</a>
+        {% elif user.is_authenticated %}
             <a href="{% url 'dashboard' %}" class="button button-green">Open dashboard</a>
         {% else %}
             <a href="{% url 'register' %}" class="button button-green">Sign up for free</a>
@@ -45,7 +47,9 @@
             {% for feature in plan.features %}<li>{{ feature }}</li>{% endfor %}
         </ul>
 
-        {% if live_checkout_enabled %}
+        {% if card.change_action %}
+            <a href="{{ card.change_action.url }}" class="button button-green">{{ card.change_action.label }}</a>
+        {% elif live_checkout_enabled %}
             {% if can_start_live_checkout %}
             <form method="post" action="{% url 'start_live_checkout' %}" class="plan-checkout-form">
                 {% csrf_token %}
@@ -87,5 +91,9 @@
     {% endfor %}
 </section>
 {% if pending_live_payment %}
+{% if open_customer_plan_change.kind == 'upgrade' %}
+<p class="plan-checkout-notice">Your unfinished Bloom upgrade can be continued from its plan card. Existing paid access is unchanged until payment is verified. If you already paid, <a href="{% url 'live_checkout_return' %}?reference={{ pending_live_payment.reference|urlencode }}">Check upgrade payment status</a>. Do not pay through an older link.</p>
+{% else %}
 <p class="plan-checkout-notice">Your unfinished {{ pending_live_payment.get_tier_display }} checkout will be replaced when you choose a plan. Do not pay through an old link. If an old checkout is paid later, its payment will be handled separately for refund and its renewals stopped once confirmed. If you already paid, <a href="{% url 'live_checkout_return' %}?reference={{ pending_live_payment.reference|urlencode }}">Check payment status</a>.</p>
+{% endif %}
 {% endif %}

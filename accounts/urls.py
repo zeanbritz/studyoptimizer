@@ -7,9 +7,12 @@ from .webhook_views import paystack_test_webhook, paystack_live_webhook
 from .live_checkout_views import start_live_checkout, live_checkout_return, cancel_live_plan
 from .preview_relay_views import local_preview_webhook
 from .refund_views import request_live_refund
+from .plan_change_views import change_live_plan, cancel_scheduled_plan
 
 
 urlpatterns = [
+    path("my-plan/change/<str:tier>/", change_live_plan, name="change_live_plan"),
+    path("my-plan/scheduled/<int:change_id>/cancel/", cancel_scheduled_plan, name="cancel_scheduled_plan"),
     path("payments/paystack/refund/", request_live_refund, name="request_live_refund"),
     path("payments/paystack/start/", start_live_checkout, name="start_live_checkout"),
     path("payments/paystack/return/", live_checkout_return, name="live_checkout_return"),

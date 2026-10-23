@@ -1,5 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
+from django.views.decorators.cache import never_cache
 
 from .access import get_study_tier
 from .entitlements import FREE_LEARNING_ITEM_LIMIT, FREE_SUBJECT_LIMIT, frozen_subjects
@@ -10,6 +11,7 @@ from .pdf_usage import get_pdf_usage
 from .refund_service import refund_page_context
 
 
+@never_cache
 @login_required
 def my_plan(request):
     user = request.user

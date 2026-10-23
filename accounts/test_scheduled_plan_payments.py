@@ -44,6 +44,7 @@ class ScheduledPlanPaymentTests(TestCase):
         self.charges = {self.payment.reference: deepcopy(self.charge)}
         self.verify.side_effect = lambda ref: deepcopy(self.charges[ref])
         self.subscriptions["SUB_old"]["next_payment_date"] = self.end.isoformat()
+        self.subscriptions["SUB_old"]["amount"] = 9000
         self.enable = self.mock_client("enable_subscription", side_effect=lambda code, token:
                                       self.subscriptions[code].update(status="active"))
         self.fetch_transaction = self.mock_client("fetch_transaction", side_effect=lambda tx:

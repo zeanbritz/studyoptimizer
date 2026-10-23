@@ -1,0 +1,55 @@
+{% if show_plan_management %}
+<section class="plan-card" aria-labelledby="plan-change-title">
+    <h2 id="plan-change-title">Plan changes</h2>
+    {% with change=plan_change_status %}
+    {% if change %}
+        <p class="notice" role="status">{{ change.get_from_tier_display }} to {{ change.get_to_tier_display }} — {{ change.get_state_display }}</p>
+        {% if change.state == 'attention' %}
+        <p class="plan-description">We could not safely confirm this billing change. Please <a href="{% url 'contact' %}">contact support</a>. Do not open another paid subscription. Your paid-through date has not been shortened by this request.</p>
+        {% elif change.cancel_requested and not change.cancelled_at %}
+        <p class="plan-description">Your cancellation request is saved. {% if change.restore_current %}We are confirming that the scheduled replacement is stopped and the previous {{ change.get_from_tier_display }} renewal can safely continue.{% else %}We are confirming that both the previous and scheduled replacement subscriptions will not renew.{% endif %} Billing changes are not yet confirmed. No further request is needed.</p>
+        {% elif change.state == 'checkout' %}
+        <p class="plan-description">Your Bloom upgrade has not been verified as paid. Existing paid access is unchanged. Use the Bloom card below to continue this same checkout, or check the payment if you already paid.</p>
+        {% elif change.state == 'queued' or change.state == 'submitting' %}
+        <p class="plan-description">Your request is saved; renewal changes are awaiting Paystack confirmation. Keep {{ change.get_from_tier_display }} until {{ change.from_paid_until|date:"j F Y, H:i T" }}. No payment is due now for this downgrade.</p>
+        {% elif change.state == 'scheduled' %}
+        <p class="plan-description">The previous renewal is stopped. Keep {{ change.get_from_tier_display }} until {{ change.effective_at|date:"j F Y, H:i T" }}. {% if change.to_tier == 'free' %}Free applies after paid access ends; there is no new debit.{% else %}Grow is scheduled at R35/month from that date, until cancelled. Lower paid access requires a verified payment.{% endif %}</p>
+        {% elif change.state == 'settling' %}
+        <p class="plan-description">Your payment was verified. We are confirming that the replaced subscription's renewals are stopped{% if change.kind == 'upgrade' %} and checking the current Grow payment for its separate credit{% endif %}. Do not start another subscription.</p>
+        {% elif change.state == 'cancelled' %}
+        <p class="plan-description">{% if change.cancelled_at %}{% if change.restore_current %}The scheduled change was cancelled and the previous {{ change.get_from_tier_display }} monthly renewal was confirmed resumed.{% else %}The scheduled change was cancelled and future renewals on both matching subscriptions were confirmed stopped. Already-paid access is preserved.{% endif %}{% else %}This change was cancelled. Check your current membership and any refund progress below; cancellation of this change alone is not confirmation that all billing has stopped.{% endif %}</p>
+        {% elif change.state == 'applied' %}
+        <p class="plan-description">This plan change has taken effect. Your current access is shown above. {% if change.kind == 'upgrade' %}Any Grow credit is shown separately below; applied does not mean the bank has credited your refund.{% endif %}</p>
+        {% endif %}
+        {% if change.payment and change.state == 'checkout' %}
+        <p class="notice"><a href="{% url 'live_checkout_return' %}?reference={{ change.payment.reference|urlencode }}">Check upgrade payment status</a></p>
+        {% endif %}
+    {% elif plan_switching_enabled %}
+        <p class="plan-description">Choose a plan below to review its price and timing before confirming. An upgrade charges the new plan now; a downgrade starts after your paid period ends.</p>
+    {% else %}
+        <p class="plan-description">Self-service plan switching is not enabled yet. You can still stop future renewals using Plan cancellation.</p>
+    {% endif %}
+    {% endwith %}
+    {% if stop_scheduled_change_url %}
+    <p class="checkout-actions">
+        <a class="header-link" href="{{ stop_scheduled_change_url }}">Cancel scheduled change and stop future billing</a>
+        {% if keep_current_plan_url %}<a class="header-link" href="{{ keep_current_plan_url }}">Cancel scheduled change and keep current plan renewing</a>{% endif %}
+    </p>
+    {% endif %}
+    {% if plan_change_wait_for_refund %}<p class="notice">A refund is still being handled. New plan changes are paused until it is resolved; stopping future billing remains available.</p>{% endif %}
+    {% if paid_restart_not_available %}<p class="notice">Paid restart and resuming a cancelled plan are not available in these controls yet. You can still cancel future billing or <a href="{% url 'contact' %}">contact support</a>.</p>{% endif %}
+</section>
+{% endif %}
+{% for recovery in plan_switch_refunds %}
+<section class="plan-card" aria-labelledby="switch-refund-{{ recovery.pk }}">
+    <h2 id="switch-refund-{{ recovery.pk }}">{% if recovery.reason == 'upgrade' %}Grow upgrade credit{% else %}Stopped subscription charge refund{% endif %}</h2>
+    <p class="notice" role="status">{{ recovery.get_status_display }}</p>
+    {% if recovery.status == 'completed' %}
+    <p class="plan-description">Paystack confirmed the full refund. Your bank may take additional time to show the credit. This refund does not remove your chosen plan's paid access.</p>
+    {% elif recovery.status == 'attention' %}
+    <p class="plan-description">This refund needs attention. Please <a href="{% url 'contact' %}">contact support</a>; do not request another refund for the same payment.</p>
+    {% else %}
+    <p class="plan-description">The payment and matching stopped subscription are being checked before the full refund is completed. No further request is needed. This does not use your first-payment guarantee.</p>
+    {% endif %}
+</section>
+{% endfor %}

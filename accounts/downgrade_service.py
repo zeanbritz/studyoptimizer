@@ -20,7 +20,7 @@ from .models import StudyMembership, StudyPayment, StudyPlanChange, StudyRefund
 from .payment_service import CheckoutNotAllowed
 from .paystack_checkout import _validate_plan, _validate_transaction
 from .paystack_client import PaystackError, PaystackLiveClient, live_billing_enabled
-from .plan_changes import OPEN_CHANGE_STATES, quote_plan_change
+from .plan_changes import OPEN_CHANGE_STATES, quote_plan_change, validate_quote_snapshot
 from .subscription_service import (
     RENEWING_STATUSES, STOPPED_STATUSES, _find_subscription, _matches_subscription,
 )
@@ -86,7 +86,7 @@ def _validate_lower_plan(client, change):
     _validate_plan(client.fetch_plan(change.to_plan_code), expected)
 
 
-def request_live_downgrade(*, user, tier):
+def request_live_downgrade(*, user, tier, expected_quote=None):
     """Record an owned, zero-charge instruction; provider mutations belong to the worker."""
     quote = quote_plan_change(user=user, tier=tier)
     if quote.kind != "downgrade":
@@ -95,6 +95,7 @@ def request_live_downgrade(*, user, tier):
     with transaction.atomic():
         user = get_user_model().objects.select_for_update().get(pk=user.pk)
         quote = quote_plan_change(user=user, tier=tier)
+        validate_quote_snapshot(user, quote, expected_quote)
         if quote.kind != "downgrade" or _pending_refund(user.pk):
             raise CheckoutNotAllowed("Finish the existing payment or refund before scheduling a change.")
         existing = StudyPlanChange.objects.filter(user=user, state__in=OPEN_CHANGE_STATES).first()

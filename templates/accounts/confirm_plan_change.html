@@ -1,0 +1,48 @@
+{% extends 'landing/page_base.html' %}
+
+{% block page_title %}Confirm plan change — StudiGarden{% endblock %}
+{% block eyebrow %}Your subscription{% endblock %}
+{% block heading %}Review your plan change{% endblock %}
+{% block intro %}Nothing changes until you confirm. Your saved study material is never deleted by a plan change.{% endblock %}
+
+{% block content %}
+{% if scheduled_change %}
+    {% if restore_current %}
+    <h2>Keep {{ from_plan.name }} renewing</h2>
+    <p>Cancel the scheduled switch to {{ to_plan.name }}. No payment is due now. Keep your current {{ from_plan.name }} access, then renew at <strong>R{{ from_plan.monthly_price|floatformat:0 }} per month</strong>, starting <strong>{{ scheduled_change.from_paid_until|date:"j F Y, H:i T" }}</strong>, until you cancel.</p>
+    <p>We must confirm that the scheduled replacement is stopped and the previous renewal is safely resumed. If confirmation fails, Profile will show that it needs attention.</p>
+    {% else %}
+    <h2>Stop all future billing</h2>
+    <p>Cancel the scheduled switch to {{ to_plan.name }} and stop the previous {{ from_plan.name }} subscription's future renewals. No new monthly charge is authorised by this request. Your already-paid access lasts until <strong>{{ scheduled_change.from_paid_until|date:"j F Y, H:i T" }}</strong>. Any other already-verified paid period is preserved.</p>
+    <p>A charge already in progress may need reconciliation. Profile will show when cancellation is confirmed; an unexpected charge after the request is handled separately for recovery.</p>
+    {% endif %}
+{% elif quote.kind == 'upgrade' %}
+    <h2>Upgrade from Grow to Bloom</h2>
+    <p><strong>R90 is due now</strong> through Paystack. Only a verified successful payment activates Bloom and starts a fresh monthly billing period. Bloom then renews at <strong>R90 per month until cancelled</strong>.</p>
+    <p>We stop the previous Grow subscription and arrange a <strong>full refund of the Grow payment funding your current billing period</strong>, once. This is a separate refund, not a discount at checkout or a partial-day credit. If that period has ended before payment completes, there is no current-period credit. Your bank may take time to show the refund.</p>
+    <p>An unpaid Bloom checkout does not remove your existing Grow access. Do not pay through an older checkout link.</p>
+{% else %}
+    <h2>Switch from {{ from_plan.name }} to {{ to_plan.name }}</h2>
+    <p><strong>R0 is due now.</strong> Keep your already-paid {{ from_plan.name }} access until <strong>{{ quote.effective_at|date:"j F Y, H:i T" }}</strong>.</p>
+    {% if quote.to_tier == 'free' %}
+    <p>Stop future paid renewals. Free takes effect when your paid access ends, with no recurring charge.</p>
+    {% else %}
+    <p>The first <strong>R{{ to_plan.monthly_price|floatformat:0 }} Grow payment</strong> is scheduled for that date using the reusable card already funding this subscription. Grow then renews at <strong>R{{ to_plan.monthly_price|floatformat:0 }} per month until cancelled</strong>. Grow access starts only after payment is verified. If billing cannot be confirmed, Profile will show the problem; a request alone does not grant paid access.</p>
+    {% endif %}
+{% endif %}
+
+<h2>What happens to my subjects?</h2>
+<p>Free keeps your earliest 2 subjects active; Grow keeps your earliest 7. Extra subjects and their study material stay stored but frozen: they cannot be opened, studied, edited or exported until your plan includes them again. Bloom includes all subjects.</p>
+<form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="quote_token" value="{{ quote_token }}">
+    {% if scheduled_change %}<input type="hidden" name="action" value="{{ action }}">{% endif %}
+    <p><label style="display:flex; align-items:flex-start; gap:12px; line-height:1.7;">
+        <input type="checkbox" name="confirm_plan_change" value="yes" required style="margin-top:6px; flex-shrink:0;">
+        <span>{% if scheduled_change %}{% if restore_current %}I agree to keep {{ from_plan.name }} renewing automatically at R{{ from_plan.monthly_price|floatformat:0 }} per month from the date above until I cancel.{% else %}I want to cancel the scheduled change and stop all future paid renewals. I understand cancellation still needs confirmation.{% endif %}{% elif quote.kind == 'upgrade' %}I agree to pay R90 now for Bloom, then R90 every month until I cancel, with the current Grow payment refunded separately as described above.{% elif quote.to_tier == 'free' %}I want to stop paid renewals and use Free after my already-paid access ends.{% else %}I agree to R35 monthly automatic renewal for Grow from the date above until I cancel, with no charge now.{% endif %}</span>
+    </label></p>
+    <button type="submit" class="button">{% if scheduled_change %}{% if restore_current %}Keep {{ from_plan.name }} renewing{% else %}Request cancellation of future billing{% endif %}{% elif quote.kind == 'upgrade' %}Continue to Paystack — R90{% elif quote.to_tier == 'free' %}Request switch to Free{% else %}Request Grow at next renewal{% endif %}</button>
+</form>
+<p><a href="{% url 'my_plan' %}">Back to Profile without changing anything</a></p>
+<p>Confirmations expire after 15 minutes. Read the <a href="{% url 'billing_policy' %}">refund and cancellation policy</a>. Your card details are not stored by StudiGarden.</p>
+{% endblock %}

@@ -1,11 +1,9 @@
-"""Server-side plan-change quotes. Recording intent alone never grants access.
-
-This foundation is deliberately not exposed through customer routes yet. The
-checkout, subscription scheduling and refund outbox must be connected first.
-"""
+"""Server-side plan-change quotes. Recording intent alone never grants access."""
 
 from dataclasses import dataclass
 from datetime import datetime
+import hashlib
+import json
 import re
 
 from allauth.account.models import EmailAddress
@@ -23,6 +21,44 @@ OPEN_CHANGE_STATES = (
     "checkout", "queued", "submitting", "scheduled", "settling", "attention",
 )
 RANK = {StudyTier.FREE: 0, StudyTier.GROW: 1, StudyTier.BLOOM: 2}
+
+
+def _membership_fingerprint(user):
+    member = StudyMembership.objects.filter(user_id=user.pk).values(
+        "id", "tier", "plan", "payment_mode", "status", "paid_until", "grace_until",
+        "paystack_customer_code", "paystack_subscription_code",
+    ).first()
+    value = {"membership": member, "email": user.email, "active": user.is_active,
+             "plans": getattr(settings, "PAYSTACK_LIVE_PLAN_CODES", {})}
+    return hashlib.sha256(json.dumps(value, default=str, sort_keys=True).encode()).hexdigest()
+
+
+def quote_snapshot(user, quote):
+    """Bind confirmation to server prices and the membership shown, not form fields."""
+    return {
+        "version": 1, "user": user.pk, "kind": quote.kind,
+        "from": quote.from_tier, "to": quote.to_tier,
+        "now": quote.amount_due_now_cents, "monthly": quote.next_monthly_amount_cents,
+        # Immediate upgrades use the actual verified payment time, not a GET time.
+        "effective": quote.effective_at.isoformat() if quote.kind == "downgrade" and quote.effective_at > timezone.now() else None,
+        "membership": _membership_fingerprint(user),
+    }
+
+
+def validate_quote_snapshot(user, quote, expected):
+    if expected is not None and expected != quote_snapshot(user, quote):
+        raise CheckoutNotAllowed("Your membership changed. Review the current plan details before confirming again.")
+
+
+def schedule_cancel_snapshot(user, change, restore_current):
+    return {
+        "version": 1, "user": user.pk, "change": change.pk,
+        "action": "keep" if restore_current else "stop",
+        "from": change.from_tier, "to": change.to_tier,
+        "paid_until": change.from_paid_until.isoformat(),
+        "monthly": STUDY_PLANS[change.from_tier].monthly_amount_cents if restore_current else 0,
+        "membership": _membership_fingerprint(user),
+    }
 
 
 def plan_changes_enabled():

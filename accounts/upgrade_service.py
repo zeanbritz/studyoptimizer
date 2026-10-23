@@ -1,4 +1,4 @@
-"""Verified upgrade settlement. Customer controls are connected in a later step.
+"""Verified upgrade settlement behind the separate live plan-change gate.
 
 The old membership survives an unpaid checkout. Only a canonical new payment can
 activate Bloom; the worker then stops the exact old subscription and queues its
@@ -19,7 +19,7 @@ from .payment_service import CheckoutNotAllowed, create_checkout_attempt
 from .paystack_client import (
     PaystackError, PaystackLiveClient, live_billing_enabled, live_callback_url, valid_authorization_url,
 )
-from .plan_changes import OPEN_CHANGE_STATES, quote_plan_change
+from .plan_changes import OPEN_CHANGE_STATES, quote_plan_change, validate_quote_snapshot
 from .subscription_service import (
     RENEWING_STATUSES, STOPPED_STATUSES, _find_subscription, _matches_subscription,
 )
@@ -77,8 +77,8 @@ def _verify_lower_payment(client, payment, customer_code):
     return result, start, end
 
 
-def prepare_live_upgrade(*, user, replace_reference=None):
-    """Backend-only entry point. The target/price/refund policy are not form data."""
+def prepare_live_upgrade(*, user, replace_reference=None, expected_quote=None):
+    """The target/price/refund policy are never taken from form data."""
     from .paystack_checkout import _record_checkout_result, _validate_plan, _validate_transaction
 
     quote = quote_plan_change(user=user, tier="bloom")
@@ -90,6 +90,7 @@ def prepare_live_upgrade(*, user, replace_reference=None):
     with transaction.atomic():
         user = get_user_model().objects.select_for_update().get(pk=user.pk)
         quote = quote_plan_change(user=user, tier="bloom")
+        validate_quote_snapshot(user, quote, expected_quote)
         if quote.kind != "upgrade" or _pending_guarantee(user.pk):
             raise CheckoutNotAllowed("Finish the current refund or payment before upgrading.")
         change = StudyPlanChange.objects.select_for_update().filter(user=user, state__in=OPEN_CHANGE_STATES).first()

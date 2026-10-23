@@ -34,10 +34,13 @@ def cookie_policy(request):
 
 
 def billing_policy(request):
+    from accounts.plan_changes import plan_changes_enabled
+    from accounts.plan_controls import billing_here
     return render(request, "landing/legal/billing.html", {
         **live_checkout_page_context(request),
         "paid_plans": PAID_STUDY_PLANS,
         "support_email": settings.STUDIGARDEN_SUPPORT_EMAIL,
+        "plan_switching_enabled": billing_here(request) and plan_changes_enabled(),
     })
 
 

@@ -12,11 +12,12 @@ from .downgrade_service import ScheduleAttention, _checked_old, _recover_submiss
 from .models import StudyMembership, StudyPlanChange
 from .payment_service import CheckoutNotAllowed
 from .paystack_client import PaystackError, live_checkout_enabled
-from .plan_changes import OPEN_CHANGE_STATES
+from .plan_changes import OPEN_CHANGE_STATES, schedule_cancel_snapshot
+from .plans import STUDY_PLANS
 from .subscription_service import RENEWING_STATUSES, STOPPED_STATUSES, _matches_subscription
 
 
-def request_schedule_cancellation(*, user, change_id=None, restore_current=False, allow_inactive=False, received_at=None):
+def request_schedule_cancellation(*, user, change_id=None, restore_current=False, allow_inactive=False, received_at=None, expected_snapshot=None):
     if (not user or not user.is_authenticated or not user.pk
             or (not user.is_active and not allow_inactive) or type(restore_current) is not bool):
         raise CheckoutNotAllowed("An owned account and an explicit cancellation choice are required.")
@@ -35,6 +36,8 @@ def request_schedule_cancellation(*, user, change_id=None, restore_current=False
             change = changes.filter(state__in=OPEN_CHANGE_STATES).first()
         if change is None or change.state == "applied":
             return None
+        if expected_snapshot is not None and expected_snapshot != schedule_cancel_snapshot(locked, change, restore_current):
+            raise CheckoutNotAllowed("Your membership changed. Review the current billing details before confirming again.")
         if change.cancelled_at:
             return change
         if change.cancel_requested and not change.restore_current and restore_current:
@@ -43,7 +46,10 @@ def request_schedule_cancellation(*, user, change_id=None, restore_current=False
             member = StudyMembership.objects.filter(user=locked, payment_mode="live").first()
             if (not locked.is_active or has_permanent_free_access(locked) or not member
                     or member.tier != change.from_tier or member.paid_until != change.from_paid_until
-                    or member.paid_until <= timezone.now()):
+                    or member.paid_until <= timezone.now()
+                    or member.status not in {"active", "non_renewing", "past_due"}
+                    or change.previous_payment.status != "succeeded" or change.previous_payment.discarded_at
+                    or change.previous_payment.refund_requests.exclude(status="ineligible").exists()):
                 raise CheckoutNotAllowed("The previous paid month cannot be resumed by this scheduled-change control.")
         change.cancel_requested = True
         change.cancel_requested_at = change.cancel_requested_at or received_at or timezone.now()
@@ -91,16 +97,29 @@ def stop_change_subscription(client, change, code):
 def _resume_old(client, change, member, user):
     if (not user.is_active or has_permanent_free_access(user) or member.tier != change.from_tier
             or member.paystack_subscription_code not in (None, "", change.from_subscription_code)
-            or member.paid_until != change.from_paid_until or member.paid_until <= timezone.now()):
+            or member.paid_until != change.from_paid_until or member.paid_until <= timezone.now()
+            or change.previous_payment.status != "succeeded" or change.previous_payment.discarded_at
+            or change.previous_payment.refund_requests.exclude(status="ineligible").exists()):
         raise ScheduleAttention("previous_plan_cannot_resume")
-    value = _checked_old(client, change)
-    try:
-        debit = parse_datetime(value.get("next_payment_date", ""))
-    except (TypeError, ValueError):
-        debit = None
-    if (not debit or timezone.is_naive(debit) or debit <= timezone.now() + timedelta(seconds=30)
-            or abs(debit - change.from_paid_until) > timedelta(minutes=5)):
-        raise ScheduleAttention("resume_next_debit_unconfirmed")
+
+    def checked_terms():
+        value = _checked_old(client, change)
+        plan = value.get("plan")
+        amount = STUDY_PLANS[change.from_tier].monthly_amount_cents
+        if (type(value.get("amount")) is not int or value["amount"] != amount
+                or not isinstance(plan, dict) or type(plan.get("amount")) is not int
+                or plan["amount"] != amount or plan.get("currency") != "ZAR" or plan.get("interval") != "monthly"):
+            raise ScheduleAttention("resume_price_unconfirmed")
+        try:
+            debit = parse_datetime(value.get("next_payment_date", ""))
+        except (TypeError, ValueError):
+            debit = None
+        if (not debit or timezone.is_naive(debit) or debit <= timezone.now() + timedelta(seconds=30)
+                or abs(debit - change.from_paid_until) > timedelta(minutes=5)):
+            raise ScheduleAttention("resume_next_debit_unconfirmed")
+        return value
+
+    value = checked_terms()
     if value.get("status") not in RENEWING_STATUSES:
         token = value.get("email_token")
         if (value.get("status") not in STOPPED_STATUSES or not isinstance(token, str)
@@ -110,7 +129,7 @@ def _resume_old(client, change, member, user):
             client.enable_subscription(change.from_subscription_code, token)
         except PaystackError:
             pass
-        if checked_change_subscription(client, change, change.from_subscription_code).get("status") not in RENEWING_STATUSES:
+        if checked_terms().get("status") not in RENEWING_STATUSES:
             raise PaystackError("Resuming the previous renewal is awaiting confirmation.")
     member.status, member.grace_until, member.paystack_subscription_code = "active", None, change.from_subscription_code
     member.save(update_fields=["status", "grace_until", "paystack_subscription_code", "updated_at"])
