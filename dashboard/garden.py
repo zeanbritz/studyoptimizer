@@ -6,7 +6,8 @@ from urllib.parse import urlencode
 from django.urls import reverse
 
 from exams.models import AssessmentEvent
-from learning.models import Subject
+from accounts.entitlements import accessible_subjects
+
 from learning.garden_fruit import FRUIT_CHOICES
 from learning.review_navigation import with_origin
 
@@ -25,7 +26,7 @@ EXAM_FRUIT_GROWTH_DAYS = 7
 
 def garden_state(user, session_subjects, groups, study_subjects, today):
     subjects = list(
-        Subject.objects.filter(user=user)
+        accessible_subjects(user)
         .order_by("created", "pk")
         .prefetch_related("study_textbooks", "assessment_events")
     )

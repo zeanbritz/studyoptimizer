@@ -68,6 +68,10 @@ class TodaysGardenTests(TestCase):
 
     def test_fruit_assignments_are_distinct_then_reused_and_never_reshuffled(self):
         from learning.garden_fruit import FRUIT_CHOICES
+        # This visual-variety test needs more than the Free plan's two trees.
+        # Free/Grow freezing is covered separately by FrozenSubjectTests.
+        self.user.beta_lifetime_access = True
+        self.user.save(update_fields=["beta_lifetime_access"])
         initial = {tree["id"]: tree["fruit"] for tree in self.state()["trees"]}
         self.assertNotEqual(initial[self.math.pk], initial[self.chemistry.pk])
         for number in range(len(FRUIT_CHOICES)-2):

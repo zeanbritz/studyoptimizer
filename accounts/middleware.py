@@ -13,6 +13,11 @@ class WorkspaceSessionPersistenceMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
 
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        from .subject_access import frozen_subject_response
+
+        return frozen_subject_response(request, view_func, view_kwargs)
+
     def __call__(self, request):
         was_authenticated = request.user.is_authenticated
 
@@ -65,6 +70,7 @@ class WorkspaceSessionPersistenceMiddleware:
 
     @classmethod
     def _restore_workspace(cls, request):
+        from .entitlements import get_subject_limit
         from dashboard.models import StudyProfile
         from exams.sync import refresh_subject_exam_dates
         from learning.models import Subject
@@ -78,6 +84,10 @@ class WorkspaceSessionPersistenceMiddleware:
                 "id",
             )
         )
+        limit = get_subject_limit(request.user)
+        request.frozen_subjects = database_subjects[limit:] if limit is not None else []
+        if limit is not None:
+            database_subjects = database_subjects[:limit]
         refresh_subject_exam_dates(database_subjects)
         session_changed = False
 
@@ -143,6 +153,9 @@ class WorkspaceSessionPersistenceMiddleware:
                 profile_record.subject_count,
             )
 
+        if limit is not None:
+            planned_count = min(planned_count, limit)
+
         while len(session_subjects) < planned_count:
             session_subjects.append(
                 {
@@ -193,6 +206,7 @@ class WorkspaceSessionPersistenceMiddleware:
 
     @classmethod
     def _save_workspace(cls, request):
+        from .entitlements import accessible_subjects, get_subject_limit
         from dashboard.models import StudyProfile
         from learning.models import Subject
 
@@ -220,6 +234,9 @@ class WorkspaceSessionPersistenceMiddleware:
                 2147483647,
             ) or 0
         )
+        # A lower plan hides surplus subjects from the compatibility session,
+        # but must not erase the persistent workspace's saved subject count.
+        subject_count = max(subject_count, Subject.objects.filter(user=request.user).count())
 
         if profile_data is not None:
             profile_record, created = StudyProfile.objects.get_or_create(
@@ -257,7 +274,11 @@ class WorkspaceSessionPersistenceMiddleware:
 
         session_changed = False
 
+        limit = get_subject_limit(request.user)
+        allowed_ids = set(accessible_subjects(request.user).values_list("pk", flat=True))
         for index, entry in enumerate(subject_entries):
+            if limit is not None and index >= limit:
+                continue
             if not isinstance(entry, dict):
                 continue
 
@@ -286,6 +307,9 @@ class WorkspaceSessionPersistenceMiddleware:
                     name=subject_name,
                 ).order_by("created", "id").first()
 
+            if subject is not None and subject.pk not in allowed_ids:
+                continue
+
             if subject is None:
                 from django.contrib.auth import get_user_model
                 from django.db import transaction
@@ -297,6 +321,7 @@ class WorkspaceSessionPersistenceMiddleware:
                     if not can_create_subject(account):
                         continue
                     subject = Subject.objects.create(user=account, name=subject_name)
+                    allowed_ids.add(subject.pk)
 
             target_grade = cls._parse_integer(
                 entry.get("target_grade"),

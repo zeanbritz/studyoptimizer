@@ -15,7 +15,9 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
-from learning.models import KnowledgeUnit, StudentKnowledge, Subject
+from accounts.entitlements import accessible_subjects
+
+from learning.models import KnowledgeUnit, StudentKnowledge
 
 from .models import (
     DailyReviewPlan,
@@ -41,7 +43,7 @@ REVIEW_TYPES = (
 def _reviewable_units(user):
     """Exclude unfinished/orphan knowledge units from the time budget."""
     return KnowledgeUnit.objects.filter(
-        subject__user=user, active=True, knowledge_type__in=REVIEW_TYPES
+        subject__in=accessible_subjects(user), active=True, knowledge_type__in=REVIEW_TYPES
     ).filter(
         Q(knowledge_type=KnowledgeUnit.KnowledgeType.DEFINITION, definition__isnull=False)
         | Q(knowledge_type=KnowledgeUnit.KnowledgeType.FORMULA, formula__isnull=False)
@@ -92,12 +94,12 @@ def _learning_dates(day, exam_date, revision_days, minutes_by_weekday):
 
 def _settings_and_summary(user, day):
     weekly = weekly_minutes(user)
-    subjects = list(Subject.objects.filter(user=user).order_by("pk"))
+    subjects = list(accessible_subjects(user).order_by("pk"))
     revision = {
         item.subject_id: item.revision_days or 0
-        for item in SubjectRevisionPlan.objects.filter(subject__user=user)
+        for item in SubjectRevisionPlan.objects.filter(subject__in=accessible_subjects(user))
     }
-    books = list(SubjectTextbook.objects.filter(subject__user=user).order_by("pk"))
+    books = list(SubjectTextbook.objects.filter(subject__in=accessible_subjects(user)).order_by("pk"))
     by_subject = defaultdict(list)
     for book in books:
         by_subject[book.subject_id].append(book)
@@ -238,22 +240,22 @@ def remaining_review_ids(user, plan):
             student=user, knowledge_unit_id__in=plan.knowledge_unit_ids
         )
     }
-    return [unit_id for unit_id in plan.knowledge_unit_ids if _due(progress.get(unit_id), plan.day)]
+    allowed_ids = set(_reviewable_units(user).values_list("pk", flat=True))
+    return [unit_id for unit_id in plan.knowledge_unit_ids
+            if unit_id in allowed_ids and _due(progress.get(unit_id), plan.day)]
 
 
 def review_capacity_outlook(user, day=None):
     """Flag clearly impossible near-term workloads; never promise mastery."""
     day = day or timezone.localdate()
-    next_exam = Subject.objects.filter(
-        user=user, exam_date__gt=day
-    ).order_by("exam_date").values_list("exam_date", flat=True).first()
+    next_exam = accessible_subjects(user).filter(exam_date__gt=day).order_by("exam_date").values_list("exam_date", flat=True).first()
     if next_exam is None:
         return None
     if (next_exam - day).days > 730:
         return None
 
     weekly = weekly_minutes(user)
-    subjects = list(Subject.objects.filter(user=user, exam_date=next_exam))
+    subjects = list(accessible_subjects(user).filter(exam_date=next_exam))
     subject_ids = [subject.pk for subject in subjects]
     units = list(_reviewable_units(user).filter(subject_id__in=subject_ids))
     progress = {

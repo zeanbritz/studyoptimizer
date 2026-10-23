@@ -98,7 +98,8 @@ class MyPlanPageTests(TestCase):
         self.client.force_login(self.user)
         response = self.client.get(self.url)
         self.assertContains(response, "Free account")
-        self.assertContains(response, "saved subjects and learning items remain available")
+        self.assertContains(response, "first 2 subjects remain available on Free")
+        self.assertContains(response, "stay saved but frozen")
 
     def test_bloom_member_sees_bloom_monthly_price(self):
         StudyMembership.objects.create(

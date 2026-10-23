@@ -9,6 +9,8 @@ from django.shortcuts import (
 from django.urls import reverse
 from django.utils import timezone
 
+from accounts.entitlements import accessible_subjects
+
 from learning.models import (
     Definition,
     KnowledgeUnit,
@@ -383,7 +385,7 @@ def get_next_subject_definition(
             knowledge_unit_id__in=planned_ids,
             knowledge_unit__subject=subject,
 
-            knowledge_unit__subject__user=user,
+            knowledge_unit__subject__in=accessible_subjects(user),
 
             knowledge_unit__knowledge_type=(
                 KnowledgeUnit
@@ -447,7 +449,7 @@ def get_next_global_definition(
     definitions = (
         Definition.objects
         .filter(
-            knowledge_unit__subject__user=user,
+            knowledge_unit__subject__in=accessible_subjects(user),
 
             knowledge_unit__knowledge_type=(
                 KnowledgeUnit
@@ -590,7 +592,7 @@ def practice_definition(
     definition = get_object_or_404(
         Definition,
         id=definition_id,
-        knowledge_unit__subject__user=request.user
+        knowledge_unit__subject__in=accessible_subjects(request.user)
     )
 
     knowledge_unit = (

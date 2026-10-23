@@ -2,7 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
 from .access import get_study_tier
-from .entitlements import FREE_LEARNING_ITEM_LIMIT, FREE_SUBJECT_LIMIT
+from .entitlements import FREE_LEARNING_ITEM_LIMIT, FREE_SUBJECT_LIMIT, frozen_subjects
 from .models import BetaInvite, StudyMembership, StudyTier
 from .plans import PAID_STUDY_PLANS, STUDY_PLANS, plan_selection_context
 from .paystack_checkout import checkout_page_context, live_checkout_page_context
@@ -36,6 +36,7 @@ def my_plan(request):
             "has_paid_access": tier in {StudyTier.GROW, StudyTier.BLOOM},
             "current_plan": STUDY_PLANS.get(tier, STUDY_PLANS[StudyTier.FREE]),
             "pdf_usage": get_pdf_usage(user),
+            "frozen_subjects": frozen_subjects(user),
             "free_subject_limit": FREE_SUBJECT_LIMIT,
             "free_learning_item_limit": FREE_LEARNING_ITEM_LIMIT,
         },

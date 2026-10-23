@@ -5,6 +5,7 @@ from inspect import signature
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from django.db.models import Subquery
 from django.shortcuts import redirect
 
 from learning.models import KnowledgeUnit, Note, Subject
@@ -31,6 +32,34 @@ def subject_count(user):
     return Subject.objects.filter(user=user).count()
 
 
+def accessible_subjects(user):
+    """Oldest subjects stay active; surplus records are retained, not deleted.
+
+    Use a subquery rather than a sliced queryset so callers can safely filter,
+    order and join this scope. Always include ownership, even for unlimited plans.
+    """
+    if not user or not user.is_authenticated or not user.is_active:
+        return Subject.objects.none()
+    owned = Subject.objects.filter(user_id=user.pk)
+    limit = get_subject_limit(user)
+    if limit is None:
+        return owned
+    oldest = owned.order_by("created", "pk").values("pk")[:limit]
+    return owned.filter(pk__in=Subquery(oldest))
+
+
+def can_access_subject(user, subject):
+    return bool(subject and accessible_subjects(user).filter(pk=subject.pk).exists())
+
+
+def frozen_subjects(user):
+    if not user or not user.is_authenticated or not user.is_active:
+        return Subject.objects.none()
+    return Subject.objects.filter(user_id=user.pk).exclude(
+        pk__in=accessible_subjects(user).values("pk"),
+    ).order_by("created", "pk")
+
+
 def learning_item_count(user, *, subject=None):
     """Count all six study-item types, optionally scoped to an owned subject."""
     filters = {"subject__user": user}
@@ -48,7 +77,7 @@ def can_create_subject(user, *, session_subject_count=0):
 
 def can_create_learning_item(user, *, subject=None):
     plan = STUDY_PLANS.get(get_study_tier(user))
-    if plan is None or (subject is not None and subject.user_id != user.pk):
+    if plan is None or (subject is not None and not can_access_subject(user, subject)):
         return False
     if plan.learning_items_per_subject is None:
         return True

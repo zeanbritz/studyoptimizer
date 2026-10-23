@@ -9,6 +9,8 @@ from django.shortcuts import (
 )
 from django.utils import timezone
 
+from accounts.entitlements import accessible_subjects
+
 from learning.models import (
     StepList,
     StudentKnowledge,
@@ -225,7 +227,7 @@ def find_next_global_step_list(
     step_lists = list(
         StepList.objects
         .filter(
-            knowledge_unit__subject__user=user,
+            knowledge_unit__subject__in=accessible_subjects(user),
             knowledge_unit__active=True,
         )
         .select_related(
@@ -327,7 +329,7 @@ def practice_step_review(
             "knowledge_unit__subject",
         ),
         id=step_list_id,
-        knowledge_unit__subject__user=request.user,
+        knowledge_unit__subject__in=accessible_subjects(request.user),
         knowledge_unit__active=True,
     )
 

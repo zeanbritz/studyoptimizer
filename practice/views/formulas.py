@@ -14,6 +14,8 @@ from django.shortcuts import (
 from django.urls import reverse
 from django.utils import timezone
 
+from accounts.entitlements import accessible_subjects
+
 from learning.models import (
     Formula,
     StudentKnowledge,
@@ -1195,7 +1197,7 @@ def get_next_due_formula(
     formulas = (
         Formula.objects
         .filter(
-            knowledge_unit__subject__user=user,
+            knowledge_unit__subject__in=accessible_subjects(user),
             knowledge_unit__active=True,
         )
         .exclude(
@@ -1340,9 +1342,7 @@ def practice_formula(
 
         id=formula_id,
 
-        knowledge_unit__subject__user=(
-            request.user
-        ),
+        knowledge_unit__subject__in=accessible_subjects(request.user),
     )
 
     knowledge_unit = (
@@ -2120,7 +2120,7 @@ def formula_reconstruction(
     formula = get_object_or_404(
         Formula,
         id=formula_id,
-        knowledge_unit__subject__user=request.user,
+        knowledge_unit__subject__in=accessible_subjects(request.user),
     )
 
     return redirect(

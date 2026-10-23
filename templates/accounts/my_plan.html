@@ -335,9 +335,10 @@
                     </dl>
 
                     <p class="notice">
-                        If a paid plan ends, your account returns to the Free limits. Existing
-                        subjects and study material remain available to view and review; nothing
-                        is deleted because it exceeds a Free limit.
+                        When your effective plan has a lower subject limit, only your earliest
+                        2 subjects on Free or earliest 7 on Grow remain active. Extra subjects
+                        and their material stay saved but frozen: they cannot be viewed, studied,
+                        edited or exported until your plan includes them again. Nothing is deleted.
                     </p>
 
                 {% else %}
@@ -351,7 +352,7 @@
                         {% if membership.status == "pending" %}
                             <p class="notice">Your {{ membership.get_tier_display }} plan is awaiting confirmed payment. Your account stays on Free until payment is verified.</p>
                         {% else %}
-                            <p class="notice">Your previous paid plan is not active. Your saved subjects and learning items remain available.</p>
+                            <p class="notice">Your previous paid plan is not active. Your first 2 subjects remain available on Free. Extra subjects and their learning items stay saved but frozen until your plan includes them again.</p>
                         {% endif %}
                     {% endif %}
                 {% endif %}
@@ -448,7 +449,7 @@
                     {% elif test_paid_access_remaining %}
                     <p class="plan-description">Your {{ membership.get_tier_display }} access continues until {{ membership.paid_until|date:"j F Y" }}. After that, Free limits apply. Your saved study material is not deleted.</p>
                     {% else %}
-                    <p class="plan-description">Your paid period has ended. Your saved study material remains available under Free access.</p>
+                    <p class="plan-description">Your paid period has ended. Free access includes your first 2 subjects; extra subjects and their material stay saved but frozen.</p>
                     {% endif %}
                 {% elif can_cancel_test_membership %}
                     <p class="plan-description">Stop future renewals whenever you choose. Any already-paid access continues until {{ membership.paid_until|date:"j F Y" }}. Cancelling does not delete your subjects or study material.</p>
@@ -489,6 +490,14 @@
                 {% if pending_test_payment %}
                 <p class="notice">A {{ pending_test_payment.get_tier_display }} test checkout is awaiting confirmation. <a href="{% url 'test_checkout_return' %}?reference={{ pending_test_payment.reference|urlencode }}">Check payment status</a>. You can resume the same plan's checkout using its test button.</p>
                 {% endif %}
+            </section>
+            {% endif %}
+
+            {% if frozen_subjects %}
+            <section class="plan-card" aria-labelledby="frozen-subjects-title">
+                <h2 id="frozen-subjects-title">Frozen subjects</h2>
+                <p class="plan-description">Your earliest subjects stay active in creation order: 2 on Free and 7 on Grow. The subjects below are safely stored, but their material, reviews, exams and exports are unavailable on your current plan. They unlock again when your plan includes them.</p>
+                <ul class="plan-features">{% for subject in frozen_subjects %}<li>{{ subject.name }} — Frozen</li>{% endfor %}</ul>
             </section>
             {% endif %}
 

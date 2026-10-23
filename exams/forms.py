@@ -1,6 +1,7 @@
 from django import forms
 
-from learning.models import Subject
+from accounts.entitlements import accessible_subjects
+
 
 from .models import AssessmentEvent
 
@@ -22,7 +23,7 @@ class AssessmentEventForm(forms.ModelForm):
 
     def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["subject"].queryset = Subject.objects.filter(user=user).order_by("name", "pk")
+        self.fields["subject"].queryset = accessible_subjects(user).order_by("name", "pk")
         self.fields["subject"].empty_label = "Choose a subject"
         self.fields["date"].input_formats = ["%Y-%m-%d"]
         # Older forms did not send this field; keep those requests valid.

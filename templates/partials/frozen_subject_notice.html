@@ -1,0 +1,6 @@
+{% if request.frozen_subjects %}
+<aside role="note" style="margin:16px 0;padding:18px 22px;background:#f8fafb;border:1px solid #d8e0e3;border-left:5px solid #278fd3;border-radius:12px;color:#303a5a;line-height:1.6;">
+    <strong>{{ request.frozen_subjects|length }} subject{{ request.frozen_subjects|length|pluralize }} frozen</strong>
+    <p style="margin:6px 0 0;">Your current plan keeps your earliest subjects active. The rest are safely saved, but cannot be opened or studied until your plan includes them. <a href="{% url 'my_plan' %}">View your plan and frozen subjects</a>.</p>
+</aside>
+{% endif %}

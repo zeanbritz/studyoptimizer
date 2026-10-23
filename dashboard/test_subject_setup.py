@@ -101,9 +101,9 @@ class NewSubjectSetupTests(TestCase):
         profile.subject_count = 3
         profile.save(update_fields=["subject_count"])
         response = self.setup_subject(index=2)
-        self.assertRedirects(response, reverse("pricing"), fetch_redirect_response=False)
+        self.assertEqual(response.status_code, 403)
         self.assertFalse(Subject.objects.filter(user=self.user, name="Chemistry").exists())
-        self.assertEqual(self.client.session["onboarding_subjects"][2]["name"], "")
+        self.assertEqual(len(self.client.session["onboarding_subjects"]), 2)
 
     def test_tour_cannot_be_completed_without_a_pending_setup(self):
         response = self.client.post(

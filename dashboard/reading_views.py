@@ -8,6 +8,8 @@ from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.views.decorators.http import require_GET
 
+from accounts.entitlements import accessible_subjects
+
 from learning.models import BulletList, Comparison, Formula, StepList
 
 
@@ -28,7 +30,7 @@ def read_review_item(request, kind, item_id):
 
     model, list_url_name, label = REVIEW_TYPES[kind]
     items = model.objects.filter(
-        knowledge_unit__subject__user=request.user,
+        knowledge_unit__subject__in=accessible_subjects(request.user),
         knowledge_unit__active=True,
     ).select_related("knowledge_unit__subject")
     if kind == "formula":

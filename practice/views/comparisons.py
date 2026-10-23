@@ -10,6 +10,8 @@ from django.shortcuts import (
 )
 from django.utils import timezone
 
+from accounts.entitlements import accessible_subjects
+
 from learning.models import (
     Comparison,
     ComparisonCell,
@@ -205,7 +207,7 @@ def find_next_global_comparison(
     comparisons = list(
         Comparison.objects
         .filter(
-            knowledge_unit__subject__user=user,
+            knowledge_unit__subject__in=accessible_subjects(user),
             knowledge_unit__active=True,
         )
         .select_related(
@@ -293,7 +295,7 @@ def practice_comparison_review(
             "rows__cells",
         ),
         id=comparison_id,
-        knowledge_unit__subject__user=request.user,
+        knowledge_unit__subject__in=accessible_subjects(request.user),
         knowledge_unit__active=True,
     )
 

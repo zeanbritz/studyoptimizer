@@ -1,0 +1,24 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Subject frozen — StudiGarden</title>
+    <style>
+        body { margin:0; background:#edf1f3; color:#303a5a; font-family:system-ui,sans-serif; }
+        main { max-width:600px; margin:10vh auto; padding:32px; background:#f8fafb; border:1px solid #d8e0e3; border-bottom:5px solid #c4cfd4; border-radius:18px; }
+        p { line-height:1.7; color:#58646a; }
+        nav { display:flex; flex-wrap:wrap; gap:16px; margin-top:24px; }
+        a { padding:12px 18px; background:#58b82a; color:#fff; border-radius:10px; text-decoration:none; font-weight:700; }
+        a:focus-visible { outline:3px solid #278fd3; outline-offset:3px; }
+        @media(max-width:680px) { main { margin:5vh 16px; padding:24px; } }
+    </style>
+</head>
+<body><main>
+    <h1>This subject is frozen</h1>
+    <p>Your current plan includes your first 2 subjects on Free, or your first 7 on Grow, in creation order. Subjects beyond that limit stay safely saved but cannot be opened, studied, edited or exported.</p>
+    <p>They become available again when your plan includes them. Nothing has been deleted.</p>
+    <nav aria-label="Account navigation"><a href="{% url 'goals' %}">Available subjects</a><a href="{% url 'my_plan' %}">View my plan</a></nav>
+</main></body>
+</html>

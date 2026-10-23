@@ -7,7 +7,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
-from learning.models import Subject
+from accounts.entitlements import accessible_subjects
+
 
 from .forms import AssessmentEventForm
 from .models import AssessmentEvent
@@ -36,7 +37,7 @@ def _calendar_context(request, selected_date, form, editing=None):
         month_start.year, month_start.month
     )
     events = AssessmentEvent.objects.filter(
-        subject__user=request.user,
+        subject__in=accessible_subjects(request.user),
         date__range=(weeks[0][0], weeks[-1][-1]),
     ).select_related("subject")
     events_by_date = {}
@@ -70,13 +71,13 @@ def _calendar_context(request, selected_date, form, editing=None):
         "selected_date": selected_date,
         "selected_events": events_by_date.get(selected_date, []),
         "upcoming_events": AssessmentEvent.objects.filter(
-            subject__user=request.user,
+            subject__in=accessible_subjects(request.user),
             date__gte=today,
             completed_at__isnull=True,
         ).select_related("subject").order_by("date", "pk")[:5],
         "form": form,
         "editing": editing,
-        "has_subjects": Subject.objects.filter(user=request.user).exists(),
+        "has_subjects": accessible_subjects(request.user).exists(),
     }
 
 
@@ -93,7 +94,7 @@ def calendar_view(request):
             editing = get_object_or_404(
                 AssessmentEvent,
                 pk=event_id,
-                subject__user=request.user,
+                subject__in=accessible_subjects(request.user),
             )
 
         if request.POST.get("action") == "delete":
@@ -161,7 +162,7 @@ def calendar_view(request):
         editing = get_object_or_404(
             AssessmentEvent,
             pk=edit_id,
-            subject__user=request.user,
+            subject__in=accessible_subjects(request.user),
         )
         selected_date = editing.date
     else:

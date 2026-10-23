@@ -80,7 +80,10 @@ def has_study_access(user):
 
 
 def can_view_existing_study_data(user):
-    """Return whether the user may view existing study material."""
+    """Account-level eligibility only; scope records with accessible_subjects.
+
+    A Free user can study their first two subjects, not all historical data.
+    """
     return get_study_access_level(user) in {
         ACCESS_FULL,
         ACCESS_FREE,

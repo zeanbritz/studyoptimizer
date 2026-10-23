@@ -191,10 +191,7 @@ class FreePlanEntitlementTests(TestCase):
             {"name": "Biology", "database_id": None},
         ]
         session.save()
-        self.assertRedirects(
-            self.client.get(reverse("subject_detail", args=[2])),
-            reverse("goals"),
-        )
+        self.assertEqual(self.client.get(reverse("subject_detail", args=[2])).status_code, 403)
         self.assertEqual(len(self.client.session["onboarding_subjects"]), 2)
         self.assertFalse(Subject.objects.filter(user=self.user, name="Biology").exists())
 

@@ -36,7 +36,7 @@ from dashboard.models import (
 )
 from dashboard.review_planner import get_daily_review_plan, remaining_review_ids
 from dashboard.pdf_lab_session import get_candidate, get_scan, mark_saved
-from accounts.entitlements import can_use_pdf_summarizer, free_learning_item_limit
+from accounts.entitlements import accessible_subjects, can_use_pdf_summarizer, free_learning_item_limit
 
 
 # ============================================================
@@ -110,7 +110,7 @@ def get_variable_meaning_suggestions(
     previous_variables = (
         FormulaVariable.objects
         .filter(
-            formula__knowledge_unit__subject__user=user
+            formula__knowledge_unit__subject__in=accessible_subjects(user)
         )
         .exclude(
             symbol=""
@@ -217,7 +217,7 @@ def get_variable_meaning_suggestions(
     variable_rows = (
         FormulaVariable.objects
         .filter(
-            formula__knowledge_unit__subject__user=user
+            formula__knowledge_unit__subject__in=accessible_subjects(user)
         )
         .exclude(
             meaning=""
@@ -970,7 +970,7 @@ def delete_formula(request, formula_id):
     formula = get_object_or_404(
         Formula,
         id=formula_id,
-        knowledge_unit__subject__user=request.user,
+        knowledge_unit__subject__in=accessible_subjects(request.user),
     )
 
     knowledge_unit = formula.knowledge_unit
@@ -1277,7 +1277,7 @@ def formula_detail(
             "knowledge_unit__subject",
         ),
         id=formula_id,
-        knowledge_unit__subject__user=request.user,
+        knowledge_unit__subject__in=accessible_subjects(request.user),
     )
 
     subject = (
@@ -1445,7 +1445,7 @@ def edit_formula(
             "knowledge_unit__subject",
         ),
         id=formula_id,
-        knowledge_unit__subject__user=request.user,
+        knowledge_unit__subject__in=accessible_subjects(request.user),
     )
 
     knowledge_unit = (
@@ -2026,7 +2026,7 @@ def review_list(
             "knowledge_unit__subject",
         ),
         id=list_id,
-        knowledge_unit__subject__user=request.user,
+        knowledge_unit__subject__in=accessible_subjects(request.user),
         knowledge_unit__active=True,
     )
 
@@ -2484,9 +2484,7 @@ def review_list(
                 all_lists = list(
                     BulletList.objects
                     .filter(
-                        knowledge_unit__subject__user=(
-                            request.user
-                        ),
+                        knowledge_unit__subject__in=accessible_subjects(request.user),
                         knowledge_unit__active=True,
                     )
                     .select_related(
@@ -2854,7 +2852,7 @@ def review_formula(request, formula_id):
     formula = get_object_or_404(
         Formula,
         id=formula_id,
-        knowledge_unit__subject__user=request.user
+        knowledge_unit__subject__in=accessible_subjects(request.user)
     )
 
     # --------------------------------------------------------
@@ -3497,7 +3495,7 @@ def review_definition(
     definition = get_object_or_404(
         Definition,
         id=definition_id,
-        knowledge_unit__subject__user=request.user
+        knowledge_unit__subject__in=accessible_subjects(request.user)
     )
 
     practice_url = reverse(
@@ -3797,7 +3795,8 @@ def reset_today_reviews(request):
     if request.method == "POST":
 
         StudentKnowledge.objects.filter(
-            student=request.user
+            student=request.user,
+            knowledge_unit__subject__in=accessible_subjects(request.user),
         ).update(
             next_review=timezone.now()
         )
@@ -3996,7 +3995,7 @@ def edit_definition(
     definition = get_object_or_404(
         Definition,
         id=definition_id,
-        knowledge_unit__subject__user=request.user
+        knowledge_unit__subject__in=accessible_subjects(request.user)
     )
 
     knowledge_unit = (
@@ -4211,7 +4210,7 @@ def delete_definition(
     definition = get_object_or_404(
         Definition,
         id=definition_id,
-        knowledge_unit__subject__user=request.user
+        knowledge_unit__subject__in=accessible_subjects(request.user)
     )
 
     subject = definition.knowledge_unit.subject
@@ -5316,7 +5315,7 @@ def edit_steps(request, step_list_id):
             "knowledge_unit__subject"
         ).prefetch_related("steps"),
         id=step_list_id,
-        knowledge_unit__subject__user=request.user,
+        knowledge_unit__subject__in=accessible_subjects(request.user),
         knowledge_unit__knowledge_type=(
             KnowledgeUnit.KnowledgeType.STEPS
         ),
@@ -5498,7 +5497,7 @@ def delete_steps(request, step_list_id):
             "knowledge_unit__subject"
         ),
         id=step_list_id,
-        knowledge_unit__subject__user=request.user,
+        knowledge_unit__subject__in=accessible_subjects(request.user),
         knowledge_unit__knowledge_type=(
             KnowledgeUnit.KnowledgeType.STEPS
         ),
@@ -6493,7 +6492,7 @@ def edit_list(
         )
         .prefetch_related("items"),
         id=list_id,
-        knowledge_unit__subject__user=request.user,
+        knowledge_unit__subject__in=accessible_subjects(request.user),
         knowledge_unit__knowledge_type=(
             KnowledgeUnit.KnowledgeType.BULLET_LIST
         ),
@@ -6718,7 +6717,7 @@ def delete_list(
             "knowledge_unit__subject"
         ),
         id=list_id,
-        knowledge_unit__subject__user=request.user,
+        knowledge_unit__subject__in=accessible_subjects(request.user),
         knowledge_unit__knowledge_type=(
             KnowledgeUnit.KnowledgeType.BULLET_LIST
         ),
@@ -7250,7 +7249,7 @@ def note_detail(
             "subject"
         ),
         id=note_id,
-        subject__user=request.user,
+        subject__in=accessible_subjects(request.user),
     )
 
     subject = (
@@ -7452,7 +7451,7 @@ def note_detail(
         global_notes = (
             Note.objects
             .filter(
-                subject__user=request.user
+                subject__in=accessible_subjects(request.user)
             )
             .select_related(
                 "subject"
@@ -8195,7 +8194,7 @@ def edit_note(
             "subject"
         ),
         id=note_id,
-        subject__user=request.user,
+        subject__in=accessible_subjects(request.user),
     )
 
     subject = (
@@ -8497,7 +8496,7 @@ def delete_note(request, note_id):
     note = get_object_or_404(
         Note.objects.select_related("subject"),
         id=note_id,
-        subject__user=request.user,
+        subject__in=accessible_subjects(request.user),
     )
 
     subject_id = note.subject_id
@@ -8547,7 +8546,7 @@ def random_note_review(
         selected_subject_id = None
 
     notes_queryset = Note.objects.filter(
-        subject__user=request.user
+        subject__in=accessible_subjects(request.user)
     )
 
     if selected_subject_id:
@@ -9181,7 +9180,7 @@ def edit_comparison(
             "knowledge_unit__subject"
         ),
         id=comparison_id,
-        knowledge_unit__subject__user=request.user,
+        knowledge_unit__subject__in=accessible_subjects(request.user),
         knowledge_unit__knowledge_type=(
             KnowledgeUnit.KnowledgeType.COMPARISON
         ),
@@ -9513,7 +9512,7 @@ def delete_comparison(
             "knowledge_unit__subject"
         ),
         id=comparison_id,
-        knowledge_unit__subject__user=request.user,
+        knowledge_unit__subject__in=accessible_subjects(request.user),
     )
 
     raw_subject_index = request.POST.get(
@@ -9687,9 +9686,7 @@ def comparison_review_list(
             Comparison,
             id=comparison_id,
             knowledge_unit__subject=subject,
-            knowledge_unit__subject__user=(
-                request.user
-            ),
+            knowledge_unit__subject__in=accessible_subjects(request.user),
         )
 
         if rating in [

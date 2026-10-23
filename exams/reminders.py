@@ -1,12 +1,14 @@
 from datetime import timedelta
 
+from accounts.entitlements import accessible_subjects
+
 from .models import AssessmentEvent
 
 
 def due_reminders(user, today):
     """Active events that have reached their reminder date, including overdue ones."""
     events = AssessmentEvent.objects.filter(
-        subject__user=user,
+        subject__in=accessible_subjects(user),
         completed_at__isnull=True,
         date__lte=today + timedelta(days=365),
     ).select_related("subject").order_by("date", "pk")

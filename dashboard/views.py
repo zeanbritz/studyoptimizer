@@ -23,6 +23,7 @@ from learning.models import (
 )
 from exams.reminders import due_reminders
 from accounts.entitlements import (
+    accessible_subjects,
     can_export_subject_summary,
     can_use_pdf_summarizer,
     can_create_subject,
@@ -230,7 +231,7 @@ def dashboard(request):
             KnowledgeUnit.objects
             .filter(
                 pk__in=planned_review_ids,
-                subject__user=request.user,
+                subject__in=accessible_subjects(request.user),
                 knowledge_type=(
                     KnowledgeUnit
                     .KnowledgeType
@@ -390,7 +391,7 @@ def dashboard(request):
             KnowledgeUnit.objects
             .filter(
                 pk__in=planned_review_ids,
-                subject__user=request.user,
+                subject__in=accessible_subjects(request.user),
                 knowledge_type=(
                     KnowledgeUnit
                     .KnowledgeType
@@ -526,7 +527,7 @@ def dashboard(request):
             BulletList.objects
             .filter(
                 knowledge_unit_id__in=planned_review_ids,
-                knowledge_unit__subject__user=request.user,
+                knowledge_unit__subject__in=accessible_subjects(request.user),
                 knowledge_unit__active=True,
             )
             .select_related(
@@ -652,7 +653,7 @@ def dashboard(request):
             StepList.objects
             .filter(
                 knowledge_unit_id__in=planned_review_ids,
-                knowledge_unit__subject__user=request.user,
+                knowledge_unit__subject__in=accessible_subjects(request.user),
                 knowledge_unit__active=True,
             )
             .select_related(
@@ -778,7 +779,7 @@ def dashboard(request):
             Comparison.objects
             .filter(
                 knowledge_unit_id__in=planned_review_ids,
-                knowledge_unit__subject__user=request.user,
+                knowledge_unit__subject__in=accessible_subjects(request.user),
                 knowledge_unit__knowledge_type=(
                     KnowledgeUnit
                     .KnowledgeType
@@ -901,7 +902,7 @@ def dashboard(request):
         notes = (
             Note.objects
             .filter(
-                subject__user=request.user
+                subject__in=accessible_subjects(request.user)
             )
             .exclude(
                 last_studied_date=today
@@ -1263,10 +1264,7 @@ def review(request):
     # ========================================================
 
     subjects = (
-        Subject.objects
-        .filter(
-            user=request.user
-        )
+        accessible_subjects(request.user)
         .order_by(
             "name"
         )
@@ -1279,7 +1277,7 @@ def review(request):
     definition_knowledge_units = (
         KnowledgeUnit.objects
         .filter(
-            subject__user=request.user,
+            subject__in=accessible_subjects(request.user),
             knowledge_type=(
                 KnowledgeUnit
                 .KnowledgeType
@@ -1322,7 +1320,7 @@ def review(request):
     formula_knowledge_units = (
         KnowledgeUnit.objects
         .filter(
-            subject__user=request.user,
+            subject__in=accessible_subjects(request.user),
             knowledge_type=(
                 KnowledgeUnit
                 .KnowledgeType
@@ -1365,7 +1363,7 @@ def review(request):
     notes = (
         Note.objects
         .filter(
-            subject__user=request.user
+            subject__in=accessible_subjects(request.user)
         )
         .select_related(
             "subject"
@@ -4773,7 +4771,7 @@ def review_definitions(request):
     definition_knowledge_units = (
         KnowledgeUnit.objects
         .filter(
-            subject__user=request.user,
+            subject__in=accessible_subjects(request.user),
             knowledge_type=(
                 KnowledgeUnit
                 .KnowledgeType
@@ -4843,7 +4841,7 @@ def review_definitions(request):
 def read_definition(request, definition_id):
     """Let a student browse their active definitions without grading them."""
     definitions = Definition.objects.filter(
-        knowledge_unit__subject__user=request.user,
+        knowledge_unit__subject__in=accessible_subjects(request.user),
         knowledge_unit__knowledge_type=KnowledgeUnit.KnowledgeType.DEFINITION,
         knowledge_unit__active=True,
     ).select_related("knowledge_unit__subject").order_by(
@@ -4892,7 +4890,7 @@ def review_formulas(request):
     formulas = (
         Formula.objects
         .filter(
-            knowledge_unit__subject__user=request.user,
+            knowledge_unit__subject__in=accessible_subjects(request.user),
             knowledge_unit__knowledge_type=(
                 KnowledgeUnit
                 .KnowledgeType
@@ -4963,7 +4961,7 @@ def review_lists(request):
     bullet_lists = (
         BulletList.objects
         .filter(
-            knowledge_unit__subject__user=request.user,
+            knowledge_unit__subject__in=accessible_subjects(request.user),
             knowledge_unit__active=True,
         )
         .select_related(
@@ -5037,7 +5035,7 @@ def review_steps(request):
     step_lists = (
         StepList.objects
         .filter(
-            knowledge_unit__subject__user=request.user,
+            knowledge_unit__subject__in=accessible_subjects(request.user),
             knowledge_unit__active=True,
         )
         .select_related(
@@ -5111,7 +5109,7 @@ def review_comparisons(request):
     comparisons = (
         Comparison.objects
         .filter(
-            knowledge_unit__subject__user=request.user,
+            knowledge_unit__subject__in=accessible_subjects(request.user),
             knowledge_unit__knowledge_type=(
                 KnowledgeUnit
                 .KnowledgeType
@@ -5188,7 +5186,7 @@ def review_notes(request):
     notes = (
         Note.objects
         .filter(
-            subject__user=request.user
+            subject__in=accessible_subjects(request.user)
         )
         .select_related(
             "subject"
@@ -5254,10 +5252,7 @@ def progress(request):
     # ========================================================
 
     subjects = (
-        Subject.objects
-        .filter(
-            user=request.user
-        )
+        accessible_subjects(request.user)
         .order_by(
             "name"
         )
@@ -5270,7 +5265,7 @@ def progress(request):
     knowledge_units = (
         KnowledgeUnit.objects
         .filter(
-            subject__user=request.user,
+            subject__in=accessible_subjects(request.user),
             active=True,
         )
         .select_related(
@@ -5301,7 +5296,7 @@ def progress(request):
     textbooks = list(
         SubjectTextbook.objects
         .filter(
-            subject__user=request.user
+            subject__in=accessible_subjects(request.user)
         )
         .select_related(
             "subject"
