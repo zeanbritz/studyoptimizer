@@ -142,12 +142,12 @@ the read-only refund admin (filter by reason/status), and worker logs; there is
 no claim of zero manual intervention. Keep the live webhook and billing worker
 running. No extra scheduled service is required.
 
-# Plan changes: foundation only, not customer-enabled yet
+# Plan changes: backend in progress, not customer-enabled yet
 
 `PAYSTACK_LIVE_PLAN_CHANGES_ENABLED` defaults to `False`. Leave it disabled.
-The saved change records and quotes do not start a checkout, modify a provider
-subscription, refund money, or change membership access. Customer routes and the
-worker integration must be implemented and tested before this flag is enabled.
+The saved change records and quotes alone do not change billing or access.
+Customer routes have NOT been connected. Do not call backend entry points from
+a shell against real accounts or enable this flag as a workaround.
 
 Agreed policy: an upgrade charges the full new monthly price and starts its new
 billing period after verified payment; refund the lower plan's verified payment
@@ -157,3 +157,20 @@ Free has no future debit. Dates are billing periods, not calendar-month resets.
 The old subscription must be stopped safely, and ambiguous financial requests
 must be reconciled before any further submission. Do not guess ownership or
 blindly repeat a subscription-create or refund POST after a timeout.
+
+The upgrade backend now records a new checkout reference before contacting the
+provider. An unpaid checkout leaves Grow untouched. A canonically verified new
+Bloom charge starts a fresh paid month. The existing live worker then stops the
+exact historical Grow subscription and queues its funding payment (including a
+verified renewal) in the durable refund outbox, independently of the first-
+payment guarantee. It never uses the current Bloom membership's cancel method
+to refund Grow. Accepted work continues if new plan changes/refunds are paused.
+Uncertain cancellations/refund submissions are reconciled with GET requests;
+unresolved ownership or financial states require attention, not a blind retry.
+
+This is not a launchable switching feature yet. Scheduled downgrades, cancellation
+and resumption of scheduled billing, retired-subscription renewal races, customer
+consent/status controls, and public policy text still need implementation and
+testing before enabling customer switches. No new migration is needed beyond
+0018 for this upgrade-backend checkpoint. No real payment/refund was submitted
+while implementing or testing it.

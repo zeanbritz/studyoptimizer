@@ -221,7 +221,8 @@ def _validate_transaction(result, payment):
         if (
             paid_at is None or timezone.is_naive(paid_at)
             or paid_at > timezone.now() + timedelta(minutes=5)
-            or paid_at < payment.created_at - timedelta(minutes=5)
+            or paid_at < (payment.period_start if payment.source == "renewal" and payment.period_start
+                          else payment.created_at) - timedelta(minutes=5)
         ):
             raise ValueError
     except (TypeError, ValueError):
@@ -265,13 +266,27 @@ def reconcile_discarded_checkout(payment, client):
     return _record_checkout_result(payment.user, payment, client.verify(payment.reference), "live")
 
 
+def reconcile_upgrade_checkout(payment, client):
+    """Signed-inbox recovery for an accepted upgrade, including inactive owners."""
+    from .models import StudyPlanChange
+
+    if (payment.mode != "live" or payment.source != "checkout"
+            or not StudyPlanChange.objects.filter(payment=payment, kind="upgrade", user_id=payment.user_id).exists()):
+        raise ValueError("A stored LIVE upgrade checkout is required.")
+    if payment.status in {"succeeded", "reversed"}:
+        return payment
+    return _record_checkout_result(payment.user, payment, client.verify(payment.reference), "live")
+
+
 def _record_checkout_result(user, payment, result, mode):
     _validate_transaction(result, payment)
     try:
         with transaction.atomic():
             locked_user = get_user_model().objects.select_for_update().get(pk=user.pk)
             payment = StudyPayment.objects.select_for_update().get(pk=payment.pk)
-            if not locked_user.is_active and not (mode == "live" and payment.discarded_at):
+            from .models import StudyPlanChange
+            upgrade = StudyPlanChange.objects.filter(payment=payment, kind="upgrade").first() if mode == "live" else None
+            if not locked_user.is_active and not (mode == "live" and (payment.discarded_at or upgrade)):
                 raise CheckoutNotAllowed("An active account is required.")
             if payment.status == StudyPayment.Status.SUCCEEDED:
                 return payment
@@ -302,6 +317,10 @@ def _record_checkout_result(user, payment, result, mode):
                     "amount_cents": payment.expected_amount_cents, "currency": payment.currency,
                 })
                 return payment
+            if upgrade:
+                from .upgrade_service import record_verified_upgrade
+
+                return record_verified_upgrade(locked_user, payment, result, paid_at, upgrade)
             membership = StudyMembership.objects.filter(user=locked_user).first()
             if membership and (
                 membership.paystack_subscription_code

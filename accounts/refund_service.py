@@ -50,9 +50,12 @@ def refund_page_context(request):
     refund = StudyRefund.objects.filter(user=request.user, mode="live", reason="first_payment").first()
     enabled = refunds_enabled() and request.is_secure() and request.get_host().lower() == "studigarden.com"
     payment = _first_payment(request.user.pk) if enabled and not refund else None
+    member = StudyMembership.objects.filter(user=request.user, payment_mode="live").first()
     return {
         "refund_request": refund,
-        "can_request_refund": bool(payment and payment.status == "succeeded"),
+        "can_request_refund": bool(payment and payment.status == "succeeded" and member and member.tier == payment.tier
+                                   and not payment.refund_requests.exclude(status="ineligible").exists()),
+        "upgrade_refunds": StudyRefund.objects.filter(user=request.user, mode="live", reason="upgrade").select_related("payment"),
         "discarded_checkout_refunds": StudyRefund.objects.filter(
             user=request.user, mode="live", reason="discarded_checkout",
         ).select_related("payment"),
@@ -75,6 +78,9 @@ def request_first_payment_refund(user):
         payment = _first_payment(locked.pk)
         if not payment or payment.status != "succeeded" or payment.plan != "monthly":
             raise RefundNotAllowed("There is no verified first paid purchase eligible for this refund button.")
+        member = StudyMembership.objects.filter(user=locked, payment_mode="live").first()
+        if not member or member.tier != payment.tier or payment.refund_requests.exclude(status="ineligible").exists():
+            raise RefundNotAllowed("This first payment has already been replaced or is being refunded. Check your Profile for its status.")
         # No amount, payment ID, timestamp or approval flag comes from the form.
         return StudyRefund.objects.create(
             user=locked, payment=payment, mode="live",
@@ -98,7 +104,8 @@ def _scope(refund):
     first = _first_payment(refund.user_id)
     if not (
         refund.mode == payment.mode == "live" and payment.user_id == refund.user_id
-        and payment.source == "checkout" and payment.plan == "monthly"
+        and (payment.source == "checkout" or (refund.reason == "upgrade" and payment.source == "renewal"))
+        and payment.plan == "monthly"
         and payment.status in {"succeeded", "reversed"}
         and payment.verified_at
         and _positive_integer(payment.paystack_transaction_id)
@@ -106,7 +113,13 @@ def _scope(refund):
         and refund.currency == payment.currency == "ZAR"
     ):
         raise _Attention("payment_scope_changed")
-    if refund.reason == StudyRefund.Reason.DISCARDED_CHECKOUT:
+    if refund.reason == StudyRefund.Reason.UPGRADE:
+        from .upgrade_service import UpgradeAttention, upgrade_refund_change
+        try:
+            upgrade_refund_change(refund)
+        except UpgradeAttention as exc:
+            raise _Attention(str(exc)) from None
+    elif refund.reason == StudyRefund.Reason.DISCARDED_CHECKOUT:
         if not payment.discarded_at:
             raise _Attention("checkout_not_discarded")
     elif refund.reason != StudyRefund.Reason.FIRST_PAYMENT or not first or first.pk != payment.pk or payment.discarded_at:
@@ -136,9 +149,17 @@ def _assess(client, refund):
     paid_at = _validate_transaction(result, payment)
     member = StudyMembership.objects.filter(user_id=refund.user_id, payment_mode="live").first()
     discarded = refund.reason == StudyRefund.Reason.DISCARDED_CHECKOUT
+    upgrade = refund.reason == StudyRefund.Reason.UPGRADE
+    if upgrade:
+        from .upgrade_service import UpgradeAttention, upgrade_refund_change, validate_upgrade_credit
+        try:
+            if not validate_upgrade_credit(client, upgrade_refund_change(refund)):
+                raise _Attention("upgrade_not_in_current_paid_period")
+        except UpgradeAttention as exc:
+            raise _Attention(str(exc)) from None
     if not (
         result.get("status") == "success" and result.get("id") == payment.paystack_transaction_id
-        and paid_at and (discarded or (
+        and paid_at and (discarded or upgrade or (
             member and member.tier == payment.tier
             and member.paystack_customer_code == result["customer"]["customer_code"]
         ))
@@ -152,7 +173,7 @@ def _assess(client, refund):
         refund.paid_at = paid_at
         # Use the server-recorded request time, NOT processing time. A request
         # arriving before the deadline stays eligible through outages or queues.
-        if not discarded and not paid_at <= refund.requested_at <= paid_at + timedelta(days=7):
+        if not (discarded or upgrade) and not paid_at <= refund.requested_at <= paid_at + timedelta(days=7):
             refund.status = Status.INELIGIBLE
             refund.last_result = "outside_seven_day_guarantee"
         else:
@@ -264,6 +285,12 @@ def process_live_refund(refund_id):
             if refund.reason == StudyRefund.Reason.DISCARDED_CHECKOUT:
                 from .discarded_checkouts import cancel_discarded_subscription
                 cancelled_code = cancel_discarded_subscription(client, refund)
+            elif refund.reason == StudyRefund.Reason.UPGRADE:
+                from .upgrade_service import UpgradeAttention, stop_previous_upgrade_subscription, upgrade_refund_change
+                try:
+                    cancelled_code = stop_previous_upgrade_subscription(client, upgrade_refund_change(refund))
+                except UpgradeAttention as exc:
+                    raise _Attention(str(exc)) from None
             else:
                 member = _cancel_membership(user=refund.user, client=client, mode="live", allow_inactive=True)
                 cancelled_code = member.paystack_subscription_code
@@ -294,6 +321,12 @@ def process_live_refund(refund_id):
                     f"StudiGarden discarded checkout refund {refund.pk}",
                     customer_note="Refund for a replaced StudiGarden checkout; your chosen plan is unchanged.",
                 )
+            elif refund.reason == StudyRefund.Reason.UPGRADE:
+                result = client.create_full_refund(
+                    refund.payment.paystack_transaction_id, refund.amount_cents,
+                    f"StudiGarden upgrade credit {refund.pk}",
+                    customer_note="Refund of the lower plan's payment for the billing period replaced by your StudiGarden upgrade. Your upgraded plan is unchanged.",
+                )
             else:
                 result = client.create_full_refund(
                     refund.payment.paystack_transaction_id, refund.amount_cents, f"StudiGarden guarantee request {refund.pk}",
@@ -320,10 +353,12 @@ def process_live_refund(refund_id):
             return _defer(refund, "submission_confirmation_pending")
         return _defer(refund, str(exc), attention=True)
     except (PaystackError, CheckoutNotAllowed):
-        if (refund.reason == StudyRefund.Reason.DISCARDED_CHECKOUT
+        if (refund.reason in {StudyRefund.Reason.DISCARDED_CHECKOUT, StudyRefund.Reason.UPGRADE}
                 and refund.status in {Status.REQUESTED, Status.APPROVED}
                 and refund.requested_at < timezone.now() - timedelta(hours=24)):
-            return _defer(refund, "discarded_subscription_needs_attention", attention=True)
+            code = ("upgrade_refund_needs_attention" if refund.reason == StudyRefund.Reason.UPGRADE
+                    else "discarded_subscription_needs_attention")
+            return _defer(refund, code, attention=True)
         return _defer(refund, "provider_confirmation_pending")
     except IntegrityError:
         return _defer(refund, "refund_identity_conflict", attention=True)

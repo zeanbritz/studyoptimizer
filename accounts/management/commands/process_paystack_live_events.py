@@ -13,6 +13,7 @@ from accounts.payment_webhooks import PAYMENT_EVENTS, process_live_payment_recei
 from accounts.paystack_client import live_billing_enabled
 from accounts.refund_service import process_refund_batch
 from accounts.subscription_webhooks import SUBSCRIPTION_EVENTS, State, _finish, process_live_subscription_receipt
+from accounts.upgrade_service import process_upgrade_batch
 
 
 def process_batch(limit=10):
@@ -63,6 +64,8 @@ class Command(BaseCommand):
                 close_old_connections()
                 for receipt_id, state, result in process_batch():
                     self.stdout.write(f"Payment receipt {receipt_id}: {state} ({result})")
+                for change_id, state, result in process_upgrade_batch():
+                    self.stdout.write(f"Plan change {change_id}: {state} ({result})")
                 for refund_id, state, result in process_refund_batch():
                     self.stdout.write(f"Refund request {refund_id}: {state} ({result})")
                 close_old_connections()
