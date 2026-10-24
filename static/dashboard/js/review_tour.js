@@ -32,6 +32,22 @@
         return step === 1 ? reviewTarget : (modeTarget || reviewTarget);
     }
 
+    function copyTargetIntoSpotlight(target) {
+        const copy = target.cloneNode(true);
+        copy.classList.add("review-tour-spotlight__copy");
+        copy.removeAttribute("href");
+        copy.setAttribute("aria-hidden", "true");
+        copy.querySelectorAll("[id]").forEach(function (element) {
+            element.removeAttribute("id");
+        });
+        copy.querySelectorAll("a, button, input, select, textarea").forEach(function (element) {
+            element.setAttribute("tabindex", "-1");
+            element.removeAttribute("autofocus");
+        });
+        spotlight.replaceChildren(copy);
+        spotlight.style.background = window.getComputedStyle(target).backgroundColor;
+    }
+
     function position() {
         const target = activeTarget();
         const rect = target.getBoundingClientRect();
@@ -40,6 +56,7 @@
         spotlight.style.top = Math.max(4, rect.top - padding) + "px";
         spotlight.style.width = Math.min(window.innerWidth - 8, rect.width + (padding * 2)) + "px";
         spotlight.style.height = Math.min(window.innerHeight - 8, rect.height + (padding * 2)) + "px";
+        copyTargetIntoSpotlight(target);
 
         if (window.innerWidth <= 640) return;
         const width = tour.offsetWidth;

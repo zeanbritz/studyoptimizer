@@ -1257,7 +1257,9 @@ def dashboard(request):
 # REVIEW
 # ============================================================
 
-def _show_review_tour(user):
+def _show_review_tour(user, has_items):
+    if not has_items:
+        return False
     profile, _ = StudyProfile.objects.get_or_create(user=user)
     return not profile.review_tour_completed
 
@@ -4651,7 +4653,7 @@ def review_definitions(request):
             "mode": mode,
 
             "show_review_tour":
-                _show_review_tour(request.user),
+                _show_review_tour(request.user, bool(definitions)),
 
             "definition_count":
                 len(
@@ -4769,7 +4771,7 @@ def review_formulas(request):
             "mode": mode,
 
             "show_review_tour":
-                _show_review_tour(request.user),
+                _show_review_tour(request.user, bool(formula_items)),
 
             "formula_count":
                 len(
@@ -4846,7 +4848,7 @@ def review_lists(request):
             "mode": mode,
 
             "show_review_tour":
-                _show_review_tour(request.user),
+                _show_review_tour(request.user, bool(list_items)),
 
             "list_count":
                 len(
@@ -4923,7 +4925,7 @@ def review_steps(request):
             "mode": mode,
 
             "show_review_tour":
-                _show_review_tour(request.user),
+                _show_review_tour(request.user, bool(step_items)),
 
             "step_count":
                 len(
@@ -5001,7 +5003,7 @@ def review_comparisons(request):
             "mode": mode,
 
             "show_review_tour":
-                _show_review_tour(request.user),
+                _show_review_tour(request.user, bool(comparison_items)),
 
             "comparison_count":
                 len(
@@ -5078,7 +5080,7 @@ def review_notes(request):
                 ),
 
             "show_review_tour":
-                _show_review_tour(request.user),
+                _show_review_tour(request.user, bool(note_items)),
         }
     )
 

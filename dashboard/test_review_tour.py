@@ -3,6 +3,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from dashboard.models import StudyProfile
+from learning.models import KnowledgeUnit, StepItem, StepList, Subject
 
 
 class ReviewTourTests(TestCase):
@@ -26,13 +27,40 @@ class ReviewTourTests(TestCase):
         )
         self.client.force_login(self.user)
 
+    def add_step(self):
+        subject = Subject.objects.create(user=self.user, name="Physics")
+        unit = KnowledgeUnit.objects.create(
+            subject=subject,
+            title="Measure acceleration",
+            knowledge_type=KnowledgeUnit.KnowledgeType.STEPS,
+        )
+        step_list = StepList.objects.create(
+            knowledge_unit=unit,
+            question="How do I measure acceleration?",
+        )
+        StepItem.objects.create(step_list=step_list, order=1, text="Measure time")
+        return step_list
+
     def test_tour_appears_in_whichever_review_category_is_opened_first(self):
+        self.add_step()
         response = self.client.get(reverse("review_steps"))
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.context["show_review_tour"])
         self.assertContains(response, 'id="review-tour"')
         self.assertContains(response, "Review your saved material")
         self.assertContains(response, ">Test<")
+
+    def test_empty_category_does_not_show_or_consume_the_tour(self):
+        response = self.client.get(reverse("review_steps"))
+        self.assertFalse(response.context["show_review_tour"])
+        self.assertNotContains(response, 'id="review-tour"')
+        self.profile.refresh_from_db()
+        self.assertFalse(self.profile.review_tour_completed)
+
+        self.add_step()
+        response = self.client.get(reverse("review_steps"))
+        self.assertTrue(response.context["show_review_tour"])
+        self.assertContains(response, 'id="review-tour"')
 
     def test_completing_tour_once_hides_it_from_all_six_categories(self):
         response = self.client.post(reverse("complete_review_tour"))
@@ -61,6 +89,13 @@ class ReviewTourTests(TestCase):
         )
         StudyProfile.objects.create(user=other, onboarding_complete=True)
         self.client.force_login(other)
-        response = self.client.get(reverse("review_definitions"))
+        subject = Subject.objects.create(user=other, name="Chemistry")
+        unit = KnowledgeUnit.objects.create(
+            subject=subject,
+            title="Titration",
+            knowledge_type=KnowledgeUnit.KnowledgeType.STEPS,
+        )
+        StepList.objects.create(knowledge_unit=unit, question="How do I titrate?")
+        response = self.client.get(reverse("review_steps"))
         self.assertTrue(response.context["show_review_tour"])
         self.assertContains(response, 'id="review-tour"')

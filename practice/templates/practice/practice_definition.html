@@ -813,29 +813,41 @@
         }
 
         .missing-input {
-            min-height: 112px;
-            margin-top: 15px;
-            padding: 13px 14px 11px;
-            border: 2px solid #c5d2d8;
-            border-bottom-width: 4px;
-            border-radius: 11px;
-            background: #f9fbfc;
+            display: inline-block;
+            width: var(--answer-width);
+            max-width: 100%;
+            min-width: 1ch;
+            min-height: 0;
+            margin: 0 .12em;
+            padding: 0 0 .05em;
+            border: 0;
+            border-bottom: 2px solid #7895a5;
+            border-radius: 0;
+            background: transparent;
             color: #2f393e;
-            font-size: 16px;
-            font-weight: 650;
-            line-height: 1.55;
-            transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+            font: inherit;
+            font-weight: 750;
+            line-height: 1.2;
+            text-align: center;
+            vertical-align: baseline;
+            transition: border-color 0.15s ease;
         }
 
         .missing-input:hover {
-            border-color: #9fbdcd;
-            background: #ffffff;
+            border-bottom-color: var(--definition-dark);
+            background: transparent;
         }
 
         .missing-input:focus {
-            border-color: var(--definition);
-            background: #ffffff;
-            box-shadow: 0 0 0 4px rgba(95, 159, 199, 0.15);
+            border-bottom-color: var(--definition-dark);
+            background: transparent;
+            box-shadow: none;
+            outline: none;
+        }
+
+        .missing-input:focus-visible {
+            border-bottom-width: 3px;
+            outline: none;
         }
 
         .submit-button,
@@ -939,7 +951,6 @@
         }
 
         .exit-review-button:focus-visible,
-        .missing-input:focus-visible,
         .submit-button:focus-visible,
         .next-button:focus-visible,
         .finish-review-button:focus-visible {
@@ -1108,32 +1119,34 @@
 
             {% csrf_token %}{% review_hidden %}
 
+            <input
+                type="hidden"
+                name="question_token"
+                value="{{ question_token }}"
+            >
+
 
             <div class="definition-question">
 
 
-                {% if before_text %}
-
-                    {{ before_text }}
-
-                {% endif %}
-
-
-                <textarea
-                    name="answer"
-                    class="missing-input"
-                    autocomplete="off"
-                    autofocus
-                    required
-                    placeholder="Type the missing part..."
-                ></textarea>
-
-
-                {% if after_text %}
-
-                    {{ after_text }}
-
-                {% endif %}
+                {% for part in question_parts %}
+                    {% if part.is_missing %}
+                        <input
+                            type="text"
+                            name="{{ part.input_name }}"
+                            class="missing-input"
+                            style="--answer-width: {{ part.width_ch }}ch;"
+                            size="{{ part.width_ch }}"
+                            autocomplete="off"
+                            spellcheck="false"
+                            aria-label="Missing word {{ part.blank_number }}"
+                            {% if part.blank_number == 1 %}autofocus{% endif %}
+                            required
+                        >
+                    {% else %}
+                        <span class="definition-word">{{ part.text }}</span>
+                    {% endif %}{% if not forloop.last %} {% endif %}
+                {% endfor %}
 
 
             </div>
@@ -1159,23 +1172,13 @@
 
         <div class="definition-question">
 
-            {% if before_text %}
-
-                {{ before_text }}
-
-            {% endif %}
-
-
-            <strong>
-                {{ missing_text }}
-            </strong>
-
-
-            {% if after_text %}
-
-                {{ after_text }}
-
-            {% endif %}
+            {% for part in question_parts %}
+                {% if part.is_missing %}
+                    <strong>{{ part.text }}</strong>
+                {% else %}
+                    <span class="definition-word">{{ part.text }}</span>
+                {% endif %}{% if not forloop.last %} {% endif %}
+            {% endfor %}
 
         </div>
 

@@ -11,12 +11,27 @@
     position: fixed;
     z-index: 10001;
     pointer-events: none;
+    overflow: hidden;
     border: 3px solid #58b82a;
     border-radius: 13px;
     box-shadow:
         0 0 0 5px rgba(255, 255, 255, .88),
         0 12px 28px rgba(22, 31, 50, .25);
     transition: left .18s ease, top .18s ease, width .18s ease, height .18s ease;
+}
+
+.review-tour-spotlight__copy {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    transform: none !important;
+    box-shadow: none !important;
+    pointer-events: none !important;
+}
+
+.review-tour-spotlight__copy * {
+    pointer-events: none !important;
 }
 
 .review-tour {

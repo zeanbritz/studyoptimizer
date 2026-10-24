@@ -1,6 +1,9 @@
 from datetime import timedelta
+import random
 
 from django.contrib.auth.decorators import login_required
+from django.core import signing
+from django.http import HttpResponseBadRequest
 from django.shortcuts import (
     render,
     redirect,
@@ -73,7 +76,9 @@ def get_definition_review_interval(
 
 def create_definition_question(
     definition_text,
-    mastery_level
+    mastery_level,
+    missing_indices=None,
+    rng=None,
 ):
 
     definition_text = (
@@ -94,6 +99,9 @@ def create_definition_question(
             "missing_text": "",
             "after_text": "",
             "hidden_percentage": 0,
+            "missing_indices": [],
+            "missing_answers": [],
+            "question_parts": [],
         }
 
 
@@ -106,25 +114,6 @@ def create_definition_question(
             mastery_level
         )
     )
-
-
-    # --------------------------------------------------------
-    # MASTERY 6
-    #
-    # Hide complete definition.
-    # --------------------------------------------------------
-
-    if hidden_percentage >= 100:
-
-        return {
-            "before_text": "",
-            "missing_text": " ".join(
-                words
-            ),
-            "after_text": "",
-            "hidden_percentage":
-                hidden_percentage,
-        }
 
 
     # --------------------------------------------------------
@@ -148,60 +137,52 @@ def create_definition_question(
     )
 
 
-    # --------------------------------------------------------
-    # HIDE SECTION AROUND MIDDLE
-    # --------------------------------------------------------
-
-    middle_index = (
-        len(words) // 2
-    )
-
-    start_index = (
-        middle_index
-        - number_to_hide // 2
-    )
-
-    start_index = max(
-        0,
-        start_index
-    )
-
-
-    if (
-        start_index
-        + number_to_hide
-        > len(words)
-    ):
-
-        start_index = (
-            len(words)
-            - number_to_hide
+    # Pick individual words instead of one fixed middle phrase. At higher
+    # mastery levels this naturally creates a mix of adjacent and separated
+    # blanks while keeping every answer field word-sized.
+    if missing_indices is None:
+        chooser = rng or random.SystemRandom()
+        missing_indices = chooser.sample(
+            range(len(words)),
+            number_to_hide,
         )
 
+    valid_missing_indices = set()
+    for raw_index in missing_indices:
+        try:
+            index = int(raw_index)
+        except (TypeError, ValueError):
+            continue
+        if 0 <= index < len(words):
+            valid_missing_indices.add(index)
 
-    end_index = (
-        start_index
-        + number_to_hide
-    )
+    missing_indices = sorted(valid_missing_indices)
 
+    if not missing_indices:
+        missing_indices = [0]
 
-    before_text = " ".join(
-        words[
-            :start_index
-        ]
-    )
+    missing_index_set = set(missing_indices)
+    missing_answers = [words[index] for index in missing_indices]
+    question_parts = []
+    blank_number = 0
 
-    missing_text = " ".join(
-        words[
-            start_index:end_index
-        ]
-    )
+    for index, word in enumerate(words):
+        is_missing = index in missing_index_set
+        if is_missing:
+            blank_number += 1
+        question_parts.append({
+            "text": word,
+            "is_missing": is_missing,
+            "input_name": f"answer_{index}",
+            "width_ch": max(1, len(word)),
+            "blank_number": blank_number if is_missing else None,
+        })
 
-    after_text = " ".join(
-        words[
-            end_index:
-        ]
-    )
+    first_missing = missing_indices[0]
+    last_missing = missing_indices[-1]
+    before_text = " ".join(words[:first_missing])
+    after_text = " ".join(words[last_missing + 1:])
+    missing_text = " ".join(missing_answers)
 
 
     return {
@@ -216,7 +197,57 @@ def create_definition_question(
 
         "hidden_percentage":
             hidden_percentage,
+
+        "missing_indices":
+            missing_indices,
+
+        "missing_answers":
+            missing_answers,
+
+        "question_parts":
+            question_parts,
     }
+
+
+# ============================================================
+# SIGNED QUESTION STATE
+# ============================================================
+
+DEFINITION_QUESTION_SALT = "studigarden.definition-question.v1"
+
+
+def create_definition_question_token(definition, question, progress):
+    return signing.dumps(
+        {
+            "definition_id": definition.pk,
+            "missing_indices": question["missing_indices"],
+            "mastery_level": progress.mastery_level,
+            "review_count": progress.review_count,
+        },
+        salt=DEFINITION_QUESTION_SALT,
+    )
+
+
+def read_definition_question_token(token, definition, progress):
+    state = signing.loads(
+        token,
+        salt=DEFINITION_QUESTION_SALT,
+        max_age=60 * 60 * 24,
+    )
+    if state.get("definition_id") != definition.pk:
+        raise signing.BadSignature("Question does not match definition")
+    if (
+        state.get("mastery_level") != progress.mastery_level
+        or state.get("review_count") != progress.review_count
+    ):
+        raise signing.BadSignature("Question has already been answered")
+    indices = state.get("missing_indices")
+    if not isinstance(indices, list) or not indices:
+        raise signing.BadSignature("Question has no blanks")
+    try:
+        return [int(index) for index in indices]
+    except (TypeError, ValueError):
+        raise signing.BadSignature("Question contains invalid blanks")
 
 
 # ============================================================
@@ -686,10 +717,29 @@ def practice_definition(
     # CREATE QUESTION
     # ========================================================
 
+    missing_indices = None
+    is_answer_submission = (
+        request.method == "POST"
+        and request.POST.get("action") != "continue"
+    )
+
+    if is_answer_submission and request.POST.get("question_token"):
+        try:
+            missing_indices = read_definition_question_token(
+                request.POST["question_token"],
+                definition,
+                progress,
+            )
+        except signing.BadSignature:
+            return HttpResponseBadRequest(
+                "This definition question has expired. Please reopen it and try again."
+            )
+
     question = (
         create_definition_question(
             definition.definition,
-            progress.mastery_level
+            progress.mastery_level,
+            missing_indices=missing_indices,
         )
     )
 
@@ -709,6 +759,20 @@ def practice_definition(
     hidden_percentage = question[
         "hidden_percentage"
     ]
+
+    question_parts = question[
+        "question_parts"
+    ]
+
+    missing_answers = question[
+        "missing_answers"
+    ]
+
+    question_token = create_definition_question_token(
+        definition,
+        question,
+        progress,
+    )
 
 
     # ========================================================
@@ -775,32 +839,28 @@ def practice_definition(
 
     if request.method == "POST":
 
-        answer = request.POST.get(
-            "answer",
-            ""
-        ).strip()
+        answers = []
+
+        for index in question["missing_indices"]:
+            field_name = f"answer_{index}"
+            value = request.POST.get(field_name)
+            if value is None and len(question["missing_indices"]) == 1:
+                # Keep older clients and tests compatible with the former
+                # single answer field.
+                value = request.POST.get("answer", "")
+            answers.append((value or "").strip())
+
+        answer = " ".join(answers)
 
 
         # ----------------------------------------------------
         # NORMALIZE ANSWERS
         # ----------------------------------------------------
 
-        normalized_answer = (
-            normalize_definition_answer(
-                answer
-            )
-        )
-
-        normalized_correct_answer = (
-            normalize_definition_answer(
-                missing_text
-            )
-        )
-
-
-        is_correct = (
-            normalized_answer
-            == normalized_correct_answer
+        is_correct = all(
+            normalize_definition_answer(given)
+            == normalize_definition_answer(expected)
+            for given, expected in zip(answers, missing_answers)
         )
 
 
@@ -928,6 +988,12 @@ def practice_definition(
                 "hidden_percentage":
                     hidden_percentage,
 
+                "question_parts":
+                    question_parts,
+
+                "question_token":
+                    question_token,
+
                 "answer":
                     answer,
 
@@ -980,6 +1046,12 @@ def practice_definition(
 
             "hidden_percentage":
                 hidden_percentage,
+
+            "question_parts":
+                question_parts,
+
+            "question_token":
+                question_token,
 
             "submitted":
                 False,
