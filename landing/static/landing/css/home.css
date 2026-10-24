@@ -55,6 +55,7 @@ body.home-page { margin: 0; background: var(--home-canvas); color: var(--home-in
 .button:hover { transform: translateY(-3px); }
 .button--lime { background: var(--home-lime); color: var(--home-deep) !important; box-shadow: 0 8px 26px rgba(10, 28, 19, .14); }
 .button--lime:hover { background: #ddf6ac; box-shadow: 0 12px 28px rgba(10, 28, 19, .2); }
+.button--hero { min-height: 62px; padding: 16px 31px; font-size: 16px; }
 .text-link { display: inline-flex; align-items: center; padding: 12px 0; font-size: 14px; font-weight: 800; }
 .text-link--light { color: #f0f6ec !important; }
 .text-link:hover { text-decoration: underline; text-underline-offset: 5px; }

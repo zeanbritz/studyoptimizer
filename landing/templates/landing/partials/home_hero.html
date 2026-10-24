@@ -10,7 +10,7 @@
                 {% if user.is_authenticated %}
                     <a class="button button--lime" href="{% url 'dashboard' %}">Open your dashboard</a>
                 {% else %}
-                    <a class="button button--lime" href="{% url 'register' %}">Sign up</a>
+                    <a class="button button--lime button--hero" href="{% url 'register' %}">Get started for free</a>
                 {% endif %}
                 <a class="text-link text-link--light" href="#how-it-works">How it works</a>
             </div>

@@ -76,6 +76,8 @@ class LandingHomeTests(TestCase):
         )
         self.assertContains(response, 'href="' + reverse("register") + '"')
         self.assertContains(response, ">Sign up</a>")
+        self.assertContains(response, ">Get started for free</a>")
+        self.assertContains(response, "button--hero")
         self.assertNotContains(response, "Try the sample dashboard")
         self.assertNotContains(response, "Start for free")
         self.assertNotContains(response, 'class="demo-tab__arrow"')
