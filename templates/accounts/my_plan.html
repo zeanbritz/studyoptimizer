@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="{% static 'landing/css/footer.css' %}">
     <link rel="stylesheet" href="{% static 'css/brand-logo.css' %}">
     <link rel="stylesheet" href="{% static 'landing/css/plan_cards.css' %}">
+    <link rel="stylesheet" href="{% static 'dashboard/css/beta_feedback.css' %}">
 
     <style>
         :root {
@@ -537,5 +538,7 @@
 
         {% include 'landing/partials/footer.html' %}
     </div>
+    {% include 'accounts/partials/support_widget.html' %}
+    <script src="{% static 'js/profile_support.js' %}"></script>
 </body>
 </html>

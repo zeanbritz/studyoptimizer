@@ -344,7 +344,8 @@ class LiveCheckoutTests(TestCase):
         browser.force_login(self.user)
         page = browser.get(reverse("my_plan"), secure=True)
         self.assertContains(page, 'name="confirm_subscription" value="yes" required', count=2)
-        self.assertContains(page, 'name="csrfmiddlewaretoken"', count=2)
+        self.assertContains(page, 'class="plan-checkout-form"', count=2)
+        self.assertGreaterEqual(page.content.count(b'name="csrfmiddlewaretoken"'), 2)
         response = browser.post(
             reverse("start_live_checkout"),
             {

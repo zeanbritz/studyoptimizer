@@ -17,6 +17,59 @@ class User(AbstractUser):
     beta_lifetime_access = models.BooleanField(default=False)
 
 
+class SupportQuery(models.Model):
+    """A support request submitted by a signed-in student."""
+
+    class Category(models.TextChoices):
+        PAYMENTS = "payments", "Payments & refunds"
+        PLANS = "plans", "Plans & access"
+        ACCOUNT = "account", "Account"
+        TECHNICAL = "technical", "Technical problem"
+        OTHER = "other", "Other"
+
+    class Status(models.TextChoices):
+        NEW = "new", "New"
+        REVIEWING = "reviewing", "Reviewing"
+        RESOLVED = "resolved", "Resolved"
+
+    class EmailStatus(models.TextChoices):
+        SENT = "sent", "Sent"
+        FAILED = "failed", "Delivery failed"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name="support_queries",
+        null=True,
+        blank=True,
+    )
+    username = models.CharField(max_length=150)
+    email = models.EmailField()
+    category = models.CharField(max_length=20, choices=Category.choices)
+    message = models.TextField(max_length=4000)
+    page_path = models.CharField(max_length=255, blank=True, default="")
+    status = models.CharField(
+        max_length=10,
+        choices=Status.choices,
+        default=Status.NEW,
+    )
+    email_status = models.CharField(
+        max_length=10,
+        choices=EmailStatus.choices,
+        default=EmailStatus.FAILED,
+    )
+    email_attempted_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at", "-pk"]
+        verbose_name_plural = "Support queries"
+
+    def __str__(self):
+        return f"Support request {self.pk} from {self.username}"
+
+
 class BetaInvite(models.Model):
     slot = models.PositiveSmallIntegerField(unique=True)
     token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)

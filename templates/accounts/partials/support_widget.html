@@ -1,0 +1,84 @@
+<div class="beta-feedback" id="profile-support">
+    <button
+        class="beta-feedback__launcher"
+        id="profile-support-launcher"
+        type="button"
+        aria-controls="profile-support-panel"
+        aria-expanded="false"
+    >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20 11.5a8 8 0 0 1-8 8 8.5 8.5 0 0 1-3.2-.6L4 20l1.1-4.8A8 8 0 1 1 20 11.5Z"></path>
+            <path d="M8 10h8M8 13.5h5"></path>
+        </svg>
+        Contact support
+    </button>
+
+    <section
+        class="beta-feedback__panel"
+        id="profile-support-panel"
+        aria-labelledby="profile-support-title"
+        hidden
+    >
+        <div class="beta-feedback__header">
+            <div>
+                <span class="beta-feedback__eyebrow">STUDIGARDEN SUPPORT</span>
+                <h2 id="profile-support-title">How can we help?</h2>
+            </div>
+            <button
+                class="beta-feedback__close"
+                id="profile-support-close"
+                type="button"
+                aria-label="Close support form"
+            >×</button>
+        </div>
+
+        <form
+            id="profile-support-form"
+            method="post"
+            action="{% url 'submit_support_query' %}"
+        >
+            {% csrf_token %}
+            <input type="hidden" name="page_path" value="{{ request.path }}">
+
+            <fieldset class="beta-feedback__choices">
+                <legend>What do you need help with?</legend>
+                <div class="beta-feedback__choice-grid beta-feedback__choice-grid--two">
+                    <label class="beta-feedback__choice">
+                        <input type="radio" name="category" value="payments" required>
+                        <span><b aria-hidden="true">R</b> Payments &amp; refunds</span>
+                    </label>
+                    <label class="beta-feedback__choice">
+                        <input type="radio" name="category" value="plans" required>
+                        <span><b aria-hidden="true">↕</b> Plans &amp; access</span>
+                    </label>
+                    <label class="beta-feedback__choice">
+                        <input type="radio" name="category" value="account" required>
+                        <span><b aria-hidden="true">@</b> Account</span>
+                    </label>
+                    <label class="beta-feedback__choice">
+                        <input type="radio" name="category" value="technical" required>
+                        <span><b aria-hidden="true">!</b> Technical problem</span>
+                    </label>
+                    <label class="beta-feedback__choice">
+                        <input type="radio" name="category" value="other" required>
+                        <span><b aria-hidden="true">?</b> Other</span>
+                    </label>
+                </div>
+            </fieldset>
+
+            <label class="beta-feedback__message-label" for="profile-support-message">
+                Explain what you are struggling with
+            </label>
+            <textarea
+                id="profile-support-message"
+                name="message"
+                maxlength="4000"
+                rows="5"
+                placeholder="Tell us what you tried, what happened, and what you expected. Do not include passwords or card details."
+                required
+            ></textarea>
+            <p class="beta-feedback__status" id="profile-support-status" role="status" aria-live="polite"></p>
+            <button class="beta-feedback__submit" type="submit">Send support request</button>
+        </form>
+    </section>
+</div>

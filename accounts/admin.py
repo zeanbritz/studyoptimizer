@@ -1,6 +1,61 @@
 from django.contrib import admin
 
-from .models import BetaInvite, PaystackWebhookReceipt, StudyPlanChange, StudyRefund
+from .models import (
+    BetaInvite,
+    PaystackWebhookReceipt,
+    StudyPlanChange,
+    StudyRefund,
+    SupportQuery,
+)
+
+
+@admin.register(SupportQuery)
+class SupportQueryAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "category",
+        "username",
+        "email",
+        "status",
+        "email_status",
+        "created_at",
+    )
+    list_editable = ("status",)
+    list_filter = ("category", "status", "email_status", "created_at")
+    search_fields = ("message", "username", "email")
+    readonly_fields = (
+        "user",
+        "username",
+        "email",
+        "category",
+        "message",
+        "page_path",
+        "email_status",
+        "email_attempted_at",
+        "created_at",
+        "updated_at",
+    )
+    fields = (
+        "status",
+        "category",
+        "message",
+        "user",
+        "username",
+        "email",
+        "page_path",
+        "email_status",
+        "email_attempted_at",
+        "created_at",
+        "updated_at",
+    )
+    ordering = ("-created_at", "-pk")
+    list_select_related = ("user",)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(BetaInvite)
