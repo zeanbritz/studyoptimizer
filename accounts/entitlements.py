@@ -90,7 +90,12 @@ def can_export_subject_summary(user):
 
 def can_use_pdf_summarizer(user):
     # Existing suggestions remain editable after the month's page allowance is used.
-    return get_study_tier(user) in {StudyTier.GROW, StudyTier.BLOOM}
+    if not user or not user.is_authenticated or not user.is_active:
+        return False
+    return user.is_superuser or get_study_tier(user) in {
+        StudyTier.GROW,
+        StudyTier.BLOOM,
+    }
 
 
 def _item_subject(request, value, *, workspace_index):

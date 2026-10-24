@@ -127,6 +127,7 @@ class StudyMembershipAccessTests(TestCase):
         self.user.save(update_fields=["is_superuser"])
 
         self.assertEqual(get_study_access_level(self.user), ACCESS_FULL)
+        self.assertTrue(can_use_pdf_summarizer(self.user))
 
 
 class FreePlanEntitlementTests(TestCase):

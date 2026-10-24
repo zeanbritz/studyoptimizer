@@ -134,3 +134,13 @@ class PlanLimitTests(TestCase):
                         allowance.add_export()
                     allowance.add_summary_pages(60)
                 self.assertIsNone(get_pdf_usage(self.user)["pages_remaining"])
+
+    def test_superuser_pdf_allowance_is_explicitly_unlimited(self):
+        self.user.is_superuser = True
+        self.user.save(update_fields=["is_superuser"])
+        with monthly_pdf_allowance(self.user) as allowance:
+            self.assertTrue(allowance.unlimited)
+            allowance.add_summary_pages(10_000)
+        usage = get_pdf_usage(self.user)
+        self.assertEqual(usage["summary_pages"], 10_000)
+        self.assertIsNone(usage["pages_remaining"])

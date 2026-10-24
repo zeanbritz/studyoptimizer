@@ -43,23 +43,25 @@ def _run_ocr(png_bytes):
     return result.stdout.decode("utf-8", errors="replace").strip()[:100_000]
 
 
-def scan_page_images(page, remaining):
-    """Only start OCR when an embedded image is present; bound work per scan."""
+def scan_page_images(page, remaining=None):
+    """OCR embedded images, optionally using a bounded remaining-image budget."""
     result = {"image_found": False, "checked": 0, "texts": [], "unavailable": False,
               "limit_reached": False}
     try:
-        image_keys = page.images.keys()
+        image_keys = list(page.images.keys())
     except (PdfReadError, ValueError, TypeError, KeyError, OSError):
         return result
     if not image_keys:
         return result
     result["image_found"] = True
-    if remaining <= 0:
+    unlimited = remaining is None
+    if not unlimited and remaining <= 0:
         result["limit_reached"] = True
         return result
 
     possible = []
-    for key in image_keys[:MAX_INSPECTED_IMAGES_PER_PAGE]:
+    inspected_keys = image_keys if unlimited else image_keys[:MAX_INSPECTED_IMAGES_PER_PAGE]
+    for key in inspected_keys:
         try:
             image = page.images[key].image
             pixels = image.width * image.height
@@ -68,8 +70,10 @@ def scan_page_images(page, remaining):
         except (PdfReadError, ValueError, TypeError, KeyError, OSError):
             continue
     possible.sort(key=lambda entry: entry[0], reverse=True)
-    selected = possible[:min(remaining, MAX_OCR_IMAGES_PER_PAGE)]
-    if len(possible) > len(selected) or len(image_keys) > MAX_INSPECTED_IMAGES_PER_PAGE:
+    selected = possible if unlimited else possible[:min(remaining, MAX_OCR_IMAGES_PER_PAGE)]
+    if not unlimited and (
+        len(possible) > len(selected) or len(image_keys) > MAX_INSPECTED_IMAGES_PER_PAGE
+    ):
         result["limit_reached"] = True
     for _, image in selected:
         try:

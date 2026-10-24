@@ -121,7 +121,7 @@
                         </div>
                         <div>
                             <label for="pages-to-scan">Pages to scan</label>
-                            <input id="pages-to-scan" type="number" name="pages_to_scan" min="1" max="{{ max_pages }}" value="{{ pages_to_scan }}" required>
+                            <input id="pages-to-scan" type="number" name="pages_to_scan" min="1"{% if max_pages %} max="{{ max_pages }}"{% endif %} value="{{ pages_to_scan }}" required>
                         </div>
                     </div>
                     <div class="details-grid">
@@ -141,7 +141,11 @@
                     </div>
                     <button class="scan-button" type="submit" {% if pdf_usage.pages_remaining == 0 %}disabled{% endif %}>Summarize</button>
                     <p class="hint">Optional book and chapter labels carry into saved items; they do not change detection.</p>
+                    {% if unlimited_scan %}
+                    <p class="hint">Superusers can scan any number of pages and embedded images within the {{ max_size_mb }} MB file limit. The PDF is not stored; results stay for 24 hours.</p>
+                    {% else %}
                     <p class="hint">Max {{ max_pages }} pages or {{ max_size_mb }} MB. Image text is checked only when an image is present, up to 8 images per scan. The PDF is not stored; results stay for 24 hours.</p>
+                    {% endif %}
                 </form>
                 {% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
                 {% for message in messages %}<div class="success" role="status">{{ message }}</div>{% endfor %}

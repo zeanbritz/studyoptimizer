@@ -342,7 +342,8 @@ def _scan_pdf(upload, start_page, pages_to_scan, *, allowance):
 
         if not image_ocr_unavailable:
             image_scan = scan_page_images(
-                reader.pages[page_number - 1], MAX_OCR_IMAGES_PER_SCAN - images_checked,
+                reader.pages[page_number - 1],
+                None if allowance.unlimited else MAX_OCR_IMAGES_PER_SCAN - images_checked,
             )
             image_pages += int(image_scan["image_found"])
             images_checked += image_scan["checked"]
@@ -387,11 +388,13 @@ def definition_pdf_lab(request, subject_id):
     subject = get_object_or_404(Subject, pk=subject_id, user=request.user)
     usage = get_pdf_usage(request.user)
     remaining = usage["pages_remaining"]
+    unlimited_scan = bool(request.user.is_active and request.user.is_superuser)
     context = {
         "subject": subject,
         "back_url": _subject_back_url(request, subject),
         "subject_index": _subject_index(request, subject) or 0,
-        "max_pages": MAX_PAGES_PER_SCAN,
+        "max_pages": None if unlimited_scan else MAX_PAGES_PER_SCAN,
+        "unlimited_scan": unlimited_scan,
         "max_size_mb": MAX_UPLOAD_BYTES // (1024 * 1024),
         "start_page": 1,
         "pages_to_scan": min(25, max(1, remaining)) if remaining is not None else 25,
@@ -460,7 +463,9 @@ def definition_pdf_lab(request, subject_id):
                     raise ValueError("The chapter cannot be longer than 255 characters.")
                 start_page = int(context["start_page"])
                 pages_to_scan = int(context["pages_to_scan"])
-                if start_page < 1 or not 1 <= pages_to_scan <= MAX_PAGES_PER_SCAN:
+                if start_page < 1 or pages_to_scan < 1:
+                    raise ValueError("Choose a start page and page count of at least 1.")
+                if not unlimited_scan and pages_to_scan > MAX_PAGES_PER_SCAN:
                     raise ValueError(
                         f"Choose a start page of at least 1 and scan 1-{MAX_PAGES_PER_SCAN} pages."
                     )

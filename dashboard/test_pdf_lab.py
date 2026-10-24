@@ -12,14 +12,16 @@ from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
 
 from learning.models import (
-    BulletList, Comparison, Definition, Formula, FormulaVariable,
-    KnowledgeUnit, Note, StepList, Subject,
+    BulletList, Comparison, ComparisonCell, ComparisonColumn, ComparisonRow,
+    Definition, Formula, FormulaVariable, KnowledgeUnit, Note, StepItem,
+    StepList, Subject,
 )
 
 from .definition_detection import find_definition_candidates
 from .formula_detection import equation_to_structure, find_formula_candidates
 from .models import SubjectTextbook
 from .pdf_lab_session import SESSION_KEY
+from .pdf_image_ocr import scan_page_images
 from .structured_detection import (
     find_comparison_candidates, find_list_candidates,
     find_note_candidates, find_step_candidates,
@@ -190,6 +192,33 @@ class StructuredDetectionTests(SimpleTestCase):
         self.assertEqual(comparisons[0]["columns"], ["Focus", "Typical question"])
         self.assertEqual(comparisons[0]["rows"][1]["name"], "Risk attribution")
         self.assertEqual(comparisons[1]["columns"], ["Macro attribution", "Micro attribution"])
+
+
+class PdfImageOcrLimitTests(SimpleTestCase):
+    class ImageCollection:
+        def __init__(self, images):
+            self._images = images
+
+        def keys(self):
+            return list(range(len(self._images)))
+
+        def __getitem__(self, key):
+            return type("PdfImage", (), {"image": self._images[key]})()
+
+    @patch("dashboard.pdf_image_ocr._run_ocr", return_value="Readable image text")
+    def test_unlimited_budget_checks_every_eligible_image_on_one_page(self, ocr):
+        page = type("PdfPage", (), {
+            "images": self.ImageCollection([
+                Image.new("RGB", (300, 300), "white") for _ in range(5)
+            ])
+        })()
+        unlimited = scan_page_images(page, None)
+        bounded = scan_page_images(page, 8)
+        self.assertEqual(unlimited["checked"], 5)
+        self.assertFalse(unlimited["limit_reached"])
+        self.assertEqual(bounded["checked"], 2)
+        self.assertTrue(bounded["limit_reached"])
+        self.assertEqual(ocr.call_count, 7)
 
 
 class DefinitionPdfLabTests(TestCase):
@@ -439,15 +468,45 @@ class DefinitionPdfLabTests(TestCase):
         self.assertEqual(response.context["scan"]["candidates"][0]["term"], "Force")
         self.assertEqual(response.context["scan"]["images_checked"], 0)
 
-    def test_image_ocr_stops_at_small_scan_budget(self):
+    def test_superuser_image_ocr_has_no_count_limit(self):
         with patch("dashboard.pdf_image_ocr._run_ocr", return_value="") as ocr:
             response = self.client.post(self.url, {
                 "pdf_file": self.image_pdf_upload(pages=9),
                 "start_page": "1", "pages_to_scan": "9",
             })
+        self.assertEqual(ocr.call_count, 9)
+        self.assertEqual(response.context["scan"]["images_checked"], 9)
+        self.assertFalse(response.context["scan"]["image_limit_reached"])
+
+    def test_non_superuser_image_ocr_keeps_bounded_scan_budget(self):
+        self.student.beta_lifetime_access = True
+        self.student.save(update_fields=["beta_lifetime_access"])
+        self.client.force_login(self.student)
+        with patch("dashboard.pdf_image_ocr._run_ocr", return_value="") as ocr:
+            response = self.client.post(
+                reverse("definition_pdf_lab", args=[self.student_subject.pk]),
+                {
+                    "pdf_file": self.image_pdf_upload(pages=9),
+                    "start_page": "1",
+                    "pages_to_scan": "9",
+                },
+            )
         self.assertEqual(ocr.call_count, 8)
         self.assertEqual(response.context["scan"]["images_checked"], 8)
         self.assertTrue(response.context["scan"]["image_limit_reached"])
+
+    def test_superuser_can_scan_more_than_fifty_pages(self):
+        response = self.client.post(self.url, {
+            "pdf_file": self.pdf_upload([
+                [f"Page {page} study material"] for page in range(1, 52)
+            ]),
+            "start_page": "1",
+            "pages_to_scan": "51",
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "scan 1-50 pages")
+        self.assertEqual(response.context["scan"]["pages_scanned"], 51)
+        self.assertIsNone(response.context["pdf_usage"]["pages_remaining"])
 
     def test_invalid_file_and_range_show_errors(self):
         invalid = SimpleUploadedFile("notes.txt", b"not a pdf", content_type="text/plain")
@@ -457,9 +516,22 @@ class DefinitionPdfLabTests(TestCase):
         self.assertContains(response, "Choose a .pdf file")
         response = self.client.post(self.url, {
             "pdf_file": self.pdf_upload([["hello"]]),
-            "start_page": "1", "pages_to_scan": "51",
+            "start_page": "1", "pages_to_scan": "0",
         })
+        self.assertContains(response, "page count of at least 1")
+        self.student.beta_lifetime_access = True
+        self.student.save(update_fields=["beta_lifetime_access"])
+        self.client.force_login(self.student)
+        response = self.client.post(
+            reverse("definition_pdf_lab", args=[self.student_subject.pk]),
+            {
+                "pdf_file": self.pdf_upload([["hello"]]),
+                "start_page": "1",
+                "pages_to_scan": "51",
+            },
+        )
         self.assertContains(response, "scan 1-50 pages")
+        self.client.force_login(self.admin)
         response = self.client.post(self.url, {
             "pdf_file": self.pdf_upload([["hello"]]),
             "start_page": "2", "pages_to_scan": "1",
@@ -702,7 +774,7 @@ class DefinitionPdfLabTests(TestCase):
         self.assertContains(response, 'class="result-group kind-list"')
         self.assertContains(response, 'class="result-group kind-comparison"')
         self.assertContains(response, "1 detected")
-        self.assertContains(response, "up to 8 images per scan")
+        self.assertContains(response, "scan any number of pages and embedded images")
         self.assertContains(response, "Auto Summarize")
         self.assertContains(response, "Summarize a PDF")
         self.assertNotContains(response, "Private prototype")
@@ -721,11 +793,46 @@ class DefinitionPdfLabTests(TestCase):
         self.assertEqual(BulletList.objects.count(), 1)
         self.assertEqual(BulletList.objects.get().items.count(), 2)
         self.assertEqual(StepList.objects.count(), 1)
-        self.assertEqual(StepList.objects.get().steps.count(), 2)
+        step_list = StepList.objects.get()
+        self.assertEqual(step_list.steps.count(), 2)
+        self.assertEqual(step_list.knowledge_unit.estimated_minutes, 2)
+        self.assertEqual(
+            list(step_list.steps.values_list("order", "text", "description")),
+            [
+                (1, "Record the chamber concentrations", "Use two samples from the chambers."),
+                (2, "Calculate permeability", "Divide diffusivity by thickness."),
+            ],
+        )
         self.assertEqual(Note.objects.count(), 1)
         self.assertEqual(Comparison.objects.count(), 1)
-        self.assertEqual(Comparison.objects.get().columns.count(), 2)
-        self.assertEqual(Comparison.objects.get().rows.count(), 2)
+        comparison = Comparison.objects.get()
+        self.assertEqual(comparison.columns.count(), 2)
+        self.assertEqual(comparison.rows.count(), 2)
+        columns = list(comparison.columns.order_by("order", "id"))
+        self.assertEqual([column.name for column in columns], [
+            "Passive diffusion", "Carrier transport",
+        ])
+        self.assertEqual([
+            (
+                row.order,
+                row.name,
+                [
+                    row.cells.get(column=column).content
+                    for column in columns
+                ],
+            )
+            for row in comparison.rows.order_by("order", "id")
+        ], [
+            (1, "Driving force", ["Concentration difference", "Coupled gradient"]),
+            (2, "Saturation", ["Not expected", "Often saturates"]),
+        ])
+        self.assertEqual(self.client.get(reverse("edit_steps", args=[step_list.pk])).status_code, 200)
+        self.assertEqual(self.client.get(reverse("edit_comparison", args=[comparison.pk])).status_code, 200)
+        self.assertContains(self.client.get(reverse("step_review_list", args=[0])), step_list.question)
+        self.assertContains(
+            self.client.get(reverse("comparison_review_list", args=[0])),
+            comparison.name,
+        )
         for model in (BulletList, StepList, Note, Comparison):
             self.assertEqual(model.objects.get().book_name, "Science Reader")
             self.assertEqual(model.objects.get().chapter, "Chapter 4")
@@ -734,6 +841,66 @@ class DefinitionPdfLabTests(TestCase):
         for kind in ("list", "steps", "note", "comparison"):
             self.client.post(self.url, {"action": f"add_{kind}_all", "scan_id": new_scan_id})
         self.assertEqual((BulletList.objects.count(), StepList.objects.count(), Note.objects.count(), Comparison.objects.count()), (1, 1, 1, 1))
+
+    def test_structured_add_does_not_reuse_different_item_with_same_title(self):
+        unit = KnowledgeUnit.objects.create(
+            subject=self.subject,
+            title="Worked method for estimating permeability",
+            knowledge_type=KnowledgeUnit.KnowledgeType.STEPS,
+            active=True,
+        )
+        existing_steps = StepList.objects.create(
+            knowledge_unit=unit,
+            question="Worked method for estimating permeability",
+        )
+        StepItem.objects.create(
+            step_list=existing_steps,
+            text="A different manually entered step",
+            order=1,
+        )
+        comparison_unit = KnowledgeUnit.objects.create(
+            subject=self.subject,
+            title="Two transport mechanisms compared",
+            knowledge_type=KnowledgeUnit.KnowledgeType.COMPARISON,
+            active=True,
+        )
+        existing_comparison = Comparison.objects.create(
+            knowledge_unit=comparison_unit,
+            name="Two transport mechanisms compared",
+        )
+        column_left = ComparisonColumn.objects.create(
+            comparison=existing_comparison,
+            name="Old left",
+            order=1,
+        )
+        column_right = ComparisonColumn.objects.create(
+            comparison=existing_comparison,
+            name="Old right",
+            order=2,
+        )
+        row = ComparisonRow.objects.create(
+            comparison=existing_comparison,
+            name="Old row",
+            order=1,
+        )
+        ComparisonCell.objects.create(row=row, column=column_left, content="Old A")
+        ComparisonCell.objects.create(row=row, column=column_right, content="Old B")
+
+        _, scan_id = self.scan_structured()
+        self.client.post(self.url, {
+            "action": "add_steps_one", "scan_id": scan_id, "candidate_index": "0",
+        })
+        self.client.post(self.url, {
+            "action": "add_comparison_one", "scan_id": scan_id, "candidate_index": "0",
+        })
+
+        self.assertEqual(StepList.objects.count(), 2)
+        self.assertEqual(Comparison.objects.count(), 2)
+        imported_steps = StepList.objects.exclude(pk=existing_steps.pk).get()
+        imported_comparison = Comparison.objects.exclude(pk=existing_comparison.pk).get()
+        self.assertEqual(imported_steps.steps.count(), 2)
+        self.assertEqual(imported_comparison.columns.count(), 2)
+        self.assertEqual(imported_comparison.rows.count(), 2)
 
     def test_structured_editor_can_correct_each_type_before_adding(self):
         _, scan_id = self.scan_structured()

@@ -10,11 +10,6 @@ KINDS = ("list", "steps", "note", "comparison")
 LABELS = {"list": "list", "steps": "step sequence", "note": "note", "comparison": "comparison"}
 MODELS = {"list": BulletList, "steps": StepList, "comparison": Comparison}
 NAME_FIELDS = {"list": "question", "steps": "question", "comparison": "name"}
-KNOWLEDGE_TYPES = {
-    "list": KnowledgeUnit.KnowledgeType.BULLET_LIST,
-    "steps": KnowledgeUnit.KnowledgeType.STEPS,
-    "comparison": KnowledgeUnit.KnowledgeType.COMPARISON,
-}
 
 
 def _text(value, limit, field):
@@ -69,6 +64,157 @@ def normalize_candidate(kind, candidate):
     return result
 
 
+def _stored_payload(kind, instance):
+    """Read an existing item in the same shape used by the manual editors."""
+    if kind == "list":
+        return {
+            "title": instance.question,
+            "items": [
+                {"text": entry.text, "description": entry.description}
+                for entry in instance.items.all().order_by("order", "id")
+            ],
+        }
+    if kind == "steps":
+        return {
+            "title": instance.question,
+            "steps": [
+                {"text": entry.text, "description": entry.description}
+                for entry in instance.steps.all().order_by("order", "id")
+            ],
+        }
+
+    columns = list(instance.columns.all().order_by("order", "id"))
+    rows = []
+    for row in instance.rows.all().order_by("order", "id"):
+        cells = {cell.column_id: cell.content for cell in row.cells.all()}
+        rows.append({
+            "name": row.name,
+            "cells": [cells.get(column.pk, "") for column in columns],
+        })
+    return {
+        "title": instance.name,
+        "columns": [column.name for column in columns],
+        "rows": rows,
+    }
+
+
+def _matching_existing(subject, kind, item, book_name, chapter):
+    """Only deduplicate a byte-for-byte equivalent structured learning item."""
+    model = MODELS[kind]
+    name_field = NAME_FIELDS[kind]
+    queryset = model.objects.filter(
+        knowledge_unit__subject=subject,
+        knowledge_unit__active=True,
+        book_name=book_name,
+        chapter=chapter,
+        **{name_field + "__iexact": item["title"]},
+    )
+    if kind == "list":
+        queryset = queryset.prefetch_related("items")
+    elif kind == "steps":
+        queryset = queryset.prefetch_related("steps")
+    else:
+        queryset = queryset.prefetch_related("columns", "rows__cells")
+    for instance in queryset:
+        stored = _stored_payload(kind, instance)
+        same_title = stored.pop("title").casefold() == item["title"].casefold()
+        expected = {key: value for key, value in item.items() if key != "title"}
+        if same_title and stored == expected:
+            return instance
+    return None
+
+
+def _create_list(subject, item, book_name, chapter):
+    unit = KnowledgeUnit.objects.create(
+        subject=subject,
+        title=item["title"],
+        knowledge_type=KnowledgeUnit.KnowledgeType.BULLET_LIST,
+        difficulty=1,
+        estimated_minutes=max(2, len(item["items"])),
+        active=True,
+    )
+    bullet_list = BulletList.objects.create(
+        knowledge_unit=unit,
+        question=item["title"],
+        book_name=book_name,
+        chapter=chapter,
+    )
+    for position, entry in enumerate(item["items"], 1):
+        BulletItem.objects.create(
+            bullet_list=bullet_list,
+            text=entry["text"],
+            description=entry["description"],
+            order=position,
+        )
+    return bullet_list
+
+
+def _create_steps(subject, item, book_name, chapter):
+    # Deliberately mirror learning.views.create_steps. In particular, the
+    # KnowledgeUnit keeps the model's ordinary defaults and each StepItem is
+    # saved with the same fields and ordering as a manually entered sequence.
+    unit = KnowledgeUnit.objects.create(
+        subject=subject,
+        title=item["title"],
+        knowledge_type=KnowledgeUnit.KnowledgeType.STEPS,
+        active=True,
+    )
+    step_list = StepList.objects.create(
+        knowledge_unit=unit,
+        question=item["title"],
+        book_name=book_name,
+        chapter=chapter,
+    )
+    for position, entry in enumerate(item["steps"], 1):
+        StepItem.objects.create(
+            step_list=step_list,
+            text=entry["text"],
+            description=entry["description"],
+            order=position,
+        )
+    return step_list
+
+
+def _create_comparison(subject, item, book_name, chapter):
+    # This is the same normalized two-dimensional structure used by the
+    # comparison editor: ordered columns, ordered rows and one cell per pair.
+    unit = KnowledgeUnit.objects.create(
+        subject=subject,
+        title=item["title"],
+        knowledge_type=KnowledgeUnit.KnowledgeType.COMPARISON,
+        difficulty=1,
+        estimated_minutes=max(2, len(item["rows"])),
+        active=True,
+    )
+    comparison = Comparison.objects.create(
+        knowledge_unit=unit,
+        name=item["title"],
+        book_name=book_name,
+        chapter=chapter,
+    )
+    columns = [
+        ComparisonColumn.objects.create(
+            comparison=comparison,
+            name=name,
+            order=position,
+        )
+        for position, name in enumerate(item["columns"], 1)
+    ]
+    for position, row_data in enumerate(item["rows"], 1):
+        row = ComparisonRow.objects.create(
+            comparison=comparison,
+            name=row_data["name"],
+            order=position,
+        )
+        for column_index, column in enumerate(columns):
+            ComparisonCell.objects.create(
+                row=row,
+                column=column,
+                content=row_data["cells"][column_index],
+            )
+    return comparison
+
+
 def import_candidate(subject, kind, candidate, book_name="", chapter=""):
     """Return (object id, created). Caller holds an atomic transaction."""
     item = normalize_candidate(kind, candidate)
@@ -86,45 +232,14 @@ def import_candidate(subject, kind, candidate, book_name="", chapter=""):
         )
         return note.pk, True
 
-    model = MODELS[kind]
-    name_field = NAME_FIELDS[kind]
-    existing = model.objects.filter(
-        knowledge_unit__subject=subject,
-        knowledge_unit__active=True,
-        book_name=book_name, chapter=chapter,
-        **{name_field + "__iexact": title},
-    ).first()
+    existing = _matching_existing(subject, kind, item, book_name, chapter)
     if existing:
         return existing.pk, False
 
-    size = len(item.get("items") or item.get("steps") or item.get("rows") or [])
-    unit = KnowledgeUnit.objects.create(
-        subject=subject, title=title, knowledge_type=KNOWLEDGE_TYPES[kind],
-        difficulty=1, estimated_minutes=max(2, size), active=True,
-    )
-    instance = model.objects.create(
-        knowledge_unit=unit, book_name=book_name, chapter=chapter,
-        **{name_field: title},
-    )
     if kind == "list":
-        BulletItem.objects.bulk_create([
-            BulletItem(bullet_list=instance, order=position, **entry)
-            for position, entry in enumerate(item["items"], 1)
-        ])
+        instance = _create_list(subject, item, book_name, chapter)
     elif kind == "steps":
-        StepItem.objects.bulk_create([
-            StepItem(step_list=instance, order=position, **entry)
-            for position, entry in enumerate(item["steps"], 1)
-        ])
+        instance = _create_steps(subject, item, book_name, chapter)
     else:
-        columns = [
-            ComparisonColumn.objects.create(comparison=instance, name=name, order=position)
-            for position, name in enumerate(item["columns"], 1)
-        ]
-        for position, row_data in enumerate(item["rows"], 1):
-            row = ComparisonRow.objects.create(
-                comparison=instance, name=row_data["name"], order=position,
-            )
-            for column, content in zip(columns, row_data["cells"]):
-                ComparisonCell.objects.create(row=row, column=column, content=content)
+        instance = _create_comparison(subject, item, book_name, chapter)
     return instance.pk, True
