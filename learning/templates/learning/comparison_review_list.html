@@ -444,14 +444,14 @@
 
                     <div>
                         <h1>Comparison Review</h1>
-                        <p>{{ subject.name }} · Complete the comparisons due today.</p>
+                        <p>{{ subject.name }} · {% if library_mode %}Choose a saved comparison to review.{% else %}Complete the comparisons due today.{% endif %}</p>
                     </div>
                 </header>
 
                 {% if due_comparisons %}
                     <section class="progress-card" aria-label="Review total">
                         <div>
-                            <span class="progress-label">Daily review</span>
+                            <span class="progress-label">{% if library_mode %}Saved comparisons{% else %}Daily review{% endif %}</span>
                             <strong>
                                 {{ due_comparison_count }}
                                 comparison{{ due_comparison_count|pluralize }} ready
@@ -486,7 +486,7 @@
                                     <div class="review-copy">
                                         <h2>{{ comparison.name }}</h2>
                                         <p>
-                                            Comparison · Due today
+                                            Comparison{% if not library_mode %} · Due today{% endif %}
                                             {% if comparison.book_name %}
                                                 · {{ comparison.book_name }}
                                             {% endif %}
@@ -540,16 +540,13 @@
                     </div>
 
                     <div class="search-empty" id="search-empty" hidden>
-                        No due comparisons match that search.
+                        No comparisons match that search.
                     </div>
                 {% else %}
                     <section class="empty">
                         <div class="empty-icon" aria-hidden="true">✓</div>
-                        <h2>Daily review complete!</h2>
-                        <p>
-                            You have reviewed every comparison due today. Your next
-                            daily review becomes available from midnight.
-                        </p>
+                        <h2>{% if library_mode %}No saved comparisons yet{% else %}Daily review complete!{% endif %}</h2>
+                        <p>{% if library_mode %}Add a comparison to this subject and it will appear here.{% else %}You have reviewed every comparison due today. Your next daily review becomes available from midnight.{% endif %}</p>
                         <a
                             href="{% review_back %}"
                             class="subject-button"

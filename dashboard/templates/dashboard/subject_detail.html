@@ -4331,7 +4331,7 @@
                             </h2>
 
                             <p>
-                                Reviews scheduled for this subject.
+                                All saved review material for this subject.
                             </p>
 
                         </div>
@@ -4353,7 +4353,7 @@
                                 <button
                                     type="submit"
                                     class="reset-reviews-button"
-                                    onclick="return confirm('Make all formulas and definitions available for review again today?');"
+                                    onclick="return confirm('Make all scheduled review items available again today?');"
                                 >
                                     Reset Today's Reviews
                                 </button>
@@ -4449,7 +4449,7 @@
                 <div class="review-category-title">
 
                     <h3>
-                        Formulas to Review
+                        Formulas
                     </h3>
 
                     <span class="review-count">
@@ -4465,7 +4465,7 @@
             </div>
 
             <p class="review-description">
-                Formulas you need to review today.
+                View and practise your saved formulas.
             </p>
 
         </a>
@@ -4489,7 +4489,7 @@
                 <div class="review-category-title">
 
                     <h3>
-                        Definitions to Review
+                        Definitions
                     </h3>
 
                     <span class="review-count">
@@ -4505,7 +4505,7 @@
             </div>
 
             <p class="review-description">
-                Definitions you need to review today.
+                View and practise your saved definitions.
             </p>
 
         </a>
@@ -4529,7 +4529,7 @@
                 <div class="review-category-title">
 
                     <h3>
-                        Lists to Review
+                        Lists
                     </h3>
 
                     <span class="review-count">
@@ -4545,7 +4545,7 @@
             </div>
 
             <p class="review-description">
-                Lists you need to review today.
+                View and practise your saved lists.
             </p>
 
         </a>
@@ -4569,7 +4569,7 @@
                 <div class="review-category-title">
 
                     <h3>
-                        Steps to Review
+                        Steps
                     </h3>
 
                     <span class="review-count">
@@ -4585,7 +4585,7 @@
             </div>
 
             <p class="review-description">
-                Steps you need to review today.
+                View and practise your saved steps.
             </p>
 
         </a>
@@ -4609,7 +4609,7 @@
             <div class="review-category-title">
 
                 <h3>
-                    Comparisons to Review
+                    Comparisons
                 </h3>
 
                 <span class="review-count">
@@ -4680,7 +4680,7 @@
     {% if not pages_to_summarize_total and not due_formulas and not due_definitions and not due_bullet_lists and not due_step_lists and not due_comparisons and not note_count %}
 
         <div class="empty-review">
-            No reviews or notes available.
+            No saved review material or notes yet.
         </div>
 
     {% endif %}

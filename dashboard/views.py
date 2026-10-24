@@ -3892,9 +3892,6 @@ def subject_detail(
     # REVIEW ITEMS
     # ========================================================
 
-    subject_review_plan = get_daily_review_plan(request.user, today)
-    subject_review_ids = remaining_review_ids(request.user, subject_review_plan)
-
     due_formulas = []
     due_definitions = []
     due_bullet_lists = []
@@ -3914,7 +3911,6 @@ def subject_detail(
         formula_knowledge_units = (
             KnowledgeUnit.objects
             .filter(
-                pk__in=subject_review_ids,
                 subject=database_subject,
                 knowledge_type=(
                     KnowledgeUnit
@@ -3942,47 +3938,9 @@ def subject_detail(
 
                 continue
 
-            progress = (
-                StudentKnowledge.objects
-                .filter(
-                    student=request.user,
-                    knowledge_unit=knowledge_unit,
-                )
-                .first()
+            due_formulas.append(
+                formula
             )
-
-            is_due = False
-
-            if progress is None:
-
-                is_due = True
-
-            elif progress.next_review is None:
-
-                is_due = True
-
-            else:
-
-                next_review_date = (
-                    timezone.localtime(
-                        progress.next_review
-                    )
-                    .date()
-                )
-
-                if (
-                    next_review_date
-                    <=
-                    today
-                ):
-
-                    is_due = True
-
-            if is_due:
-
-                due_formulas.append(
-                    formula
-                )
 
         # ====================================================
         # DEFINITIONS
@@ -3991,7 +3949,6 @@ def subject_detail(
         definition_knowledge_units = (
             KnowledgeUnit.objects
             .filter(
-                pk__in=subject_review_ids,
                 subject=database_subject,
                 knowledge_type=(
                     KnowledgeUnit
@@ -4019,47 +3976,9 @@ def subject_detail(
 
                 continue
 
-            progress = (
-                StudentKnowledge.objects
-                .filter(
-                    student=request.user,
-                    knowledge_unit=knowledge_unit,
-                )
-                .first()
+            due_definitions.append(
+                definition
             )
-
-            is_due = False
-
-            if progress is None:
-
-                is_due = True
-
-            elif progress.next_review is None:
-
-                is_due = True
-
-            else:
-
-                next_review_date = (
-                    timezone.localtime(
-                        progress.next_review
-                    )
-                    .date()
-                )
-
-                if (
-                    next_review_date
-                    <=
-                    today
-                ):
-
-                    is_due = True
-
-            if is_due:
-
-                due_definitions.append(
-                    definition
-                )
 
         # ====================================================
         # LISTS
@@ -4068,7 +3987,6 @@ def subject_detail(
         bullet_lists = (
             BulletList.objects
             .filter(
-                knowledge_unit_id__in=subject_review_ids,
                 knowledge_unit__subject=database_subject,
                 knowledge_unit__active=True,
             )
@@ -4084,54 +4002,7 @@ def subject_detail(
             )
         )
 
-        for bullet_list in (
-            bullet_lists
-        ):
-
-            progress = (
-                StudentKnowledge.objects
-                .filter(
-                    student=request.user,
-                    knowledge_unit=(
-                        bullet_list
-                        .knowledge_unit
-                    ),
-                )
-                .first()
-            )
-
-            is_due = False
-
-            if progress is None:
-
-                is_due = True
-
-            elif progress.next_review is None:
-
-                is_due = True
-
-            else:
-
-                next_review_date = (
-                    timezone.localtime(
-                        progress.next_review
-                    )
-                    .date()
-                )
-
-                if (
-                    next_review_date
-                    <=
-                    today
-                ):
-
-                    is_due = True
-
-            if is_due:
-
-                due_bullet_lists.append(
-                    bullet_list
-                )
+        due_bullet_lists = list(bullet_lists)
 
         # ====================================================
         # STEPS
@@ -4140,7 +4011,6 @@ def subject_detail(
         step_lists = (
             StepList.objects
             .filter(
-                knowledge_unit_id__in=subject_review_ids,
                 knowledge_unit__subject=database_subject,
                 knowledge_unit__active=True,
             )
@@ -4157,55 +4027,7 @@ def subject_detail(
             )
         )
 
-        for step_list in (
-            step_lists
-        ):
-
-            knowledge_unit = (
-                step_list.knowledge_unit
-            )
-
-            progress = (
-                StudentKnowledge.objects
-                .filter(
-                    student=request.user,
-                    knowledge_unit=knowledge_unit,
-                )
-                .first()
-            )
-
-            is_due = False
-
-            if progress is None:
-
-                is_due = True
-
-            elif progress.next_review is None:
-
-                is_due = True
-
-            else:
-
-                next_review_date = (
-                    timezone.localtime(
-                        progress.next_review
-                    )
-                    .date()
-                )
-
-                if (
-                    next_review_date
-                    <=
-                    today
-                ):
-
-                    is_due = True
-
-            if is_due:
-
-                due_step_lists.append(
-                    step_list
-                )
+        due_step_lists = list(step_lists)
 
         # ====================================================
         # COMPARISONS
@@ -4214,7 +4036,6 @@ def subject_detail(
         comparisons = (
             Comparison.objects
             .filter(
-                knowledge_unit_id__in=subject_review_ids,
                 knowledge_unit__subject=database_subject,
                 knowledge_unit__knowledge_type=(
                     KnowledgeUnit
@@ -4232,47 +4053,7 @@ def subject_detail(
             )
         )
 
-        for comparison in comparisons:
-
-            progress = (
-                StudentKnowledge.objects
-                .filter(
-                    student=request.user,
-                    knowledge_unit=(
-                        comparison.knowledge_unit
-                    ),
-                )
-                .first()
-            )
-
-            is_due = False
-
-            if progress is None:
-
-                is_due = True
-
-            elif progress.next_review is None:
-
-                is_due = True
-
-            else:
-
-                next_review_date = (
-                    timezone.localtime(
-                        progress.next_review
-                    )
-                    .date()
-                )
-
-                if next_review_date <= today:
-
-                    is_due = True
-
-            if is_due:
-
-                due_comparisons.append(
-                    comparison
-                )
+        due_comparisons = list(comparisons)
 
 
 

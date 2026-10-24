@@ -19,7 +19,7 @@ from learning.models import (
 
 from .definition_detection import find_definition_candidates
 from .formula_detection import equation_to_structure, find_formula_candidates
-from .models import SubjectTextbook
+from .models import StudyAvailability, SubjectTextbook
 from .pdf_lab_session import SESSION_KEY
 from .pdf_image_ocr import scan_page_images
 from .structured_detection import (
@@ -828,9 +828,18 @@ class DefinitionPdfLabTests(TestCase):
         ])
         self.assertEqual(self.client.get(reverse("edit_steps", args=[step_list.pk])).status_code, 200)
         self.assertEqual(self.client.get(reverse("edit_comparison", args=[comparison.pk])).status_code, 200)
-        self.assertContains(self.client.get(reverse("step_review_list", args=[0])), step_list.question)
         self.assertContains(
-            self.client.get(reverse("comparison_review_list", args=[0])),
+            self.client.get(
+                reverse("step_review_list", args=[0]),
+                {"review_origin": "subject"},
+            ),
+            step_list.question,
+        )
+        self.assertContains(
+            self.client.get(
+                reverse("comparison_review_list", args=[0]),
+                {"review_origin": "subject"},
+            ),
             comparison.name,
         )
         for model in (BulletList, StepList, Note, Comparison):
@@ -841,6 +850,55 @@ class DefinitionPdfLabTests(TestCase):
         for kind in ("list", "steps", "note", "comparison"):
             self.client.post(self.url, {"action": f"add_{kind}_all", "scan_id": new_scan_id})
         self.assertEqual((BulletList.objects.count(), StepList.objects.count(), Note.objects.count(), Comparison.objects.count()), (1, 1, 1, 1))
+
+    def test_auto_summarized_items_appear_in_subject_review_library_even_off_schedule(self):
+        StudyAvailability.objects.create(user=self.admin)
+
+        definition_scan_id = self.scan_definitions()
+        self.client.post(self.url, {
+            "action": "add_all",
+            "scan_id": definition_scan_id,
+        })
+
+        _, formula_scan_id = self.scan_formulas()
+        self.client.post(self.url, {
+            "action": "add_formula_all",
+            "scan_id": formula_scan_id,
+        })
+
+        _, structured_scan_id = self.scan_structured()
+        for kind in ("list", "steps", "note", "comparison"):
+            self.client.post(self.url, {
+                "action": f"add_{kind}_all",
+                "scan_id": structured_scan_id,
+            })
+
+        detail = self.client.get(reverse("subject_detail", args=[0]))
+        self.assertEqual(detail.context["due_definition_count"], 2)
+        self.assertGreaterEqual(detail.context["due_formula_count"], 1)
+        self.assertEqual(detail.context["due_bullet_list_count"], 1)
+        self.assertEqual(detail.context["due_step_list_count"], 1)
+        self.assertEqual(detail.context["due_comparison_count"], 1)
+        self.assertEqual(detail.context["note_count"], 1)
+
+        review_pages = (
+            ("definition_review_list", "Photosynthesis"),
+            ("formula_review_list", "Diffusion"),
+            ("list_review_list", "Assumptions to check"),
+            ("step_review_list", "Worked method for estimating permeability"),
+            ("comparison_review_list", "Two transport mechanisms compared"),
+        )
+        for route_name, expected_text in review_pages:
+            response = self.client.get(
+                reverse(route_name, args=[0]),
+                {"review_origin": "subject"},
+            )
+            self.assertContains(response, expected_text)
+            self.assertTrue(response.context["library_mode"])
+
+        scheduled = self.client.get(reverse("definition_review_list", args=[0]))
+        self.assertNotContains(scheduled, "Photosynthesis")
+        self.assertFalse(scheduled.context["library_mode"])
 
     def test_structured_add_does_not_reuse_different_item_with_same_title(self):
         unit = KnowledgeUnit.objects.create(

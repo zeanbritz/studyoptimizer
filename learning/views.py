@@ -37,6 +37,7 @@ from dashboard.models import (
 from dashboard.review_planner import get_daily_review_plan, remaining_review_ids
 from dashboard.pdf_lab_session import get_candidate, get_scan, mark_saved
 from accounts.entitlements import accessible_subjects, can_use_pdf_summarizer, free_learning_item_limit
+from .review_navigation import review_origin
 
 
 # ============================================================
@@ -2967,9 +2968,7 @@ def formula_review_list(
     # ========================================================
 
     due_formulas = []
-    planned_ids = remaining_review_ids(
-        request.user, get_daily_review_plan(request.user)
-    )
+    library_mode = review_origin(request) == "subject"
 
     if database_subject:
 
@@ -2978,7 +2977,6 @@ def formula_review_list(
         knowledge_units = (
             KnowledgeUnit.objects
             .filter(
-                pk__in=planned_ids,
                 subject=database_subject,
 
                 knowledge_type=(
@@ -2992,7 +2990,17 @@ def formula_review_list(
             .select_related(
                 "formula"
             )
+            .order_by(
+                "title",
+                "id",
+            )
         )
+
+        if not library_mode:
+            planned_ids = remaining_review_ids(
+                request.user, get_daily_review_plan(request.user, today)
+            )
+            knowledge_units = knowledge_units.filter(pk__in=planned_ids)
 
         for knowledge_unit in knowledge_units:
 
@@ -3003,6 +3011,10 @@ def formula_review_list(
             )
 
             if not formula:
+                continue
+
+            if library_mode:
+                due_formulas.append(formula)
                 continue
 
             progress = (
@@ -3076,6 +3088,9 @@ def formula_review_list(
 
             "due_formula_count":
                 len(due_formulas),
+
+            "library_mode":
+                library_mode,
         }
     )
 
@@ -3174,14 +3189,11 @@ def definition_review_list(
     # ========================================================
 
     today = timezone.localdate()
-    planned_ids = remaining_review_ids(
-        request.user, get_daily_review_plan(request.user, today)
-    )
+    library_mode = review_origin(request) == "subject"
 
     knowledge_units = (
         KnowledgeUnit.objects
         .filter(
-            pk__in=planned_ids,
             subject=database_subject,
             knowledge_type=(
                 KnowledgeUnit
@@ -3199,6 +3211,12 @@ def definition_review_list(
         )
     )
 
+    if not library_mode:
+        planned_ids = remaining_review_ids(
+            request.user, get_daily_review_plan(request.user, today)
+        )
+        knowledge_units = knowledge_units.filter(pk__in=planned_ids)
+
     due_definitions = []
 
     for knowledge_unit in knowledge_units:
@@ -3210,6 +3228,10 @@ def definition_review_list(
         )
 
         if not definition:
+            continue
+
+        if library_mode:
+            due_definitions.append(definition)
             continue
 
         progress = (
@@ -3264,6 +3286,9 @@ def definition_review_list(
 
             "due_definition_count":
                 len(due_definitions),
+
+            "library_mode":
+                library_mode,
         }
     )
 
@@ -3381,9 +3406,7 @@ def list_review_list(
     # ========================================================
 
     today = timezone.localdate()
-    planned_ids = remaining_review_ids(
-        request.user, get_daily_review_plan(request.user, today)
-    )
+    library_mode = review_origin(request) == "subject"
 
     # ========================================================
     # ALL ACTIVE LISTS FOR SUBJECT
@@ -3392,7 +3415,6 @@ def list_review_list(
     bullet_lists = (
         BulletList.objects
         .filter(
-            knowledge_unit_id__in=planned_ids,
             knowledge_unit__subject=database_subject,
             knowledge_unit__knowledge_type=(
                 KnowledgeUnit
@@ -3413,6 +3435,12 @@ def list_review_list(
         )
     )
 
+    if not library_mode:
+        planned_ids = remaining_review_ids(
+            request.user, get_daily_review_plan(request.user, today)
+        )
+        bullet_lists = bullet_lists.filter(knowledge_unit_id__in=planned_ids)
+
     # ========================================================
     # ONLY LISTS DUE TODAY
     # ========================================================
@@ -3420,6 +3448,10 @@ def list_review_list(
     due_lists = []
 
     for bullet_list in bullet_lists:
+
+        if library_mode:
+            due_lists.append(bullet_list)
+            continue
 
         progress = (
             StudentKnowledge.objects
@@ -3479,6 +3511,9 @@ def list_review_list(
                 len(
                     due_lists
                 ),
+
+            "library_mode":
+                library_mode,
         }
     )
 
@@ -3661,9 +3696,7 @@ def step_review_list(
     # ========================================================
 
     today = timezone.localdate()
-    planned_ids = remaining_review_ids(
-        request.user, get_daily_review_plan(request.user, today)
-    )
+    library_mode = review_origin(request) == "subject"
 
     # ========================================================
     # ALL ACTIVE STEPS FOR THIS SUBJECT
@@ -3672,7 +3705,6 @@ def step_review_list(
     step_lists = (
         StepList.objects
         .filter(
-            knowledge_unit_id__in=planned_ids,
             knowledge_unit__subject=subject,
             knowledge_unit__active=True,
         )
@@ -3689,6 +3721,12 @@ def step_review_list(
         )
     )
 
+    if not library_mode:
+        planned_ids = remaining_review_ids(
+            request.user, get_daily_review_plan(request.user, today)
+        )
+        step_lists = step_lists.filter(knowledge_unit_id__in=planned_ids)
+
     # ========================================================
     # DUE STEPS
     # ========================================================
@@ -3696,6 +3734,10 @@ def step_review_list(
     due_steps = []
 
     for step_list in step_lists:
+
+        if library_mode:
+            due_steps.append(step_list)
+            continue
 
         knowledge_unit = (
             step_list.knowledge_unit
@@ -3782,6 +3824,9 @@ def step_review_list(
                 len(
                     due_steps
                 ),
+
+            "library_mode":
+                library_mode,
         }
     )
     
@@ -9775,14 +9820,11 @@ def comparison_review_list(
     # ========================================================
 
     today = timezone.localdate()
-    planned_ids = remaining_review_ids(
-        request.user, get_daily_review_plan(request.user, today)
-    )
+    library_mode = review_origin(request) == "subject"
 
     comparisons = (
         Comparison.objects
         .filter(
-            knowledge_unit_id__in=planned_ids,
             knowledge_unit__subject=subject,
             knowledge_unit__knowledge_type=(
                 KnowledgeUnit
@@ -9804,43 +9846,50 @@ def comparison_review_list(
         )
     )
 
+    if not library_mode:
+        planned_ids = remaining_review_ids(
+            request.user, get_daily_review_plan(request.user, today)
+        )
+        comparisons = comparisons.filter(knowledge_unit_id__in=planned_ids)
+
     due_comparisons = []
 
     for comparison in comparisons:
 
-        progress = (
-            StudentKnowledge.objects
-            .filter(
-                student=request.user,
-                knowledge_unit=(
-                    comparison.knowledge_unit
-                ),
-            )
-            .first()
-        )
+        is_due = library_mode
 
-        is_due = False
-
-        if progress is None:
-
-            is_due = True
-
-        elif progress.next_review is None:
-
-            is_due = True
-
-        else:
-
-            next_review_date = (
-                timezone.localtime(
-                    progress.next_review
+        if not library_mode:
+            progress = (
+                StudentKnowledge.objects
+                .filter(
+                    student=request.user,
+                    knowledge_unit=(
+                        comparison.knowledge_unit
+                    ),
                 )
-                .date()
+                .first()
             )
 
-            if next_review_date <= today:
+            if progress is None:
 
                 is_due = True
+
+            elif progress.next_review is None:
+
+                is_due = True
+
+            else:
+
+                next_review_date = (
+                    timezone.localtime(
+                        progress.next_review
+                    )
+                    .date()
+                )
+
+                if next_review_date <= today:
+
+                    is_due = True
 
         if not is_due:
 
@@ -9950,5 +9999,8 @@ def comparison_review_list(
                 len(
                     due_comparisons
                 ),
+
+            "library_mode":
+                library_mode,
         }
     )

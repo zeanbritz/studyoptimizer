@@ -580,14 +580,14 @@
 
                     <div>
                         <h1>List Review</h1>
-                        <p>{{ subject.name }} · Complete the lists due today.</p>
+                        <p>{{ subject.name }} · {% if library_mode %}Choose a saved list to review.{% else %}Complete the lists due today.{% endif %}</p>
                     </div>
                 </header>
 
                 {% if due_lists %}
                     <section class="progress-card" aria-label="Review total">
                         <div>
-                            <span class="progress-label">Daily review</span>
+                            <span class="progress-label">{% if library_mode %}Saved lists{% else %}Daily review{% endif %}</span>
                             <strong>
                                 {{ due_list_count }} list{{ due_list_count|pluralize }} ready
                             </strong>
@@ -630,7 +630,7 @@
                                     <div class="review-copy">
                                         <h2>{{ list.question }}</h2>
                                         <p>
-                                            List · {{ list.items.count }} item{{ list.items.count|pluralize }} · Due today
+                                            List · {{ list.items.count }} item{{ list.items.count|pluralize }}{% if not library_mode %} · Due today{% endif %}
                                         </p>
                                     </div>
                                 </a>
@@ -678,13 +678,13 @@
                     </div>
 
                     <div class="search-empty" id="search-empty" hidden>
-                        No due lists match that search.
+                        No lists match that search.
                     </div>
                 {% else %}
                     <section class="empty">
                         <div class="empty-icon" aria-hidden="true">✓</div>
-                        <h2>Daily review complete!</h2>
-                        <p>You have reviewed every list due today.</p>
+                        <h2>{% if library_mode %}No saved lists yet{% else %}Daily review complete!{% endif %}</h2>
+                        <p>{% if library_mode %}Add a list to this subject and it will appear here.{% else %}You have reviewed every list due today.{% endif %}</p>
                         <a
                             href="{% review_back %}"
                             class="subject-button"

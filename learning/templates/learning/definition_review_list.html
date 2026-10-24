@@ -444,14 +444,14 @@
 
                     <div>
                         <h1>Definition Review</h1>
-                        <p>{{ subject.name }} · Complete the definitions due today.</p>
+                        <p>{{ subject.name }} · {% if library_mode %}Choose a saved definition to review.{% else %}Complete the definitions due today.{% endif %}</p>
                     </div>
                 </header>
 
                 {% if definitions %}
                     <section class="progress-card" aria-label="Review total">
                         <div>
-                            <span class="progress-label">Daily review</span>
+                            <span class="progress-label">{% if library_mode %}Saved definitions{% else %}Daily review{% endif %}</span>
                             <strong>
                                 {{ due_definition_count }}
                                 definition{{ due_definition_count|pluralize }} ready
@@ -486,7 +486,7 @@
                                     <div class="review-copy">
                                         <h2>{{ definition.term }}</h2>
                                         <p>
-                                            Definition · Due today
+                                            Definition{% if not library_mode %} · Due today{% endif %}
                                         </p>
                                     </div>
                                 </a>
@@ -534,16 +534,13 @@
                     </div>
 
                     <div class="search-empty" id="search-empty" hidden>
-                        No due definitions match that search.
+                        No definitions match that search.
                     </div>
                 {% else %}
                     <section class="empty">
                         <div class="empty-icon" aria-hidden="true">✓</div>
-                        <h2>Daily review complete!</h2>
-                        <p>
-                            You have reviewed every definition due today. Your next
-                            daily review becomes available from midnight.
-                        </p>
+                        <h2>{% if library_mode %}No saved definitions yet{% else %}Daily review complete!{% endif %}</h2>
+                        <p>{% if library_mode %}Add a definition to this subject and it will appear here.{% else %}You have reviewed every definition due today. Your next daily review becomes available from midnight.{% endif %}</p>
                         <a
                             href="{% review_back %}"
                             class="subject-button"

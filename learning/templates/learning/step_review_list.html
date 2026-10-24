@@ -580,14 +580,14 @@
 
                     <div>
                         <h1>Step Review</h1>
-                        <p>{{ subject.name }} · Complete the steps due today.</p>
+                        <p>{{ subject.name }} · {% if library_mode %}Choose a saved step set to review.{% else %}Complete the steps due today.{% endif %}</p>
                     </div>
                 </header>
 
                 {% if due_steps %}
                     <section class="progress-card" aria-label="Review total">
                         <div>
-                            <span class="progress-label">Daily review</span>
+                            <span class="progress-label">{% if library_mode %}Saved steps{% else %}Daily review{% endif %}</span>
                             <strong>
                                 {{ due_step_count }} step set{{ due_step_count|pluralize }} ready
                             </strong>
@@ -626,7 +626,7 @@
                                     <div class="review-copy">
                                         <h2>{{ step_list.question }}</h2>
                                         <p>
-                                            Steps · {{ step_list.steps.count }} step{{ step_list.steps.count|pluralize }} · Due today
+                                            Steps · {{ step_list.steps.count }} step{{ step_list.steps.count|pluralize }}{% if not library_mode %} · Due today{% endif %}
                                         </p>
                                     </div>
                                 </a>
@@ -674,13 +674,13 @@
                     </div>
 
                     <div class="search-empty" id="search-empty" hidden>
-                        No due steps match that search.
+                        No step sets match that search.
                     </div>
                 {% else %}
                     <section class="empty">
                         <div class="empty-icon" aria-hidden="true">✓</div>
-                        <h2>Daily review complete!</h2>
-                        <p>You have reviewed every step set due today.</p>
+                        <h2>{% if library_mode %}No saved steps yet{% else %}Daily review complete!{% endif %}</h2>
+                        <p>{% if library_mode %}Add a step set to this subject and it will appear here.{% else %}You have reviewed every step set due today.{% endif %}</p>
                         <a
                             href="{% review_back %}"
                             class="subject-button"
