@@ -91,7 +91,7 @@ class UpgradeSettlementTests(TestCase):
         return {
             "domain": "live", "subscription_code": code, "status": "active", "id": 12,
             "customer": {"id": 9, "customer_code": "CUS_owner"},
-            "plan": {"domain": "live", "plan_code": plan}, "email_token": "fake-cancel-token",
+            "plan": {"plan_code": plan}, "email_token": "fake-cancel-token",
             "createdAt": created.isoformat(),
         }
 

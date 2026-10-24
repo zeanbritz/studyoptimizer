@@ -15,8 +15,54 @@ from .access import get_study_tier
 from .models import StudyMembership, StudyPayment, StudyTier
 from .payment_service import CheckoutNotAllowed
 from .paystack_client import PaystackError, PaystackTestClient
-from .subscription_service import cancel_test_membership
+from .subscription_service import cancel_test_membership, _matches_subscription
 from .test_paystack_checkout import SANDBOX
+
+
+class SubscriptionResponseModeTests(SimpleTestCase):
+    def response(self):
+        return {"domain": "live", "subscription_code": "SUB_owned",
+                "customer": {"customer_code": "CUS_owned"}, "plan": {"plan_code": "PLN_owned"}}
+
+    def matches(self, response):
+        return _matches_subscription(response, "CUS_owned", "PLN_owned", "live")
+
+    def test_missing_null_or_matching_nested_mode_is_allowed_only_under_explicit_live_parent(self):
+        for mode in (None, "live"):
+            response = self.response()
+            response["customer"]["domain"] = mode
+            response["plan"]["domain"] = mode
+            self.assertTrue(self.matches(response))
+        self.assertTrue(self.matches(self.response()))
+
+    def test_missing_or_wrong_parent_mode_is_never_inferred_from_children_or_client(self):
+        for mode in (None, "test", "unknown", "", False, [], {}):
+            response = self.response()
+            response["domain"] = mode
+            self.assertFalse(self.matches(response))
+        response.pop("domain")
+        self.assertFalse(self.matches(response))
+
+    def test_explicit_conflicting_nested_mode_is_not_repaired_or_ignored(self):
+        for child in ("customer", "plan"):
+            for mode in ("test", "unknown", "", False, [], {}):
+                response = self.response()
+                response[child]["domain"] = mode
+                self.assertFalse(self.matches(response))
+
+    def test_omitted_nested_modes_do_not_allow_different_customer_plan_or_invalid_subscription_code(self):
+        response = self.response()
+        self.assertFalse(_matches_subscription(response, "CUS_other", "PLN_owned", "live"))
+        self.assertFalse(_matches_subscription(response, "CUS_owned", "PLN_other", "live"))
+        response["subscription_code"] = "invalid"
+        self.assertFalse(self.matches(response))
+
+    def test_embedded_objects_are_still_required(self):
+        for child in ("customer", "plan"):
+            for invalid in (None, "code-only", 1, [], {}):
+                response = self.response()
+                response[child] = invalid
+                self.assertFalse(self.matches(response))
 
 
 @override_settings(**SANDBOX)
@@ -109,6 +155,30 @@ class SubscriptionCancellationTests(TestCase):
         self.fetch.assert_called_once_with("SUB_owned")
         self.disable.assert_called_once_with("SUB_owned", "privateFakeCancellationToken")
 
+    def test_both_embedded_modes_can_be_omitted_when_owned_subscription_mode_is_explicit(self):
+        self.subscription["customer"].pop("domain")
+        self.subscription["plan"].pop("domain")
+        result = cancel_test_membership(user=self.user)
+        self.assertEqual((result.status, result.paid_until), ("non_renewing", self.end_date))
+        self.disable.assert_called_once_with("SUB_owned", "privateFakeCancellationToken")
+
+    def test_saved_subscription_accepts_null_embedded_plan_mode(self):
+        self.subscription["customer"]["domain"] = None
+        self.subscription["plan"]["domain"] = None
+        StudyMembership.objects.filter(pk=self.membership.pk).update(paystack_subscription_code="SUB_owned")
+        result = cancel_test_membership(user=self.user)
+        self.assertEqual(result.paid_until, self.end_date)
+        self.disable.assert_called_once()
+
+    def test_explicit_invalid_plan_modes_still_block_cancellation(self):
+        self.subscription["customer"].pop("domain")
+        for domain in ("live", "unknown", "", False, [], {}):
+            self.subscription["plan"]["domain"] = domain
+            with self.subTest(domain=domain), self.assertRaises(PaystackError):
+                cancel_test_membership(user=self.user)
+            self.assert_unchanged()
+        self.disable.assert_not_called()
+
     def test_null_embedded_customer_mode_uses_subscription_test_mode(self):
         self.subscription["customer"]["domain"] = None
         result = cancel_test_membership(user=self.user)
@@ -130,7 +200,7 @@ class SubscriptionCancellationTests(TestCase):
             (("domain",), "live"), (("domain",), None),
             (("customer", "customer_code"), "CUS_other"),
             (("customer",), 9), (("customer",), {}),
-            (("plan", "domain"), "live"), (("plan", "domain"), None),
+            (("plan", "domain"), "live"),
             (("plan", "plan_code"), "PLN_other"),
         ):
             changed = deepcopy(self.subscription)

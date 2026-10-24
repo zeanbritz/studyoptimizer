@@ -131,7 +131,13 @@ class LiveCheckoutTests(TestCase):
         self.assertEqual(self.start("bloom").expected_amount_cents, 9000)
 
     def test_test_mode_provider_plan_is_rejected_before_checkout(self):
-        self.plan["domain"] = "test"
+        # Only embedded subscription metadata may omit redundant mode. The
+        # standalone canonical plan endpoint must explicitly report LIVE.
+        for mode in ("test", None):
+            self.plan["domain"] = mode
+            with self.subTest(mode=mode), self.assertRaises(PaystackError):
+                self.start()
+        self.plan.pop("domain")
         with self.assertRaises(PaystackError):
             self.start()
         self.initialize.assert_not_called()

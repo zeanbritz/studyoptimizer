@@ -24,12 +24,13 @@ def _matches_subscription(subscription, customer_code, plan_code, mode="test"):
     plan = subscription.get("plan")
     return bool(
         subscription.get("domain") == mode
-        # Paystack can omit domain on the embedded customer. The subscription
-        # itself must still be test-mode, and its customer code must match our
-        # verified payment. Reject any explicit non-test customer mode.
+        # Real LIVE responses omit domain on embedded customer/plan objects.
+        # The subscription must explicitly match the requested mode and both
+        # codes must match verified ownership proof. Only redundant nested
+        # modes may be omitted/null; explicit conflicting modes are rejected.
         and isinstance(customer, dict) and customer.get("domain") in (None, mode)
         and customer.get("customer_code") == customer_code
-        and isinstance(plan, dict) and plan.get("domain") == mode
+        and isinstance(plan, dict) and plan.get("domain") in (None, mode)
         and plan.get("plan_code") == plan_code
         and isinstance(subscription.get("subscription_code"), str)
         and re.fullmatch(r"SUB_[A-Za-z0-9]+", subscription["subscription_code"])

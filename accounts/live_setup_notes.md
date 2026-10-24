@@ -297,3 +297,22 @@ Profile and billing copy distinguish accepted requests, confirmation and paid ti
 Tests still use fake provider responses/disposable databases. The remaining
 rollout check must verify actual provider response shapes and the full enabled
 customer flow before these new controls are advertised or enabled.
+
+## Confirmed LIVE subscription response compatibility
+
+A read-only production lookup confirmed subscription.domain="live" while both
+embedded customer.domain and plan.domain are omitted/null. The actual subscription
+notification was retained for retry as provider_ownership_invalid; its charge was
+already verified. The shared subscription matcher now accepts those redundant
+nested modes as omitted/null, just as it already did for the embedded customer.
+It still requires explicit subscription mode, exact verified customer/plan codes,
+valid subscription identity and rejects any explicit conflicting nested mode.
+Canonical standalone plan and transaction mode/price checks remain unchanged.
+
+Regression tests replay the failed-metadata outcome with the confirmed response
+shape and assert only the subscription link changes: no extra payment, refund,
+paid-time extension or provider mutation. Existing upgrade, scheduling, restart
+and renewal fixtures now exercise omitted embedded plan modes as well.
+No production receipt was edited or manually linked here; after a reviewed
+deployment, the existing worker can reprocess its retained retry normally.
+Keep PAYSTACK_LIVE_PLAN_CHANGES_ENABLED=False during that verification.

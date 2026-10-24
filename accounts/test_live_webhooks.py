@@ -48,7 +48,8 @@ class LiveWebhookTests(TestCase):
         self.subscription = {
             "domain": "live", "id": 11, "subscription_code": "SUB_owner", "status": "active",
             "customer": {"id": 9, "customer_code": "CUS_owner"},
-            "plan": {"domain": "live", "plan_code": "PLN_growLive"},
+            # Actual LIVE responses omit both redundant embedded domains.
+            "plan": {"plan_code": "PLN_growLive"},
             "createdAt": self.initial.created_at.isoformat(), "most_recent_invoice": self.invoice,
         }
         self.charge = {
@@ -120,6 +121,45 @@ class LiveWebhookTests(TestCase):
         self.fetch.assert_called_once()
         self.verify.assert_called_once()
         self.assertEqual(StudyPayment.objects.count(), 2)
+
+    def test_retrying_subscription_notification_with_missing_nested_modes_links_without_granting_time(self):
+        StudyMembership.objects.filter(pk=self.member.pk).update(paystack_subscription_code=None)
+        receipt = self.receipt(event="subscription.create")
+        PaystackWebhookReceipt.objects.filter(pk=receipt.pk).update(
+            processing_status="retry", last_result="provider_ownership_invalid", attempt_count=2,
+        )
+        payments = list(StudyPayment.objects.values())
+        self.assertEqual(process_batch(), [(receipt.pk, "processed", "subscription_linked")])
+        self.member.refresh_from_db()
+        self.assertEqual(self.member.paystack_subscription_code, "SUB_owner")
+        self.assertEqual(self.member.paid_until, self.start)
+        self.assertEqual(list(StudyPayment.objects.values()), payments)
+        self.verify.assert_not_called()
+        self.network.assert_not_called()
+
+    def test_null_nested_modes_are_equivalent_to_omitted_modes(self):
+        self.subscription["customer"]["domain"] = None
+        self.subscription["plan"]["domain"] = None
+        result = process_live_subscription_receipt(self.receipt(event="subscription.create").pk)
+        self.assertEqual(result.processing_status, "processed")
+        self.member.refresh_from_db()
+        self.assertEqual(self.member.paid_until, self.start)
+        self.verify.assert_not_called()
+
+    def test_explicit_wrong_nested_mode_or_missing_top_mode_does_not_link(self):
+        StudyMembership.objects.filter(pk=self.member.pk).update(paystack_subscription_code=None)
+        for object_name, mode in (("plan", "test"), ("customer", "test"), ("plan", "unknown")):
+            self.subscription[object_name]["domain"] = mode
+            result = process_live_subscription_receipt(self.receipt(event="subscription.create").pk)
+            self.assertEqual((result.processing_status, result.last_result), ("retry", "provider_ownership_invalid"))
+            self.subscription[object_name].pop("domain")
+        self.subscription.pop("domain")
+        result = process_live_subscription_receipt(self.receipt(event="subscription.create").pk)
+        self.assertEqual((result.processing_status, result.last_result), ("ignored", "provider_mode_mismatch"))
+        self.member.refresh_from_db()
+        self.assertIsNone(self.member.paystack_subscription_code)
+        self.assertEqual(self.member.paid_until, self.start)
+        self.verify.assert_not_called()
 
     def test_live_receipt_cannot_change_test_membership(self):
         StudyMembership.objects.filter(pk=self.member.pk).update(payment_mode="test")

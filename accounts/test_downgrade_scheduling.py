@@ -48,7 +48,7 @@ class DowngradeSchedulingTests(TestCase):
         self.subscriptions = {"SUB_old": {
             "domain": "live", "id": 11, "subscription_code": "SUB_old", "status": "active",
             "customer": {"id": 9, "customer_code": "CUS_owner"},
-            "plan": self.plan("PLN_bloomLive"), "email_token": "fake-cancel-token",
+            "plan": {k: v for k, v in self.plan("PLN_bloomLive").items() if k != "domain"}, "email_token": "fake-cancel-token",
             "authorization": deepcopy(self.authorization), "createdAt": self.paid.isoformat(),
         }}
         self.network = self.mock("accounts.paystack_client.build_opener", side_effect=AssertionError("Real billing forbidden"))
@@ -93,7 +93,7 @@ class DowngradeSchedulingTests(TestCase):
         self.subscriptions[code] = {
             "id": 12, "domain": "live", "subscription_code": code, "status": "active", "amount": 3500,
             "customer": {"id": 9, "customer_code": data["customer_code"]},
-            "plan": self.plan(data["plan_code"]), "authorization": deepcopy(self.authorization),
+            "plan": {k: v for k, v in self.plan(data["plan_code"]).items() if k != "domain"}, "authorization": deepcopy(self.authorization),
             "start": int(data["start_date"].timestamp()), "createdAt": timezone.now().isoformat(),
             "email_token": "fake-lower-cancel-token",
         }

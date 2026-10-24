@@ -82,7 +82,8 @@ class SubscriptionDiagnosticTests(TestCase):
         self.assertIn("createdAt: missing", output)
         self.assertIn("created_at: valid for this checkout", output)
         self.assertIn("Plan mode: missing or unsupported", output)
-        self.assertIn("Required ownership fields match: False", output)
+        self.assertIn("Required ownership fields match: True", output)
+        self.api.disable_subscription.assert_not_called()
 
     def test_saved_link_only_adds_a_get_lookup(self):
         self.membership.paystack_subscription_code = "SUB_owned"
