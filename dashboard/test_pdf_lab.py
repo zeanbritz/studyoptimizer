@@ -59,6 +59,20 @@ class DefinitionDetectionTests(SimpleTestCase):
             [],
         )
 
+    def test_does_not_treat_formula_guidance_or_equations_as_definitions(self):
+        text = (
+            "First pass: understand measurement, attribution and appraisal.\n"
+            "TL;DR: Measures relative wealth growth rather than the simple return difference.\n"
+            "Interpretation: Positive means outperformance; negative means underperformance.\n"
+            "Exam trap: Arithmetic effects require smoothing across several periods.\n"
+            "A = P - B; S = B - M; P = M + S + A\n"
+            "When holdings are unavailable, model error can become material.\n"
+            "Return not explained by the factors is treated as residual return.\n"
+            "Macro attribution: Evaluates the asset owner's strategic allocation decisions."
+        )
+        candidates = find_definition_candidates(text, 5)
+        self.assertEqual([item["term"] for item in candidates], ["Macro attribution"])
+
 
 class FormulaDetectionTests(SimpleTestCase):
     def test_short_equations_are_editable(self):
@@ -118,6 +132,65 @@ class StructuredDetectionTests(SimpleTestCase):
         self.assertEqual(find_note_candidates(prose, 1), [])
         self.assertEqual(find_comparison_candidates(prose, 1), [])
 
+    def test_contents_page_is_not_mistaken_for_steps(self):
+        contents = (
+            "Contents\nHow to use this guide 2\n"
+            "1. Performance evaluation: the big picture 5\n"
+            "2. Types of attribution 5\n3. Benchmarks 8"
+        )
+        self.assertEqual(find_step_candidates(contents, 3), [])
+
+    def test_realistic_lists_and_numbered_process_are_detected(self):
+        page = (
+            "An effective attribution process must:\n"
+            "� reconcile to total active return;\n"
+            "� reflect the manager's real decision process;\n"
+            "� quantify the manager's active decisions.\n"
+            "A defensible evaluation of skill\n"
+            "1 Confirm that the benchmark matches the mandate.\n"
+            "2 Measure absolute and benchmark-relative return.\n"
+            "3 Identify the decisions that generated the return.\n"
+            "4 Measure the risk introduced by those decisions."
+        )
+        lists = find_list_candidates(page, 9)
+        steps = find_step_candidates(page, 9)
+        self.assertEqual(len(lists), 1)
+        self.assertEqual(len(lists[0]["items"]), 3)
+        self.assertEqual(steps[0]["title"], "A defensible evaluation of skill")
+        self.assertEqual(len(steps[0]["steps"]), 4)
+
+    def test_callouts_and_formula_guidance_become_notes(self):
+        page = (
+            "Core relationship\n\n"
+            "Measurement is the foundation. Attribution explains the measured result.\n\n"
+            "1. Portfolio and benchmark return\n"
+            "R = sum(w_i x R_i)\n\n"
+            "TL;DR: Calculate the weighted return of the portfolio.\n\n"
+            "Interpretation: Add each segment's weighted contribution.\n\n"
+            "Exam trap: Portfolio and benchmark weights should sum to 100%."
+        )
+        notes = find_note_candidates(page, 11)
+        self.assertEqual([item["title"] for item in notes], [
+            "Core relationship", "Portfolio and benchmark return notes",
+        ])
+        self.assertIn("Interpretation:", notes[1]["content"])
+
+    def test_aligned_tables_and_paired_versus_text_become_comparisons(self):
+        table = (
+            "Return attribution versus risk attribution\n"
+            "Type                Focus                       Typical question\n"
+            "Return attribution  Consequences for return     Did allocation add value?\n"
+            "Risk attribution    Consequences for risk       Which decisions created risk?\n"
+            "Macro versus micro attribution\n"
+            "� Macro attribution: Evaluates the sponsor's allocation decisions.\n"
+            "� Micro attribution: Evaluates the manager's security decisions."
+        )
+        comparisons = find_comparison_candidates(table, 5)
+        self.assertEqual(len(comparisons), 2)
+        self.assertEqual(comparisons[0]["columns"], ["Focus", "Typical question"])
+        self.assertEqual(comparisons[0]["rows"][1]["name"], "Risk attribution")
+        self.assertEqual(comparisons[1]["columns"], ["Macro attribution", "Micro attribution"])
+
 
 class DefinitionPdfLabTests(TestCase):
     def setUp(self):
@@ -175,6 +248,36 @@ class DefinitionPdfLabTests(TestCase):
         })
         self.assertEqual(response.status_code, 200)
         return response, self.client.session[SESSION_KEY]["id"]
+
+    def test_step_sequence_continues_across_pdf_pages(self):
+        response = self.client.post(self.url, {
+            "pdf_file": self.pdf_upload([
+                [
+                    "A defensible evaluation of skill",
+                    "1 Confirm the benchmark matches the mandate.",
+                    "2 Measure absolute and relative return.",
+                    "3 Identify the decisions that generated the return.",
+                ],
+                [
+                    "4 Measure the risk introduced by the decisions.",
+                    "5 Evaluate risk-adjusted results.",
+                ],
+            ]),
+            "start_page": "1", "pages_to_scan": "2",
+        })
+        self.assertEqual(response.status_code, 200)
+        scan = self.client.session[SESSION_KEY]["scan"]
+        self.assertEqual(len(scan["step_candidates"]), 1)
+        self.assertEqual(
+            [item["text"] for item in scan["step_candidates"][0]["steps"]],
+            [
+                "Confirm the benchmark matches the mandate.",
+                "Measure absolute and relative return.",
+                "Identify the decisions that generated the return.",
+                "Measure the risk introduced by the decisions.",
+                "Evaluate risk-adjusted results.",
+            ],
+        )
 
     @staticmethod
     def structured_pdf_upload():

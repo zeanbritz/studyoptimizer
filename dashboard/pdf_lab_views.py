@@ -300,6 +300,16 @@ def _scan_pdf(upload, start_page, pages_to_scan, *, allowance):
         for kind, candidates in detectors.items():
             bucket = structured[KIND_KEYS[kind][0]]
             for candidate in candidates:
+                continuation_start = candidate.pop("_continuation_start", None)
+                if kind == "steps" and continuation_start is not None:
+                    previous = bucket[-1] if bucket else None
+                    if (
+                        previous
+                        and previous.get("page") == page_number - 1
+                        and continuation_start == len(previous.get("steps", [])) + 1
+                    ):
+                        previous["steps"].extend(candidate.get("steps", []))
+                    continue
                 key = json.dumps(
                     {field: value for field, value in candidate.items() if field not in {"page", "confidence", "source"}},
                     sort_keys=True, ensure_ascii=False,

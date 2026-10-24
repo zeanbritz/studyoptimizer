@@ -17,7 +17,16 @@ OTHER_SECTION = re.compile(
 )
 EXCLUDED_TERMS = re.compile(
     r"^(?:example|exercise|chapter|figure|table|page|summary|note|tip|"
-    r"question|answer|learning outcome|the|this|these|those|it|we|they)\b",
+    r"question|answer|learning outcome|the|this|these|those|it|we|they|when|a|an|"
+    r"tl;?dr|interpretation|exam trap|first pass|second pass|third pass|final pass|"
+    r"return not)\b",
+    re.I,
+)
+CONTENTS = re.compile(r"^(?:table of )?contents$", re.I)
+NOTE_CONTEXT = re.compile(
+    r"^(?:the chapter in one sentence|core relationship|exam shortcut|"
+    r"most to least accurate|best conclusion|calculation discipline|"
+    r"decision rule|key judg(?:e)?ment|remember|warning)$",
     re.I,
 )
 
@@ -36,6 +45,7 @@ def _valid_term(term):
         and any(char.isalpha() for char in term)
         and not EXCLUDED_TERMS.match(term)
         and not re.search(r"[.!?]", term)
+        and not re.search(r"[=<>±×÷^_]", term)
     )
 
 
@@ -70,6 +80,8 @@ def _extend_body(body, lines, start):
 def find_definition_candidates(page_text, page_number):
     """Return candidates, never authoritative definitions or database writes."""
     lines = [_clean(line) for line in (page_text or "").splitlines()]
+    if any(CONTENTS.fullmatch(line) for line in lines[:30]):
+        return []
     candidates = []
     in_glossary = False
     index = 0
@@ -121,7 +133,12 @@ def find_definition_candidates(page_text, page_number):
         sentence = SENTENCE.match(line)
         if sentence and _valid_term(sentence.group("term")):
             body, consumed = _extend_body(line, lines, index)
-            if _valid_definition(sentence.group("body")):
+            previous = next((value for value in reversed(lines[:index - 1]) if value), "")
+            if (
+                not NOTE_CONTEXT.fullmatch(previous)
+                and body.endswith((".", "!", "?"))
+                and _valid_definition(sentence.group("body"))
+            ):
                 candidates.append({
                     "term": sentence.group("term"), "definition": body,
                     "page": page_number, "confidence": "possible",
