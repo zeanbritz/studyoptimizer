@@ -305,9 +305,9 @@ class LiveCheckoutTests(TestCase):
             )
             for feature in (
                 "Create up to 2 subjects", "Create up to 100 learning items",
-                "Up to 7 subjects", "2 PDF exports per month",
+                "Up to 7 subjects", "2 summary exports per month",
                 "Auto Summarize up to 5 PDF pages per month",
-                "Unlimited subjects", "Unlimited PDF exports",
+                "Unlimited subjects", "Unlimited summary exports",
             ):
                 self.assertContains(response, feature)
             markup = re.search(

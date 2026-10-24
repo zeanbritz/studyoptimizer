@@ -67,6 +67,13 @@ class LandingHomeTests(TestCase):
         self.assertContains(response, "Nothing here is saved to an account.")
         self.assertContains(response, 'href="#why"')
         self.assertContains(response, reverse("pricing"))
+        self.assertContains(
+            response,
+            '<a class="site-header__signin" href="'
+            + reverse("pricing")
+            + '">Pricing</a>',
+            html=True,
+        )
         self.assertContains(response, 'href="' + reverse("register") + '"')
         self.assertContains(response, ">Sign up</a>")
         self.assertNotContains(response, "Try the sample dashboard")
@@ -94,6 +101,12 @@ class LandingHomeTests(TestCase):
         self.assertContains(response, "Create up to 100 learning items")
         self.assertContains(response, "Grow coming soon")
         self.assertContains(response, "Bloom coming soon")
+        self.assertContains(response, "2 summary exports per month")
+        self.assertContains(response, "Unlimited summary exports")
+        self.assertNotContains(response, "Already joined during the invited beta?")
+        self.assertNotContains(response, "Grow’s PDF allowances are shared")
+        self.assertNotContains(response, "2 PDF exports per month")
+        self.assertNotContains(response, "Unlimited PDF exports")
         self.assertContains(response, "class=\"button button-unavailable\" disabled", count=2)
         self.assertNotContains(response, "R99")
         self.assertNotContains(response, "Yearly")

@@ -177,42 +177,6 @@
             line-height: 1.6;
         }
 
-        .beta-note,
-        .billing-disclaimer {
-            margin: 20px 0 0;
-            padding: 17px 19px;
-            border-radius: 11px;
-            font-size: 13px;
-            line-height: 1.6;
-        }
-
-        .beta-note {
-            border: 1px solid #d3e7cc;
-            border-left: 5px solid var(--green);
-            background: #f2faee;
-            color: #405642;
-        }
-
-        .beta-note strong {
-            display: block;
-            margin-bottom: 3px;
-            font-size: 14px;
-        }
-
-        .beta-note a {
-            color: #367c19;
-            font-weight: 850;
-            text-decoration: underline;
-            text-underline-offset: 2px;
-        }
-
-        .billing-disclaimer {
-            border: 1px solid #c9dce9;
-            border-left: 5px solid #278fd3;
-            background: #eaf5fc;
-            color: #3f5867;
-        }
-
         a:focus-visible,
         button:focus-visible,
         input:focus-visible {
@@ -266,15 +230,6 @@
             </section>
 
             {% include 'landing/partials/plan_cards.html' %}
-
-            <aside class="beta-note" aria-label="Existing beta members">
-                <strong>Already joined during the invited beta?</strong>
-                Your previously granted permanent free access remains in place.
-            </aside>
-
-            <p class="billing-disclaimer">
-                Grow’s PDF allowances are shared across all subjects and reset on the first of each calendar month. {% if live_checkout_enabled %}Paid checkout is handled by Paystack. See the <a href="{% url 'billing_policy' %}">refund and cancellation policy</a>.{% else %}Live paid checkout is not open yet.{% endif %} Creating a free account does not start a subscription.
-            </p>
         </main>
 
         {% include 'landing/partials/footer.html' %}

@@ -38,8 +38,8 @@ class StudyPlan:
             features.append("PDF exports and Auto Summarize are not included")
         else:
             features.extend([
-                f"{self.monthly_pdf_exports} PDF exports per month"
-                if self.monthly_pdf_exports is not None else "Unlimited PDF exports",
+                f"{self.monthly_pdf_exports} summary exports per month"
+                if self.monthly_pdf_exports is not None else "Unlimited summary exports",
                 f"Auto Summarize up to {self.monthly_summary_pages} PDF pages per month"
                 if self.monthly_summary_pages is not None else "Auto Summarize with no monthly page limit",
             ])

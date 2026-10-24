@@ -28,6 +28,7 @@
                 <a class="site-nav__link" href="#why">Why StudiGarden</a>
             </nav>
             <div class="site-header__actions">
+                <a class="site-header__signin" href="{% url 'pricing' %}">Pricing</a>
                 {% if user.is_authenticated %}
                     <a class="site-header__signin" href="{% url 'dashboard' %}">Dashboard</a>
                     <form method="post" action="{% url 'logout' %}" class="logout-form">
