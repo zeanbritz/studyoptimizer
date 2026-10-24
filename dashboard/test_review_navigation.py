@@ -222,6 +222,9 @@ class ReviewNavigationTests(TestCase):
                     {"review_origin": "library"},
                 )
                 self.assertEqual(response.status_code, 200)
+                self.assertContains(response, "review_feedback.css")
+                self.assertContains(response, "review-check-answer")
+                self.assertContains(response, "review_feedback.js")
                 self.assertIn(
                     reverse(list_route),
                     [link.get("href") for link in Links(response.content.decode()).links],

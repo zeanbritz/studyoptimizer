@@ -1,0 +1,73 @@
+.review-check-answer {
+    width: auto !important;
+    min-width: 0 !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    padding-right: 22px !important;
+    padding-left: 22px !important;
+}
+
+.review-feedback-correct {
+    transform-origin: center;
+    animation: review-feedback-correct .48s cubic-bezier(.2, .85, .32, 1.25) both;
+}
+
+.review-feedback-incorrect {
+    transform-origin: center;
+    animation: review-feedback-incorrect .42s ease-out both;
+}
+
+.review-feedback-correct .result-icon,
+.review-feedback-correct.result-icon {
+    animation: review-feedback-icon-pop .48s cubic-bezier(.2, .85, .32, 1.35) both;
+}
+
+.review-feedback-incorrect .result-icon,
+.review-feedback-incorrect.result-icon {
+    animation: review-feedback-icon-wrong .42s ease-out both;
+}
+
+@keyframes review-feedback-correct {
+    0% { opacity: 0; transform: translateY(8px) scale(.97); }
+    62% { opacity: 1; transform: translateY(-2px) scale(1.015); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes review-feedback-incorrect {
+    0% { opacity: 0; transform: translateX(0); }
+    28% { opacity: 1; transform: translateX(-7px); }
+    52% { transform: translateX(6px); }
+    74% { transform: translateX(-3px); }
+    100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes review-feedback-icon-pop {
+    0% { transform: scale(.65) rotate(-8deg); }
+    68% { transform: scale(1.12) rotate(3deg); }
+    100% { transform: scale(1) rotate(0); }
+}
+
+@keyframes review-feedback-icon-wrong {
+    0%, 100% { transform: rotate(0); }
+    35% { transform: rotate(-8deg); }
+    70% { transform: rotate(7deg); }
+}
+
+@media (max-width: 600px) {
+    .review-check-answer {
+        width: auto !important;
+        max-width: 100%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .review-feedback-correct,
+    .review-feedback-incorrect,
+    .review-feedback-correct .result-icon,
+    .review-feedback-correct.result-icon,
+    .review-feedback-incorrect .result-icon,
+    .review-feedback-incorrect.result-icon {
+        animation: none;
+    }
+}

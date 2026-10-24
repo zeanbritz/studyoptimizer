@@ -18,6 +18,7 @@
     </title>
 
     <link rel="stylesheet" href="{% static 'dashboard/css/sidebar.css' %}">
+    <link rel="stylesheet" href="{% static 'dashboard/css/review_feedback.css' %}">
 
 
     <style>
@@ -1154,7 +1155,7 @@
 
             <button
                 type="submit"
-                class="submit-button"
+                class="submit-button review-check-answer"
             >
                 Check Answer
             </button>
@@ -1347,7 +1348,7 @@
             ? "correct"
             : (document.querySelector(".result.incorrect") ? "incorrect" : null);
 
-        if (!resultKind) {
+        if (!resultKind || window.STUDIGARDEN_SHARED_FEEDBACK) {
             return;
         }
 
@@ -1418,6 +1419,7 @@
 </script>
 {% endif %}
 
+<script src="{% static 'js/review_feedback.js' %}"></script>
 <script src="{% static 'dashboard/js/sidebar.js' %}"></script>
 
 

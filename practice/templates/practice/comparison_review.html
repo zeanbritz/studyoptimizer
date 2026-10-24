@@ -21,6 +21,7 @@
         rel="stylesheet"
         href="{% static 'dashboard/css/sidebar.css' %}"
     >
+    <link rel="stylesheet" href="{% static 'dashboard/css/review_feedback.css' %}">
 
     <style>
 
@@ -858,7 +859,7 @@
 
                         <button
                             type="submit"
-                            class="check-button"
+                            class="check-button review-check-answer"
                             id="check-button"
                             disabled
                         >
@@ -1417,6 +1418,7 @@
     }
 </script>
 
+<script src="{% static 'js/review_feedback.js' %}"></script>
 <script src="{% static 'dashboard/js/sidebar.js' %}"></script>
 
 </body>

@@ -22,6 +22,7 @@
         rel="stylesheet"
         href="{% static 'dashboard/css/sidebar.css' %}"
     >
+    <link rel="stylesheet" href="{% static 'dashboard/css/review_feedback.css' %}">
 
 
     <style>
@@ -3821,7 +3822,7 @@
 
             <button
                 type="submit"
-                class="submit-button"
+                class="submit-button review-check-answer"
             >
                 Check Answer
             </button>
@@ -4858,6 +4859,8 @@ const formulaResult =
 
 if (
     shouldPlayFormulaResultSound
+    &&
+    !window.STUDIGARDEN_SHARED_FEEDBACK
 ) {
 
     if (
@@ -5343,6 +5346,7 @@ if (
 </script>
 
 
+<script src="{% static 'js/review_feedback.js' %}"></script>
 <script src="{% static 'dashboard/js/sidebar.js' %}"></script>
 
 
