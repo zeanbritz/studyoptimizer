@@ -22,6 +22,7 @@
         href="{% static 'dashboard/css/sidebar.css' %}"
     >
     <link rel="stylesheet" href="{% static 'dashboard/css/review_modes.css' %}">
+    <link rel="stylesheet" href="{% static 'dashboard/css/review_tour.css' %}">
 
     <style>
 
@@ -670,8 +671,8 @@
                             class="review-card"
                             data-review-card
                             data-subject-name="{{ item.subject.name|escape }}"
-                            data-global-url="{% if mode == 'test' %}{% url 'practice_comparison_review' comparison_id=item.comparison.id %}?scope=all{% else %}{% url 'read_review_item' kind='comparison' item_id=item.comparison.id %}{% endif %}"
-                            data-subject-url="{% if mode == 'test' %}{% url 'practice_comparison_review' comparison_id=item.comparison.id %}?scope=subject&amp;subject_index={{ item.subject_index }}{% else %}{% url 'read_review_item' kind='comparison' item_id=item.comparison.id %}?subject_id={{ item.subject.id }}{% endif %}"
+                            data-global-url="{% if mode == 'test' %}{% url 'practice_comparison_review' comparison_id=item.comparison.id %}?scope=all&amp;review_origin=library{% else %}{% url 'read_review_item' kind='comparison' item_id=item.comparison.id %}?review_origin=library{% endif %}"
+                            data-subject-url="{% if mode == 'test' %}{% url 'practice_comparison_review' comparison_id=item.comparison.id %}?scope=subject&amp;subject_index={{ item.subject_index }}&amp;review_origin=library{% else %}{% url 'read_review_item' kind='comparison' item_id=item.comparison.id %}?subject_id={{ item.subject.id }}&amp;review_origin=library{% endif %}"
                         >
 
                             <div class="item-content">
@@ -970,6 +971,9 @@
 </script>
 
 {% endif %}
+
+{% include 'dashboard/partials/review_tour.html' %}
+<script src="{% static 'dashboard/js/review_tour.js' %}"></script>
 
 <script
     src="{% static 'dashboard/js/sidebar.js' %}"

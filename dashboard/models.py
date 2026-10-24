@@ -52,6 +52,8 @@ class StudyProfile(models.Model):
 
     subject_tour_completed = models.BooleanField(default=False)
 
+    review_tour_completed = models.BooleanField(default=False)
+
     updated_at = models.DateTimeField(
         auto_now=True
     )

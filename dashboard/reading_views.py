@@ -11,6 +11,7 @@ from django.views.decorators.http import require_GET
 from accounts.entitlements import accessible_subjects
 
 from learning.models import BulletList, Comparison, Formula, StepList
+from learning.review_navigation import review_origin, with_origin
 
 
 REVIEW_TYPES = {
@@ -60,7 +61,9 @@ def read_review_item(request, kind, item_id):
 
     def read_url(pk):
         url = reverse("read_review_item", kwargs={"kind": kind, "item_id": pk})
-        return f"{url}?subject_id={subject_id}" if subject_id is not None else url
+        if subject_id is not None:
+            url = f"{url}?subject_id={subject_id}"
+        return with_origin(url, review_origin(request))
 
     context = {
         "kind": kind,

@@ -35,6 +35,11 @@ urlpatterns = [
         name="review",
     ),
     path(
+        "review/tour/complete/",
+        views.complete_review_tour,
+        name="complete_review_tour",
+    ),
+    path(
         "subjects/<int:subject_index>/",
         views.subject_detail,
         name="subject_detail",

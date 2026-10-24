@@ -21,6 +21,7 @@
         rel="stylesheet"
         href="{% static 'dashboard/css/sidebar.css' %}"
     >
+    <link rel="stylesheet" href="{% static 'dashboard/css/review_tour.css' %}">
 
     <style>
 
@@ -665,8 +666,8 @@
                             class="review-card"
                             data-review-card
                             data-subject-name="{{ item.subject.name|escape }}"
-                            data-global-url="{% url 'note_detail' note_id=item.note.id %}?mode=global_review"
-                            data-subject-url="{% url 'note_detail' note_id=item.note.id %}?mode=global_review&amp;subject_id={{ item.subject.id }}"
+                            data-global-url="{% url 'note_detail' note_id=item.note.id %}?mode=global_review&amp;review_origin=library"
+                            data-subject-url="{% url 'note_detail' note_id=item.note.id %}?mode=global_review&amp;subject_id={{ item.subject.id }}&amp;review_origin=library"
                         >
 
                             <div class="item-content">
@@ -964,6 +965,9 @@
 </script>
 
 {% endif %}
+
+{% include 'dashboard/partials/review_tour.html' %}
+<script src="{% static 'dashboard/js/review_tour.js' %}"></script>
 
 <script
     src="{% static 'dashboard/js/sidebar.js' %}"

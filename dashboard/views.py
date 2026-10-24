@@ -7,7 +7,7 @@ from django.http import Http404, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST
 from django.utils import timezone
 
 from learning.models import (
@@ -21,6 +21,7 @@ from learning.models import (
     Note,
     Comparison,
 )
+from learning.review_navigation import review_origin, with_origin
 from exams.reminders import due_reminders
 from accounts.entitlements import (
     accessible_subjects,
@@ -1255,6 +1256,20 @@ def dashboard(request):
 # ============================================================
 # REVIEW
 # ============================================================
+
+def _show_review_tour(user):
+    profile, _ = StudyProfile.objects.get_or_create(user=user)
+    return not profile.review_tour_completed
+
+
+@login_required
+@require_POST
+def complete_review_tour(request):
+    profile, _ = StudyProfile.objects.get_or_create(user=request.user)
+    if not profile.review_tour_completed:
+        profile.review_tour_completed = True
+        profile.save(update_fields=["review_tour_completed"])
+    return JsonResponse({"success": True})
 
 @login_required
 def review(request):
@@ -4635,6 +4650,9 @@ def review_definitions(request):
 
             "mode": mode,
 
+            "show_review_tour":
+                _show_review_tour(request.user),
+
             "definition_count":
                 len(
                     definitions
@@ -4673,7 +4691,9 @@ def read_definition(request, definition_id):
         if definition_pk is None:
             return None
         url = reverse("read_definition", kwargs={"definition_id": definition_pk})
-        return f"{url}?subject_id={subject_id}" if subject_id is not None else url
+        if subject_id is not None:
+            url = f"{url}?subject_id={subject_id}"
+        return with_origin(url, review_origin(request))
 
     return render(request, "dashboard/read_definition.html", {
         "definition": current,
@@ -4747,6 +4767,9 @@ def review_formulas(request):
                 formula_items,
 
             "mode": mode,
+
+            "show_review_tour":
+                _show_review_tour(request.user),
 
             "formula_count":
                 len(
@@ -4822,6 +4845,9 @@ def review_lists(request):
 
             "mode": mode,
 
+            "show_review_tour":
+                _show_review_tour(request.user),
+
             "list_count":
                 len(
                     list_items
@@ -4895,6 +4921,9 @@ def review_steps(request):
                 step_items,
 
             "mode": mode,
+
+            "show_review_tour":
+                _show_review_tour(request.user),
 
             "step_count":
                 len(
@@ -4971,6 +5000,9 @@ def review_comparisons(request):
 
             "mode": mode,
 
+            "show_review_tour":
+                _show_review_tour(request.user),
+
             "comparison_count":
                 len(
                     comparison_items
@@ -5044,6 +5076,9 @@ def review_notes(request):
                 len(
                     note_items
                 ),
+
+            "show_review_tour":
+                _show_review_tour(request.user),
         }
     )
 

@@ -1,0 +1,30 @@
+{% if show_review_tour %}
+<div class="review-tour-backdrop" id="review-tour-backdrop" aria-hidden="true"></div>
+<div class="review-tour-spotlight" id="review-tour-spotlight" aria-hidden="true"></div>
+
+<section
+    class="review-tour"
+    id="review-tour"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="review-tour-title"
+    data-complete-url="{% url 'complete_review_tour' %}"
+>
+    <span class="review-tour__step" id="review-tour-step">Step 1 of 2</span>
+    <h2 id="review-tour-title">Review your saved material</h2>
+    <p id="review-tour-copy">
+        Everything you add to your subjects is collected here. Open an item to read and review it.
+    </p>
+    <div class="review-tour__mode-preview" id="review-tour-mode-preview" hidden aria-hidden="true">
+        <span>Review</span>
+        <span class="is-selected">Test</span>
+    </div>
+    <div class="review-tour__actions">
+        <button type="button" id="review-tour-next">Next</button>
+        <button type="button" id="review-tour-done" hidden>All set!</button>
+    </div>
+    <span class="review-tour__status" id="review-tour-status" aria-live="polite"></span>
+</section>
+
+<form id="review-tour-csrf" hidden>{% csrf_token %}</form>
+{% endif %}

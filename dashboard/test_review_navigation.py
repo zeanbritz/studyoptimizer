@@ -165,6 +165,68 @@ class ReviewNavigationTests(TestCase):
         task = self.client.get(reverse("practice_definition_review", args=[self.definition.pk]), {"review_origin": "library"})
         self.assertIn(reverse("review_definitions"), [a.get("href") for a in Links(task.content.decode()).links])
 
+    def test_all_six_library_cards_keep_library_origin_after_filtering(self):
+        library_cases = [
+            ("review_definitions", reverse("read_definition", args=[self.definition.pk])),
+            ("review_formulas", reverse("read_review_item", args=["formula", self.formula.pk])),
+            ("review_lists", reverse("read_review_item", args=["list", self.bullet.pk])),
+            ("review_steps", reverse("read_review_item", args=["step", self.steps.pk])),
+            ("review_comparisons", reverse("read_review_item", args=["comparison", self.comparison.pk])),
+            ("review_notes", reverse("note_detail", args=[self.note.pk])),
+        ]
+        for list_route, item_path in library_cases:
+            with self.subTest(list_route=list_route):
+                response = self.client.get(reverse(list_route), {"mode": "review"})
+                cards = [
+                    link for link in Links(response.content.decode()).links
+                    if "data-review-card" in link and urlsplit(link.get("href", "")).path == item_path
+                ]
+                self.assertTrue(cards)
+                for attribute in ("href", "data-global-url", "data-subject-url"):
+                    self.assertEqual(
+                        parse_qs(urlsplit(cards[0][attribute]).query).get("review_origin"),
+                        ["library"],
+                    )
+
+    def test_reading_from_each_library_returns_to_that_library(self):
+        reading_cases = [
+            ("review_definitions", reverse("read_definition", args=[self.definition.pk])),
+            ("review_formulas", reverse("read_review_item", args=["formula", self.formula.pk])),
+            ("review_lists", reverse("read_review_item", args=["list", self.bullet.pk])),
+            ("review_steps", reverse("read_review_item", args=["step", self.steps.pk])),
+            ("review_comparisons", reverse("read_review_item", args=["comparison", self.comparison.pk])),
+            ("review_notes", reverse("note_detail", args=[self.note.pk]) + "?mode=global_review"),
+        ]
+        for list_route, item_url in reading_cases:
+            with self.subTest(list_route=list_route):
+                separator = "&" if "?" in item_url else "?"
+                response = self.client.get(item_url + separator + "review_origin=library")
+                self.assertEqual(response.status_code, 200)
+                self.assertIn(
+                    reverse(list_route),
+                    [link.get("href") for link in Links(response.content.decode()).links],
+                )
+
+    def test_testing_from_each_testable_library_returns_to_that_library(self):
+        testing_cases = [
+            ("review_definitions", "practice_definition_review", self.definition),
+            ("review_formulas", "practice_formula", self.formula),
+            ("review_lists", "review_list", self.bullet),
+            ("review_steps", "practice_step_review", self.steps),
+            ("review_comparisons", "practice_comparison_review", self.comparison),
+        ]
+        for list_route, task_route, item in testing_cases:
+            with self.subTest(list_route=list_route):
+                response = self.client.get(
+                    reverse(task_route, args=[item.pk]),
+                    {"review_origin": "library"},
+                )
+                self.assertEqual(response.status_code, 200)
+                self.assertIn(
+                    reverse(list_route),
+                    [link.get("href") for link in Links(response.content.decode()).links],
+                )
+
     def test_private_items_are_not_accessible_with_a_valid_origin(self):
         owner = get_user_model().objects.create_user(username="private-owner")
         subject = Subject.objects.create(user=owner, name="Private")
