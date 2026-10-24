@@ -3,28 +3,30 @@
 {% block page_title %}Cookie policy — StudiGarden{% endblock %}
 {% block eyebrow %}Legal{% endblock %}
 {% block heading %}Cookie policy{% endblock %}
-{% block intro %}A plain-language explanation of the website's essential cookies.{% endblock %}
+{% block intro %}The essential cookies that keep StudiGarden signed-in sessions and forms secure.{% endblock %}
 
 {% block content %}
-<div class="draft-notice">
-    Draft for review before launch. Check the cookies actually set in production, including any analytics, hosting, or payment tools, before publishing a final list.
-</div>
+<p><strong>Effective date:</strong> {{ effective_date }}</p>
 
 <h2>What cookies do</h2>
-<p>Cookies are small pieces of information stored by your browser. The current Django application uses session and cross-site request forgery (CSRF) protection mechanisms to help users stay signed in and protect forms.</p>
+<p>Cookies are small pieces of information stored by a browser. StudiGarden, operated by {{ legal_name }} (registration number {{ registration_number }}), uses essential cookies so accounts, forms and security protections work correctly.</p>
 
-<h2>Essential cookies</h2>
+<h2>Cookies set by StudiGarden</h2>
 <ul>
-    <li><strong>Session cookie:</strong> helps the website remember your signed-in session.</li>
-    <li><strong>CSRF cookie:</strong> helps protect form submissions from unauthorized requests.</li>
+    <li><strong>sessionid:</strong> remembers your signed-in session and server-side session information. It normally lasts for up to two weeks, but can end earlier when you sign out or the session is invalidated.</li>
+    <li><strong>csrftoken:</strong> helps prevent another website from submitting a form as you. It normally lasts for up to one year and may be renewed when you use the site.</li>
 </ul>
-<p>The actual cookie names, durations, and production settings should be verified before this policy is finalized.</p>
+<p>Cookie duration can be shortened by browser settings, security action, account deletion or changes needed to protect the service.</p>
+
+<h2>Payments and third-party pages</h2>
+<p>When you continue to Paystack for checkout or payment management, Paystack may use its own cookies on its website for security, fraud prevention and payment processing. Those cookies are controlled by Paystack rather than StudiGarden.</p>
 
 <h2>Optional cookies</h2>
-<p>No analytics or advertising tools were identified in the reviewed project code. This does not verify what a future hosting or payment setup may add. If optional cookies are introduced, update this page and add any controls or consent process that is required.</p>
+<p>StudiGarden does not currently use advertising or analytics cookies. If optional cookies are introduced, this policy will be updated and any consent controls required by applicable law will be provided before those cookies are used.</p>
 
 <h2>Your browser controls</h2>
-<p>You can remove or block cookies through your browser settings. Blocking essential cookies may prevent login or forms from working correctly.</p>
+<p>You can remove or block cookies through your browser settings. Blocking essential StudiGarden cookies may prevent sign-in, account security or forms from working correctly.</p>
 
-<p>For information about related personal-data handling, read the <a href="{% url 'privacy_policy' %}">privacy policy</a>.</p>
+<h2>Contact</h2>
+<p>Questions about cookies or personal information may be sent to <a href="mailto:{{ support_email }}">{{ support_email }}</a>. For more information, read the <a href="{% url 'privacy_policy' %}">privacy policy</a>.</p>
 {% endblock %}

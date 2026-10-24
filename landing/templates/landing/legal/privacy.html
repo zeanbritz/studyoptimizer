@@ -3,39 +3,64 @@
 {% block page_title %}Privacy policy — StudiGarden{% endblock %}
 {% block eyebrow %}Legal{% endblock %}
 {% block heading %}Privacy policy{% endblock %}
-{% block intro %}How StudiGarden handles account and study information.{% endblock %}
+{% block intro %}How StudiGarden collects, uses, shares, protects and deletes personal information.{% endblock %}
 
 {% block content %}
-<div class="draft-notice">
-    Draft for review before launch. Add the legal operator's name and contact details, hosting providers, retention periods, and any analytics or payment processors before treating this as a final privacy notice.
-</div>
+<p><strong>Effective date:</strong> {{ effective_date }}</p>
 
 <h2>Who is responsible</h2>
-<p>StudiGarden is operated from South Africa. The legal name and contact details of the operator still need to be added here.</p>
+<p>{{ legal_name }}, registration number {{ registration_number }}, is the South African {{ company_type|lower }} responsible for StudiGarden and the personal information described in this notice. Its registration was certified on {{ registration_date }}. Privacy requests may be sent to <a href="mailto:{{ support_email }}">{{ support_email }}</a>.</p>
 
-<h2>Information used by the service</h2>
+<h2>Information we collect</h2>
 <ul>
-    <li>Account details supplied at registration, including username and email address.</li>
-    <li>Study information you add, such as subjects, notes, definitions, formulas, steps, comparisons, and related learning material.</li>
-    <li>Review and progress information generated as you use the service.</li>
-    <li>Technical information needed to run and secure the website, including session and security-cookie information. Hosting logs and their retention must be confirmed.</li>
+    <li><strong>Account information:</strong> username, email address, password hash, email-verification status, account status and age confirmation.</li>
+    <li><strong>Study information:</strong> subjects, notes, definitions, formulas, steps, comparisons, exams, plans, progress, review history and settings you create.</li>
+    <li><strong>PDF information:</strong> documents and selected pages you submit for PDF features, extracted text, detected study suggestions and usage totals. PDF processing is performed by the StudiGarden application; submitted documents are not sold.</li>
+    <li><strong>Billing information:</strong> selected plan, price, currency, payment reference, Paystack customer, transaction, subscription, invoice and refund identifiers, billing status and service dates. Paystack handles card details; StudiGarden does not store full card numbers or security codes.</li>
+    <li><strong>Support and feedback:</strong> messages, category, account email, page location, delivery status and our handling status.</li>
+    <li><strong>Technical information:</strong> session and security-cookie information and ordinary server records such as request time, requested page, browser information, IP address, response status and security events.</li>
 </ul>
 
-<h2>Why it is used</h2>
-<p>This information supports account access, saving and displaying your study material, generating review and progress views, and keeping the service secure. Any further purposes, such as marketing or analytics, must be disclosed here before they are added.</p>
+<h2>Where information comes from</h2>
+<p>Most information comes directly from you when you register, study, upload a document, choose a plan or contact support. StudiGarden also creates progress and usage records from your activity. Paystack provides verified billing and subscription results. Hosting and email providers provide the technical information needed to deliver and secure their services.</p>
 
-<h2>Storage, sharing, and retention</h2>
-<p>The hosting location, service providers, possible cross-border transfers, and retention periods are not yet documented. These must be completed before publication. Do not enter information you are not comfortable storing while this policy remains a draft.</p>
+<h2>Why we use it</h2>
+<ul>
+    <li>To create and secure your account and provide the study features you request.</li>
+    <li>To enforce plan limits, verify payments, manage subscriptions, process eligible refunds and prevent duplicate or fraudulent billing.</li>
+    <li>To send essential messages such as verification, password-reset, security, billing and support communications.</li>
+    <li>To answer support requests, investigate faults, keep audit records and improve the reliability and usability of StudiGarden.</li>
+    <li>To comply with legal, accounting, tax, consumer-protection and regulatory duties and to establish, exercise or defend legal claims.</li>
+</ul>
+<p>Account and study information is necessary to provide StudiGarden. If you do not provide required registration information, an account cannot be created. Study material, PDF uploads and optional feedback are voluntary, although the related feature cannot work without the information it needs.</p>
 
-<h2>Deleting your account</h2>
-<p>You can delete your account from Profile after future subscription renewals have been stopped and any plan change or refund already in progress has finished. Account deletion permanently removes subjects, learning material, reviews, exams, progress and saved study settings, disables the login and removes its registered email address. Limited payment, refund, security and support records may be retained where reasonably necessary for accounting, fraud prevention, dispute handling or legal obligations.</p>
+<h2>Service providers and sharing</h2>
+<p>We do not sell personal information. We share only what is reasonably needed with:</p>
+<ul>
+    <li><strong>Railway:</strong> application and database hosting, networking, deployment and operational logs.</li>
+    <li><strong>Paystack:</strong> checkout, recurring billing, payment verification, subscription management and refunds.</li>
+    <li><strong>Mailgun:</strong> transactional email delivery, including verification, password-reset and support notifications.</li>
+    <li><strong>Professional advisers, regulators, courts or law enforcement:</strong> where reasonably necessary to comply with law, protect rights, investigate fraud or resolve a dispute.</li>
+</ul>
+<p>These providers act under their own terms and privacy commitments. Some processing may occur outside South Africa. Where personal information is transferred across borders, we take reasonable steps to use providers and arrangements that provide appropriate protection consistent with applicable law.</p>
+
+<h2>Retention and account deletion</h2>
+<p>Account and study information is kept while your account is active and as needed to provide the service. You can delete your account from Profile after future subscription renewals have been stopped and any plan change or refund already in progress has finished. Deletion removes subjects, learning material, reviews, exams, progress, saved study settings, registered email addresses and the active login.</p>
+<p>Payment, refund, subscription, fraud-prevention, security and support records may be retained after account deletion for the period reasonably needed for accounting, tax, legal, audit, dispute and security purposes. They are restricted to those purposes and are deleted or de-identified when no longer needed or legally authorised. If restricted backups are in use, residual copies may remain until the normal backup cycle overwrites them.</p>
+
+<h2>Security</h2>
+<p>We use measures intended to protect personal information, including encrypted HTTPS connections, password hashing, access controls, secure production cookies, signed payment notifications, server-side payment verification and restricted administrative access. No online service can promise absolute security. If we have reasonable grounds to believe personal information has been unlawfully accessed or acquired, we will investigate and make notifications required by applicable law.</p>
 
 <h2>Your choices and rights</h2>
-<p>Depending on the circumstances, South Africa's POPIA provides rights to ask about, access, correct, or request deletion of personal information, and to object to certain processing. A contact method for these requests must be added to the <a href="{% url 'contact' %}">contact page</a>. You can also learn about complaints and forms on the <a href="https://inforegulator.org.za/popia/" rel="noopener noreferrer">Information Regulator's website</a>.</p>
+<p>Subject to applicable law, you may ask whether we hold personal information about you, request access, request correction or deletion, object to certain processing, or withdraw consent where processing depends on consent. These rights are not absolute and some records may lawfully need to be retained. Send a request from your account email to <a href="mailto:{{ support_email }}">{{ support_email }}</a>. We may ask for reasonable identity verification before acting.</p>
+<p>You may also lodge a complaint with South Africa's <a href="https://inforegulator.org.za/" rel="noopener noreferrer">Information Regulator</a>. Its website provides complaint forms and current contact details.</p>
+
+<h2>Marketing</h2>
+<p>StudiGarden currently uses account email addresses for essential service and support messages, not third-party advertising. We do not sell mailing lists. If optional promotional email or analytics is introduced, this notice and any required consent or opt-out controls will be updated first.</p>
 
 <h2>Age requirement</h2>
-<p>StudiGarden is for people aged 18 or older. We ask you to confirm this when registering; signup does not request a date of birth or an identity document. If you believe someone under 18 has created an account, please contact us using the details on the <a href="{% url 'contact' %}">contact page</a> so we can investigate and address the account and its information.</p>
+<p>StudiGarden is intended for people aged 18 or older. Registration requires confirmation of this requirement but does not request a date of birth or identity document. If you believe someone under 18 has created an account, contact <a href="mailto:{{ support_email }}">{{ support_email }}</a> so we can investigate.</p>
 
-<h2>Updates</h2>
-<p>When this notice is finalized, add an effective date and explain how users will be told about material changes.</p>
+<h2>Changes to this notice</h2>
+<p>We may update this notice when the service, providers or law changes. The current version and effective date will remain on this page, and material changes will be communicated when required.</p>
 {% endblock %}

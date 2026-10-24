@@ -10,7 +10,11 @@
 <h2>Email support</h2>
 <p><a href="mailto:{{ support_email }}">{{ support_email }}</a></p>
 <p>Eligible first-payment refunds can be requested automatically from <a href="{% url 'my_plan' %}">Profile</a> within seven days of payment. See our <a href="{% url 'billing_policy' %}">billing and refund policy</a>.</p>
-<p>StudiGarden is operated by STRATOCK (Pty) Ltd.</p>
+<h2>Business details</h2>
+<p>StudiGarden is operated by {{ legal_name }}, a South African {{ company_type|lower }}.</p>
+<p><strong>Registration number:</strong> {{ registration_number }}<br>
+<strong>Registration certified:</strong> {{ registration_date }}<br>
+<strong>Website:</strong> <a href="{{ website_url }}">{{ website_url }}</a></p>
 {% else %}
 <p>A working support email address will be published here before paid checkout opens.</p>
 {% endif %}

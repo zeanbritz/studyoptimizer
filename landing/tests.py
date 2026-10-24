@@ -8,6 +8,45 @@ from django.test import RequestFactory, SimpleTestCase, TestCase
 from django.urls import reverse
 
 
+class LegalPageTests(TestCase):
+    def test_legal_pages_publish_company_details_and_effective_date(self):
+        for name in (
+            "terms_of_use",
+            "privacy_policy",
+            "cookie_policy",
+            "billing_policy",
+        ):
+            with self.subTest(name=name):
+                response = self.client.get(reverse(name))
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, "STRATOCK (Pty) Ltd")
+                self.assertContains(response, "2026/121556/07")
+                self.assertContains(response, "24 October 2026")
+                self.assertNotContains(response, "Draft for review before launch")
+                self.assertNotContains(response, "still need to be added")
+
+    def test_terms_match_the_live_paid_service(self):
+        response = self.client.get(reverse("terms_of_use"))
+        self.assertContains(response, "A paid subscription starts only after")
+        self.assertContains(response, "Paystack")
+        self.assertNotContains(
+            response,
+            "Paid checkout remains unavailable until launch setup",
+        )
+
+    def test_privacy_page_names_current_service_providers(self):
+        response = self.client.get(reverse("privacy_policy"))
+        for provider in ("Railway", "Paystack", "Mailgun"):
+            self.assertContains(response, provider)
+        self.assertContains(response, "does not store full card numbers")
+
+    def test_contact_page_publishes_company_registration(self):
+        response = self.client.get(reverse("contact"))
+        self.assertContains(response, "STRATOCK (Pty) Ltd")
+        self.assertContains(response, "2026/121556/07")
+        self.assertContains(response, "18 February 2026")
+
+
 class LandingHomeTests(TestCase):
     def test_home_explains_study_flow_and_offers_public_signup(self):
         response = self.client.get(reverse("landing"))

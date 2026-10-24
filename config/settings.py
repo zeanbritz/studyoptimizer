@@ -288,6 +288,27 @@ PAYSTACK_LIVE_PLAN_CODES = {
 # from the Mailgun sender used for verification and password-reset emails.
 STUDIGARDEN_SUPPORT_EMAIL = os.getenv("STUDIGARDEN_SUPPORT_EMAIL", "zd.britz@icloud.com").strip()
 
+# Public company details used consistently across the legal and contact pages.
+# These are not secrets and may be overridden without changing templates.
+STUDIGARDEN_LEGAL_NAME = os.getenv(
+    "STUDIGARDEN_LEGAL_NAME", "STRATOCK (Pty) Ltd"
+).strip()
+STUDIGARDEN_REGISTRATION_NUMBER = os.getenv(
+    "STUDIGARDEN_REGISTRATION_NUMBER", "2026/121556/07"
+).strip()
+STUDIGARDEN_COMPANY_TYPE = os.getenv(
+    "STUDIGARDEN_COMPANY_TYPE", "Private company"
+).strip()
+STUDIGARDEN_REGISTRATION_DATE = os.getenv(
+    "STUDIGARDEN_REGISTRATION_DATE", "18 February 2026"
+).strip()
+STUDIGARDEN_LEGAL_EFFECTIVE_DATE = os.getenv(
+    "STUDIGARDEN_LEGAL_EFFECTIVE_DATE", "24 October 2026"
+).strip()
+STUDIGARDEN_WEBSITE_URL = os.getenv(
+    "STUDIGARDEN_WEBSITE_URL", "https://studigarden.com"
+).rstrip("/")
+
 
 # Email
 

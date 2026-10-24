@@ -6,6 +6,8 @@
 {% block intro %}Monthly billing, cancellation, and the first-payment refund guarantee.{% endblock %}
 
 {% block content %}
+<p><strong>Effective date:</strong> {{ effective_date }}</p>
+
 {% if not support_email %}
 <div class="draft-notice">Paid checkout has not launched. Support contact details and the final legal review must be completed before accepting payments.</div>
 {% elif not live_checkout_enabled %}
@@ -13,7 +15,7 @@
 {% endif %}
 
 <h2>Displayed plans</h2>
-<p>StudiGarden is operated by STRATOCK (Pty) Ltd. The <a href="{% url 'pricing' %}">pricing page</a> shows Free at R0, {% for plan in paid_plans %}{{ plan.name }} at R{{ plan.monthly_price|floatformat:0 }} per month{% if not forloop.last %} and {% endif %}{% endfor %}. Plan features and monthly allowances are listed there. Paid checkout charges the displayed plan amount in South African rand. StudiGarden does not add a separate checkout fee.</p>
+<p>StudiGarden is operated by {{ legal_name }}, registration number {{ registration_number }}. The <a href="{% url 'pricing' %}">pricing page</a> shows Free at R0, {% for plan in paid_plans %}{{ plan.name }} at R{{ plan.monthly_price|floatformat:0 }} per month{% if not forloop.last %} and {% endif %}{% endfor %}. Plan features and monthly allowances are listed there. Paid checkout charges the displayed plan amount in South African rand. StudiGarden does not add a separate checkout fee.</p>
 
 <h2>Starting a paid subscription</h2>
 <p>Registration does not choose a paid plan or collect payment. A paid subscription starts only when you select a plan, agree to monthly automatic renewal, and complete payment through Paystack. The selected plan renews monthly until cancelled. Access is activated only after payment is verified.</p>
@@ -39,7 +41,7 @@
 
 <h2>Automatic 7-day first-payment refund</h2>
 <p>We offer a voluntary full-refund guarantee on your first paid purchase, once per account. Request it from Profile within seven days of the time payment was made. No reason is required, and using the study tools does not disqualify you. This automatic guarantee does not apply to monthly renewal payments.</p>
-<p>Choose Request first-payment refund and confirm. We check your payment and the server-recorded request time automatically. A qualifying request needs no manual approval. Requests submitted on time remain eligible if processing is delayed. Duplicate clicks do not create additional refunds.</p>
+<p>Choose Request first-payment refund and confirm. StudiGarden checks your payment and the server-recorded request time automatically. A qualifying request needs no discretionary approval, but completion still depends on Paystack and the banking system. Requests submitted on time remain eligible if processing is delayed. Duplicate clicks do not create additional refunds.</p>
 <p>We stop future renewals before submitting the full refund to Paystack. Once Paystack confirms the refund is completed, the refunded paid access ends and Free limits apply unless you have another entitlement. Your saved study material is not deleted. Cancelling a plan and requesting a refund are separate actions.</p>
 
 <h2>Refund progress and exceptional problems</h2>

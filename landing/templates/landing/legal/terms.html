@@ -3,31 +3,50 @@
 {% block page_title %}Terms of use — StudiGarden{% endblock %}
 {% block eyebrow %}Legal{% endblock %}
 {% block heading %}Terms of use{% endblock %}
-{% block intro %}The basic rules for using StudiGarden.{% endblock %}
+{% block intro %}The rules for creating an account and using StudiGarden.{% endblock %}
 
 {% block content %}
-<div class="draft-notice">
-    Draft for review before launch. Add the operator's legal identity, dispute process, and effective date before relying on these terms.
-</div>
+<p><strong>Effective date:</strong> {{ effective_date }}</p>
+
+<h2>Who provides StudiGarden</h2>
+<p>StudiGarden is a service operated by {{ legal_name }}, a South African {{ company_type|lower }} with registration number {{ registration_number }}. Its registration was certified on {{ registration_date }}. The service is available at <a href="{{ website_url }}">{{ website_url }}</a>. Questions and formal notices may be sent to <a href="mailto:{{ support_email }}">{{ support_email }}</a>.</p>
+
+<h2>Accepting these terms</h2>
+<p>By creating an account or using StudiGarden, you agree to these terms, the <a href="{% url 'privacy_policy' %}">privacy policy</a>, the <a href="{% url 'cookie_policy' %}">cookie policy</a>, and, if you buy a paid plan, the <a href="{% url 'billing_policy' %}">billing and refunds policy</a>. If you do not agree, do not use the service.</p>
 
 <h2>The service</h2>
-<p>StudiGarden helps users organize study material and review it. The tools support learning but do not guarantee grades, exam results, or admission outcomes.</p>
+<p>StudiGarden helps users organise study material, plan study activity, practise saved material, track progress, and manage exams and assessments. Some plans include PDF tools. StudiGarden supports learning, but it does not guarantee grades, examination results, admission, employment, or any other academic outcome.</p>
 
 <h2>Age requirement</h2>
-<p>You must be at least 18 years old to create or use a StudiGarden account. When registering, you must confirm that you meet this age requirement. Do not register if you are under 18.</p>
+<p>You must be at least 18 years old to create or use a StudiGarden account. When registering, you must confirm that you meet this requirement. Do not register if you are under 18.</p>
 
 <h2>Your account</h2>
-<p>Keep your account credentials private and provide accurate registration information. You can delete your account from Profile after stopping any active monthly renewal and allowing billing changes or refunds already in progress to finish. Account deletion permanently removes your study material and disables your login. Minimal payment, refund, fraud-prevention and support records may be retained where reasonably required.</p>
+<p>You must provide accurate registration information, keep your password private, and tell us promptly if you believe your account has been used without permission. You are responsible for activity performed through your account unless it results from a failure by StudiGarden to use reasonable security measures.</p>
+<p>You can delete your account from Profile after future subscription renewals have been stopped and any billing change or refund already in progress has finished. Account deletion permanently removes your study workspace and disables your login. Limited payment, refund, fraud-prevention, security and support records may be retained where reasonably required by law or for legitimate accounting and dispute purposes, as described in the privacy policy.</p>
 
 <h2>Your study material</h2>
-<p>You are responsible for material you add to the service and for respecting other people's rights. Do not upload unlawful content or material you do not have permission to use. The final terms should state precisely what rights StudiGarden needs to store, display, and process your material to provide the service.</p>
+<p>You retain ownership of material you add to StudiGarden. You give {{ legal_name }} a limited, non-exclusive permission to host, copy, process, display and technically modify that material only as needed to operate, secure and improve the service for you. This permission ends when the material is deleted, except for temporary residual copies in restricted backups and information that must lawfully be retained.</p>
+<p>You are responsible for your material and must have the right to use it. Do not upload unlawful, harmful or infringing material, malicious code, another person's confidential information without authority, or material that interferes with the service.</p>
 
-<h2>Availability and changes</h2>
-<p>Features may change while the service is being developed. Any commitments about uptime, backups, notice of changes, or account suspension must be decided and added before publication.</p>
+<h2>Acceptable use</h2>
+<p>Do not attempt to bypass plan limits, access another user's account or data, disrupt or probe the service, automate abusive traffic, reverse engineer protected parts of the service, or use StudiGarden in a way that breaks applicable law. We may restrict or suspend access where reasonably necessary to protect users, investigate abuse, comply with law, or prevent harm. Where practical, we will explain the reason and provide a way to contact support.</p>
 
 <h2>Plans and payments</h2>
-<p>The <a href="{% url 'pricing' %}">pricing page</a> describes Free access and the Grow and Bloom monthly plans. Creating an account does not start a paid subscription. The <a href="{% url 'billing_policy' %}">billing and refunds policy</a> explains automatic monthly renewal, cancellation, and the voluntary automatic seven-day first-payment refund guarantee. Applicable consumer rights are not limited by that guarantee. Paid checkout remains unavailable until launch setup and the final terms are complete.</p>
+<p>The <a href="{% url 'pricing' %}">pricing page</a> describes Free, Grow and Bloom. Creating an account does not start a paid subscription. A paid subscription starts only after you choose a plan, agree to recurring monthly billing and complete a Paystack checkout that StudiGarden verifies. Paid plans renew monthly until cancelled.</p>
+<p>The <a href="{% url 'billing_policy' %}">billing and refunds policy</a> forms part of these terms and explains prices, automatic renewal, cancellation, plan changes, frozen subjects, the voluntary seven-day first-payment refund guarantee, and exceptional billing problems. That voluntary guarantee does not limit applicable consumer rights.</p>
 
-<h2>Applicable law</h2>
-<p>StudiGarden is operated from South Africa. Any final governing-law and dispute-resolution terms should be checked against applicable South African consumer and privacy law before publication.</p>
+<h2>Availability and changes</h2>
+<p>We use reasonable efforts to keep StudiGarden available and protect stored information, but internet services can experience maintenance, faults, provider outages and data loss. We do not promise uninterrupted or error-free operation. We may change or discontinue features for security, legal, operational or product reasons. If a material change adversely affects a paid plan, we will take reasonable steps to give affected users notice and preserve rights required by law.</p>
+
+<h2>Responsibility and consumer rights</h2>
+<p>Nothing in these terms excludes or limits a right or remedy that cannot lawfully be excluded under South African law. To the extent permitted by law, {{ legal_name }} is not responsible for indirect or consequential loss, loss caused by material supplied by a user, or a failure outside its reasonable control. Any responsibility that cannot lawfully be excluded remains unaffected.</p>
+
+<h2>Ending use of the service</h2>
+<p>You may stop using StudiGarden at any time. Cancelling a subscription and deleting an account are separate actions. We may terminate or suspend an account for a serious or repeated breach of these terms, unlawful use, fraud, or a security threat. Where reasonable and lawful, we will first notify you and allow an opportunity to address the problem.</p>
+
+<h2>Disputes and applicable law</h2>
+<p>These terms are governed by the laws of South Africa. If you have a complaint, email <a href="mailto:{{ support_email }}">{{ support_email }}</a> with the account email and relevant details. We will try to investigate and resolve it in good faith. If it cannot be resolved directly, you may use any regulator, ombud, consumer-protection process or court available to you under applicable law. These terms do not require you to give up a non-excludable consumer right.</p>
+
+<h2>Changes to these terms</h2>
+<p>We may update these terms when the service, law or business changes. The latest version and effective date will remain available here. We will give reasonable notice of a material change when required, and a change will not retrospectively remove rights already accrued.</p>
 {% endblock %}
