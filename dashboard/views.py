@@ -3544,6 +3544,27 @@ def subject_detail(
 
     pages_to_summarize_total = 0
 
+    # Keep every unfinished textbook visible in the subject workspace. The
+    # daily scheduler may assign zero pages on a rest or revision day, but the
+    # student should still be able to open the book plan and log extra study.
+    study_textbooks = []
+    study_textbook_lookup = {}
+
+    for textbook in textbooks:
+        remaining_pages = max(
+            0,
+            textbook.page_count - textbook.pages_summarized,
+        )
+        if remaining_pages <= 0:
+            continue
+        item = {
+            "textbook": textbook,
+            "remaining_pages": remaining_pages,
+            "pages_today": 0,
+        }
+        study_textbooks.append(item)
+        study_textbook_lookup[textbook.pk] = item
+
     pages_today_weekday = (
         today.strftime(
             "%A"
@@ -3888,6 +3909,8 @@ def subject_detail(
                         pages_today
                     )
 
+                    study_textbook_lookup[textbook.pk]["pages_today"] = pages_today
+
     # ========================================================
     # REVIEW ITEMS
     # ========================================================
@@ -4198,6 +4221,9 @@ def subject_detail(
 
             "pages_to_summarize_total":
                 pages_to_summarize_total,
+
+            "study_textbooks":
+                study_textbooks,
 
             "pages_today_weekday":
                 pages_today_weekday,

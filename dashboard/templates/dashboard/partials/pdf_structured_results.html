@@ -35,19 +35,22 @@
                     </table></div>
                 {% endif %}
                 <div class="candidate-actions">
-                    {% if item.saved_id %}
-                        <span class="saved-label">Added to review</span>
-                        <a class="edit-link" href="{{ item.saved_edit_url }}">Edit saved {{ singular }}</a>
-                    {% else %}
-                        <form method="post">
-                            {% csrf_token %}
-                            <input type="hidden" name="action" value="add_{{ kind }}_one">
-                            <input type="hidden" name="scan_id" value="{{ scan_id }}">
-                            <input type="hidden" name="candidate_index" value="{{ item.index }}">
-                            <button class="action-button primary" type="submit">Add {{ singular }}</button>
-                        </form>
-                        <a class="edit-link" href="{{ item.edit_before_url }}">Edit before adding</a>
-                    {% endif %}
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="add_{{ kind }}_one">
+                        <input type="hidden" name="scan_id" value="{{ scan_id }}">
+                        <input type="hidden" name="candidate_index" value="{{ item.index }}">
+                        <button class="action-button primary" type="submit">Add {{ singular }}</button>
+                    </form>
+                    <a class="edit-link" href="{{ item.edit_before_url }}">Edit before adding</a>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="dismiss_candidate">
+                        <input type="hidden" name="kind" value="{{ kind }}">
+                        <input type="hidden" name="scan_id" value="{{ scan_id }}">
+                        <input type="hidden" name="candidate_index" value="{{ item.index }}">
+                        <button class="action-button delete" type="submit">Delete suggestion</button>
+                    </form>
                 </div>
             </article>
             {% endfor %}

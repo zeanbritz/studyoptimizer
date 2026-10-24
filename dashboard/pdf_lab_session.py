@@ -31,6 +31,7 @@ def save_scan(request, subject_id, scan, file_name, book_name="", chapter=""):
         "saved_steps": {},
         "saved_notes": {},
         "saved_comparisons": {},
+        "dismissed": {},
     }
     request.session[SESSION_KEY] = state
     return state
@@ -73,5 +74,29 @@ def mark_saved(request, subject_id, scan_id, index, item_id, kind="definition"):
         return False
     key = KIND_KEYS[kind][1]
     state.setdefault(key, {})[str(index)] = item_id
+    request.session[SESSION_KEY] = state
+    return True
+
+
+def dismissed_indexes(state, kind):
+    """Return candidate indexes the student removed from this preview."""
+    if kind not in KIND_KEYS or not isinstance(state, dict):
+        return set()
+    dismissed = state.get("dismissed") or {}
+    values = dismissed.get(kind) or []
+    return {str(value) for value in values}
+
+
+def dismiss_candidate(request, subject_id, scan_id, index, kind):
+    """Hide one suggestion without deleting any saved learning material."""
+    state = get_scan(request, subject_id, scan_id)
+    if state is None or get_candidate(request, subject_id, scan_id, index, kind) is None:
+        return False
+    index = str(int(index))
+    dismissed = dict(state.get("dismissed") or {})
+    kind_indexes = set(str(value) for value in dismissed.get(kind, []))
+    kind_indexes.add(index)
+    dismissed[kind] = sorted(kind_indexes, key=int)
+    state["dismissed"] = dismissed
     request.session[SESSION_KEY] = state
     return True

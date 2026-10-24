@@ -21,7 +21,10 @@ from .definition_detection import find_definition_candidates
 from .formula_detection import equation_to_structure, find_formula_candidates
 from .models import SubjectTextbook
 from .pdf_image_ocr import MAX_OCR_IMAGES_PER_SCAN, scan_page_images
-from .pdf_lab_session import KIND_KEYS, SESSION_KEY, get_candidate, get_scan, mark_saved, save_scan
+from .pdf_lab_session import (
+    KIND_KEYS, SESSION_KEY, dismiss_candidate, dismissed_indexes,
+    get_candidate, get_scan, mark_saved, save_scan,
+)
 from .structured_detection import (
     find_comparison_candidates, find_list_candidates,
     find_note_candidates, find_step_candidates,
@@ -185,40 +188,52 @@ def _display_scan(context, state):
     scan = state["scan"]
     saved = state.get("saved") or {}
     saved_formulas = state.get("saved_formulas") or {}
-    structured_edit_names = {
-        "list": "edit_list", "steps": "edit_steps",
-        "note": "edit_note", "comparison": "edit_comparison",
-    }
+    dismissed_definitions = dismissed_indexes(state, "definition")
+    dismissed_formulas = dismissed_indexes(state, "formula")
     structured_display = {}
     for kind in KINDS:
         candidate_key, saved_key = KIND_KEYS[kind]
         saved_items = state.get(saved_key) or {}
+        dismissed = dismissed_indexes(state, kind)
         decorated = []
         for index, item in enumerate(scan.get(candidate_key, [])):
             saved_id = saved_items.get(str(index))
+            if saved_id or str(index) in dismissed:
+                continue
             decorated.append({
-                **item, "index": index, "saved_id": saved_id,
-                "saved_edit_url": (
-                    reverse(structured_edit_names[kind], args=[saved_id])
-                    if saved_id else ""
-                ),
+                **item, "index": index,
                 "edit_before_url": (
                     reverse("edit_pdf_suggestion", args=[state["subject_id"], kind, index])
                     + "?scan_id=" + state["id"]
                 ),
             })
         structured_display[candidate_key] = decorated
+
+    definition_display = [
+        {**item, "index": index}
+        for index, item in enumerate(scan["candidates"])
+        if str(index) not in saved and str(index) not in dismissed_definitions
+    ]
+    formula_display = [
+        {**item, "index": index}
+        for index, item in enumerate(scan.get("formula_candidates", []))
+        if str(index) not in saved_formulas and str(index) not in dismissed_formulas
+    ]
+    candidate_keys = ["candidates", "formula_candidates"] + [
+        KIND_KEYS[kind][0] for kind in KINDS
+    ]
+    detected_total = sum(len(scan.get(key, [])) for key in candidate_keys)
+    remaining_total = len(definition_display) + len(formula_display) + sum(
+        len(items) for items in structured_display.values()
+    )
+
     context["scan"] = {
         **scan,
-        "candidates": [
-            {**item, "index": index, "saved_definition_id": saved.get(str(index))}
-            for index, item in enumerate(scan["candidates"])
-        ],
-        "formula_candidates": [
-            {**item, "index": index, "saved_formula_id": saved_formulas.get(str(index))}
-            for index, item in enumerate(scan.get("formula_candidates", []))
-        ],
+        "candidates": definition_display,
+        "formula_candidates": formula_display,
         **structured_display,
+        "detected_total": detected_total,
+        "remaining_total": remaining_total,
     }
     context["scan_id"] = state["id"]
     context["file_name"] = state["file_name"]
@@ -410,7 +425,21 @@ def definition_pdf_lab(request, subject_id):
             f"add_{kind}_{mode}"
             for kind in KINDS for mode in ("one", "all")
         }
-        if action in {"add_one", "add_all", "add_formula_one", "add_formula_all"} | structured_actions:
+        if action == "dismiss_candidate":
+            state = get_scan(request, subject.pk, request.POST.get("scan_id") or "")
+            kind = request.POST.get("kind", "")
+            index = request.POST.get("candidate_index", "")
+            if (
+                state is None
+                or kind not in KIND_KEYS
+                or not dismiss_candidate(
+                    request, subject.pk, state["id"], index, kind,
+                )
+            ):
+                context["error"] = "This suggestion is no longer available. Scan the PDF again."
+            else:
+                return redirect("definition_pdf_lab", subject_id=subject.pk)
+        elif action in {"add_one", "add_all", "add_formula_one", "add_formula_all"} | structured_actions:
             state = get_scan(request, subject.pk, request.POST.get("scan_id") or "")
             if state is None:
                 context["error"] = "This PDF preview is no longer available. Scan the PDF again."
@@ -422,13 +451,17 @@ def definition_pdf_lab(request, subject_id):
                         else "definition"
                     )
                     candidates = state["scan"].get(KIND_KEYS[kind][0], [])
+                    dismissed = dismissed_indexes(state, kind)
                     if action.endswith("one"):
                         index = int(request.POST.get("candidate_index", ""))
-                        if not 0 <= index < len(candidates):
+                        if not 0 <= index < len(candidates) or str(index) in dismissed:
                             raise ValueError("Choose an item from the current scan.")
                         indexes = [index]
                     else:
-                        indexes = range(len(candidates))
+                        indexes = [
+                            index for index in range(len(candidates))
+                            if str(index) not in dismissed
+                        ]
                     if kind in KINDS:
                         created, already_present = _import_structured(
                             request, subject, state, kind, indexes,

@@ -4331,36 +4331,8 @@
                             </h2>
 
                             <p>
-                                All saved review material for this subject.
+                                Your textbook study and saved review material.
                             </p>
-
-                        </div>
-
-
-                        <!-- RESET REVIEWS -->
-
-                        <div class="reset-reviews-container">
-
-
-                            <form
-                                method="post"
-                                action="{% url 'reset_today_reviews' %}"
-                            >
-
-                                {% csrf_token %}
-
-
-                                <button
-                                    type="submit"
-                                    class="reset-reviews-button"
-                                    onclick="return confirm('Make all scheduled review items available again today?');"
-                                >
-                                    Reset Today's Reviews
-                                </button>
-
-
-                            </form>
-
 
                         </div>
 
@@ -4372,7 +4344,7 @@
          PAGES TO SUMMARIZE
     ================================== -->
 
-    {% if pages_to_summarize_total %}
+    {% if study_textbooks %}
 
         <a
             href="{% url 'book_summary' subject_index=subject_index %}"
@@ -4384,11 +4356,11 @@
                 <div class="pages-review-title">
 
                     <h3>
-                        Pages to Summarize
+                        Textbook Study
                     </h3>
 
                     <span class="pages-review-count">
-                        {{ pages_to_summarize_total }}
+                        {% if pages_to_summarize_total %}{{ pages_to_summarize_total }}{% else %}{{ study_textbooks|length }}{% endif %}
                     </span>
 
                 </div>
@@ -4401,14 +4373,17 @@
 
 
             <p class="pages-review-description">
-                Recommended textbook pages to summarize today
-                based on your available study time.
+                {% if pages_to_summarize_total %}
+                    Today's recommended pages based on your available study time.
+                {% else %}
+                    Open your textbook plan or record extra study.
+                {% endif %}
             </p>
 
 
             <div class="pages-review-breakdown">
 
-                {% for item in pages_to_summarize %}
+                {% for item in study_textbooks %}
 
                     <div class="pages-review-book">
 
@@ -4417,8 +4392,11 @@
                         </span>
 
                         <span class="pages-review-book-pages">
-                            {{ item.pages }}
-                            page{{ item.pages|pluralize }}
+                            {% if item.pages_today %}
+                                {{ item.pages_today }} page{{ item.pages_today|pluralize }} today
+                            {% else %}
+                                {{ item.remaining_pages }} page{{ item.remaining_pages|pluralize }} remaining
+                            {% endif %}
                         </span>
 
                     </div>
@@ -4677,7 +4655,7 @@
          EMPTY
     ================================== -->
 
-    {% if not pages_to_summarize_total and not due_formulas and not due_definitions and not due_bullet_lists and not due_step_lists and not due_comparisons and not note_count %}
+    {% if not study_textbooks and not due_formulas and not due_definitions and not due_bullet_lists and not due_step_lists and not due_comparisons and not note_count %}
 
         <div class="empty-review">
             No saved review material or notes yet.

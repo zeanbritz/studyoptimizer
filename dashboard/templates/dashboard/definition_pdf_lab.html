@@ -50,8 +50,8 @@
         .candidate-actions form { margin: 0; }
         .action-button, .edit-link { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; padding: 8px 13px; border: 1px solid #b9cbd4; border-bottom-width: 3px; border-radius: 8px; background: #fff; color: #176f9f; font: inherit; font-size: 12px; font-weight: 800; text-decoration: none; cursor: pointer; }
         .action-button.primary { border-color: #3f8f1d; background: #58b82a; color: white; }
+        .action-button.delete { border-color: #d7b5b5; background: #fff7f7; color: #9b3535; }
         .action-button:hover, .edit-link:hover { filter: brightness(.96); }
-        .saved-label { color: #3f8f1d; font-size: 12px; font-weight: 850; }
         .batch-form { margin-top: 16px; }
         .result-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 20px; }
         .result-group { min-width: 0; margin: 0; overflow: hidden; border: 1px solid #d8e0e3; border-top: 4px solid var(--accent, #58b82a); border-bottom: 4px solid #c4cfd4; border-radius: 13px; background: white; }
@@ -172,7 +172,9 @@
                 {% if scan.image_text_pages %}<p class="notice">Text found in images can contain recognition mistakes. Check these suggestions carefully before saving.</p>{% endif %}
                 {% if not scan.text_pages and not scan.image_text_pages %}
                     <p class="notice">No readable text was found in this page range. If this PDF has scanned images, a clearer copy may help.</p>
-                {% elif not scan.candidates and not scan.formula_candidates and not scan.list_candidates and not scan.step_candidates and not scan.note_candidates and not scan.comparison_candidates %}
+                {% elif scan.remaining_total == 0 and scan.detected_total %}
+                    <p class="notice">No suggestions remaining.</p>
+                {% elif scan.detected_total == 0 %}
                     <p class="notice">Text was extracted, but no clear learning items matched this first-pass detector. Check the text sample below.</p>
                 {% endif %}
                 {% if scan.truncated or scan.formula_truncated or scan.structured_truncated %}<p class="notice">A result type reached the 300-candidate preview limit. Scan a smaller range to inspect the rest.</p>{% endif %}
@@ -199,19 +201,22 @@
                         <h3>{{ item.term }}</h3>
                         <p>{{ item.definition }}</p>
                         <div class="candidate-actions">
-                            {% if item.saved_definition_id %}
-                                <span class="saved-label">Added to review</span>
-                                <a class="edit-link" href="{% url 'edit_definition' definition_id=item.saved_definition_id %}">Edit saved definition</a>
-                            {% else %}
-                                <form method="post">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="action" value="add_one">
-                                    <input type="hidden" name="scan_id" value="{{ scan_id }}">
-                                    <input type="hidden" name="candidate_index" value="{{ item.index }}">
-                                    <button class="action-button primary" type="submit">Add definition</button>
-                                </form>
-                                <a class="edit-link" href="{% url 'create_definition' subject_id=subject.id %}?subject_index={{ subject_index }}&amp;pdf_scan_id={{ scan_id }}&amp;pdf_candidate_index={{ item.index }}">Edit before adding</a>
-                            {% endif %}
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="add_one">
+                                <input type="hidden" name="scan_id" value="{{ scan_id }}">
+                                <input type="hidden" name="candidate_index" value="{{ item.index }}">
+                                <button class="action-button primary" type="submit">Add definition</button>
+                            </form>
+                            <a class="edit-link" href="{% url 'create_definition' subject_id=subject.id %}?subject_index={{ subject_index }}&amp;pdf_scan_id={{ scan_id }}&amp;pdf_candidate_index={{ item.index }}">Edit before adding</a>
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="dismiss_candidate">
+                                <input type="hidden" name="kind" value="definition">
+                                <input type="hidden" name="scan_id" value="{{ scan_id }}">
+                                <input type="hidden" name="candidate_index" value="{{ item.index }}">
+                                <button class="action-button delete" type="submit">Delete suggestion</button>
+                            </form>
                         </div>
                     </article>
                     {% endfor %}
@@ -243,10 +248,6 @@
                             <h3>{{ item.title }}</h3>
                             <p class="equation">{{ item.equation }}</p>
                             <div class="candidate-actions">
-                                {% if item.saved_formula_id %}
-                                <span class="saved-label">Added to review</span>
-                                <a class="edit-link" href="{% url 'edit_formula' formula_id=item.saved_formula_id %}">Edit saved formula</a>
-                                {% else %}
                                 <form method="post">
                                     {% csrf_token %}
                                     <input type="hidden" name="action" value="add_formula_one">
@@ -255,7 +256,14 @@
                                     <button class="action-button primary" type="submit">Add formula</button>
                                 </form>
                                 <a class="edit-link" href="{% url 'create_formula' subject_id=subject.id %}?subject_index={{ subject_index }}&amp;pdf_scan_id={{ scan_id }}&amp;pdf_formula_index={{ item.index }}">Edit before adding</a>
-                                {% endif %}
+                                <form method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="dismiss_candidate">
+                                    <input type="hidden" name="kind" value="formula">
+                                    <input type="hidden" name="scan_id" value="{{ scan_id }}">
+                                    <input type="hidden" name="candidate_index" value="{{ item.index }}">
+                                    <button class="action-button delete" type="submit">Delete suggestion</button>
+                                </form>
                             </div>
                         </article>
                         {% endfor %}

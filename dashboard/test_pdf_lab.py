@@ -580,6 +580,19 @@ class DefinitionPdfLabTests(TestCase):
         self.assertContains(page, "Auto Summarize PDF")
         self.assertContains(page, self.url)
 
+    def test_unfinished_textbook_stays_visible_when_no_pages_are_scheduled_today(self):
+        SubjectTextbook.objects.create(
+            subject=self.subject,
+            name="Science Reader",
+            page_count=200,
+            pages_summarized=25,
+        )
+        page = self.client.get(reverse("subject_detail", args=[0]))
+        self.assertContains(page, "Textbook Study")
+        self.assertContains(page, "Science Reader")
+        self.assertContains(page, "175 pages remaining")
+        self.assertNotContains(page, "Reset Today&#x27;s Reviews")
+
     def test_add_one_creates_reviewable_definition_and_cannot_duplicate(self):
         scan_id = self.scan_definitions()
         data = {"action": "add_one", "scan_id": scan_id, "candidate_index": "0"}
@@ -589,9 +602,51 @@ class DefinitionPdfLabTests(TestCase):
         self.assertEqual(definition.knowledge_unit.subject, self.subject)
         self.assertEqual(definition.knowledge_unit.knowledge_type, KnowledgeUnit.KnowledgeType.DEFINITION)
         self.assertTrue(definition.knowledge_unit.active)
-        self.assertContains(self.client.get(self.url), "Edit saved definition")
+        page = self.client.get(self.url)
+        self.assertNotContains(page, "Added to review")
+        self.assertNotContains(page, "Edit saved definition")
+        self.assertEqual(
+            [item["term"] for item in page.context["scan"]["candidates"]],
+            ["Osmosis"],
+        )
         self.client.post(self.url, data)
         self.assertEqual(Definition.objects.count(), 1)
+
+    def test_deleted_suggestion_disappears_and_batch_add_cannot_import_it(self):
+        scan_id = self.scan_definitions()
+        response = self.client.post(self.url, {
+            "action": "dismiss_candidate",
+            "kind": "definition",
+            "scan_id": scan_id,
+            "candidate_index": "0",
+        })
+        self.assertRedirects(response, self.url)
+        page = self.client.get(self.url)
+        self.assertEqual(
+            [item["term"] for item in page.context["scan"]["candidates"]],
+            ["Osmosis"],
+        )
+        self.assertContains(page, "Delete suggestion")
+
+        self.client.post(self.url, {"action": "add_all", "scan_id": scan_id})
+        self.assertEqual(list(Definition.objects.values_list("term", flat=True)), ["Osmosis"])
+
+    def test_structured_suggestion_can_be_deleted_without_creating_an_item(self):
+        _, scan_id = self.scan_structured()
+        response = self.client.post(self.url, {
+            "action": "dismiss_candidate",
+            "kind": "steps",
+            "scan_id": scan_id,
+            "candidate_index": "0",
+        })
+        self.assertRedirects(response, self.url)
+        page = self.client.get(self.url)
+        self.assertEqual(page.context["scan"]["step_candidates"], [])
+        self.client.post(self.url, {
+            "action": "add_steps_all",
+            "scan_id": scan_id,
+        })
+        self.assertEqual(StepList.objects.count(), 0)
 
     def test_add_all_skips_previously_added_and_exact_existing_definitions(self):
         scan_id = self.scan_definitions()
@@ -712,7 +767,9 @@ class DefinitionPdfLabTests(TestCase):
         self.assertEqual(formula.knowledge_unit.subject, self.subject)
         self.assertEqual(json.loads(formula.structure)[0]["value"], "J")
         self.assertTrue(FormulaVariable.objects.filter(formula=formula, symbol="J").exists())
-        self.assertContains(self.client.get(self.url), "Edit saved formula")
+        page = self.client.get(self.url)
+        self.assertNotContains(page, "Added to review")
+        self.assertEqual(len(page.context["scan"]["formula_candidates"]), 2)
         self.client.post(self.url, {"action": "add_formula_all", "scan_id": scan_id})
         self.assertEqual(Formula.objects.count(), 3)
         self.client.post(self.url, {"action": "add_formula_all", "scan_id": scan_id})
@@ -845,7 +902,12 @@ class DefinitionPdfLabTests(TestCase):
         for model in (BulletList, StepList, Note, Comparison):
             self.assertEqual(model.objects.get().book_name, "Science Reader")
             self.assertEqual(model.objects.get().chapter, "Chapter 4")
-        self.assertContains(self.client.get(self.url), "Edit saved comparison")
+        saved_page = self.client.get(self.url)
+        for key in (
+            "list_candidates", "step_candidates",
+            "note_candidates", "comparison_candidates",
+        ):
+            self.assertEqual(saved_page.context["scan"][key], [])
         _, new_scan_id = self.scan_structured("Science Reader", "Chapter 4")
         for kind in ("list", "steps", "note", "comparison"):
             self.client.post(self.url, {"action": f"add_{kind}_all", "scan_id": new_scan_id})
