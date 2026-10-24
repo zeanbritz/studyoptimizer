@@ -150,6 +150,70 @@
             line-height: 1.6;
         }
 
+        .profile-layout {
+            display: grid;
+            grid-template-columns: 235px minmax(0, 1fr);
+            align-items: start;
+            gap: 22px;
+            margin-top: 22px;
+        }
+
+        .profile-sidebar {
+            position: sticky;
+            top: 18px;
+            padding: 20px;
+            border: 1px solid #d8e0e3;
+            border-bottom: 4px solid #c4cfd4;
+            border-radius: 16px;
+            background: #f8fafb;
+        }
+
+        .profile-identity {
+            padding-bottom: 17px;
+            border-bottom: 1px solid #dde5e7;
+        }
+
+        .profile-identity strong,
+        .profile-identity span {
+            display: block;
+            overflow-wrap: anywhere;
+        }
+
+        .profile-identity strong { color: var(--navy); font-size: 17px; }
+        .profile-identity span { margin-top: 5px; color: var(--muted); font-size: 12px; }
+
+        .profile-tier {
+            display: inline-flex !important;
+            margin-top: 13px !important;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #e8f6e1;
+            color: #38771f !important;
+            font-size: 11px !important;
+            font-weight: 900;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+        }
+
+        .profile-nav {
+            display: grid;
+            gap: 5px;
+            margin-top: 14px;
+        }
+
+        .profile-nav a {
+            padding: 10px 11px;
+            border-radius: 9px;
+            color: #536068;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .profile-nav a:hover { background: #edf5e9; color: #347221; }
+
+        .profile-content { min-width: 0; }
+        .profile-content > .plan-card { margin-top: 0; margin-bottom: 18px; }
+
         .plan-card {
             margin-top: 22px;
             padding: 28px;
@@ -242,6 +306,46 @@
         .cancel-confirmation { display: flex; align-items: flex-start; gap: 10px; margin: 18px 0; font-size: 14px; line-height: 1.5; }
         .cancel-confirmation input { margin-top: 4px; }
 
+        .danger-card {
+            border-top-color: #c65353;
+            background: #fffafa;
+        }
+
+        .danger-card h2 { color: #8f3030; }
+
+        .danger-button {
+            min-height: 44px;
+            padding: 9px 17px 7px;
+            border: 2px solid #9d3434;
+            border-bottom-width: 4px;
+            border-radius: 11px;
+            background: #c94f4f;
+            color: white;
+            font: inherit;
+            font-size: 13px;
+            font-weight: 850;
+            cursor: pointer;
+        }
+
+        .danger-button:hover { background: #b94343; }
+
+        .delete-dialog {
+            width: min(520px, calc(100% - 28px));
+            padding: 0;
+            border: 1px solid #e2c4c4;
+            border-radius: 18px;
+            background: #fff;
+            color: var(--ink);
+            box-shadow: 0 24px 70px rgba(28, 37, 52, .28);
+        }
+
+        .delete-dialog::backdrop { background: rgba(29, 36, 50, .62); }
+        .delete-dialog__body { padding: 26px; }
+        .delete-dialog h2 { margin: 0 0 10px; color: #8f3030; font-size: 25px; }
+        .delete-dialog p { color: #58646a; font-size: 14px; line-height: 1.6; }
+        .delete-dialog__actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+        .delete-dialog__cancel { border: 1px solid #cfd8dc; background: #f5f8f9; color: #4e5a60; cursor: pointer; }
+
         a:focus-visible, button:focus-visible {
             outline: 3px solid rgba(39, 143, 211, 0.35);
             outline-offset: 3px;
@@ -251,11 +355,18 @@
             .details { grid-template-columns: 1fr; }
         }
 
+        @media (max-width: 850px) {
+            .profile-layout { grid-template-columns: 1fr; }
+            .profile-sidebar { position: static; }
+            .profile-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
         @media (max-width: 520px) {
             .shell { width: min(100% - 28px, 1180px); }
             .site-header { align-items: flex-start; flex-direction: column; }
             .intro { padding: 29px 22px; }
             .plan-card { padding: 21px; }
+            .profile-nav { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -280,6 +391,26 @@
                 <h1 id="page-title">Profile</h1>
                 <p>See how your StudiGarden access is set up.{% if test_checkout_enabled %} Local test mode is enabled; no real money will be charged.{% elif live_billing_enabled %} Manage your monthly membership and stop renewals here.{% else %} This page does not start, change, or cancel a payment.{% endif %}</p>
             </section>
+
+            <div class="profile-layout">
+                <aside class="profile-sidebar" aria-label="Profile navigation">
+                    <div class="profile-identity">
+                        <strong>{{ user.username }}</strong>
+                        <span>{{ user.email }}</span>
+                        <span class="profile-tier">{{ current_plan.name }} access</span>
+                    </div>
+                    <nav class="profile-nav">
+                        <a href="#current-plan-title">Plan overview</a>
+                        {% if show_plan_management %}<a href="#plan-change-title">Plan changes</a>{% endif %}
+                        {% if can_request_refund or refund_request %}<a href="#refund-title">Refund status</a>{% endif %}
+                        {% if live_billing_enabled %}<a href="#live-cancel-title">Billing &amp; cancellation</a>{% endif %}
+                        {% if live_checkout_enabled or pending_live_payment %}<a href="#live-checkout-title">Choose a plan</a>{% endif %}
+                        {% if frozen_subjects %}<a href="#frozen-subjects-title">Frozen subjects</a>{% endif %}
+                        <a href="#account-settings-title">Account settings</a>
+                    </nav>
+                </aside>
+
+                <div class="profile-content">
 
             <section class="plan-card" aria-labelledby="current-plan-title">
                 <p class="plan-label">Current plan</p>
@@ -523,6 +654,36 @@
             </section>
             {% endfor %}
 
+            <section class="plan-card danger-card" aria-labelledby="account-settings-title">
+                <p class="plan-label">Account settings</p>
+                <h2 id="account-settings-title">Delete account</h2>
+                <p class="plan-description">Permanently delete your subjects, learning material, reviews, exams, progress and saved study settings. This cannot be undone. Minimal payment, refund and support records may be retained where needed for accounting, fraud prevention and support.</p>
+                {% if can_delete_account %}
+                    <p class="notice">Deleting your account does not create a refund. Any remaining paid access is forfeited.</p>
+                    <button type="button" class="danger-button" id="delete-account-open">Delete my account</button>
+                    <dialog class="delete-dialog" id="delete-account-dialog" aria-labelledby="delete-account-title">
+                        <div class="delete-dialog__body">
+                            <h2 id="delete-account-title">Are you sure?</h2>
+                            <p>Your StudiGarden account will be disabled immediately and all study content you created will be permanently deleted. You will be signed out and this cannot be reversed.</p>
+                            <form method="post" action="{% url 'delete_account' %}" id="delete-account-form">
+                                {% csrf_token %}
+                                <label class="cancel-confirmation">
+                                    <input type="checkbox" name="confirm_delete" value="yes" required>
+                                    <span>I understand that all my subjects, learning material, reviews, exams, progress and study settings will be permanently deleted.</span>
+                                </label>
+                                <div class="delete-dialog__actions">
+                                    <button type="button" class="header-link delete-dialog__cancel" id="delete-account-close">Keep my account</button>
+                                    <button type="submit" class="danger-button">Permanently delete account</button>
+                                </div>
+                            </form>
+                        </div>
+                    </dialog>
+                {% else %}
+                    <p class="notice" role="status">{{ account_deletion_blocker }}</p>
+                    {% if can_cancel_live_membership %}<p class="plan-description"><a href="#live-cancel-title">Go to Plan cancellation</a> to stop future renewals first.</p>{% elif can_cancel_test_membership %}<p class="plan-description"><a href="#cancel-plan-title">Go to Plan cancellation</a> to stop future renewals first.</p>{% endif %}
+                {% endif %}
+            </section>
+
             <p class="notice">
                 {% if test_checkout_enabled %}
                 Local test purchases and cancellation are available here. Renewal-payment
@@ -534,11 +695,14 @@
                 informational and does not change your current access.
                 {% endif %}
             </p>
+                </div>
+            </div>
         </main>
 
         {% include 'landing/partials/footer.html' %}
     </div>
     {% include 'accounts/partials/support_widget.html' %}
     <script src="{% static 'js/profile_support.js' %}"></script>
+    <script src="{% static 'js/account_deletion.js' %}"></script>
 </body>
 </html>

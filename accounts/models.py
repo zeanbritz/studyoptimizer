@@ -15,6 +15,7 @@ class User(AbstractUser):
     """StudiGarden user."""
 
     beta_lifetime_access = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True, editable=False)
 
 
 class SupportQuery(models.Model):

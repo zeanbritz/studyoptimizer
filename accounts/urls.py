@@ -9,9 +9,11 @@ from .preview_relay_views import local_preview_webhook
 from .refund_views import request_live_refund
 from .plan_change_views import change_live_plan, cancel_scheduled_plan
 from .support_views import submit_support_query
+from .account_deletion_views import delete_account
 
 
 urlpatterns = [
+    path("my-plan/delete-account/", delete_account, name="delete_account"),
     path("support/submit/", submit_support_query, name="submit_support_query"),
     path("my-plan/change/<str:tier>/", change_live_plan, name="change_live_plan"),
     path("my-plan/scheduled/<int:change_id>/cancel/", cancel_scheduled_plan, name="cancel_scheduled_plan"),
