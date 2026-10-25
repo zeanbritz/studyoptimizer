@@ -2387,10 +2387,34 @@
         }
 
         .acceptable-answer-button {
-            border: 2px solid #d7a0a0;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            border: 2px solid #4b9c2a;
             border-bottom-width: 3px;
             border-radius: 9px;
+            background: #eef9e9;
+            color: #2f7417;
             font-weight: 800;
+        }
+
+        .acceptable-answer-button:hover {
+            border-color: #3f891f;
+            background: #e2f5d9;
+            color: #286414;
+        }
+
+        .acceptable-answer-help {
+            display: inline-grid;
+            width: 18px;
+            height: 18px;
+            place-items: center;
+            border-radius: 50%;
+            background: #58b82a;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 900;
+            line-height: 1;
         }
 
         .result {
@@ -3319,8 +3343,10 @@
                                     <button
                                         type="submit"
                                         class="acceptable-answer-button"
+                                        title="Mark your answer as another acceptable version"
                                     >
                                         Acceptable answer
+                                        <span class="acceptable-answer-help" aria-hidden="true">?</span>
                                     </button>
 
                                 </form>

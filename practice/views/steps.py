@@ -1,31 +1,22 @@
+import json
+import math
 import random
-
 from datetime import timedelta
 
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import (
-    get_object_or_404,
-    render,
-)
+from django.core import signing
+from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 
 from accounts.entitlements import accessible_subjects
-
-from learning.models import (
-    StepList,
-    StudentKnowledge,
-)
+from learning.models import StepList, StudentKnowledge
 
 
-# ============================================================
-# REVIEW INTERVAL
-# ============================================================
+STEP_QUESTION_SALT = "studigarden.step-ordering.v1"
 
-def get_review_interval(
-    mastery_level
-):
 
-    intervals = {
+def get_review_interval(mastery_level):
+    return {
         0: 0,
         1: 1,
         2: 2,
@@ -33,298 +24,228 @@ def get_review_interval(
         4: 7,
         5: 14,
         6: 30,
-    }
-
-    return intervals.get(
-        mastery_level,
-        0
-    )
+    }.get(mastery_level, 0)
 
 
-# ============================================================
-# NORMALIZE STEP ANSWER
-# ============================================================
-
-def normalize_step_answer(
-    value
-):
-
-    return " ".join(
-        str(
-            value
-            or ""
-        )
-        .strip()
-        .casefold()
-        .split()
-    )
+def normalize_step_answer(value):
+    """Retained for callers that imported the old text-answer helper."""
+    return " ".join(str(value or "").strip().casefold().split())
 
 
-# ============================================================
-# NUMBER OF HIDDEN STEPS
-# ============================================================
+def get_step_hidden_count(total_steps, mastery_level):
+    """Return how many complete step blocks the learner must place.
 
-def get_step_hidden_count(
-    total_steps,
-    mastery_level
-):
-
+    The function name is retained for backwards compatibility. Mastery may be
+    fractional, so it must not be rounded before applying the difficulty rule.
+    """
     if total_steps <= 0:
-
         return 0
+    if total_steps <= 2:
+        return total_steps
 
-    mastery_level = max(
-        0,
-        min(
-            6,
-            int(
-                mastery_level
-                or 0
-            )
-        )
-    )
-
-    # --------------------------------------------------------
-    # NEW KNOWLEDGE:
-    # HIDE ONE STEP
-    # --------------------------------------------------------
-
-    if mastery_level == 0:
-
-        return 1
-
-    # --------------------------------------------------------
-    # PROGRESSIVELY HIDE MORE
-    #
-    # 6/6 = ALL STEPS HIDDEN
-    # --------------------------------------------------------
-
+    try:
+        mastery_score = float(mastery_level or 0)
+    except (TypeError, ValueError):
+        mastery_score = 0
+    mastery_score = max(0, min(6, mastery_score))
     return min(
         total_steps,
-        1
-        +
-        (
-            (
-                total_steps - 1
-            )
-            * mastery_level
-            // 6
-        )
+        max(2, math.ceil(total_steps * mastery_score / 6)),
     )
 
 
-# ============================================================
-# FIND NEXT DUE STEP LIST
-#
-# SUBJECT-SPECIFIC REVIEW
-# ============================================================
+def choose_required_positions(total_steps, steps_to_place, rng=None):
+    """Choose missing positions across the sequence instead of just its start."""
+    if total_steps <= 0 or steps_to_place <= 0:
+        return []
+    if steps_to_place >= total_steps:
+        return list(range(total_steps))
 
-def find_next_due_step_list(
-    user,
-    subject,
-    exclude_step_list_id=None,
-):
+    rng = rng or random
+    positions = []
+    for bucket in range(steps_to_place):
+        start = math.floor(bucket * total_steps / steps_to_place)
+        end = math.floor((bucket + 1) * total_steps / steps_to_place) - 1
+        positions.append(rng.randint(start, max(start, end)))
+    return sorted(positions)
 
-    today = (
-        timezone.localdate()
+
+def build_step_question(step_list, steps, progress, rng=None):
+    """Create a signed, replay-resistant ordering question."""
+    rng = rng or random
+    steps_to_place = get_step_hidden_count(len(steps), progress.mastery_level)
+    required_positions = choose_required_positions(
+        len(steps),
+        steps_to_place,
+        rng=rng,
     )
+    required_ids = [steps[position].id for position in required_positions]
+    required_set = set(required_ids)
+    prefilled_ids = [step.id for step in steps if step.id not in required_set]
+    available_order = list(required_ids)
+    rng.shuffle(available_order)
 
+    state = {
+        "step_list_id": step_list.id,
+        "mastery_level": progress.mastery_level,
+        "review_count": progress.review_count,
+        "required_ids": required_ids,
+        "prefilled_ids": prefilled_ids,
+        "available_order": available_order,
+    }
+    return state, signing.dumps(state, salt=STEP_QUESTION_SALT, compress=True)
+
+
+def load_step_question(token, step_list, steps, progress):
+    """Validate the signed question against the current review and database."""
+    state = signing.loads(
+        token,
+        salt=STEP_QUESTION_SALT,
+        max_age=60 * 60 * 24,
+    )
+    all_ids = [step.id for step in steps]
+    required_ids = state.get("required_ids")
+    prefilled_ids = state.get("prefilled_ids")
+    available_order = state.get("available_order")
+
+    if state.get("step_list_id") != step_list.id:
+        raise signing.BadSignature("Wrong step set")
+    if state.get("review_count") != progress.review_count:
+        raise signing.BadSignature("Question has already been answered")
+    if not all(isinstance(values, list) for values in (
+        required_ids,
+        prefilled_ids,
+        available_order,
+    )):
+        raise signing.BadSignature("Incomplete question")
+    if len(set(required_ids)) != len(required_ids):
+        raise signing.BadSignature("Duplicate required step")
+    if len(set(prefilled_ids)) != len(prefilled_ids):
+        raise signing.BadSignature("Duplicate prefilled step")
+    if set(required_ids) & set(prefilled_ids):
+        raise signing.BadSignature("Overlapping question state")
+    if set(required_ids) | set(prefilled_ids) != set(all_ids):
+        raise signing.BadSignature("Question no longer matches this step set")
+    if set(available_order) != set(required_ids) or len(available_order) != len(required_ids):
+        raise signing.BadSignature("Invalid available steps")
+
+    expected_count = get_step_hidden_count(len(steps), state.get("mastery_level"))
+    if len(required_ids) != expected_count:
+        raise signing.BadSignature("Invalid question difficulty")
+    return state
+
+
+def question_display(steps, state):
+    by_id = {step.id: step for step in steps}
+    prefilled = set(state["prefilled_ids"])
+    return {
+        "ordering_slots": [
+            {
+                "position": position,
+                "number": position + 1,
+                "locked": step.id in prefilled,
+                "step": step if step.id in prefilled else None,
+            }
+            for position, step in enumerate(steps)
+        ],
+        "available_steps": [by_id[step_id] for step_id in state["available_order"]],
+        "steps_to_place": len(state["required_ids"]),
+        "steps_already_added": len(state["prefilled_ids"]),
+    }
+
+
+def find_next_due_step_list(user, subject, exclude_step_list_id=None):
+    today = timezone.localdate()
     from dashboard.review_planner import get_daily_review_plan, remaining_review_ids
-    planned_ids = remaining_review_ids(user, get_daily_review_plan(user, today))
 
+    planned_ids = remaining_review_ids(user, get_daily_review_plan(user, today))
     candidates = (
-        StepList.objects
-        .filter(
+        StepList.objects.filter(
             knowledge_unit_id__in=planned_ids,
             knowledge_unit__subject=subject,
             knowledge_unit__active=True,
         )
-        .select_related(
-            "knowledge_unit",
-            "knowledge_unit__subject",
-        )
-        .order_by(
-            "knowledge_unit__created",
-            "id",
-        )
+        .select_related("knowledge_unit", "knowledge_unit__subject")
+        .order_by("knowledge_unit__created", "id")
     )
-
-    if (
-        exclude_step_list_id
-        is not None
-    ):
-
-        candidates = (
-            candidates.exclude(
-                id=exclude_step_list_id
-            )
-        )
+    if exclude_step_list_id is not None:
+        candidates = candidates.exclude(id=exclude_step_list_id)
 
     for candidate in candidates:
-
-        progress = (
-            StudentKnowledge.objects
-            .filter(
-                student=user,
-                knowledge_unit=(
-                    candidate.knowledge_unit
-                ),
-            )
-            .first()
-        )
-
-        # ----------------------------------------------------
-        # NEVER REVIEWED
-        # ----------------------------------------------------
-
-        if progress is None:
-
+        candidate_progress = StudentKnowledge.objects.filter(
+            student=user,
+            knowledge_unit=candidate.knowledge_unit,
+        ).first()
+        if candidate_progress is None or candidate_progress.next_review is None:
             return candidate
-
-        # ----------------------------------------------------
-        # NO NEXT REVIEW DATE
-        # ----------------------------------------------------
-
-        if progress.next_review is None:
-
+        if timezone.localtime(candidate_progress.next_review).date() <= today:
             return candidate
-
-        # ----------------------------------------------------
-        # DUE TODAY OR OVERDUE
-        # ----------------------------------------------------
-
-        next_review_date = (
-            timezone.localtime(
-                progress.next_review
-            )
-            .date()
-        )
-
-        if (
-            next_review_date
-            <= today
-        ):
-
-            return candidate
-
     return None
 
 
-# ============================================================
-# FIND NEXT GLOBAL STEP LIST
-#
-# GLOBAL REVIEW
-#
-# ALL ACTIVE STEPS ACROSS ALL SUBJECTS.
-# DUE DATE DOES NOT MATTER HERE.
-# ============================================================
-
-def find_next_global_step_list(
-    user,
-    current_step_list_id,
-):
-
+def find_next_global_step_list(user, current_step_list_id):
     step_lists = list(
-        StepList.objects
-        .filter(
+        StepList.objects.filter(
             knowledge_unit__subject__in=accessible_subjects(user),
             knowledge_unit__active=True,
         )
-        .select_related(
-            "knowledge_unit",
-            "knowledge_unit__subject",
-        )
+        .select_related("knowledge_unit", "knowledge_unit__subject")
         .order_by(
             "knowledge_unit__subject__name",
             "knowledge_unit__created",
             "id",
         )
     )
-
-    current_position = None
-
-    for (
-        index,
-        step_list
-    ) in enumerate(
-        step_lists
-    ):
-
-        if (
-            step_list.id
-            == current_step_list_id
-        ):
-
-            current_position = index
-
-            break
-
-    if current_position is None:
-
-        return None
-
-    next_position = (
-        current_position
-        +
-        1
-    )
-
-    if (
-        next_position
-        >= len(
-            step_lists
-        )
-    ):
-
-        return None
-
-    return step_lists[
-        next_position
-    ]
+    for position, candidate in enumerate(step_lists):
+        if candidate.id == current_step_list_id:
+            next_position = position + 1
+            return step_lists[next_position] if next_position < len(step_lists) else None
+    return None
 
 
-# ============================================================
-# PRACTICE STEPS
-# ============================================================
+def _base_context(
+    step_list,
+    subject,
+    subject_index,
+    review_scope,
+    progress,
+    total_steps,
+):
+    return {
+        "step_list": step_list,
+        "subject": subject,
+        "subject_index": subject_index,
+        "review_scope": review_scope,
+        "progress": progress,
+        "mastery_level": progress.mastery_level,
+        "mastery_percentage": round((progress.mastery_level / 6) * 100),
+        "total_steps": total_steps,
+        "attempt_complete": False,
+        "result": None,
+        "next_step_list": None,
+        "error": None,
+    }
+
+
+def _fresh_question_context(context, step_list, steps, progress, rng=None):
+    state, token = build_step_question(step_list, steps, progress, rng=rng)
+    context.update(question_display(steps, state))
+    context.update({
+        "question_token": token,
+        # Keep the old name available for older tests and extensions.
+        "hidden_count": len(state["required_ids"]),
+        "review_steps": [],
+    })
+    return context
+
 
 @login_required
-def practice_step_review(
-    request,
-    step_list_id
-):
-
-    # ========================================================
-    # REVIEW SCOPE
-    #
-    # subject = subject-specific due review
-    # all     = global review across all subjects
-    # ========================================================
-
-    review_scope = (
-        request.GET.get(
-            "scope"
-        )
-        or
-        request.POST.get(
-            "scope"
-        )
-        or
-        "subject"
-    )
-
-    if review_scope != "all":
-
-        review_scope = "subject"
-
-    # ========================================================
-    # STEP LIST
-    #
-    # ONLY ALLOW DATA BELONGING TO THIS USER
-    # ========================================================
+def practice_step_review(request, step_list_id):
+    review_scope = request.GET.get("scope") or request.POST.get("scope") or "subject"
+    review_scope = "all" if review_scope == "all" else "subject"
 
     step_list = get_object_or_404(
-        StepList.objects
-        .select_related(
+        StepList.objects.select_related(
             "knowledge_unit",
             "knowledge_unit__subject",
         ),
@@ -332,670 +253,138 @@ def practice_step_review(
         knowledge_unit__subject__in=accessible_subjects(request.user),
         knowledge_unit__active=True,
     )
+    knowledge_unit = step_list.knowledge_unit
+    subject = knowledge_unit.subject
 
-    knowledge_unit = (
-        step_list.knowledge_unit
-    )
-
-    subject = (
-        knowledge_unit.subject
-    )
-
-    # ========================================================
-    # SUBJECT INDEX
-    #
-    # USED BY SUBJECT-SPECIFIC REVIEW ONLY.
-    # GLOBAL REVIEW WILL USUALLY HAVE NONE.
-    # ========================================================
-
-    subject_index = (
-        request.GET.get(
-            "subject_index"
-        )
-        or
-        request.POST.get(
-            "subject_index"
-        )
-    )
-
+    subject_index = request.GET.get("subject_index") or request.POST.get("subject_index")
     try:
-
-        subject_index = int(
-            subject_index
-        )
-
-    except (
-        TypeError,
-        ValueError
-    ):
-
+        subject_index = int(subject_index)
+    except (TypeError, ValueError):
         subject_index = None
 
-    # ========================================================
-    # STUDENT KNOWLEDGE / MASTERY
-    # ========================================================
-
-    progress, created = (
-        StudentKnowledge.objects
-        .get_or_create(
-            student=request.user,
-            knowledge_unit=knowledge_unit,
-        )
+    progress, _ = StudentKnowledge.objects.get_or_create(
+        student=request.user,
+        knowledge_unit=knowledge_unit,
+    )
+    progress.mastery_level = max(0, min(6, int(progress.mastery_level or 0)))
+    steps = list(step_list.steps.all().order_by("order", "id"))
+    total_steps = len(steps)
+    context = _base_context(
+        step_list,
+        subject,
+        subject_index,
+        review_scope,
+        progress,
+        total_steps,
     )
 
-    progress.mastery_level = max(
-        0,
-        min(
-            6,
-            int(
-                progress.mastery_level
-                or 0
-            )
+    if not steps:
+        context["error"] = "This step set does not contain any steps."
+        context.update({
+            "steps_to_place": 0,
+            "steps_already_added": 0,
+            "ordering_slots": [],
+            "available_steps": [],
+            "hidden_count": 0,
+            "review_steps": [],
+        })
+        return render(request, "practice/step_review.html", context)
+
+    if request.method != "POST":
+        _fresh_question_context(context, step_list, steps, progress)
+        return render(request, "practice/step_review.html", context)
+
+    try:
+        state = load_step_question(
+            request.POST.get("question_token", ""),
+            step_list,
+            steps,
+            progress,
         )
+        submitted_ids = json.loads(request.POST.get("ordered_step_ids", "[]"))
+        submitted_ids = [int(step_id) for step_id in submitted_ids]
+    except (signing.BadSignature, signing.SignatureExpired, TypeError, ValueError, json.JSONDecodeError):
+        context["error"] = "This review changed unexpectedly. Please try the refreshed question."
+        _fresh_question_context(context, step_list, steps, progress)
+        return render(request, "practice/step_review.html", context)
+
+    correct_ids = [step.id for step in steps]
+    prefilled_ids = set(state["prefilled_ids"])
+    valid_submission = (
+        len(submitted_ids) == total_steps
+        and len(set(submitted_ids)) == total_steps
+        and set(submitted_ids) == set(correct_ids)
     )
+    if valid_submission:
+        for position, correct_id in enumerate(correct_ids):
+            if correct_id in prefilled_ids and submitted_ids[position] != correct_id:
+                valid_submission = False
+                break
 
-    # ========================================================
-    # STEPS
-    # ========================================================
+    if not valid_submission:
+        context["error"] = "Place every available step before checking your answer."
+        context.update(question_display(steps, state))
+        context.update({
+            "question_token": request.POST.get("question_token", ""),
+            "hidden_count": len(state["required_ids"]),
+            "review_steps": [],
+        })
+        return render(request, "practice/step_review.html", context)
 
-    steps = list(
-        step_list.steps
-        .all()
-        .order_by(
-            "order",
-            "id",
-        )
+    required_ids = set(state["required_ids"])
+    all_correct = all(
+        submitted_ids[position] == correct_id
+        for position, correct_id in enumerate(correct_ids)
+        if correct_id in required_ids
     )
-
-    total_steps = len(
-        steps
-    )
-
-    # ========================================================
-    # MASTERY PERCENTAGE
-    # ========================================================
-
-    mastery_percentage = round(
-        (
-            progress.mastery_level
-            /
-            6
-        )
-        * 100
-    )
-
-    # ========================================================
-    # EMPTY STEP SET
-    # ========================================================
-
-    if total_steps == 0:
-
-        return render(
-            request,
-            "practice/step_review.html",
-            {
-                "step_list":
-                    step_list,
-
-                "subject":
-                    subject,
-
-                "subject_index":
-                    subject_index,
-
-                "review_scope":
-                    review_scope,
-
-                "progress":
-                    progress,
-
-                "mastery_level":
-                    progress.mastery_level,
-
-                "mastery_percentage":
-                    mastery_percentage,
-
-                "total_steps":
-                    0,
-
-                "hidden_count":
-                    0,
-
-                "review_steps":
-                    [],
-
-                "error":
-                    (
-                        "This step set does not "
-                        "contain any steps."
-                    ),
-
-                "result":
-                    None,
-
-                "attempt_complete":
-                    False,
-
-                "correct_answers":
-                    [],
-
-                "next_step_list":
-                    None,
-            }
-        )
-
-    # ========================================================
-    # NUMBER TO HIDE
-    # ========================================================
-
-    hidden_count = (
-        get_step_hidden_count(
-            total_steps,
-            progress.mastery_level,
-        )
-    )
-
-    # ========================================================
-    # PAGE STATE
-    # ========================================================
-
-    result = None
-
-    error = None
-
-    attempt_complete = False
-
-    correct_answers = []
-
-    next_step_list = None
-
-    hidden_step_ids = []
-
-    submitted_answers = {}
-
-    # ========================================================
-    # POST
-    # ========================================================
-
-    if request.method == "POST":
-
-        # ====================================================
-        # GET HIDDEN STEP IDS
-        #
-        # THIS PRESERVES THE RANDOM STEPS THAT WERE
-        # HIDDEN ON THE ORIGINAL GET REQUEST.
-        # ====================================================
-
-        hidden_step_id_values = (
-            request.POST.getlist(
-                "hidden_step_id"
-            )
-        )
-
-        for value in (
-            hidden_step_id_values
-        ):
-
-            try:
-
-                step_id = int(
-                    value
-                )
-
-            except (
-                TypeError,
-                ValueError
-            ):
-
-                continue
-
-            if (
-                step_id
-                not in hidden_step_ids
-            ):
-
-                hidden_step_ids.append(
-                    step_id
-                )
-
-        # ====================================================
-        # VALIDATE IDS
-        # ====================================================
-
-        valid_step_ids = {
-            step.id
-            for step
-            in steps
-        }
-
-        hidden_step_ids = [
-            step_id
-
-            for step_id
-            in hidden_step_ids
-
-            if step_id
-            in valid_step_ids
-        ]
-
-        if (
-            len(
-                hidden_step_ids
-            )
-            != hidden_count
-        ):
-
-            error = (
-                "The review changed unexpectedly. "
-                "Please reload the page and try again."
-            )
-
-        else:
-
-            # =================================================
-            # CHECK ANSWERS
-            #
-            # IMPORTANT:
-            #
-            # UNLIKE LISTS, STEPS ARE POSITION-SENSITIVE.
-            #
-            # EACH ANSWER IS CHECKED AGAINST THE STEP
-            # BELONGING TO THAT EXACT NUMBER.
-            #
-            # ANSWERS ARE NOT SORTED.
-            # =================================================
-
-            all_correct = True
-
-            correct_answers = []
-
-            for step in steps:
-
-                if (
-                    step.id
-                    not in hidden_step_ids
-                ):
-
-                    continue
-
-                # --------------------------------------------
-                # FIELD BELONGING TO THIS EXACT STEP
-                # --------------------------------------------
-
-                answer_name = (
-                    f"answer_{step.id}"
-                )
-
-                submitted_answer = (
-                    request.POST.get(
-                        answer_name,
-                        ""
-                    )
-                )
-
-                submitted_answers[
-                    step.id
-                ] = submitted_answer
-
-                # --------------------------------------------
-                # NORMALIZE ANSWERS
-                # --------------------------------------------
-
-                submitted_normalized = (
-                    normalize_step_answer(
-                        submitted_answer
-                    )
-                )
-
-                expected_normalized = (
-                    normalize_step_answer(
-                        step.text
-                    )
-                )
-
-                # --------------------------------------------
-                # POSITION MUST MATCH
-                # --------------------------------------------
-
-                if (
-                    submitted_normalized
-                    != expected_normalized
-                ):
-
-                    all_correct = False
-
-                # --------------------------------------------
-                # STORE CORRECT ANSWERS FOR WRONG RESULT
-                # --------------------------------------------
-
-                correct_answers.append(
-                    {
-                        "number":
-                            step.order,
-
-                        "text":
-                            step.text,
-                    }
-                )
-
-            # =================================================
-            # COMPLETE ATTEMPT
-            # =================================================
-
-            attempt_complete = True
-
-            now = (
-                timezone.now()
-            )
-
-            progress.review_count = (
-                progress.review_count
-                +
-                1
-            )
-
-            progress.last_reviewed = (
-                now
-            )
-
-            # =================================================
-            # CORRECT
-            # =================================================
-
-            if all_correct:
-
-                result = "correct"
-
-                progress.correct_count = (
-                    progress.correct_count
-                    +
-                    1
-                )
-
-                progress.mastery_level = min(
-                    6,
-                    (
-                        progress.mastery_level
-                        +
-                        1
-                    )
-                )
-
-                correct_answers = []
-
-            # =================================================
-            # INCORRECT
-            # =================================================
-
-            else:
-
-                result = "incorrect"
-
-                progress.incorrect_count = (
-                    progress.incorrect_count
-                    +
-                    1
-                )
-
-                progress.mastery_level = max(
-                    0,
-                    (
-                        progress.mastery_level
-                        -
-                        1
-                    )
-                )
-
-            # =================================================
-            # NEXT REVIEW
-            # =================================================
-
-            interval_days = (
-                get_review_interval(
-                    progress.mastery_level
-                )
-            )
-
-            # -------------------------------------------------
-            # AFTER ANY ATTEMPT, REMOVE THE STEP SET FROM
-            # TODAY'S DUE REVIEWS.
-            #
-            # EVEN 0/6 WAITS UNTIL AT LEAST TOMORROW.
-            # -------------------------------------------------
-
-            interval_days = max(
-                1,
-                interval_days
-            )
-
-            progress.next_review = (
-                now
-                +
-                timedelta(
-                    days=interval_days
-                )
-            )
-
-            progress.save()
-
-            # =================================================
-            # NEXT STEP SET
-            # =================================================
-
-            if review_scope == "all":
-
-                # =============================================
-                # GLOBAL REVIEW
-                #
-                # ALL ACTIVE STEP SETS ACROSS ALL SUBJECTS.
-                #
-                # THIS MATCHES GLOBAL LIST REVIEW:
-                # DUE DATE DOES NOT MATTER.
-                # =============================================
-
-                next_step_list = (
-                    find_next_global_step_list(
-                        user=request.user,
-                        current_step_list_id=(
-                            step_list.id
-                        ),
-                    )
-                )
-
-            else:
-
-                # =============================================
-                # SUBJECT REVIEW
-                #
-                # ONLY ANOTHER DUE STEP SET FROM
-                # THIS SAME SUBJECT.
-                # =============================================
-
-                next_step_list = (
-                    find_next_due_step_list(
-                        user=request.user,
-                        subject=subject,
-                        exclude_step_list_id=(
-                            step_list.id
-                        ),
-                    )
-                )
-
-            # =================================================
-            # UPDATED MASTERY PERCENTAGE
-            # =================================================
-
-            mastery_percentage = round(
-                (
-                    progress.mastery_level
-                    /
-                    6
-                )
-                * 100
-            )
-
-            # =================================================
-            # RESULT SCREEN
-            # =================================================
-
-            return render(
-                request,
-                "practice/step_review.html",
-                {
-                    "step_list":
-                        step_list,
-
-                    "subject":
-                        subject,
-
-                    "subject_index":
-                        subject_index,
-
-                    "review_scope":
-                        review_scope,
-
-                    "progress":
-                        progress,
-
-                    "mastery_level":
-                        progress.mastery_level,
-
-                    "mastery_percentage":
-                        mastery_percentage,
-
-                    "total_steps":
-                        total_steps,
-
-                    "hidden_count":
-                        hidden_count,
-
-                    "review_steps":
-                        [],
-
-                    "error":
-                        None,
-
-                    "result":
-                        result,
-
-                    "attempt_complete":
-                        True,
-
-                    "correct_answers":
-                        correct_answers,
-
-                    "next_step_list":
-                        next_step_list,
-                }
-            )
-
-    # ========================================================
-    # GET
-    # ========================================================
-
+    by_id = {step.id: step for step in steps}
+    result_steps = []
+    for position, correct_id in enumerate(correct_ids):
+        submitted_id = submitted_ids[position]
+        result_steps.append({
+            "number": position + 1,
+            "submitted": by_id[submitted_id],
+            "expected": by_id[correct_id],
+            "required": correct_id in required_ids,
+            "correct": submitted_id == correct_id,
+        })
+
+    now = timezone.now()
+    progress.review_count += 1
+    progress.last_reviewed = now
+    if all_correct:
+        progress.correct_count += 1
+        progress.mastery_level = min(6, progress.mastery_level + 1)
+        result = "correct"
     else:
+        progress.incorrect_count += 1
+        progress.mastery_level = max(0, progress.mastery_level - 1)
+        result = "incorrect"
 
-        hidden_steps = (
-            random.sample(
-                steps,
-                hidden_count
-            )
+    interval_days = max(1, get_review_interval(progress.mastery_level))
+    progress.next_review = now + timedelta(days=interval_days)
+    progress.save()
+
+    if review_scope == "all":
+        next_step_list = find_next_global_step_list(request.user, step_list.id)
+    else:
+        next_step_list = find_next_due_step_list(
+            request.user,
+            subject,
+            exclude_step_list_id=step_list.id,
         )
 
-        hidden_step_ids = [
-            step.id
-
-            for step
-            in hidden_steps
-        ]
-
-    # ========================================================
-    # BUILD TEMPLATE STEPS
-    # ========================================================
-
-    hidden_step_id_set = set(
-        hidden_step_ids
-    )
-
-    review_steps = []
-
-    for step in steps:
-
-        is_hidden = (
-            step.id
-            in hidden_step_id_set
-        )
-
-        review_steps.append(
-            {
-                "step":
-                    step,
-
-                "hidden":
-                    is_hidden,
-
-                "input_name":
-                    f"answer_{step.id}",
-
-                "submitted_answer":
-                    submitted_answers.get(
-                        step.id,
-                        ""
-                    ),
-            }
-        )
-
-    # ========================================================
-    # RENDER QUESTION
-    # ========================================================
-
-    return render(
-        request,
-        "practice/step_review.html",
-        {
-            "step_list":
-                step_list,
-
-            "subject":
-                subject,
-
-            "subject_index":
-                subject_index,
-
-            "review_scope":
-                review_scope,
-
-            "progress":
-                progress,
-
-            "mastery_level":
-                progress.mastery_level,
-
-            "mastery_percentage":
-                mastery_percentage,
-
-            "total_steps":
-                total_steps,
-
-            "hidden_count":
-                hidden_count,
-
-            "review_steps":
-                review_steps,
-
-            "error":
-                error,
-
-            "result":
-                result,
-
-            "attempt_complete":
-                attempt_complete,
-
-            "correct_answers":
-                correct_answers,
-
-            "next_step_list":
-                next_step_list,
-        }
-    )
+    context.update({
+        "progress": progress,
+        "mastery_level": progress.mastery_level,
+        "mastery_percentage": round((progress.mastery_level / 6) * 100),
+        "steps_to_place": len(state["required_ids"]),
+        "steps_already_added": len(state["prefilled_ids"]),
+        "hidden_count": len(state["required_ids"]),
+        "attempt_complete": True,
+        "result": result,
+        "result_steps": result_steps,
+        "next_step_list": next_step_list,
+        "review_steps": [],
+    })
+    return render(request, "practice/step_review.html", context)
