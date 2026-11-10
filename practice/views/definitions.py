@@ -1,5 +1,6 @@
 from datetime import timedelta
 import random
+import re
 
 from django.contrib.auth.decorators import login_required
 from django.core import signing
@@ -74,6 +75,36 @@ def get_definition_review_interval(
 # CREATE HIDDEN DEFINITION SECTION
 # ============================================================
 
+# These words help a sentence read naturally but are not useful recall targets.
+# Keep this deliberately limited to function words: short scientific terms such
+# as "DNA", "pH", "ion", and "per" remain eligible to be tested.
+DEFINITION_COMMON_WORDS = {
+    "a", "an", "the",
+    "and", "or", "but", "if", "then", "than", "as",
+    "at", "by", "for", "from", "in", "into", "of", "on", "onto",
+    "to", "with", "without", "within", "through", "during", "before",
+    "after", "above", "below", "between", "among", "under", "over",
+    "is", "are", "was", "were", "be", "been", "being",
+    "do", "does", "did", "have", "has", "had",
+    "can", "could", "may", "might", "will", "would", "should", "must",
+    "this", "that", "these", "those", "it", "its", "they", "them",
+    "their", "we", "our", "you", "your", "he", "she", "him", "her",
+    "which", "who", "whom", "whose", "what", "when", "where", "why",
+    "how", "not", "no", "yes", "each", "every", "any", "some", "such",
+    "other", "only", "also", "very", "more", "most", "less", "least",
+    "etc",
+}
+
+
+def is_testable_definition_word(word):
+    """Return whether a displayed definition word is worth recalling."""
+    normalized_word = re.sub(
+        r"(^[^\w]+|[^\w]+$)",
+        "",
+        word,
+    ).casefold()
+    return bool(normalized_word) and normalized_word not in DEFINITION_COMMON_WORDS
+
 def create_definition_question(
     definition_text,
     mastery_level,
@@ -99,6 +130,7 @@ def create_definition_question(
             "missing_text": "",
             "after_text": "",
             "hidden_percentage": 0,
+            "has_testable_words": False,
             "missing_indices": [],
             "missing_answers": [],
             "question_parts": [],
@@ -117,11 +149,45 @@ def create_definition_question(
 
 
     # --------------------------------------------------------
-    # NUMBER OF WORDS TO HIDE
+    # NUMBER OF MEANINGFUL WORDS TO HIDE
+    #
+    # Articles, conjunctions, prepositions, and similar filler
+    # words stay visible. The percentage is therefore calculated
+    # from the words that are actually useful to recall.
     # --------------------------------------------------------
 
+    testable_indices = [
+        index
+        for index, word in enumerate(words)
+        if is_testable_definition_word(word)
+    ]
+
+    # A definition made only of filler words is not useful study material,
+    # but returning an empty question keeps this helper predictable and avoids
+    # making one of those filler words a surprise test target.
+    if not testable_indices:
+        return {
+            "before_text": definition_text,
+            "missing_text": "",
+            "after_text": "",
+            "hidden_percentage": hidden_percentage,
+            "has_testable_words": False,
+            "missing_indices": [],
+            "missing_answers": [],
+            "question_parts": [
+                {
+                    "text": word,
+                    "is_missing": False,
+                    "input_name": f"answer_{index}",
+                    "width_ch": max(1, len(word)),
+                    "blank_number": None,
+                }
+                for index, word in enumerate(words)
+            ],
+        }
+
     number_to_hide = round(
-        len(words)
+        len(testable_indices)
         * hidden_percentage
         / 100
     )
@@ -133,7 +199,7 @@ def create_definition_question(
 
     number_to_hide = min(
         number_to_hide,
-        len(words)
+        len(testable_indices)
     )
 
 
@@ -143,7 +209,7 @@ def create_definition_question(
     if missing_indices is None:
         chooser = rng or random.SystemRandom()
         missing_indices = chooser.sample(
-            range(len(words)),
+            testable_indices,
             number_to_hide,
         )
 
@@ -153,13 +219,13 @@ def create_definition_question(
             index = int(raw_index)
         except (TypeError, ValueError):
             continue
-        if 0 <= index < len(words):
+        if index in testable_indices:
             valid_missing_indices.add(index)
 
     missing_indices = sorted(valid_missing_indices)
 
     if not missing_indices:
-        missing_indices = [0]
+        missing_indices = [testable_indices[0]]
 
     missing_index_set = set(missing_indices)
     missing_answers = [words[index] for index in missing_indices]
@@ -198,6 +264,9 @@ def create_definition_question(
         "hidden_percentage":
             hidden_percentage,
 
+        "has_testable_words":
+            True,
+
         "missing_indices":
             missing_indices,
 
@@ -213,7 +282,7 @@ def create_definition_question(
 # SIGNED QUESTION STATE
 # ============================================================
 
-DEFINITION_QUESTION_SALT = "studigarden.definition-question.v1"
+DEFINITION_QUESTION_SALT = "studigarden.definition-question.v2"
 
 
 def create_definition_question_token(definition, question, progress):
@@ -768,11 +837,15 @@ def practice_definition(
         "missing_answers"
     ]
 
-    question_token = create_definition_question_token(
-        definition,
-        question,
-        progress,
-    )
+    has_testable_words = question["has_testable_words"]
+
+    question_token = None
+    if has_testable_words:
+        question_token = create_definition_question_token(
+            definition,
+            question,
+            progress,
+        )
 
 
     # ========================================================
@@ -838,6 +911,11 @@ def practice_definition(
     # ========================================================
 
     if request.method == "POST":
+
+        if not has_testable_words:
+            return HttpResponseBadRequest(
+                "This definition has no meaningful words to test."
+            )
 
         answers = []
 
@@ -994,6 +1072,9 @@ def practice_definition(
                 "question_token":
                     question_token,
 
+                "no_testable_words":
+                    False,
+
                 "answer":
                     answer,
 
@@ -1052,6 +1133,9 @@ def practice_definition(
 
             "question_token":
                 question_token,
+
+            "no_testable_words":
+                not has_testable_words,
 
             "submitted":
                 False,

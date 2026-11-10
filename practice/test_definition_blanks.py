@@ -5,7 +5,11 @@ from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 
 from learning.models import Definition, KnowledgeUnit, StudentKnowledge, Subject
-from practice.views.definitions import create_definition_question
+from practice.views.definitions import (
+    DEFINITION_COMMON_WORDS,
+    create_definition_question,
+    is_testable_definition_word,
+)
 
 
 class DefinitionQuestionBuilderTests(SimpleTestCase):
@@ -54,6 +58,40 @@ class DefinitionQuestionBuilderTests(SimpleTestCase):
             [part["width_ch"] for part in hidden_parts],
             [len(part["text"]) for part in hidden_parts],
         )
+
+    def test_common_words_are_never_selected_as_definition_blanks(self):
+        text = (
+            "The cell is an important unit of life and it carries out "
+            "specialised functions in an organism"
+        )
+
+        for seed in range(20):
+            question = create_definition_question(
+                text,
+                6,
+                rng=random.Random(seed),
+            )
+            for missing_index in question["missing_indices"]:
+                word = text.split()[missing_index]
+                self.assertTrue(is_testable_definition_word(word))
+                self.assertNotIn(word.casefold(), DEFINITION_COMMON_WORDS)
+
+    def test_explicit_common_word_indices_are_not_used_as_blanks(self):
+        question = create_definition_question(
+            "The cell is an important unit of life",
+            3,
+            missing_indices=[0, 1, 2, 3, 4, 5, 6, 7],
+        )
+        self.assertEqual(question["missing_answers"], ["cell", "important", "unit", "life"])
+
+    def test_common_words_with_punctuation_are_not_testable(self):
+        self.assertFalse(is_testable_definition_word("The,"))
+        self.assertFalse(is_testable_definition_word("an."))
+
+    def test_filler_only_definition_does_not_create_a_blank(self):
+        question = create_definition_question("The and an of", 6)
+        self.assertFalse(question["has_testable_words"])
+        self.assertEqual(question["missing_indices"], [])
 
 
 class DefinitionQuestionViewTests(TestCase):
@@ -118,3 +156,19 @@ class DefinitionQuestionViewTests(TestCase):
             "answer_0": "anything",
         })
         self.assertEqual(response.status_code, 400)
+
+    def test_filler_only_definition_is_not_given_an_unanswerable_test(self):
+        filler_definition = Definition.objects.create(
+            knowledge_unit=self.unit,
+            term="Filler example",
+            definition="The and an of",
+        )
+
+        response = self.client.get(
+            reverse("practice_definition_review", args=[filler_definition.pk])
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["no_testable_words"])
+        self.assertIsNone(response.context["question_token"])
+        self.assertNotContains(response, "Check Answer")

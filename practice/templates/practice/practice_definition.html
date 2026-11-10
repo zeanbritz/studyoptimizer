@@ -1116,6 +1116,22 @@
              QUESTION
         ====================================== -->
 
+        {% if no_testable_words %}
+
+            <div class="definition-question">
+
+                {% for part in question_parts %}
+                    <span class="definition-word">{{ part.text }}</span>{% if not forloop.last %} {% endif %}
+                {% endfor %}
+
+            </div>
+
+            <p class="no-testable-words">
+                This definition does not contain a meaningful word to test yet.
+            </p>
+
+        {% else %}
+
         <form method="POST">
 
             {% csrf_token %}{% review_hidden %}
@@ -1162,6 +1178,8 @@
 
 
         </form>
+
+        {% endif %}
 
 
     {% else %}
