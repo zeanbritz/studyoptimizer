@@ -953,7 +953,8 @@
                             type="button"
                             onclick="addElement('variable')"
                         >
-                            + Variable
+                            <span class="toolbar-icon" aria-hidden="true">𝑥</span>
+                            Variable
                         </button>
 
 
@@ -961,7 +962,8 @@
                             type="button"
                             onclick="addElement('number')"
                         >
-                            + Number
+                            <span class="toolbar-icon" aria-hidden="true">123</span>
+                            Number
                         </button>
 
 
@@ -969,7 +971,7 @@
 
 
                             <option value="">
-                                + Operator
+                                × Operator
                             </option>
 
 
@@ -1023,7 +1025,8 @@
                             type="button"
                             onclick="addElement('symbol', '(')"
                         >
-                            + Symbol
+                            <span class="toolbar-icon" aria-hidden="true">Ω</span>
+                            Symbol
                         </button>
 
 
@@ -1031,14 +1034,24 @@
                             type="button"
                             onclick="addFraction()"
                         >
-                            + Fraction
+                            <span class="toolbar-icon" aria-hidden="true">½</span>
+                            Fraction
                         </button>
 
 
                     </div>
 
 
-                    <div id="formula-canvas">
+                    <p class="keyboard-hint">
+                        Click inside the formula first. Type a letter to add a variable,
+                        or use 0–9, a decimal point, +, -, *, /, =, &lt; or &gt;.
+                    </p>
+
+
+                    <div
+                        id="formula-canvas"
+                        tabindex="0"
+                    >
                     </div>
 
 
@@ -1321,7 +1334,7 @@
 </script>
 
 
-<script src="{% static 'js/formula-editor.js' %}">
+<script src="{% static 'js/formula-editor.js' %}?v=20261111-1">
 </script>
 
 

@@ -268,6 +268,12 @@ let formulaKeyboardActive =
     false;
 
 
+// A browser does not reliably emit a dblclick event for the secondary mouse
+// button, so track two quick right-clicks on the same token ourselves.
+let pendingRightClickDelete =
+    null;
+
+
 // ============================================================
 // UPDATE STRUCTURE
 // ============================================================
@@ -732,9 +738,17 @@ function renderContainer(
 
                     if (
                         element.type
-                        !==
+                        ===
                         "fraction"
                     ) {
+
+                        showFractionDeletePrompt(
+                            element
+                        );
+
+                    }
+
+                    else {
 
                         formulaKeyboardActive =
                             false;
@@ -745,6 +759,26 @@ function renderContainer(
                         );
 
                     }
+
+                }
+            );
+
+
+            box.addEventListener(
+                "contextmenu",
+                function (
+                    event
+                ) {
+
+                    event.preventDefault();
+
+                    event.stopPropagation();
+
+
+                    handleRightClickDelete(
+                        element,
+                        box
+                    );
 
                 }
             );
@@ -1211,6 +1245,282 @@ function removeElement(
 
 
     return false;
+
+}
+
+
+// ============================================================
+// DELETE A FORMULA ELEMENT
+// ============================================================
+
+function deleteFormulaElement(
+    elementId
+) {
+
+    removeElement(
+        formulaElements,
+        elementId
+    );
+
+
+    activeContainer =
+        formulaElements;
+
+
+    insertionIndex =
+        formulaElements.length;
+
+
+    renderFormula();
+
+
+    focusFormula();
+
+}
+
+
+// ============================================================
+// DOUBLE RIGHT-CLICK TO DELETE
+// ============================================================
+
+function handleRightClickDelete(
+    element,
+    box
+) {
+
+    const now = Date.now();
+
+
+    if (
+        pendingRightClickDelete
+        &&
+        pendingRightClickDelete.id
+        ===
+        element.id
+        &&
+        now
+        -
+        pendingRightClickDelete.time
+        <=
+        450
+    ) {
+
+        window.clearTimeout(
+            pendingRightClickDelete.timeoutId
+        );
+
+
+        pendingRightClickDelete =
+            null;
+
+
+        if (
+            element.type
+            ===
+            "fraction"
+        ) {
+
+            showFractionDeletePrompt(
+                element
+            );
+
+            return;
+
+        }
+
+
+        deleteFormulaElement(
+            element.id
+        );
+
+
+        return;
+
+    }
+
+
+    if (
+        pendingRightClickDelete
+        &&
+        pendingRightClickDelete.box
+    ) {
+
+        pendingRightClickDelete.box.classList.remove(
+            "right-click-delete-armed"
+        );
+
+    }
+
+
+    box.classList.add(
+        "right-click-delete-armed"
+    );
+
+
+    const timeoutId = window.setTimeout(
+        function () {
+
+            if (
+                pendingRightClickDelete
+                &&
+                pendingRightClickDelete.id
+                ===
+                element.id
+            ) {
+
+                box.classList.remove(
+                    "right-click-delete-armed"
+                );
+
+
+                pendingRightClickDelete =
+                    null;
+
+            }
+
+        },
+        450
+    );
+
+
+    pendingRightClickDelete = {
+        id: element.id,
+        time: now,
+        box: box,
+        timeoutId: timeoutId,
+    };
+
+}
+
+
+// ============================================================
+// FRACTION DELETE PROMPT
+// ============================================================
+
+function showFractionDeletePrompt(
+    fraction
+) {
+
+    const existingPrompt = document.getElementById(
+        "formula-confirmation"
+    );
+
+
+    if (
+        existingPrompt
+    ) {
+
+        existingPrompt.remove();
+
+    }
+
+
+    const prompt = document.createElement(
+        "div"
+    );
+
+
+    prompt.id =
+        "formula-confirmation";
+
+
+    prompt.className =
+        "formula-confirmation-backdrop";
+
+
+    prompt.innerHTML = `
+
+        <div
+            class="formula-confirmation-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="fraction-delete-title"
+        >
+            <h3 id="fraction-delete-title">
+                Delete fraction?
+            </h3>
+            <p>
+                This removes the fraction and everything in its numerator and denominator.
+            </p>
+            <div class="formula-confirmation-actions">
+                <button
+                    type="button"
+                    class="formula-confirmation-cancel"
+                >
+                    Cancel
+                </button>
+                <button
+                    type="button"
+                    class="formula-confirmation-delete"
+                >
+                    Delete fraction
+                </button>
+            </div>
+        </div>
+
+    `;
+
+
+    function closePrompt() {
+
+        prompt.remove();
+
+    }
+
+
+    prompt.addEventListener(
+        "click",
+        function (
+            event
+        ) {
+
+            if (
+                event.target
+                ===
+                prompt
+            ) {
+
+                closePrompt();
+
+            }
+
+        }
+    );
+
+
+    prompt.querySelector(
+        ".formula-confirmation-cancel"
+    ).addEventListener(
+        "click",
+        closePrompt
+    );
+
+
+    prompt.querySelector(
+        ".formula-confirmation-delete"
+    ).addEventListener(
+        "click",
+        function () {
+
+            deleteFormulaElement(
+                fraction.id
+            );
+
+
+            closePrompt();
+
+        }
+    );
+
+
+    document.body.appendChild(
+        prompt
+    );
+
+
+    prompt.querySelector(
+        ".formula-confirmation-cancel"
+    ).focus();
 
 }
 
@@ -1993,27 +2303,12 @@ function showEditor(
             "click",
             function () {
 
-                removeElement(
-                    formulaElements,
-                    element.id
-                );
-
-
                 editor.remove();
 
 
-                activeContainer =
-                    formulaElements;
-
-
-                insertionIndex =
-                    formulaElements.length;
-
-
-                renderFormula();
-
-
-                focusFormula();
+                deleteFormulaElement(
+                    element.id
+                );
 
             }
         );
@@ -2368,6 +2663,26 @@ document.addEventListener(
 
 
             addKeyboardNumberCharacter(
+                key
+            );
+
+
+            return;
+
+        }
+
+
+        if (
+            /^\p{L}$/u.test(
+                key
+            )
+        ) {
+
+            event.preventDefault();
+
+
+            addElement(
+                "variable",
                 key
             );
 

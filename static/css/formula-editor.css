@@ -75,6 +75,12 @@
     cursor: grabbing;
 }
 
+.formula-element.right-click-delete-armed {
+    border-color: #d65454;
+    background: #fff1f1;
+    box-shadow: 0 0 0 3px rgba(214, 84, 84, 0.15);
+}
+
 .formula-element.dragging {
     opacity: 0.4;
 }
@@ -141,6 +147,22 @@
     background: #f5f5f5;
 }
 
+.toolbar-icon {
+    display: inline-block;
+    min-width: 1.25em;
+    margin-right: 0.18em;
+    color: #226f9c;
+    font-weight: 800;
+    text-align: center;
+}
+
+.keyboard-hint {
+    margin: 0 0 14px;
+    color: #737a80;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
 #operator-select {
     padding: 8px 10px;
     font-size: 14px;
@@ -201,6 +223,76 @@
     margin: 4px;
 
     cursor: pointer;
+}
+
+
+/* =========================
+   FRACTION DELETE PROMPT
+   ========================= */
+
+.formula-confirmation-backdrop {
+    position: fixed;
+    z-index: 1100;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgba(31, 42, 57, 0.45);
+}
+
+.formula-confirmation-dialog {
+    width: min(100%, 390px);
+    padding: 24px;
+    border: 2px solid #dfe3e6;
+    border-bottom-width: 5px;
+    border-radius: 16px;
+    background: #ffffff;
+    color: #2f373b;
+    box-shadow: 0 18px 45px rgba(24, 34, 48, 0.25);
+}
+
+.formula-confirmation-dialog h3 {
+    margin: 0 0 8px;
+    font-size: 20px;
+}
+
+.formula-confirmation-dialog p {
+    margin: 0;
+    color: #687278;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.formula-confirmation-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 9px;
+    margin-top: 22px;
+}
+
+.formula-confirmation-actions button {
+    min-height: 39px;
+    padding: 8px 13px;
+    border: 2px solid #d5dde0;
+    border-bottom-width: 4px;
+    border-radius: 9px;
+    background: #ffffff;
+    color: #364146;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.formula-confirmation-actions .formula-confirmation-delete {
+    border-color: #b63b3b;
+    background: #d65454;
+    color: #ffffff;
+}
+
+.formula-confirmation-actions button:active {
+    border-bottom-width: 2px;
+    transform: translateY(2px);
 }
 
 
