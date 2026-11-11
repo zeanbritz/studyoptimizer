@@ -339,6 +339,30 @@ function focusFormula() {
 
 
 // ============================================================
+// GROUPING BRACKETS
+// ============================================================
+
+// Brackets only organise a formula, so unlike other symbols they do not need
+// a student-written description.
+function isGroupingBracketSymbol(
+    value
+) {
+
+    return [
+        "(",
+        ")",
+        "{",
+        "}",
+        "[",
+        "]",
+    ].includes(
+        value
+    );
+
+}
+
+
+// ============================================================
 // ADD ELEMENT
 // ============================================================
 
@@ -402,6 +426,19 @@ function addElement(
         ===
         "symbol"
     ) {
+
+        if (
+            isGroupingBracketSymbol(
+                value
+            )
+        ) {
+
+            focusFormula();
+
+
+            return;
+
+        }
 
         formulaKeyboardActive =
             false;
@@ -1769,6 +1806,20 @@ function showEditor(
     element
 ) {
 
+    if (
+        element.type
+        ===
+        "symbol"
+        &&
+        isGroupingBracketSymbol(
+            element.value
+        )
+    ) {
+
+        return;
+
+    }
+
     const existing =
         document.getElementById(
             "element-editor"
@@ -2663,6 +2714,26 @@ document.addEventListener(
 
 
             addKeyboardNumberCharacter(
+                key
+            );
+
+
+            return;
+
+        }
+
+
+        if (
+            isGroupingBracketSymbol(
+                key
+            )
+        ) {
+
+            event.preventDefault();
+
+
+            addElement(
+                "symbol",
                 key
             );
 
