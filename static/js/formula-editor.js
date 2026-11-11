@@ -274,6 +274,10 @@ let pendingRightClickDelete =
     null;
 
 
+let selectedFormulaElementId =
+    null;
+
+
 // ============================================================
 // UPDATE STRUCTURE
 // ============================================================
@@ -370,6 +374,8 @@ function addElement(
     type,
     value = ""
 ) {
+
+    clearSelectedFormulaElement();
 
     const element = {
 
@@ -725,6 +731,19 @@ function renderContainer(
                 element.id;
 
 
+            if (
+                selectedFormulaElementId
+                ===
+                element.id
+            ) {
+
+                box.classList.add(
+                    "formula-element-selected"
+                );
+
+            }
+
+
             box.draggable =
                 true;
 
@@ -760,6 +779,28 @@ function renderContainer(
                     element.meaning;
 
             }
+
+
+            box.addEventListener(
+                "click",
+                function (
+                    event
+                ) {
+
+                    event.preventDefault();
+
+                    event.stopPropagation();
+
+
+                    selectFormulaElement(
+                        element,
+                        elements,
+                        index,
+                        box
+                    );
+
+                }
+            );
 
 
             box.addEventListener(
@@ -1030,6 +1071,8 @@ function selectInsertionPoint(
     zone
 ) {
 
+    clearSelectedFormulaElement();
+
     activeContainer =
         elements;
 
@@ -1159,6 +1202,8 @@ function renderFraction(
 // ============================================================
 
 function addFraction() {
+
+    clearSelectedFormulaElement();
 
     const fraction = {
 
@@ -1290,9 +1335,136 @@ function removeElement(
 // DELETE A FORMULA ELEMENT
 // ============================================================
 
+function clearSelectedFormulaElement() {
+
+    selectedFormulaElementId =
+        null;
+
+
+    document.querySelectorAll(
+        ".formula-element-selected"
+    ).forEach(
+        function (
+            box
+        ) {
+
+            box.classList.remove(
+                "formula-element-selected"
+            );
+
+        }
+    );
+
+}
+
+
+function selectFormulaElement(
+    element,
+    elements,
+    index,
+    box
+) {
+
+    clearSelectedFormulaElement();
+
+
+    selectedFormulaElementId =
+        element.id;
+
+
+    activeContainer =
+        elements;
+
+
+    insertionIndex =
+        index
+        +
+        1;
+
+
+    box.classList.add(
+        "formula-element-selected"
+    );
+
+
+    focusFormula();
+
+}
+
+
+function deleteSelectedOrPreviousFormulaElement() {
+
+    if (
+        selectedFormulaElementId
+    ) {
+
+        deleteFormulaElement(
+            selectedFormulaElementId
+        );
+
+
+        return;
+
+    }
+
+
+    let previousElement =
+        null;
+
+
+    if (
+        activeContainer
+        &&
+        insertionIndex
+        >
+        0
+    ) {
+
+        previousElement =
+            activeContainer[
+                insertionIndex
+                -
+                1
+            ];
+
+    }
+
+
+    if (
+        !previousElement
+        &&
+        formulaElements.length
+        >
+        0
+    ) {
+
+        previousElement =
+            formulaElements[
+                formulaElements.length
+                -
+                1
+            ];
+
+    }
+
+
+    if (
+        previousElement
+    ) {
+
+        deleteFormulaElement(
+            previousElement.id
+        );
+
+    }
+
+}
+
 function deleteFormulaElement(
     elementId
 ) {
+
+    clearSelectedFormulaElement();
 
     removeElement(
         formulaElements,
@@ -1657,6 +1829,8 @@ function moveElement(
     targetId,
     insertAfter
 ) {
+
+    clearSelectedFormulaElement();
 
     const dragged =
         findAndRemoveElement(
@@ -2705,6 +2879,23 @@ document.addEventListener(
 
 
         if (
+            key
+            ===
+            "Backspace"
+        ) {
+
+            event.preventDefault();
+
+
+            deleteSelectedOrPreviousFormulaElement();
+
+
+            return;
+
+        }
+
+
+        if (
             /^[0-9.]$/.test(
                 key
             )
@@ -2807,6 +2998,8 @@ if (
                 ===
                 formulaCanvas
             ) {
+
+                clearSelectedFormulaElement();
 
                 activeContainer =
                     formulaElements;

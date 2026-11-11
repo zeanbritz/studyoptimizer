@@ -81,6 +81,12 @@
     box-shadow: 0 0 0 3px rgba(214, 84, 84, 0.15);
 }
 
+.formula-element.formula-element-selected {
+    border-color: #226f9c;
+    background: #e8f3f9;
+    box-shadow: 0 0 0 3px rgba(34, 111, 156, 0.16);
+}
+
 .formula-element.dragging {
     opacity: 0.4;
 }
