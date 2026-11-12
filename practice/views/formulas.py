@@ -1234,6 +1234,12 @@ def get_next_due_formula(
         timezone.localdate()
     )
 
+    # Today's plan may contain the daily Definition/Formula practice floor.
+    # Those items remain available for this session even when their next
+    # spaced-review date is in the future.
+    if subject is not None:
+        return formulas.first()
+
     for formula in formulas:
 
         progress = (

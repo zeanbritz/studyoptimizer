@@ -271,54 +271,6 @@ def dashboard(request):
                 continue
 
             # ------------------------------------------------
-            # PROGRESS
-            # ------------------------------------------------
-
-            progress = (
-                StudentKnowledge.objects
-                .filter(
-                    student=request.user,
-                    knowledge_unit=knowledge_unit,
-                )
-                .first()
-            )
-
-            # ------------------------------------------------
-            # IS DUE?
-            # ------------------------------------------------
-
-            is_due = False
-
-            if progress is None:
-
-                is_due = True
-
-            elif progress.next_review is None:
-
-                is_due = True
-
-            else:
-
-                next_review_date = (
-                    timezone.localtime(
-                        progress.next_review
-                    )
-                    .date()
-                )
-
-                if (
-                    next_review_date
-                    <=
-                    today
-                ):
-
-                    is_due = True
-
-            if not is_due:
-
-                continue
-
-            # ------------------------------------------------
             # SUBJECT
             # ------------------------------------------------
 
@@ -423,46 +375,6 @@ def dashboard(request):
             )
 
             if not formula:
-
-                continue
-
-            progress = (
-                StudentKnowledge.objects
-                .filter(
-                    student=request.user,
-                    knowledge_unit=knowledge_unit,
-                )
-                .first()
-            )
-
-            is_due = False
-
-            if progress is None:
-
-                is_due = True
-
-            elif progress.next_review is None:
-
-                is_due = True
-
-            else:
-
-                next_review_date = (
-                    timezone.localtime(
-                        progress.next_review
-                    )
-                    .date()
-                )
-
-                if (
-                    next_review_date
-                    <=
-                    today
-                ):
-
-                    is_due = True
-
-            if not is_due:
 
                 continue
 

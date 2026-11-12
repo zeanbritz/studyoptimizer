@@ -38,6 +38,11 @@ REVIEW_TYPES = (
     KnowledgeUnit.KnowledgeType.STEPS,
     KnowledgeUnit.KnowledgeType.COMPARISON,
 )
+DAILY_PRACTICE_TYPES = (
+    KnowledgeUnit.KnowledgeType.DEFINITION,
+    KnowledgeUnit.KnowledgeType.FORMULA,
+)
+DAILY_PRACTICE_FLOOR = 10
 
 
 def _reviewable_units(user):
@@ -126,7 +131,7 @@ def _settings_and_summary(user, day):
 
     units_stamp = list(_reviewable_units(user).order_by("pk").values_list("pk", "estimated_minutes"))
     signature_data = {
-        "planner_version": 1,
+        "planner_version": 2,
         "week": weekly,
         "subjects": [(s.pk, s.exam_date.isoformat() if s.exam_date else None, revision.get(s.pk, 0)) for s in subjects],
         "books": [(b.pk, b.subject_id, b.page_count) for b in books],
@@ -164,6 +169,36 @@ def _candidates(user, day):
         )
     }
     return [(unit, progress.get(unit.pk)) for unit in units if _due(progress.get(unit.pk), day)]
+
+
+def _daily_practice_candidates(user):
+    """Return stable Definition/Formula material for a caught-up day."""
+    units = list(
+        _reviewable_units(user)
+        .filter(knowledge_type__in=DAILY_PRACTICE_TYPES)
+        .select_related("subject")
+        .order_by("pk")
+    )
+    progress_by_unit_id = {
+        item.knowledge_unit_id: item
+        for item in StudentKnowledge.objects.filter(
+            student=user,
+            knowledge_unit_id__in=[unit.pk for unit in units],
+        )
+    }
+
+    def practice_priority(unit):
+        progress = progress_by_unit_id.get(unit.pk)
+        # Rotate toward material practised least recently; weaker material wins
+        # ties so the floor remains useful instead of becoming random revision.
+        return (
+            0 if not progress or not progress.last_reviewed else 1,
+            progress.last_reviewed if progress and progress.last_reviewed else timezone.now(),
+            progress.mastery_level if progress else 0,
+            unit.pk,
+        )
+
+    return sorted(units, key=practice_priority)
 
 
 def _priority(unit, progress, day):
@@ -215,6 +250,21 @@ def get_daily_review_plan(user, day=None):
     candidates = _candidates(user, day)
     budget = max(0, available - summary)
     ids = _choose(candidates, budget, day)
+
+    # Once Definitions and Formulas are genuinely caught up, give the student
+    # a small daily retrieval-practice set. This is selected when the plan is
+    # first made for the day; it never refills after each answer.
+    has_due_daily_practice = any(
+        unit.knowledge_type in DAILY_PRACTICE_TYPES
+        for unit, _progress in candidates
+    )
+    if available > 0 and not has_due_daily_practice:
+        practice_ids = [
+            unit.pk
+            for unit in _daily_practice_candidates(user)
+            if unit.pk not in ids
+        ]
+        ids.extend(practice_ids[:DAILY_PRACTICE_FLOOR])
     with transaction.atomic():
         plan, _ = DailyReviewPlan.objects.update_or_create(
             user=user,
@@ -233,7 +283,7 @@ def get_daily_review_plan(user, day=None):
 
 
 def remaining_review_ids(user, plan):
-    """Extra practice can finish assigned work, but never refills today's batch."""
+    """Keep today's batch until its items are completed; never refill it."""
     progress = {
         item.knowledge_unit_id: item
         for item in StudentKnowledge.objects.filter(
@@ -241,8 +291,16 @@ def remaining_review_ids(user, plan):
         )
     }
     allowed_ids = set(_reviewable_units(user).values_list("pk", flat=True))
-    return [unit_id for unit_id in plan.knowledge_unit_ids
-            if unit_id in allowed_ids and _due(progress.get(unit_id), plan.day)]
+    return [
+        unit_id
+        for unit_id in plan.knowledge_unit_ids
+        if unit_id in allowed_ids
+        and not (
+            progress.get(unit_id)
+            and progress[unit_id].last_reviewed
+            and timezone.localtime(progress[unit_id].last_reviewed).date() >= plan.day
+        )
+    ]
 
 
 def review_capacity_outlook(user, day=None):

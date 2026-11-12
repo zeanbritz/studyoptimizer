@@ -476,9 +476,6 @@ def get_next_subject_definition(
 
     planned_ids = remaining_review_ids(user, get_daily_review_plan(user))
 
-    now = timezone.now()
-
-
     definitions = (
         Definition.objects
         .filter(
@@ -509,18 +506,10 @@ def get_next_subject_definition(
 
 
     # --------------------------------------------------------
-    # RETURN FIRST DEFINITION STILL DUE
+    # RETURN THE NEXT UNFINISHED ITEM FROM TODAY'S PLAN
     # --------------------------------------------------------
 
-    for definition in definitions:
-
-        if definition_is_due(
-            user,
-            definition,
-            now,
-        ):
-
-            return definition
+    return definitions.first()
 
 
     # --------------------------------------------------------

@@ -154,6 +154,35 @@ class ReviewPlannerTests(TestCase):
         self.assertEqual(plan.available_minutes, 0)
         self.assertEqual(plan.knowledge_unit_ids, [])
 
+    def test_caught_up_definitions_return_as_daily_practice(self):
+        self.add_definitions(self.subject, 12)
+        today = timezone.localdate()
+        weekday = today.strftime("%A").lower()
+        setattr(self.availability, f"{weekday}_enabled", True)
+        setattr(self.availability, f"{weekday}_time", "02:00")
+        self.availability.save()
+        for unit in KnowledgeUnit.objects.filter(subject=self.subject):
+            StudentKnowledge.objects.create(
+                student=self.user,
+                knowledge_unit=unit,
+                mastery_level=6,
+                review_count=6,
+                last_reviewed=timezone.now() - timedelta(days=1),
+                next_review=timezone.now() + timedelta(days=20),
+            )
+
+        plan = get_daily_review_plan(self.user, today)
+        self.assertEqual(len(plan.knowledge_unit_ids), 10)
+        self.assertEqual(remaining_review_ids(self.user, plan), plan.knowledge_unit_ids)
+
+        first_progress = StudentKnowledge.objects.get(
+            student=self.user,
+            knowledge_unit_id=plan.knowledge_unit_ids[0],
+        )
+        first_progress.last_reviewed = timezone.now()
+        first_progress.save(update_fields=["last_reviewed"])
+        self.assertEqual(len(remaining_review_ids(self.user, plan)), 9)
+
     def test_dashboard_and_subject_list_share_the_same_batch(self):
         self.add_definitions(self.subject, 40)
         today = timezone.localdate()

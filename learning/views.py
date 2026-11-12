@@ -3017,54 +3017,9 @@ def formula_review_list(
                 due_formulas.append(formula)
                 continue
 
-            progress = (
-                StudentKnowledge.objects
-                .filter(
-                    student=request.user,
-
-                    knowledge_unit=(
-                        knowledge_unit
-                    )
-                )
-                .first()
+            due_formulas.append(
+                formula
             )
-
-            # ------------------------------------------------
-            # NEVER REVIEWED
-            # ------------------------------------------------
-
-            if progress is None:
-
-                due_formulas.append(
-                    formula
-                )
-
-                continue
-
-            # ------------------------------------------------
-            # REVIEW DUE
-            # ------------------------------------------------
-
-            if progress.next_review is None:
-
-                due_formulas.append(
-                    formula
-                )
-
-                continue
-
-            next_review_date = (
-                timezone.localtime(
-                    progress.next_review
-                )
-                .date()
-            )
-
-            if next_review_date <= today:
-
-                due_formulas.append(
-                    formula
-                )
 
         due_formulas.sort(
             key=lambda formula: (
@@ -3234,39 +3189,9 @@ def definition_review_list(
             due_definitions.append(definition)
             continue
 
-        progress = (
-            StudentKnowledge.objects
-            .filter(
-                student=request.user,
-                knowledge_unit=knowledge_unit,
-            )
-            .first()
+        due_definitions.append(
+            definition
         )
-
-        is_due = False
-
-        if progress is None:
-
-            is_due = True
-
-        elif progress.next_review is None:
-
-            is_due = True
-
-        elif (
-            timezone.localtime(
-                progress.next_review
-            ).date()
-            <= today
-        ):
-
-            is_due = True
-
-        if is_due:
-
-            due_definitions.append(
-                definition
-            )
 
     return render(
         request,
