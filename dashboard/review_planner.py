@@ -131,7 +131,7 @@ def _settings_and_summary(user, day):
 
     units_stamp = list(_reviewable_units(user).order_by("pk").values_list("pk", "estimated_minutes"))
     signature_data = {
-        "planner_version": 2,
+        "planner_version": 3,
         "week": weekly,
         "subjects": [(s.pk, s.exam_date.isoformat() if s.exam_date else None, revision.get(s.pk, 0)) for s in subjects],
         "books": [(b.pk, b.subject_id, b.page_count) for b in books],
@@ -251,20 +251,25 @@ def get_daily_review_plan(user, day=None):
     budget = max(0, available - summary)
     ids = _choose(candidates, budget, day)
 
-    # Once Definitions and Formulas are genuinely caught up, give the student
-    # a small daily retrieval-practice set. This is selected when the plan is
-    # first made for the day; it never refills after each answer.
-    has_due_daily_practice = any(
-        unit.knowledge_type in DAILY_PRACTICE_TYPES
+    # Keep Definition/Formula practice independent from Lists, Steps, and
+    # every other review type. A student's daily plan always tops this portion
+    # up to the floor when there is enough saved material; the batch is still
+    # created only once per calendar day and never refills after each answer.
+    planned_daily_practice_count = sum(
+        unit.pk in ids and unit.knowledge_type in DAILY_PRACTICE_TYPES
         for unit, _progress in candidates
     )
-    if available > 0 and not has_due_daily_practice:
+    practice_slots_needed = max(
+        0,
+        DAILY_PRACTICE_FLOOR - planned_daily_practice_count,
+    )
+    if available > 0 and practice_slots_needed:
         practice_ids = [
             unit.pk
             for unit in _daily_practice_candidates(user)
             if unit.pk not in ids
         ]
-        ids.extend(practice_ids[:DAILY_PRACTICE_FLOOR])
+        ids.extend(practice_ids[:practice_slots_needed])
     with transaction.atomic():
         plan, _ = DailyReviewPlan.objects.update_or_create(
             user=user,

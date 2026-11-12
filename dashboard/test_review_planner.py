@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from learning.models import Definition, KnowledgeUnit, StudentKnowledge, Subject
+from learning.models import BulletList, Definition, KnowledgeUnit, StudentKnowledge, Subject
 
 from .models import StudyAvailability, SubjectRevisionPlan, SubjectTextbook
 from .review_planner import (
@@ -154,7 +154,7 @@ class ReviewPlannerTests(TestCase):
         self.assertEqual(plan.available_minutes, 0)
         self.assertEqual(plan.knowledge_unit_ids, [])
 
-    def test_caught_up_definitions_return_as_daily_practice(self):
+    def test_daily_definition_practice_does_not_wait_for_other_review_types(self):
         self.add_definitions(self.subject, 12)
         today = timezone.localdate()
         weekday = today.strftime("%A").lower()
@@ -171,17 +171,34 @@ class ReviewPlannerTests(TestCase):
                 next_review=timezone.now() + timedelta(days=20),
             )
 
+        other_unit = KnowledgeUnit.objects.create(
+            subject=self.other,
+            title="Due list",
+            knowledge_type=KnowledgeUnit.KnowledgeType.BULLET_LIST,
+            estimated_minutes=2,
+        )
+        BulletList.objects.create(
+            knowledge_unit=other_unit,
+            question="Due list",
+        )
+
         plan = get_daily_review_plan(self.user, today)
-        self.assertEqual(len(plan.knowledge_unit_ids), 10)
+        practice_ids = list(
+            KnowledgeUnit.objects.filter(
+                pk__in=plan.knowledge_unit_ids,
+                knowledge_type=KnowledgeUnit.KnowledgeType.DEFINITION,
+            ).values_list("pk", flat=True)
+        )
+        self.assertEqual(len(practice_ids), 10)
         self.assertEqual(remaining_review_ids(self.user, plan), plan.knowledge_unit_ids)
 
         first_progress = StudentKnowledge.objects.get(
             student=self.user,
-            knowledge_unit_id=plan.knowledge_unit_ids[0],
+            knowledge_unit_id=practice_ids[0],
         )
         first_progress.last_reviewed = timezone.now()
         first_progress.save(update_fields=["last_reviewed"])
-        self.assertEqual(len(remaining_review_ids(self.user, plan)), 9)
+        self.assertEqual(len(remaining_review_ids(self.user, plan)), len(plan.knowledge_unit_ids) - 1)
 
     def test_dashboard_and_subject_list_share_the_same_batch(self):
         self.add_definitions(self.subject, 40)
