@@ -42,7 +42,7 @@ DAILY_PRACTICE_TYPES = (
     KnowledgeUnit.KnowledgeType.DEFINITION,
     KnowledgeUnit.KnowledgeType.FORMULA,
 )
-DAILY_PRACTICE_FLOOR = 10
+DAILY_PRACTICE_FLOOR_PER_TYPE = 10
 
 
 def _reviewable_units(user):
@@ -131,7 +131,7 @@ def _settings_and_summary(user, day):
 
     units_stamp = list(_reviewable_units(user).order_by("pk").values_list("pk", "estimated_minutes"))
     signature_data = {
-        "planner_version": 3,
+        "planner_version": 4,
         "week": weekly,
         "subjects": [(s.pk, s.exam_date.isoformat() if s.exam_date else None, revision.get(s.pk, 0)) for s in subjects],
         "books": [(b.pk, b.subject_id, b.page_count) for b in books],
@@ -171,11 +171,11 @@ def _candidates(user, day):
     return [(unit, progress.get(unit.pk)) for unit in units if _due(progress.get(unit.pk), day)]
 
 
-def _daily_practice_candidates(user):
-    """Return stable Definition/Formula material for a caught-up day."""
+def _daily_practice_candidates(user, knowledge_type):
+    """Return stable material for one daily-practice review type."""
     units = list(
         _reviewable_units(user)
-        .filter(knowledge_type__in=DAILY_PRACTICE_TYPES)
+        .filter(knowledge_type=knowledge_type)
         .select_related("subject")
         .order_by("pk")
     )
@@ -251,25 +251,28 @@ def get_daily_review_plan(user, day=None):
     budget = max(0, available - summary)
     ids = _choose(candidates, budget, day)
 
-    # Keep Definition/Formula practice independent from Lists, Steps, and
-    # every other review type. A student's daily plan always tops this portion
-    # up to the floor when there is enough saved material; the batch is still
-    # created only once per calendar day and never refills after each answer.
-    planned_daily_practice_count = sum(
-        unit.pk in ids and unit.knowledge_type in DAILY_PRACTICE_TYPES
-        for unit, _progress in candidates
-    )
-    practice_slots_needed = max(
-        0,
-        DAILY_PRACTICE_FLOOR - planned_daily_practice_count,
-    )
-    if available > 0 and practice_slots_needed:
-        practice_ids = [
-            unit.pk
-            for unit in _daily_practice_candidates(user)
-            if unit.pk not in ids
-        ]
-        ids.extend(practice_ids[:practice_slots_needed])
+    # Definitions and Formulas have independent daily practice floors, so a
+    # large definition library cannot crowd formulas out of Today's Plan (and
+    # vice versa). Lists, Steps and the other types remain independently due
+    # under their normal review intervals.
+    if available > 0:
+        for knowledge_type in DAILY_PRACTICE_TYPES:
+            planned_count = sum(
+                unit.pk in ids and unit.knowledge_type == knowledge_type
+                for unit, _progress in candidates
+            )
+            slots_needed = max(
+                0,
+                DAILY_PRACTICE_FLOOR_PER_TYPE - planned_count,
+            )
+            if not slots_needed:
+                continue
+            practice_ids = [
+                unit.pk
+                for unit in _daily_practice_candidates(user, knowledge_type)
+                if unit.pk not in ids
+            ]
+            ids.extend(practice_ids[:slots_needed])
     with transaction.atomic():
         plan, _ = DailyReviewPlan.objects.update_or_create(
             user=user,

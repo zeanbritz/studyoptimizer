@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from learning.models import BulletList, Definition, KnowledgeUnit, StudentKnowledge, Subject
+from learning.models import BulletList, Definition, Formula, KnowledgeUnit, StudentKnowledge, Subject
 
 from .models import StudyAvailability, SubjectRevisionPlan, SubjectTextbook
 from .review_planner import (
@@ -39,6 +39,16 @@ class ReviewPlannerTests(TestCase):
             Definition.objects.create(
                 knowledge_unit=unit, term=unit.title, definition=f"Meaning {number}"
             )
+
+    def add_formulas(self, subject, count):
+        for number in range(count):
+            unit = KnowledgeUnit.objects.create(
+                subject=subject,
+                title=f"{subject.name} formula {number}",
+                knowledge_type=KnowledgeUnit.KnowledgeType.FORMULA,
+                estimated_minutes=2,
+            )
+            Formula.objects.create(knowledge_unit=unit)
 
     def test_longer_day_gets_twice_the_review_capacity(self):
         self.add_definitions(self.subject, 100)
@@ -156,6 +166,7 @@ class ReviewPlannerTests(TestCase):
 
     def test_daily_definition_practice_does_not_wait_for_other_review_types(self):
         self.add_definitions(self.subject, 12)
+        self.add_formulas(self.subject, 12)
         today = timezone.localdate()
         weekday = today.strftime("%A").lower()
         setattr(self.availability, f"{weekday}_enabled", True)
@@ -190,6 +201,11 @@ class ReviewPlannerTests(TestCase):
             ).values_list("pk", flat=True)
         )
         self.assertEqual(len(practice_ids), 10)
+        formula_practice_count = KnowledgeUnit.objects.filter(
+            pk__in=plan.knowledge_unit_ids,
+            knowledge_type=KnowledgeUnit.KnowledgeType.FORMULA,
+        ).count()
+        self.assertEqual(formula_practice_count, 10)
         self.assertEqual(remaining_review_ids(self.user, plan), plan.knowledge_unit_ids)
 
         first_progress = StudentKnowledge.objects.get(
