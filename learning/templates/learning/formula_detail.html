@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-{% load review_navigation %}
+{% load static review_navigation %}
 <html lang="en">
 
 <head>
@@ -14,6 +14,8 @@
     <title>
         {{ formula.knowledge_unit.title }} - StudiGarden
     </title>
+
+    <link rel="stylesheet" href="{% static 'dashboard/css/sidebar.css' %}">
 
 
     <style>
@@ -586,6 +588,272 @@
 
         }
 
+        /* =========================================
+           STUDIGARDEN FORMULA DETAIL
+        ========================================= */
+
+        :root {
+            --ink: #2f373b;
+            --muted: #6d777d;
+            --navy: #303a5a;
+            --navy-light: #485676;
+            --navy-dark: #222b45;
+            --blue: #3597c8;
+            --blue-dark: #226f9c;
+            --blue-soft: #edf8fd;
+            --green: #58b82a;
+            --raised-border: #d7e0e4;
+        }
+
+        body {
+            background: #edf1f3;
+            color: var(--ink);
+        }
+
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .page {
+            min-height: 100vh;
+            padding: 30px 40px 56px;
+        }
+
+        .container {
+            max-width: 1060px;
+        }
+
+        .header {
+            position: relative;
+            min-height: 142px;
+            align-items: flex-start;
+            overflow: hidden;
+            margin-bottom: 22px;
+            padding: 28px 30px;
+            border: 1px solid #465270;
+            border-bottom: 5px solid var(--navy-dark);
+            border-radius: 18px;
+            background: linear-gradient(135deg, var(--navy), var(--navy-light));
+            box-shadow: 0 10px 24px rgba(35, 45, 70, 0.13);
+        }
+
+        .header::after {
+            position: absolute;
+            right: 42px;
+            bottom: -47px;
+            color: rgba(255, 255, 255, 0.08);
+            content: "ƒx";
+            font: 800 138px/1 Georgia, serif;
+            pointer-events: none;
+            transform: rotate(-8deg);
+        }
+
+        .back-button,
+        .header-text {
+            position: relative;
+            z-index: 1;
+        }
+
+        .back-button {
+            width: auto;
+            min-height: 42px;
+            padding: 10px 15px 8px;
+            border: 2px solid rgba(255, 255, 255, 0.44);
+            border-bottom-width: 4px;
+            border-radius: 11px;
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.21);
+        }
+
+        .header-text h1 {
+            margin: 4px 0 7px;
+            color: #fff;
+            font-size: clamp(27px, 4vw, 36px);
+            font-weight: 850;
+            letter-spacing: -0.9px;
+            line-height: 1.1;
+        }
+
+        .header-text p {
+            color: #d9e1ee;
+            font-weight: 650;
+        }
+
+        .card {
+            padding: 27px;
+            border: 2px solid var(--raised-border);
+            border-bottom-width: 5px;
+            border-radius: 18px;
+            background: #fff;
+            box-shadow: 0 8px 22px rgba(42, 59, 67, 0.06);
+        }
+
+        .section {
+            margin-bottom: 26px;
+        }
+
+        .formula-focus {
+            padding: 22px;
+            border: 2px solid #a8d4e8;
+            border-bottom-width: 5px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #f4fbff, #eef8fc);
+        }
+
+        .section-title {
+            margin-bottom: 10px;
+            color: var(--ink);
+            font-size: 21px;
+            font-weight: 850;
+            letter-spacing: -0.3px;
+        }
+
+        .formula-guidance {
+            margin: -2px 0 17px;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .formula-preview {
+            min-height: 150px;
+            justify-content: center;
+            padding: 28px;
+            border: 2px solid #c6e0eb;
+            border-bottom-width: 5px;
+            border-radius: 14px;
+            background: #fff;
+            color: #1f3744;
+            font-size: clamp(28px, 5vw, 42px);
+            font-weight: 800;
+            line-height: 1.45;
+            text-align: center;
+        }
+
+        .formula-item {
+            margin: 0 8px;
+        }
+
+        .formula-fraction {
+            margin: 0 13px;
+            font-size: 0.82em;
+        }
+
+        .fraction-line {
+            background: var(--blue-dark);
+        }
+
+        .section-divider {
+            margin: 27px 0;
+            background: #e4eaed;
+        }
+
+        .details-grid {
+            gap: 14px;
+        }
+
+        .detail-card {
+            padding: 19px;
+            border: 2px solid #dbe5e9;
+            border-bottom-width: 4px;
+            border-radius: 13px;
+            background: #fbfdfe;
+        }
+
+        .detail-label {
+            color: var(--blue-dark);
+            font-size: 11px;
+            font-weight: 850;
+            letter-spacing: 0.07em;
+        }
+
+        .detail-value {
+            color: #3d484d;
+            font-size: 15px;
+            font-weight: 550;
+        }
+
+        .variables-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 11px;
+        }
+
+        .variable-card {
+            grid-template-columns: 54px minmax(0, 1fr);
+            gap: 13px;
+            min-height: 76px;
+            padding: 12px;
+            border: 2px solid #d5e7cf;
+            border-bottom-width: 4px;
+            border-radius: 13px;
+            background: #fbfefa;
+        }
+
+        .variable-symbol {
+            display: grid;
+            width: 48px;
+            min-height: 48px;
+            place-items: center;
+            border: 2px solid #b6d8a9;
+            border-radius: 11px;
+            background: #eef9e9;
+            color: #367d1a;
+            font-size: 22px;
+        }
+
+        .variable-meaning {
+            color: #455157;
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.45;
+        }
+
+        .actions {
+            gap: 10px;
+            margin-top: 24px;
+            padding-top: 23px;
+        }
+
+        .action-button {
+            min-height: 43px;
+            padding: 10px 16px 8px;
+            border: 2px solid #d0dce1;
+            border-bottom-width: 4px;
+            border-radius: 10px;
+            color: #3a484e;
+            font-weight: 800;
+        }
+
+        .primary-button {
+            border-color: #438f20;
+            background: var(--green);
+        }
+
+        .primary-button:hover {
+            background: #65c936;
+        }
+
+        @media (max-width: 700px) {
+            .page { padding: 22px 18px 42px; }
+            .header { min-height: 133px; padding: 22px; }
+            .card { padding: 18px; }
+            .formula-focus { padding: 16px; }
+            .formula-preview { min-height: 125px; padding: 19px 13px; }
+        }
+
     </style>
 
 </head>
@@ -593,7 +861,13 @@
 
 <body>
 
-
+<div class="app">
+{% if request.GET.review_origin %}
+    {% include 'partials/sidebar.html' with active_page='review' %}
+{% else %}
+    {% include 'partials/sidebar.html' with active_page='subjects' %}
+{% endif %}
+<main class="main">
 <div class="page">
 
 
@@ -611,7 +885,11 @@
                 href="{% if request.GET.review_origin %}{% review_back %}{% else %}{% url 'formula_list' subject_id=subject.id %}?subject_index={{ subject_index }}{% endif %}"
                 class="back-button"
             >
-                ←
+                {% if request.GET.review_origin %}
+                    Finish Review
+                {% else %}
+                    Back to formulas
+                {% endif %}
             </a>
 
 
@@ -624,7 +902,7 @@
 
 
                 <p>
-                    {{ subject.name }}
+                    Formula guide · {{ subject.name }}
                 </p>
 
 
@@ -645,12 +923,16 @@
                  FORMULA
             ====================================== -->
 
-            <section class="section">
+            <section class="section formula-focus">
 
 
                 <h2 class="section-title">
-                    Formula
+                    The formula
                 </h2>
+
+                <p class="formula-guidance">
+                    Learn the relationship first, then connect each symbol to what it represents.
+                </p>
 
 
                 <div class="formula-preview">
@@ -779,7 +1061,7 @@
 
 
                     <h2 class="section-title">
-                        Formula Details
+                        What it means
                     </h2>
 
 
@@ -854,7 +1136,7 @@
 
 
                     <h2 class="section-title">
-                        Variables
+                        Symbols to know
                     </h2>
 
 
@@ -917,7 +1199,7 @@
 
 
                     <h2 class="section-title">
-                        Additional Details
+                        Source
                     </h2>
 
 
@@ -992,12 +1274,14 @@
                 </a>
 
 
-                <a
-                    href="{% url 'review_formula' formula.id %}{% review_query '?' %}"
-                    class="action-button"
-                >
-                    Review Formula
-                </a>
+                {% if not request.GET.review_origin %}
+                    <a
+                        href="{% url 'review_formula' formula.id %}{% review_query '?' %}"
+                        class="action-button"
+                    >
+                        Review Formula
+                    </a>
+                {% endif %}
 
 
                 <a
@@ -1017,6 +1301,9 @@
     </div>
 
 
+</div>
+
+</main>
 </div>
 
 
