@@ -144,6 +144,28 @@ class StepOrderingReviewTests(TestCase):
         self.progress.refresh_from_db()
         self.assertEqual(self.progress.review_count, 0)
 
+    def test_no_idea_records_an_incorrect_attempt_and_shows_the_correction(self):
+        question = self._question()
+        response = self.client.post(
+            self.url,
+            {
+                "scope": "all",
+                "review_origin": "library",
+                "question_token": question.context["question_token"],
+                "no_idea": "1",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["result"], "incorrect")
+        self.assertTrue(response.context["gave_up"])
+        self.assertContains(response, "Correct step")
+        self.assertContains(response, "No answer")
+
+        self.progress.refresh_from_db()
+        self.assertEqual(self.progress.review_count, 1)
+        self.assertEqual(self.progress.incorrect_count, 1)
+
     def test_prefilled_step_cannot_be_moved_by_a_tampered_submission(self):
         question = self._question()
         locked_ids = [

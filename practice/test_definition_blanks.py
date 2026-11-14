@@ -155,6 +155,27 @@ class DefinitionQuestionViewTests(TestCase):
         self.assertEqual(progress.mastery_level, 1)
         self.assertEqual(progress.correct_count, 1)
 
+    def test_no_idea_marks_the_definition_incorrect_and_reveals_the_answer(self):
+        question = self.client.get(self.url, {"review_origin": "library"})
+
+        result = self.client.post(self.url, {
+            "question_token": question.context["question_token"],
+            "review_origin": "library",
+            "no_idea": "1",
+        })
+
+        self.assertEqual(result.status_code, 200)
+        self.assertFalse(result.context["is_correct"])
+        self.assertEqual(result.context["answer"], "No idea")
+        self.assertContains(result, "Correct answer")
+
+        progress = StudentKnowledge.objects.get(
+            student=self.user,
+            knowledge_unit=self.unit,
+        )
+        self.assertEqual(progress.incorrect_count, 1)
+        self.assertEqual(progress.mastery_level, 0)
+
     def test_tampered_question_state_is_rejected(self):
         question = self.client.get(self.url)
         response = self.client.post(self.url, {

@@ -770,6 +770,29 @@
         .correct-answer-box { border: 2px solid #e2e6e8; border-radius: 13px; background: white; }
         .correct-answer-title { font-weight: 850; }
         .error-box { border: 2px solid #efb0b0; border-radius: 12px; background: #fff1f1; color: #a53131; }
+        .review-actions { gap: 10px; flex-wrap: wrap; }
+        .no-idea-button {
+            display: inline-block;
+            padding: 11px 18px 9px;
+            border: 2px solid #c8d4d9;
+            border-bottom-width: 4px;
+            border-radius: 12px;
+            background: #ffffff;
+            color: #405159;
+            cursor: pointer;
+            font: inherit;
+            font-size: 14px;
+            font-weight: 850;
+            transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+        }
+        .no-idea-button:hover, .no-idea-button:focus-visible {
+            border-color: #9eb1ba;
+            background: #f1f6f8;
+            color: #284754;
+            outline: none;
+            transform: translateY(-1px);
+        }
+        .no-idea-button:active { border-bottom-width: 2px; transform: translateY(2px); }
         @media (max-width: 700px) { .page { padding: 22px 18px 42px; } .page-header { align-items: flex-start; flex-direction: column; } .back-link { width: 100%; text-align: center; } .review-card { padding: 19px; } }
     </style>
 
@@ -1298,6 +1321,16 @@
                                 class="submit-button review-check-answer"
                             >
                                 Check Answer
+                            </button>
+
+                            <button
+                                type="submit"
+                                name="no_idea"
+                                value="1"
+                                formnovalidate
+                                class="no-idea-button"
+                            >
+                                No Idea
                             </button>
 
 

@@ -930,28 +930,32 @@ def practice_definition(
                 "This definition has no meaningful words to test."
             )
 
+        gave_up = request.POST.get("no_idea") == "1"
         answers = []
 
         for index in question["missing_indices"]:
             field_name = f"answer_{index}"
-            value = request.POST.get(field_name)
+            value = "" if gave_up else request.POST.get(field_name)
             if value is None and len(question["missing_indices"]) == 1:
                 # Keep older clients and tests compatible with the former
                 # single answer field.
                 value = request.POST.get("answer", "")
             answers.append((value or "").strip())
 
-        answer = " ".join(answers)
+        answer = "No idea" if gave_up else " ".join(answers)
 
 
         # ----------------------------------------------------
         # NORMALIZE ANSWERS
         # ----------------------------------------------------
 
-        is_correct = all(
-            normalize_definition_answer(given)
-            == normalize_definition_answer(expected)
-            for given, expected in zip(answers, missing_answers)
+        is_correct = (
+            not gave_up
+            and all(
+                normalize_definition_answer(given)
+                == normalize_definition_answer(expected)
+                for given, expected in zip(answers, missing_answers)
+            )
         )
 
 

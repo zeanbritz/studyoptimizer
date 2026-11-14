@@ -290,6 +290,9 @@
     });
 
     form.addEventListener("submit", function (event) {
+        if (event.submitter && event.submitter.name === "no_idea") {
+            return;
+        }
         sync();
         if (!hiddenOrder.value) {
             event.preventDefault();

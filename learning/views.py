@@ -2240,6 +2240,8 @@ def review_list(
 
     if request.method == "POST":
 
+        gave_up = request.POST.get("no_idea") == "1"
+
         # ====================================================
         # HIDDEN IDS
         # ====================================================
@@ -2344,7 +2346,9 @@ def review_list(
                 )
 
                 submitted_answer = (
-                    request.POST.get(
+                    "No idea"
+                    if gave_up
+                    else request.POST.get(
                         answer_name,
                         ""
                     )
@@ -2381,7 +2385,8 @@ def review_list(
             )
 
             all_correct = (
-                normalized_student
+                not gave_up
+                and normalized_student
                 ==
                 normalized_expected
             )

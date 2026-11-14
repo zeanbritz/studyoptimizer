@@ -212,6 +212,21 @@
         }
         .submit-button:hover:not(:disabled), .continue-button:hover { background: #4da822; }
         .submit-button:disabled { border-color: #aeb8b2; border-bottom-color: #98a39c; background: #c6ceca; cursor: not-allowed; }
+        .answer-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        .no-idea-button {
+            min-height: 50px;
+            padding: 12px 16px 10px;
+            border: 2px solid #c8d4d9;
+            border-bottom-width: 4px;
+            border-radius: 10px;
+            background: #fff;
+            color: #405159;
+            cursor: pointer;
+            font: inherit;
+            font-weight: 850;
+        }
+        .no-idea-button:hover, .no-idea-button:focus-visible { border-color: #9eb1ba; background: #f1f6f8; color: #284754; outline: none; }
+        .no-idea-button:active { border-bottom-width: 2px; transform: translateY(2px); }
         .result-panel { text-align: center; }
         .result-icon {
             display: grid;
@@ -320,8 +335,12 @@
                                 <div class="result-step {% if item.required %}{% if item.correct %}correct{% else %}incorrect{% endif %}{% else %}locked{% endif %}">
                                     <div class="result-number">{{ item.number }}</div>
                                     <div class="result-copy">
-                                        <strong>{{ item.submitted.text }}</strong>
-                                        {% if item.submitted.description %}<div class="step-description">{{ item.submitted.description }}</div>{% endif %}
+                                        {% if gave_up and item.required %}
+                                            <strong>No answer</strong>
+                                        {% else %}
+                                            <strong>{{ item.submitted.text }}</strong>
+                                            {% if item.submitted.description %}<div class="step-description">{{ item.submitted.description }}</div>{% endif %}
+                                        {% endif %}
                                         {% if item.required and not item.correct %}
                                             <div class="expected-step"><strong>Correct step</strong>{{ item.expected.text }}</div>
                                         {% endif %}
@@ -409,7 +428,10 @@
 
                             <div class="form-footer">
                                 <div class="live-status" id="step-order-status" aria-live="polite">Place {{ steps_to_place }} step{{ steps_to_place|pluralize }} to continue.</div>
-                                <button type="submit" class="submit-button review-check-answer" id="check-answer" disabled>Check Answer</button>
+                                <div class="answer-actions">
+                                    <button type="submit" class="submit-button review-check-answer" id="check-answer" disabled>Check Answer</button>
+                                    <button type="submit" name="no_idea" value="1" formnovalidate class="no-idea-button">No Idea</button>
+                                </div>
                             </div>
                         </form>
                     {% endif %}

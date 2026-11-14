@@ -1699,6 +1699,14 @@ def practice_formula(
         "POST"
     ):
 
+        gave_up = (
+            request.POST.get(
+                "no_idea"
+            )
+            ==
+            "1"
+        )
+
         # ====================================================
         # WAS IT ALREADY MASTERED BEFORE THIS REVIEW?
         #
@@ -1760,13 +1768,14 @@ def practice_formula(
             # ------------------------------------------------
 
             user_answer = (
-                request.POST.get(
+                "No idea"
+                if gave_up
+                else request.POST.get(
                     "answer_"
                     +
                     element_id,
                     ""
-                )
-                .strip()
+                ).strip()
             )
 
             # ------------------------------------------------
@@ -1785,7 +1794,8 @@ def practice_formula(
             # ------------------------------------------------
 
             is_correct = (
-                formula_answer_is_correct(
+                not gave_up
+                and formula_answer_is_correct(
                     user_answer,
                     correct_answer,
                     element_type,

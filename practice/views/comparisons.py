@@ -455,8 +455,18 @@ def practice_comparison_review(
 
     if request.method == "POST":
 
+        gave_up = request.POST.get("no_idea") == "1"
+
         placements_raw = (
-            request.POST.get(
+            json.dumps({
+                str(cell.id): {
+                    "row_id": cell.row_id,
+                    "column_id": cell.column_id,
+                }
+                for cell in answer_cells
+            })
+            if gave_up
+            else request.POST.get(
                 "placements",
                 ""
             )
@@ -610,7 +620,7 @@ def practice_comparison_review(
 
         if error is None:
 
-            all_correct = True
+            all_correct = not gave_up
 
             # Identical characteristic text is interchangeable.
             # A submitted field is correct when its destination
@@ -740,8 +750,11 @@ def practice_comparison_review(
                     not in used_expected_cell_ids
                 ]
 
-                answer_correct = bool(
-                    available_matches
+                answer_correct = (
+                    not gave_up
+                    and bool(
+                        available_matches
+                    )
                 )
 
                 if answer_correct:
@@ -843,10 +856,12 @@ def practice_comparison_review(
                     )
 
                     placed_location = (
-                        placed_column.name
+                        "No answer"
+                        if gave_up
+                        else placed_column.name
                     )
 
-                    if has_named_rows:
+                    if has_named_rows and not gave_up:
 
                         placed_row_name = (
                             placed_row.name.strip()

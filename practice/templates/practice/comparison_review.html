@@ -479,6 +479,30 @@
             cursor: not-allowed;
         }
 
+        .no-idea-button {
+            min-width: 112px;
+            min-height: 48px;
+            padding: 11px 16px 9px;
+            border: 2px solid #c8d4d9;
+            border-bottom: 4px solid #aebdc4;
+            border-radius: 10px;
+            background: #fff;
+            color: #405159;
+            cursor: pointer;
+            font: inherit;
+            font-size: 14px;
+            font-weight: 850;
+        }
+
+        .no-idea-button:hover, .no-idea-button:focus-visible {
+            border-color: #9eb1ba;
+            background: #f1f6f8;
+            color: #284754;
+            outline: none;
+        }
+
+        .no-idea-button:active { border-bottom-width: 2px; transform: translateY(2px); }
+
         @media (max-width: 700px) {
 
             .page {
@@ -494,7 +518,8 @@
             }
 
             .check-button,
-            .next-button {
+            .next-button,
+            .no-idea-button {
                 width: 100%;
             }
         }
@@ -864,6 +889,16 @@
                             disabled
                         >
                             Check answer
+                        </button>
+
+                        <button
+                            type="submit"
+                            name="no_idea"
+                            value="1"
+                            formnovalidate
+                            class="no-idea-button"
+                        >
+                            No Idea
                         </button>
 
                     </div>
@@ -1344,6 +1379,16 @@
     reviewForm.addEventListener(
         "submit",
         function(event) {
+
+            if (
+                event.submitter
+                &&
+                event.submitter.name === "no_idea"
+            ) {
+
+                return;
+
+            }
 
             const placements = {};
 

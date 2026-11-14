@@ -222,6 +222,7 @@ def _base_context(
         "total_steps": total_steps,
         "attempt_complete": False,
         "result": None,
+        "gave_up": False,
         "next_step_list": None,
         "error": None,
     }
@@ -294,6 +295,8 @@ def practice_step_review(request, step_list_id):
         _fresh_question_context(context, step_list, steps, progress)
         return render(request, "practice/step_review.html", context)
 
+    gave_up = request.POST.get("no_idea") == "1"
+
     try:
         state = load_step_question(
             request.POST.get("question_token", ""),
@@ -301,8 +304,13 @@ def practice_step_review(request, step_list_id):
             steps,
             progress,
         )
-        submitted_ids = json.loads(request.POST.get("ordered_step_ids", "[]"))
-        submitted_ids = [int(step_id) for step_id in submitted_ids]
+        if gave_up:
+            # Use the known order only to render the correction below; the
+            # attempt is still recorded as incorrect.
+            submitted_ids = [step.id for step in steps]
+        else:
+            submitted_ids = json.loads(request.POST.get("ordered_step_ids", "[]"))
+            submitted_ids = [int(step_id) for step_id in submitted_ids]
     except (signing.BadSignature, signing.SignatureExpired, TypeError, ValueError, json.JSONDecodeError):
         context["error"] = "This review changed unexpectedly. Please try the refreshed question."
         _fresh_question_context(context, step_list, steps, progress)
@@ -332,10 +340,13 @@ def practice_step_review(request, step_list_id):
         return render(request, "practice/step_review.html", context)
 
     required_ids = set(state["required_ids"])
-    all_correct = all(
-        submitted_ids[position] == correct_id
-        for position, correct_id in enumerate(correct_ids)
-        if correct_id in required_ids
+    all_correct = (
+        not gave_up
+        and all(
+            submitted_ids[position] == correct_id
+            for position, correct_id in enumerate(correct_ids)
+            if correct_id in required_ids
+        )
     )
     by_id = {step.id: step for step in steps}
     result_steps = []
@@ -346,7 +357,10 @@ def practice_step_review(request, step_list_id):
             "submitted": by_id[submitted_id],
             "expected": by_id[correct_id],
             "required": correct_id in required_ids,
-            "correct": submitted_id == correct_id,
+            "correct": (
+                submitted_id == correct_id
+                and not gave_up
+            ),
         })
 
     now = timezone.now()
@@ -383,6 +397,7 @@ def practice_step_review(request, step_list_id):
         "hidden_count": len(state["required_ids"]),
         "attempt_complete": True,
         "result": result,
+        "gave_up": gave_up,
         "result_steps": result_steps,
         "next_step_list": next_step_list,
         "review_steps": [],

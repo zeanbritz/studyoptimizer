@@ -1171,10 +1171,51 @@
             transform: none;
         }
 
+        .answer-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .answer-actions .submit-button {
+            width: auto;
+        }
+
+        .no-idea-button {
+            min-height: 50px;
+            padding: 12px 16px 10px;
+            border: 2px solid #c9d4d9;
+            border-bottom-width: 4px;
+            border-radius: 12px;
+            background: #ffffff;
+            color: #53636b;
+            cursor: pointer;
+            font: inherit;
+            font-size: 14px;
+            font-weight: 850;
+            transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+        }
+
+        .no-idea-button:hover,
+        .no-idea-button:focus-visible {
+            border-color: #9daeb6;
+            background: #f3f6f7;
+            color: #33434a;
+            outline: none;
+            transform: translateY(-1px);
+        }
+
+        .no-idea-button:active {
+            border-bottom-width: 2px;
+            transform: translateY(2px);
+        }
+
         @media (max-width: 700px) {
             .word-bank { padding: 15px; }
             .word-tile { min-height: 42px; }
             .word-slot { min-height: 2.25em; }
+            .answer-actions > * { width: 100%; }
         }
     </style>
 
@@ -1324,7 +1365,7 @@
 
             <div class="word-bank" data-word-bank>
                 <span class="word-bank-heading">Words to place</span>
-                <p class="word-bank-help">Drag a word into a blank, or tap a word and then tap its place.</p>
+                <p class="word-bank-help">Drag a word into a blank space, or tap a word and then tap where you believe it should go.</p>
                 <div class="word-bank-tiles" data-word-bank-tiles>
                     {% for tile in drag_tiles %}
                         <button
@@ -1342,13 +1383,24 @@
             </div>
 
 
-            <button
-                type="submit"
-                class="submit-button review-check-answer"
-                disabled
-            >
-                Check Answer
-            </button>
+            <div class="answer-actions">
+                <button
+                    type="submit"
+                    class="submit-button review-check-answer"
+                    disabled
+                >
+                    Check Answer
+                </button>
+                <button
+                    type="submit"
+                    name="no_idea"
+                    value="1"
+                    formnovalidate
+                    class="no-idea-button"
+                >
+                    No Idea
+                </button>
+            </div>
 
 
         </form>
