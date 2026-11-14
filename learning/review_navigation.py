@@ -11,7 +11,7 @@ REVIEW_ROUTES = {
     "definition_review_list", "formula_review_list", "list_review_list",
     "step_review_list", "comparison_review_list", "note_list", "note_detail",
     "review_definition", "review_formula", "review_list", "practice_formula",
-    "formula_reconstruction", "practice_definition_review", "practice_step_review",
+    "formula_reconstruction", "practice_definition_review", "practice_definition_match", "practice_step_review",
     "practice_comparison_review", "read_review_item", "read_definition",
 }
 LIBRARY_ROUTES = {"review_definitions", "review_formulas", "review_lists", "review_steps", "review_comparisons", "review_notes"}
@@ -53,6 +53,11 @@ def return_url(request, subject=None, library_route=None):
     if origin in {"standard", "garden"}:
         return reverse("dashboard") + "?" + urlencode({"view": origin, "review_return": "1"}) + "#today-plan"
     if origin == "library" and library_route in LIBRARY_ROUTES:
+        if (
+            library_route == "review_definitions"
+            and request.GET.get("review_mode", request.POST.get("review_mode")) == "random"
+        ):
+            return reverse(library_route) + "?mode=random"
         return reverse(library_route)
     index = subject_index(request, subject)
     if index is not None:

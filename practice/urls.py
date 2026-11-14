@@ -36,6 +36,12 @@ urlpatterns = [
     ),
 
     path(
+        "definitions/random/<int:subject_id>/",
+        review_navigation(definitions.practice_definition_match),
+        name="practice_definition_match",
+    ),
+
+    path(
         "steps/<int:step_list_id>/review/",
         review_navigation(views.practice_step_review),
         name="practice_step_review",

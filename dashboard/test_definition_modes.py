@@ -60,7 +60,7 @@ class DefinitionModesTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["mode"], "test")
         self.assertContains(response, 'aria-current="page">Test</a>')
-        self.assertContains(response, 'id="random-review-button"')
+        self.assertNotContains(response, 'id="random-review-button"')
         self.assertNotContains(response, "Meaning of Cells.")
         self.assertContains(
             response,
@@ -73,6 +73,25 @@ class DefinitionModesTests(TestCase):
         )
         self.assertNotContains(quiz, 'class="mode-switch"')
         self.assertNotContains(quiz, reverse("read_definition", args=[self.first.pk]))
+
+    def test_random_mode_only_lists_subjects_with_four_definitions(self):
+        self.add_definition(self.subject, "Organs")
+        self.add_definition(self.subject, "Systems")
+
+        response = self.client.get(reverse("review_definitions") + "?mode=random")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["mode"], "random")
+        self.assertContains(response, 'aria-current="page">Random test</a>')
+        self.assertContains(response, self.subject.name)
+        self.assertContains(
+            response,
+            reverse("practice_definition_match", args=[self.subject.pk]),
+        )
+        self.assertNotContains(
+            response,
+            reverse("practice_definition_match", args=[self.other_subject.pk]),
+        )
 
     def test_reader_browses_definitions_in_subject_without_writing_progress(self):
         url = reverse("read_definition", args=[self.first.pk])

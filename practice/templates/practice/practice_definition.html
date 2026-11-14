@@ -1331,6 +1331,10 @@
 
             {% csrf_token %}{% review_hidden %}
 
+            {% if review_mode %}
+                <input type="hidden" name="review_mode" value="{{ review_mode }}">
+            {% endif %}
+
             <input
                 type="hidden"
                 name="question_token"
@@ -1513,7 +1517,7 @@
 <div class="review-actions">
 
 
-    {% if next_definition %}
+    {% if next_definition and review_mode != "random" %}
 
         <form
             method="POST"
@@ -1521,6 +1525,10 @@
         >
 
             {% csrf_token %}{% review_hidden %}
+
+            {% if review_mode %}
+                <input type="hidden" name="review_mode" value="{{ review_mode }}">
+            {% endif %}
 
             <input
                 type="hidden"
@@ -1548,6 +1556,17 @@
             </button>
 
         </form>
+
+    {% endif %}
+
+    {% if review_mode == "random" %}
+
+        <a
+            href="{% url 'practice_definition_match' subject_id=definition.knowledge_unit.subject.id %}?review_origin=library&amp;review_mode=random"
+            class="finish-review-button"
+        >
+            Try Another
+        </a>
 
     {% endif %}
 

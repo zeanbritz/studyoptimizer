@@ -4502,7 +4502,9 @@ def get_review_subject_index(
 @login_required
 def review_definitions(request):
 
-    mode = "test" if request.GET.get("mode") == "test" else "review"
+    mode = request.GET.get("mode", "review")
+    if mode not in {"review", "test", "random"}:
+        mode = "review"
 
     definition_knowledge_units = (
         KnowledgeUnit.objects
@@ -4555,6 +4557,23 @@ def review_definitions(request):
                 }
             )
 
+    random_subject_counts = {}
+    for item in definitions:
+        subject = item["subject"]
+        random_subject_counts.setdefault(
+            subject.id,
+            {"subject": subject, "definition_count": 0},
+        )["definition_count"] += 1
+
+    random_subjects = sorted(
+        (
+            item
+            for item in random_subject_counts.values()
+            if item["definition_count"] >= 4
+        ),
+        key=lambda item: item["subject"].name.casefold(),
+    )
+
     return render(
         request,
         "dashboard/review_definitions.html",
@@ -4564,8 +4583,13 @@ def review_definitions(request):
 
             "mode": mode,
 
+            "random_subjects": random_subjects,
+
             "show_review_tour":
-                _show_review_tour(request.user, bool(definitions)),
+                _show_review_tour(
+                    request.user,
+                    bool(definitions) and mode != "random",
+                ),
 
             "definition_count":
                 len(

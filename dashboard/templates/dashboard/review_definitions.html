@@ -196,6 +196,7 @@
 
         .mode-switch {
             display: inline-flex;
+            flex-wrap: wrap;
             gap: 5px;
             margin: 0 0 10px;
             padding: 5px;
@@ -232,6 +233,80 @@
             color: var(--muted);
             font-size: 13px;
             font-weight: 600;
+        }
+
+        .random-mode-panel {
+            padding: 25px;
+            border: 1px solid #d8e0e3;
+            border-top: 3px solid var(--green);
+            border-bottom: 5px solid var(--surface-edge);
+            border-radius: 16px;
+            background: #ffffff;
+        }
+
+        .random-mode-panel h2 {
+            margin: 0 0 7px;
+            color: #34393b;
+            font-size: 22px;
+            font-weight: 850;
+        }
+
+        .random-mode-panel > p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.55;
+        }
+
+        .random-subject-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 20px;
+        }
+
+        .random-subject-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            min-height: 86px;
+            padding: 17px 18px;
+            border: 2px solid #cfe5c3;
+            border-bottom-width: 5px;
+            border-radius: 14px;
+            background: linear-gradient(145deg, #ffffff 35%, #eef9e9 100%);
+            color: #34423a;
+            font-size: 17px;
+            font-weight: 850;
+            text-decoration: none;
+            transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+        }
+
+        .random-subject-card:hover {
+            border-color: var(--green-dark);
+            box-shadow: 0 8px 18px rgba(63, 143, 29, .12);
+            transform: translateY(-2px);
+        }
+
+        .random-subject-count {
+            flex-shrink: 0;
+            padding: 6px 9px;
+            border: 1px solid #c9dfec;
+            border-radius: 8px;
+            background: #edf7fd;
+            color: #276f97;
+            font-size: 12px;
+            font-weight: 850;
+            white-space: nowrap;
+        }
+
+        .random-requirement {
+            margin-top: 18px !important;
+            padding: 14px;
+            border-radius: 11px;
+            background: #f7fafb;
         }
 
         .review-toolbar {
@@ -485,6 +560,10 @@
             .review-list {
                 grid-template-columns: 1fr;
             }
+
+            .random-subject-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         @media (max-width: 650px) {
@@ -598,23 +677,13 @@
                         Back to Review
                     </a>
 
-                    {% if definitions and mode == 'test' %}
-
-                        <button
-                            type="button"
-                            class="random-review-button"
-                            id="random-review-button"
-                        >
-                            ↻ Random Test
-                        </button>
-
-                    {% endif %}
-
                 </div>
 
             </header>
 
             {% if definitions %}
+
+                {% if mode != 'random' %}
 
                 <section
                     class="review-toolbar"
@@ -697,13 +766,44 @@
 
                 </section>
 
+                {% endif %}
+
                 <nav class="mode-switch" aria-label="Definition mode">
                     <a href="{% url 'review_definitions' %}?mode=review" {% if mode == 'review' %}aria-current="page"{% endif %}>Review</a>
                     <a href="{% url 'review_definitions' %}?mode=test" {% if mode == 'test' %}aria-current="page"{% endif %}>Test</a>
+                    {% if random_subjects %}
+                        <a href="{% url 'review_definitions' %}?mode=random" {% if mode == 'random' %}aria-current="page"{% endif %}>Random test</a>
+                    {% endif %}
                 </nav>
                 <p class="mode-help">
-                    {% if mode == 'test' %}Test what you remember and track your progress.{% else %}Open a definition and read at your own pace. Review does not affect your progress.{% endif %}
+                    {% if mode == 'test' %}Test what you remember and track your progress.{% elif mode == 'random' %}Choose a subject to match terms with definitions you have saved.{% else %}Open a definition and read at your own pace. Review does not affect your progress.{% endif %}
                 </p>
+
+                {% if mode == 'random' %}
+
+                    <section class="random-mode-panel">
+                        <span class="eyebrow" style="color: #4b8b2a;">Random test</span>
+                        <h2>Match the definition</h2>
+                        <p>Choose a subject with at least four definitions. Each question uses one correct answer and three real definitions from that subject.</p>
+
+                        {% if random_subjects %}
+                            <div class="random-subject-grid">
+                                {% for item in random_subjects %}
+                                    <a
+                                        class="random-subject-card"
+                                        href="{% url 'practice_definition_match' subject_id=item.subject.id %}?review_origin=library&amp;review_mode=random"
+                                    >
+                                        <span>{{ item.subject.name }}</span>
+                                        <span class="random-subject-count">{{ item.definition_count }} definitions</span>
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="random-requirement">Add at least four definitions to one subject to unlock Random test.</p>
+                        {% endif %}
+                    </section>
+
+                {% else %}
 
                 <div class="review-list">
 
@@ -756,6 +856,8 @@
 
                 </div>
 
+                {% endif %}
+
             {% else %}
 
                 <div class="empty-state">
@@ -778,7 +880,7 @@
 
 </div>
 
-{% if definitions %}
+{% if definitions and mode != 'random' %}
 
 <script>
 
@@ -809,11 +911,6 @@
             const filteredEmpty =
                 document.getElementById(
                     "filtered-empty"
-                );
-
-            const randomReviewButton =
-                document.getElementById(
-                    "random-review-button"
                 );
 
             const cards = Array.from(
@@ -863,14 +960,6 @@
 
                 }
             );
-
-            function visibleCards() {
-                return cards.filter(
-                    function(card) {
-                        return !card.hidden;
-                    }
-                );
-            }
 
             function countLabel(count) {
                 return (
@@ -956,11 +1045,6 @@
                 filteredEmpty.hidden =
                     visibleTotal !== 0;
 
-                if (randomReviewButton) {
-                    randomReviewButton.disabled =
-                        visibleTotal === 0;
-                }
-
             }
 
             searchInput.addEventListener(
@@ -972,34 +1056,6 @@
                 "change",
                 applyFilters
             );
-
-            if (randomReviewButton) {
-                randomReviewButton.addEventListener(
-                    "click",
-                    function() {
-
-                        const availableCards =
-                            visibleCards();
-
-                        if (!availableCards.length) {
-                            return;
-                        }
-
-                        const randomIndex =
-                            Math.floor(
-                                Math.random()
-                                *
-                                availableCards.length
-                            );
-
-                        window.location.href =
-                            availableCards[
-                                randomIndex
-                            ].href;
-
-                    }
-                );
-            }
 
             applyFilters();
 
