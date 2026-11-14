@@ -70,7 +70,7 @@
         .page-header p { margin: 0; color: #d8dfed; font-size: 14px; font-weight: 650; }
 
         .back-button,
-        .try-another,
+        .next-question,
         .finish-button,
         .no-idea-button {
             min-height: 43px;
@@ -157,28 +157,32 @@
         .no-idea-button { border-color: #b7c0c5; background: white; color: #566269; }
         .no-idea-button:hover { background: #f3f6f7; transform: translateY(-1px); }
 
-        .feedback-dialog {
-            width: min(420px, calc(100% - 36px));
-            margin: auto;
-            padding: 0;
-            border: 0;
-            border-radius: 18px;
-            background: transparent;
-            box-shadow: 0 20px 50px rgba(32, 43, 57, .28);
-            animation: result-arrive .24s ease-out both;
+        .feedback-toast {
+            position: fixed;
+            z-index: 1000;
+            top: 28px;
+            left: 50%;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: min(360px, calc(100% - 36px));
+            padding: 14px 17px;
+            border: 2px solid;
+            border-bottom-width: 5px;
+            border-radius: 15px;
+            box-shadow: 0 12px 26px rgba(32, 43, 57, .18);
+            transform: translateX(-50%);
+            animation: feedback-toast 2.1s ease-in-out forwards;
+            pointer-events: none;
         }
 
-        .feedback-dialog::backdrop { background: rgba(29, 40, 50, .42); backdrop-filter: blur(2px); }
-        .feedback-dialog-card { padding: 27px; border: 2px solid; border-bottom-width: 5px; border-radius: 18px; }
-        .feedback-dialog.correct .feedback-dialog-card { border-color: #88c36b; background: var(--green-soft); color: #286d1a; }
-        .feedback-dialog.incorrect .feedback-dialog-card { border-color: #e19c9c; background: var(--red-soft); color: #9a3535; }
-        .feedback-icon { display: grid; width: 47px; height: 47px; place-items: center; margin-bottom: 13px; border-radius: 50%; color: #fff; font-size: 27px; font-weight: 900; }
+        .feedback-toast.correct { border-color: #88c36b; background: var(--green-soft); color: #286d1a; }
+        .feedback-toast.incorrect { border-color: #e19c9c; background: var(--red-soft); color: #9a3535; }
+        .feedback-icon { display: grid; width: 41px; height: 41px; flex: 0 0 auto; place-items: center; border-radius: 50%; color: #fff; font-size: 23px; font-weight: 900; }
         .correct .feedback-icon { background: var(--green); }
         .incorrect .feedback-icon { background: var(--red); }
-        .feedback-dialog h2 { margin: 0 0 6px; font-size: 26px; font-weight: 900; letter-spacing: -.4px; }
-        .feedback-dialog p { margin: 0; font-size: 15px; font-weight: 650; line-height: 1.55; }
-        .dismiss-feedback { width: 100%; min-height: 45px; margin-top: 22px; padding: 10px 16px 8px; border: 2px solid currentColor; border-bottom-width: 4px; border-radius: 11px; background: rgba(255, 255, 255, .72); color: inherit; cursor: pointer; font: inherit; font-size: 14px; font-weight: 850; }
-        .dismiss-feedback:hover { background: #fff; }
+        .feedback-copy strong { display: block; font-size: 18px; font-weight: 900; }
+        .feedback-copy span { display: block; margin-top: 2px; font-size: 13px; font-weight: 700; }
 
         .result-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
         .next-question { border-color: var(--green-dark); background: var(--green); color: white; }
@@ -186,7 +190,11 @@
         .finish-button { border-color: var(--blue-dark); background: #edf8ff; color: var(--blue-dark); }
         .finish-button:hover { background: #dff2ff; transform: translateY(-1px); }
 
-        @keyframes result-arrive { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes feedback-toast {
+            0% { opacity: 0; transform: translate(-50%, -10px) scale(.96); }
+            16%, 76% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -8px) scale(.98); }
+        }
 
         @media (max-width: 760px) {
             .page { padding: 22px 18px 42px; }
@@ -248,22 +256,15 @@
                 </form>
 
                 {% if submitted %}
-                    <dialog class="feedback-dialog {{ result }}" open aria-labelledby="feedback-title">
-                        <div class="feedback-dialog-card">
-                            {% if result == 'correct' %}
-                                <div class="feedback-icon" aria-hidden="true">✓</div>
-                                <h2 id="feedback-title">Correct</h2>
-                                <p>You chose the matching definition.</p>
-                            {% else %}
-                                <div class="feedback-icon" aria-hidden="true">×</div>
-                                <h2 id="feedback-title">Not quite</h2>
-                                <p>The matching definition is highlighted in green. The other choices are not a match.</p>
-                            {% endif %}
-                            <form method="dialog">
-                                <button type="submit" class="dismiss-feedback">See result</button>
-                            </form>
-                        </div>
-                    </dialog>
+                    <div class="feedback-toast feedback-box {{ result }}" role="status" aria-live="polite">
+                        {% if result == 'correct' %}
+                            <div class="feedback-icon" aria-hidden="true">✓</div>
+                            <div class="feedback-copy"><strong>Correct</strong><span>That is the matching definition.</span></div>
+                        {% else %}
+                            <div class="feedback-icon" aria-hidden="true">×</div>
+                            <div class="feedback-copy"><strong>Not quite</strong><span>The correct answer is highlighted in green.</span></div>
+                        {% endif %}
+                    </div>
 
                     <div class="result-actions">
                         <a href="{% url 'practice_definition_match' subject_id=subject.id %}{% review_query '?' %}&amp;review_mode=random" class="next-question">Next</a>
@@ -274,5 +275,15 @@
         </div>
     </main>
 </div>
+{% if submitted %}
+<script>
+    window.setTimeout(function () {
+        const toast = document.querySelector('.feedback-toast');
+        if (toast) toast.remove();
+    }, 2200);
+</script>
+{% endif %}
+<script src="{% static 'js/review_feedback.js' %}"></script>
+<script src="{% static 'dashboard/js/sidebar.js' %}"></script>
 </body>
 </html>
