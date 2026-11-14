@@ -103,6 +103,32 @@ class DefinitionMatchTests(TestCase):
         self.assertEqual(progress.incorrect_count, 1)
         self.assertEqual(progress.mastery_level, 0)
 
+    def test_term_match_shows_definition_and_marks_the_selected_term(self):
+        url = reverse("practice_definition_term_match", args=[self.subject.pk])
+        question = self.client.get(url + "?review_origin=library&review_mode=random")
+
+        self.assertEqual(question.status_code, 200)
+        definition = question.context["definition"]
+        self.assertContains(question, definition.definition)
+        self.assertContains(question, "Which term matches this definition?")
+
+        response = self.client.post(
+            url,
+            {
+                "question_token": question.context["question_token"],
+                "selected_definition_id": definition.pk,
+                "review_origin": "library",
+                "review_mode": "random",
+            },
+        )
+
+        self.assertEqual(response.context["result"], "correct")
+        self.assertContains(response, "That is the matching term.")
+        self.assertContains(
+            response,
+            reverse("practice_definition_match", args=[self.subject.pk]),
+        )
+
     @patch("practice.views.definitions.random.choice")
     def test_random_entry_can_open_the_existing_drag_activity(self, choice):
         choice.side_effect = ["drag", self.definitions[0]]

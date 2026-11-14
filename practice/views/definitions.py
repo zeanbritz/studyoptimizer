@@ -1196,6 +1196,7 @@ def practice_definition(
 # ============================================================
 
 DEFINITION_MATCH_TOKEN_SALT = "studigarden.definition-match.v1"
+DEFINITION_TERM_MATCH_TOKEN_SALT = "studigarden.definition-term-match.v1"
 
 
 def _definition_match_token(definition, options, progress, user):
@@ -1210,6 +1211,22 @@ def _definition_match_token(definition, options, progress, user):
             "review_count": progress.review_count,
         },
         salt=DEFINITION_MATCH_TOKEN_SALT,
+        compress=True,
+    )
+
+
+def _definition_term_match_token(definition, options, progress, user):
+    """Create a short-lived, tamper-proof record of a term-match question."""
+    return signing.dumps(
+        {
+            "user_id": user.pk,
+            "subject_id": definition.knowledge_unit.subject_id,
+            "definition_id": definition.pk,
+            "option_ids": [option.pk for option in options],
+            "mastery_level": progress.mastery_level,
+            "review_count": progress.review_count,
+        },
+        salt=DEFINITION_TERM_MATCH_TOKEN_SALT,
         compress=True,
     )
 
@@ -1276,8 +1293,10 @@ def practice_definition_match(request, subject_id):
     # for deterministic automated tests; normal student visits choose freely.
     if request.method == "GET":
         activity = request.GET.get("activity")
-        if activity not in {"match", "drag"}:
-            activity = random.choice(("match", "drag"))
+        if activity == "match":
+            activity = "definition"
+        if activity not in {"definition", "term", "drag"}:
+            activity = random.choice(("definition", "term", "drag"))
         if activity == "drag":
             definition = random.choice(definitions)
             query = urlencode(
@@ -1288,6 +1307,11 @@ def practice_definition_match(request, subject_id):
             )
             return redirect(
                 f"{reverse('practice_definition_review', args=[definition.pk])}?{query}"
+            )
+        if activity == "term":
+            return redirect(
+                reverse("practice_definition_term_match", args=[subject.pk])
+                + "?review_mode=random"
             )
 
     if request.method == "POST":
@@ -1366,6 +1390,7 @@ def practice_definition_match(request, subject_id):
                 "gave_up": gave_up,
                 "submitted": True,
                 "result": result,
+                "match_type": "definition",
             },
         )
 
@@ -1391,5 +1416,130 @@ def practice_definition_match(request, subject_id):
                 request.user,
             ),
             "submitted": False,
+            "match_type": "definition",
+        },
+    )
+
+
+@login_required
+def practice_definition_term_match(request, subject_id):
+    """Show a definition and ask the student to identify its saved term."""
+    definitions = list(
+        Definition.objects.filter(
+            knowledge_unit__subject__in=accessible_subjects(request.user),
+            knowledge_unit__subject_id=subject_id,
+            knowledge_unit__knowledge_type=KnowledgeUnit.KnowledgeType.DEFINITION,
+            knowledge_unit__active=True,
+        )
+        .select_related("knowledge_unit", "knowledge_unit__subject")
+        .order_by("term", "pk")
+    )
+
+    if len(definitions) < 4:
+        raise Http404("Add at least four definitions to use Random test.")
+
+    subject = definitions[0].knowledge_unit.subject
+
+    if request.method == "POST":
+        try:
+            question = signing.loads(
+                request.POST.get("question_token", ""),
+                salt=DEFINITION_TERM_MATCH_TOKEN_SALT,
+                max_age=60 * 60,
+            )
+            option_ids = [int(item) for item in question["option_ids"]]
+            definition_id = int(question["definition_id"])
+        except (
+            signing.BadSignature,
+            KeyError,
+            TypeError,
+            ValueError,
+        ):
+            return HttpResponseBadRequest(
+                "This random test has expired. Please start another one."
+            )
+
+        if (
+            question.get("user_id") != request.user.pk
+            or question.get("subject_id") != subject.pk
+            or len(option_ids) != 4
+            or len(set(option_ids)) != 4
+        ):
+            return HttpResponseBadRequest("This random test is no longer valid.")
+
+        definitions_by_id = {item.pk: item for item in definitions}
+        try:
+            definition = definitions_by_id[definition_id]
+            options = [definitions_by_id[item_id] for item_id in option_ids]
+        except KeyError:
+            return HttpResponseBadRequest("This random test is no longer valid.")
+
+        progress, _ = StudentKnowledge.objects.get_or_create(
+            student=request.user,
+            knowledge_unit=definition.knowledge_unit,
+        )
+
+        if (
+            question.get("mastery_level") != progress.mastery_level
+            or question.get("review_count") != progress.review_count
+        ):
+            return HttpResponseBadRequest(
+                "This definition changed in another review. Please start another test."
+            )
+
+        gave_up = request.POST.get("no_idea") == "1"
+        selected_value = request.POST.get("selected_definition_id")
+        try:
+            selected_definition_id = int(selected_value)
+        except (TypeError, ValueError):
+            selected_definition_id = None
+
+        if not gave_up and selected_definition_id not in option_ids:
+            return HttpResponseBadRequest("Choose one of the displayed terms.")
+
+        is_correct = not gave_up and selected_definition_id == definition.pk
+        result = _update_definition_match_progress(progress, is_correct)
+
+        return render(
+            request,
+            "practice/practice_definition_match.html",
+            {
+                "definition": definition,
+                "subject": subject,
+                "options": options,
+                "progress": progress,
+                "question_token": request.POST.get("question_token", ""),
+                "selected_definition_id": selected_definition_id,
+                "correct_definition_id": definition.pk,
+                "gave_up": gave_up,
+                "submitted": True,
+                "result": result,
+                "match_type": "term",
+            },
+        )
+
+    definition = random.choice(definitions)
+    progress, _ = StudentKnowledge.objects.get_or_create(
+        student=request.user,
+        knowledge_unit=definition.knowledge_unit,
+    )
+    options = _definition_match_options(definition, definitions)
+
+    return render(
+        request,
+        "practice/practice_definition_match.html",
+        {
+            "definition": definition,
+            "subject": subject,
+            "options": options,
+            "progress": progress,
+            "question_token": _definition_term_match_token(
+                definition,
+                options,
+                progress,
+                request.user,
+            ),
+            "submitted": False,
+            "match_type": "term",
         },
     )

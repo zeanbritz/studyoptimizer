@@ -11,7 +11,7 @@ REVIEW_ROUTES = {
     "definition_review_list", "formula_review_list", "list_review_list",
     "step_review_list", "comparison_review_list", "note_list", "note_detail",
     "review_definition", "review_formula", "review_list", "practice_formula",
-    "formula_reconstruction", "practice_definition_review", "practice_definition_match", "practice_step_review",
+    "formula_reconstruction", "practice_definition_review", "practice_definition_match", "practice_definition_term_match", "practice_step_review",
     "practice_comparison_review", "read_review_item", "read_definition",
 }
 LIBRARY_ROUTES = {"review_definitions", "review_formulas", "review_lists", "review_steps", "review_comparisons", "review_notes"}

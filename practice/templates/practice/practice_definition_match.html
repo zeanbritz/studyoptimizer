@@ -116,6 +116,7 @@
 
         .question-label { margin: 0 0 9px; color: #637178; font-size: 12px; font-weight: 850; letter-spacing: .05em; text-transform: uppercase; }
         .term { margin: 0; color: #176f9f; font-size: clamp(25px, 4vw, 34px); font-weight: 900; line-height: 1.2; }
+        .term--definition { font-size: clamp(18px, 2.8vw, 24px); line-height: 1.5; }
         .instruction { margin: 15px 0 0; color: var(--muted); font-size: 15px; font-weight: 600; line-height: 1.55; }
 
         .choice-grid {
@@ -171,10 +172,12 @@
             border-bottom-width: 5px;
             border-radius: 15px;
             box-shadow: 0 12px 26px rgba(32, 43, 57, .18);
-            transform: translateX(-50%);
-            animation: feedback-toast 2.1s ease-in-out forwards;
+            opacity: 0;
+            transform: translate(-50%, -10px) scale(.96);
             pointer-events: none;
         }
+
+        .feedback-toast.is-visible { animation: feedback-toast 2.35s ease-in-out forwards; }
 
         .feedback-toast.correct { border-color: #88c36b; background: var(--green-soft); color: #286d1a; }
         .feedback-toast.incorrect { border-color: #e19c9c; background: var(--red-soft); color: #9a3535; }
@@ -226,9 +229,15 @@
             <div class="mastery">Mastery: {{ progress.mastery_level }}/6</div>
 
             <section class="question-card" aria-labelledby="term-heading">
-                <p class="question-label">What does this term mean?</p>
-                <h2 class="term" id="term-heading">{{ definition.term }}</h2>
-                <p class="instruction">Choose the correct definition from the four saved in this subject.</p>
+                {% if match_type == 'term' %}
+                    <p class="question-label">Which term matches this definition?</p>
+                    <h2 class="term term--definition" id="term-heading">{{ definition.definition }}</h2>
+                    <p class="instruction">Choose the correct term from the four saved in this subject.</p>
+                {% else %}
+                    <p class="question-label">What does this term mean?</p>
+                    <h2 class="term" id="term-heading">{{ definition.term }}</h2>
+                    <p class="instruction">Choose the correct definition from the four saved in this subject.</p>
+                {% endif %}
 
                 <form method="post">
                     {% csrf_token %}
@@ -244,7 +253,7 @@
                                 value="{{ option.id }}"
                                 class="choice-button{% if submitted %}{% if option.id == correct_definition_id %} is-correct{% else %} is-incorrect{% endif %}{% endif %}"
                                 {% if submitted %}disabled{% endif %}
-                            >{{ option.definition }}</button>
+                            >{% if match_type == 'term' %}{{ option.term }}{% else %}{{ option.definition }}{% endif %}</button>
                         {% endfor %}
                     </div>
 
@@ -256,13 +265,13 @@
                 </form>
 
                 {% if submitted %}
-                    <div class="feedback-toast feedback-box {{ result }}" role="status" aria-live="polite">
+                    <div id="review-feedback-toast" class="feedback-toast feedback-box {{ result }}" role="status" aria-live="polite">
                         {% if result == 'correct' %}
                             <div class="feedback-icon" aria-hidden="true">✓</div>
-                            <div class="feedback-copy"><strong>Correct</strong><span>That is the matching definition.</span></div>
+                            <div class="feedback-copy"><strong>Correct</strong><span>That is the matching {% if match_type == 'term' %}term{% else %}definition{% endif %}.</span></div>
                         {% else %}
                             <div class="feedback-icon" aria-hidden="true">×</div>
-                            <div class="feedback-copy"><strong>Not quite</strong><span>The correct answer is highlighted in green.</span></div>
+                            <div class="feedback-copy"><strong>Not quite</strong><span>The correct {% if match_type == 'term' %}term{% else %}definition{% endif %} is highlighted in green.</span></div>
                         {% endif %}
                     </div>
 
@@ -277,10 +286,16 @@
 </div>
 {% if submitted %}
 <script>
-    window.setTimeout(function () {
-        const toast = document.querySelector('.feedback-toast');
-        if (toast) toast.remove();
-    }, 2200);
+    (function () {
+        const toast = document.getElementById('review-feedback-toast');
+        if (!toast) return;
+        window.requestAnimationFrame(function () {
+            toast.classList.add('is-visible');
+        });
+        window.setTimeout(function () {
+            toast.remove();
+        }, 2450);
+    }());
 </script>
 {% endif %}
 <script src="{% static 'js/review_feedback.js' %}"></script>
