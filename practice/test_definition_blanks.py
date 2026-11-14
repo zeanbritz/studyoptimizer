@@ -44,7 +44,7 @@ class DefinitionQuestionBuilderTests(SimpleTestCase):
             for question in questions
         ))
 
-    def test_each_hidden_word_has_its_own_matching_width(self):
+    def test_each_hidden_word_has_a_matching_tile_and_slot(self):
         question = create_definition_question(
             self.text,
             3,
@@ -55,9 +55,14 @@ class DefinitionQuestionBuilderTests(SimpleTestCase):
             "alpha", "delta", "epsilon", "iota",
         ])
         self.assertEqual(
-            [part["width_ch"] for part in hidden_parts],
-            [len(part["text"]) for part in hidden_parts],
+            sorted(tile["text"] for tile in question["drag_tiles"]),
+            ["alpha", "delta", "epsilon", "iota"],
         )
+        self.assertEqual(
+            sorted(tile["blank_number"] for tile in question["drag_tiles"]),
+            [1, 2, 3, 4],
+        )
+        self.assertTrue(all(part["tile_id"] for part in hidden_parts))
 
     def test_common_words_are_never_selected_as_definition_blanks(self):
         text = (
@@ -114,7 +119,7 @@ class DefinitionQuestionViewTests(TestCase):
         self.client.force_login(self.user)
         self.url = reverse("practice_definition_review", args=[self.definition.pk])
 
-    def test_question_renders_word_sized_inline_inputs(self):
+    def test_question_renders_draggable_word_tiles_and_inline_slots(self):
         response = self.client.get(self.url, {"review_origin": "library"})
         self.assertEqual(response.status_code, 200)
         missing_parts = [
@@ -122,12 +127,13 @@ class DefinitionQuestionViewTests(TestCase):
             if part["is_missing"]
         ]
         self.assertEqual(len(missing_parts), 1)
-        self.assertContains(response, 'class="missing-input"', count=1)
+        self.assertContains(response, 'class="word-slot"', count=1)
+        self.assertContains(response, 'class="word-tile"', count=1)
         self.assertContains(
             response,
             f'--answer-width: {missing_parts[0]["width_ch"]}ch;',
         )
-        self.assertNotContains(response, "<textarea")
+        self.assertNotContains(response, 'class="missing-input"')
 
     def test_signed_question_keeps_the_same_blanks_when_answer_is_checked(self):
         question = self.client.get(self.url, {"review_origin": "library"})

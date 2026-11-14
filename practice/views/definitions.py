@@ -133,6 +133,7 @@ def create_definition_question(
             "has_testable_words": False,
             "missing_indices": [],
             "missing_answers": [],
+            "drag_tiles": [],
             "question_parts": [],
         }
 
@@ -174,6 +175,7 @@ def create_definition_question(
             "has_testable_words": False,
             "missing_indices": [],
             "missing_answers": [],
+            "drag_tiles": [],
             "question_parts": [
                 {
                     "text": word,
@@ -230,19 +232,34 @@ def create_definition_question(
     missing_index_set = set(missing_indices)
     missing_answers = [words[index] for index in missing_indices]
     question_parts = []
+    drag_tiles = []
     blank_number = 0
 
     for index, word in enumerate(words):
         is_missing = index in missing_index_set
         if is_missing:
             blank_number += 1
+            drag_tiles.append({
+                "tile_id": f"definition-tile-{blank_number}",
+                "text": word,
+                "blank_number": blank_number,
+            })
         question_parts.append({
             "text": word,
             "is_missing": is_missing,
             "input_name": f"answer_{index}",
             "width_ch": max(1, len(word)),
             "blank_number": blank_number if is_missing else None,
+            "tile_id": (
+                f"definition-tile-{blank_number}"
+                if is_missing
+                else None
+            ),
         })
+
+    # The tiles contain only the words that belong in the definition, but are
+    # deliberately mixed up so recall includes placing each word in context.
+    (rng or random.SystemRandom()).shuffle(drag_tiles)
 
     first_missing = missing_indices[0]
     last_missing = missing_indices[-1]
@@ -272,6 +289,9 @@ def create_definition_question(
 
         "missing_answers":
             missing_answers,
+
+        "drag_tiles":
+            drag_tiles,
 
         "question_parts":
             question_parts,
@@ -826,6 +846,10 @@ def practice_definition(
         "missing_answers"
     ]
 
+    drag_tiles = question[
+        "drag_tiles"
+    ]
+
     has_testable_words = question["has_testable_words"]
 
     question_token = None
@@ -1058,6 +1082,9 @@ def practice_definition(
                 "question_parts":
                     question_parts,
 
+                "drag_tiles":
+                    drag_tiles,
+
                 "question_token":
                     question_token,
 
@@ -1119,6 +1146,9 @@ def practice_definition(
 
             "question_parts":
                 question_parts,
+
+            "drag_tiles":
+                drag_tiles,
 
             "question_token":
                 question_token,

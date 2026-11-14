@@ -1022,6 +1022,160 @@
                 transition: none;
             }
         }
+
+        /* Word-placement definition activity */
+        .definition-question--drag {
+            margin-bottom: 13px;
+        }
+
+        .word-slot {
+            display: inline-flex;
+            min-width: calc(var(--answer-width) + 0.8ch);
+            min-height: 2.1em;
+            align-items: center;
+            justify-content: center;
+            margin: 0 0.12em;
+            padding: 0 0.15em;
+            border-bottom: 2px dashed #7ca0b4;
+            border-radius: 7px 7px 2px 2px;
+            background: #f3f9fc;
+            color: #547181;
+            cursor: pointer;
+            font: inherit;
+            font-weight: 800;
+            line-height: 1.25;
+            text-align: center;
+            vertical-align: middle;
+            transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+        }
+
+        .word-slot:hover,
+        .word-slot:focus-visible,
+        .word-slot.is-over {
+            border-bottom-color: var(--definition-dark);
+            background: #e3f3fb;
+            outline: none;
+        }
+
+        .word-slot.is-over {
+            transform: translateY(-1px);
+        }
+
+        .word-slot.is-filled {
+            min-width: 0;
+            padding: 0;
+            border-bottom-style: solid;
+            background: transparent;
+        }
+
+        .word-slot-placeholder {
+            display: inline-block;
+            min-width: 0.7ch;
+            color: #7d99a8;
+            user-select: none;
+        }
+
+        .word-bank {
+            margin: 0 0 18px;
+            padding: 17px;
+            border: 1px solid #bdd9e9;
+            border-bottom: 4px solid #9fc4d9;
+            border-radius: 15px;
+            background: linear-gradient(145deg, #ffffff, #edf8fd);
+        }
+
+        .word-bank.is-over {
+            border-color: var(--definition);
+            background: #e1f3fb;
+        }
+
+        .word-bank-heading {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--definition-dark);
+            font-size: 12px;
+            font-weight: 900;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .word-bank-help,
+        .drag-status {
+            margin: 0;
+            color: #64808f;
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+
+        .word-bank-tiles {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 9px;
+            margin-top: 13px;
+        }
+
+        .word-tile {
+            min-height: 39px;
+            padding: 8px 12px 6px;
+            border: 2px solid #6da9c7;
+            border-bottom: 4px solid #4785a5;
+            border-radius: 10px;
+            background: #ffffff;
+            color: #245f7d;
+            cursor: grab;
+            font: inherit;
+            font-size: 14px;
+            font-weight: 850;
+            line-height: 1.15;
+            transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+        }
+
+        .word-tile:hover,
+        .word-tile:focus-visible,
+        .word-tile.is-selected {
+            border-color: var(--definition-dark);
+            background: #e5f4fb;
+            box-shadow: 0 0 0 4px rgba(95, 159, 199, 0.18);
+            outline: none;
+            transform: translateY(-1px);
+        }
+
+        .word-tile:active {
+            cursor: grabbing;
+            border-bottom-width: 2px;
+            transform: translateY(2px);
+        }
+
+        .word-tile.is-dragging {
+            opacity: 0.45;
+        }
+
+        .word-slot .word-tile {
+            min-height: 32px;
+            padding: 6px 9px 4px;
+            border-bottom-width: 3px;
+            font-size: 0.93em;
+        }
+
+        .drag-status {
+            min-height: 1.5em;
+            margin-top: 11px;
+        }
+
+        .submit-button[disabled] {
+            border-color: #b8c6cd;
+            background: #b8c6cd;
+            color: #eff4f6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        @media (max-width: 700px) {
+            .word-bank { padding: 15px; }
+            .word-tile { min-height: 42px; }
+            .word-slot { min-height: 2.25em; }
+        }
     </style>
 
 </head>
@@ -1049,7 +1203,7 @@
             </h1>
 
             <p>
-                Recall the missing part of the definition.
+                Place the missing words where they belong in the definition.
             </p>
 
         </div>
@@ -1132,7 +1286,7 @@
 
         {% else %}
 
-        <form method="POST">
+        <form method="POST" data-definition-drag>
 
             {% csrf_token %}{% review_hidden %}
 
@@ -1143,23 +1297,23 @@
             >
 
 
-            <div class="definition-question">
+            <div class="definition-question definition-question--drag">
 
 
                 {% for part in question_parts %}
                     {% if part.is_missing %}
-                        <input
-                            type="text"
-                            name="{{ part.input_name }}"
-                            class="missing-input"
+                        <span
+                            class="word-slot"
+                            role="button"
+                            tabindex="0"
+                            data-word-slot
+                            data-input-name="{{ part.input_name }}"
+                            aria-label="Missing word {{ part.blank_number }}. Choose a word tile to place here."
                             style="--answer-width: {{ part.width_ch }}ch;"
-                            size="{{ part.width_ch }}"
-                            autocomplete="off"
-                            spellcheck="false"
-                            aria-label="Missing word {{ part.blank_number }}"
-                            {% if part.blank_number == 1 %}autofocus{% endif %}
-                            required
                         >
+                            <span class="word-slot-placeholder" aria-hidden="true">&nbsp;</span>
+                        </span>
+                        <input type="hidden" name="{{ part.input_name }}" value="">
                     {% else %}
                         <span class="definition-word">{{ part.text }}</span>
                     {% endif %}{% if not forloop.last %} {% endif %}
@@ -1168,10 +1322,30 @@
 
             </div>
 
+            <div class="word-bank" data-word-bank>
+                <span class="word-bank-heading">Words to place</span>
+                <p class="word-bank-help">Drag a word into a blank, or tap a word and then tap its place.</p>
+                <div class="word-bank-tiles" data-word-bank-tiles>
+                    {% for tile in drag_tiles %}
+                        <button
+                            type="button"
+                            class="word-tile"
+                            draggable="true"
+                            data-word-tile
+                            data-tile-id="{{ tile.tile_id }}"
+                            data-value="{{ tile.text }}"
+                            aria-pressed="false"
+                        >{{ tile.text }}</button>
+                    {% endfor %}
+                </div>
+                <p class="drag-status" data-drag-status aria-live="polite">Place every word to check your answer.</p>
+            </div>
+
 
             <button
                 type="submit"
                 class="submit-button review-check-answer"
+                disabled
             >
                 Check Answer
             </button>
@@ -1358,6 +1532,202 @@
 </div>
 </main>
 </div>
+
+{% if not submitted and not no_testable_words %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.querySelector("[data-definition-drag]");
+        if (!form) {
+            return;
+        }
+
+        const bank = form.querySelector("[data-word-bank]");
+        const bankTiles = form.querySelector("[data-word-bank-tiles]");
+        const slots = Array.from(form.querySelectorAll("[data-word-slot]"));
+        const inputs = Array.from(form.querySelectorAll('input[type="hidden"][name^="answer_"]'));
+        const checkButton = form.querySelector(".review-check-answer");
+        const status = form.querySelector("[data-drag-status]");
+        let selectedTile = null;
+        let draggedTile = null;
+
+        function slotInput(slot) {
+            return form.querySelector(
+                'input[name="' + slot.dataset.inputName + '"]'
+            );
+        }
+
+        function makePlaceholder() {
+            const placeholder = document.createElement("span");
+            placeholder.className = "word-slot-placeholder";
+            placeholder.setAttribute("aria-hidden", "true");
+            placeholder.innerHTML = "&nbsp;";
+            return placeholder;
+        }
+
+        function clearSelection() {
+            if (selectedTile) {
+                selectedTile.classList.remove("is-selected");
+                selectedTile.setAttribute("aria-pressed", "false");
+            }
+            selectedTile = null;
+        }
+
+        function updateState() {
+            const unfilled = inputs.filter(function (input) {
+                return !input.value;
+            }).length;
+
+            checkButton.disabled = unfilled > 0;
+            status.textContent = unfilled
+                ? "Place " + unfilled + " more " + (unfilled === 1 ? "word" : "words") + " to check your answer."
+                : "All words are in place. Check your answer when you are ready.";
+        }
+
+        function returnTileToBank(tile) {
+            const slot = tile.closest("[data-word-slot]");
+            if (slot) {
+                const input = slotInput(slot);
+                if (input) {
+                    input.value = "";
+                }
+                slot.classList.remove("is-filled");
+                slot.replaceChildren(makePlaceholder());
+            }
+            bankTiles.append(tile);
+        }
+
+        function placeTile(tile, slot) {
+            const existingTile = slot.querySelector("[data-word-tile]");
+            if (existingTile && existingTile !== tile) {
+                returnTileToBank(existingTile);
+            }
+
+            const currentSlot = tile.closest("[data-word-slot]");
+            if (currentSlot && currentSlot !== slot) {
+                const currentInput = slotInput(currentSlot);
+                if (currentInput) {
+                    currentInput.value = "";
+                }
+                currentSlot.classList.remove("is-filled");
+                currentSlot.replaceChildren(makePlaceholder());
+            }
+
+            slot.replaceChildren(tile);
+            slot.classList.add("is-filled");
+            const input = slotInput(slot);
+            if (input) {
+                input.value = tile.dataset.value;
+            }
+            clearSelection();
+            updateState();
+        }
+
+        function selectTile(tile) {
+            if (selectedTile === tile) {
+                clearSelection();
+                return;
+            }
+
+            clearSelection();
+            selectedTile = tile;
+            tile.classList.add("is-selected");
+            tile.setAttribute("aria-pressed", "true");
+            status.textContent = "Now choose the blank where “" + tile.dataset.value + "” belongs.";
+        }
+
+        form.addEventListener("click", function (event) {
+            const tile = event.target.closest("[data-word-tile]");
+            if (tile && form.contains(tile)) {
+                selectTile(tile);
+                return;
+            }
+
+            const slot = event.target.closest("[data-word-slot]");
+            if (!slot || !form.contains(slot)) {
+                return;
+            }
+
+            if (selectedTile) {
+                placeTile(selectedTile, slot);
+            } else {
+                const placedTile = slot.querySelector("[data-word-tile]");
+                if (placedTile) {
+                    returnTileToBank(placedTile);
+                    updateState();
+                }
+            }
+        });
+
+        slots.forEach(function (slot) {
+            slot.addEventListener("keydown", function (event) {
+                if (event.key !== "Enter" && event.key !== " ") {
+                    return;
+                }
+                event.preventDefault();
+                slot.click();
+            });
+
+            slot.addEventListener("dragover", function (event) {
+                event.preventDefault();
+                slot.classList.add("is-over");
+            });
+
+            slot.addEventListener("dragleave", function () {
+                slot.classList.remove("is-over");
+            });
+
+            slot.addEventListener("drop", function (event) {
+                event.preventDefault();
+                slot.classList.remove("is-over");
+                if (draggedTile) {
+                    placeTile(draggedTile, slot);
+                }
+            });
+        });
+
+        form.querySelectorAll("[data-word-tile]").forEach(function (tile) {
+            tile.addEventListener("dragstart", function (event) {
+                draggedTile = tile;
+                tile.classList.add("is-dragging");
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData("text/plain", tile.dataset.tileId);
+            });
+
+            tile.addEventListener("dragend", function () {
+                tile.classList.remove("is-dragging");
+                draggedTile = null;
+                slots.forEach(function (slot) {
+                    slot.classList.remove("is-over");
+                });
+                bank.classList.remove("is-over");
+            });
+        });
+
+        bank.addEventListener("dragover", function (event) {
+            event.preventDefault();
+            bank.classList.add("is-over");
+        });
+
+        bank.addEventListener("dragleave", function (event) {
+            if (!bank.contains(event.relatedTarget)) {
+                bank.classList.remove("is-over");
+            }
+        });
+
+        bank.addEventListener("drop", function (event) {
+            event.preventDefault();
+            bank.classList.remove("is-over");
+            if (draggedTile) {
+                returnTileToBank(draggedTile);
+                clearSelection();
+                updateState();
+            }
+        });
+
+        updateState();
+    });
+</script>
+{% endif %}
 
 {% if submitted %}
 <script>
