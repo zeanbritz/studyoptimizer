@@ -145,7 +145,7 @@
         .choice-button:hover:not(:disabled) { border-color: #76b5db; background: var(--blue-soft); transform: translateY(-2px); }
         .choice-button:focus-visible,
         .back-button:focus-visible,
-        .try-another:focus-visible,
+        .next-question:focus-visible,
         .finish-button:focus-visible,
         .no-idea-button:focus-visible { outline: 3px solid rgba(39, 143, 211, .35); outline-offset: 3px; }
         .choice-button:disabled { cursor: default; }
@@ -157,23 +157,32 @@
         .no-idea-button { border-color: #b7c0c5; background: white; color: #566269; }
         .no-idea-button:hover { background: #f3f6f7; transform: translateY(-1px); }
 
-        .result-popover {
-            margin-top: 22px;
-            padding: 18px 20px;
-            border: 2px solid;
-            border-bottom-width: 5px;
-            border-radius: 15px;
+        .feedback-dialog {
+            width: min(420px, calc(100% - 36px));
+            margin: auto;
+            padding: 0;
+            border: 0;
+            border-radius: 18px;
+            background: transparent;
+            box-shadow: 0 20px 50px rgba(32, 43, 57, .28);
             animation: result-arrive .24s ease-out both;
         }
 
-        .result-popover.correct { border-color: #88c36b; background: var(--green-soft); color: #286d1a; }
-        .result-popover.incorrect { border-color: #e19c9c; background: var(--red-soft); color: #9a3535; }
-        .result-popover h2 { margin: 0 0 5px; font-size: 20px; font-weight: 900; }
-        .result-popover p { margin: 0; font-size: 14px; font-weight: 650; line-height: 1.5; }
+        .feedback-dialog::backdrop { background: rgba(29, 40, 50, .42); backdrop-filter: blur(2px); }
+        .feedback-dialog-card { padding: 27px; border: 2px solid; border-bottom-width: 5px; border-radius: 18px; }
+        .feedback-dialog.correct .feedback-dialog-card { border-color: #88c36b; background: var(--green-soft); color: #286d1a; }
+        .feedback-dialog.incorrect .feedback-dialog-card { border-color: #e19c9c; background: var(--red-soft); color: #9a3535; }
+        .feedback-icon { display: grid; width: 47px; height: 47px; place-items: center; margin-bottom: 13px; border-radius: 50%; color: #fff; font-size: 27px; font-weight: 900; }
+        .correct .feedback-icon { background: var(--green); }
+        .incorrect .feedback-icon { background: var(--red); }
+        .feedback-dialog h2 { margin: 0 0 6px; font-size: 26px; font-weight: 900; letter-spacing: -.4px; }
+        .feedback-dialog p { margin: 0; font-size: 15px; font-weight: 650; line-height: 1.55; }
+        .dismiss-feedback { width: 100%; min-height: 45px; margin-top: 22px; padding: 10px 16px 8px; border: 2px solid currentColor; border-bottom-width: 4px; border-radius: 11px; background: rgba(255, 255, 255, .72); color: inherit; cursor: pointer; font: inherit; font-size: 14px; font-weight: 850; }
+        .dismiss-feedback:hover { background: #fff; }
 
         .result-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
-        .try-another { border-color: var(--green-dark); background: var(--green); color: white; }
-        .try-another:hover { background: #65c936; transform: translateY(-1px); }
+        .next-question { border-color: var(--green-dark); background: var(--green); color: white; }
+        .next-question:hover { background: #65c936; transform: translateY(-1px); }
         .finish-button { border-color: var(--blue-dark); background: #edf8ff; color: var(--blue-dark); }
         .finish-button:hover { background: #dff2ff; transform: translateY(-1px); }
 
@@ -239,18 +248,25 @@
                 </form>
 
                 {% if submitted %}
-                    <section class="result-popover {{ result }}" role="status" aria-live="polite">
-                        {% if result == 'correct' %}
-                            <h2>Correct</h2>
-                            <p>Nice work. Your mastery level has been updated.</p>
-                        {% else %}
-                            <h2>Not quite</h2>
-                            <p>The correct definition is highlighted in green. The other choices are not a match.</p>
-                        {% endif %}
-                    </section>
+                    <dialog class="feedback-dialog {{ result }}" open aria-labelledby="feedback-title">
+                        <div class="feedback-dialog-card">
+                            {% if result == 'correct' %}
+                                <div class="feedback-icon" aria-hidden="true">✓</div>
+                                <h2 id="feedback-title">Correct</h2>
+                                <p>You chose the matching definition.</p>
+                            {% else %}
+                                <div class="feedback-icon" aria-hidden="true">×</div>
+                                <h2 id="feedback-title">Not quite</h2>
+                                <p>The matching definition is highlighted in green. The other choices are not a match.</p>
+                            {% endif %}
+                            <form method="dialog">
+                                <button type="submit" class="dismiss-feedback">See result</button>
+                            </form>
+                        </div>
+                    </dialog>
 
                     <div class="result-actions">
-                        <a href="{% url 'practice_definition_match' subject_id=subject.id %}{% review_query '?' %}&amp;review_mode=random" class="try-another">Try another</a>
+                        <a href="{% url 'practice_definition_match' subject_id=subject.id %}{% review_query '?' %}&amp;review_mode=random" class="next-question">Next</a>
                         <a href="{% review_back %}" class="finish-button">Finish Review</a>
                     </div>
                 {% endif %}
