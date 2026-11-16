@@ -39,7 +39,8 @@
 
         button,
         input,
-        select {
+        select,
+        textarea {
             font: inherit;
         }
 
@@ -253,7 +254,15 @@
             font-weight: 900;
         }
 
-        .add-item-button {
+        .item-actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 9px;
+        }
+
+        .add-item-button,
+        .bulk-upload-button {
             min-height: 40px;
             padding: 7px 14px 5px;
             border: 2px solid var(--list-dark);
@@ -267,14 +276,97 @@
             transition: filter 0.15s ease, transform 0.15s ease;
         }
 
-        .add-item-button:hover {
+        .bulk-upload-button {
+            border-color: #b9c8ce;
+            background: #ffffff;
+            color: #46565d;
+        }
+
+        .add-item-button:hover,
+        .bulk-upload-button:hover {
             filter: brightness(1.06);
             transform: translateY(-1px);
         }
 
-        .add-item-button:active {
+        .add-item-button:active,
+        .bulk-upload-button:active {
             border-bottom-width: 2px;
             transform: translateY(2px);
+        }
+
+        .bulk-upload-dialog {
+            width: min(650px, calc(100% - 32px));
+            margin: auto;
+            padding: 0;
+            border: 0;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(35, 45, 70, 0.25);
+        }
+
+        .bulk-upload-dialog::backdrop {
+            background: rgba(34, 43, 55, 0.46);
+            backdrop-filter: blur(2px);
+        }
+
+        .bulk-upload-content {
+            padding: 24px;
+            border: 1px solid var(--surface-border);
+            border-top: 3px solid var(--list);
+            border-bottom: 5px solid var(--surface-edge);
+            border-radius: 16px;
+            background: #f8fafb;
+        }
+
+        .bulk-upload-content h2 {
+            margin: 0 0 7px;
+            color: #34393b;
+            font-size: 21px;
+            font-weight: 900;
+        }
+
+        .bulk-upload-content p {
+            margin: 0 0 17px;
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 1.55;
+        }
+
+        .bulk-upload-content textarea {
+            width: 100%;
+            min-height: 210px;
+            display: block;
+            padding: 13px;
+            border: 2px solid #d5dde0;
+            border-bottom-width: 4px;
+            border-radius: 11px;
+            background: #ffffff;
+            color: var(--ink);
+            font: inherit;
+            font-size: 14px;
+            line-height: 1.5;
+            outline: none;
+            resize: vertical;
+        }
+
+        .bulk-upload-content textarea:focus {
+            border-color: #d4bc73;
+            box-shadow: 0 0 0 3px rgba(193, 159, 77, 0.13);
+        }
+
+        .bulk-upload-error {
+            min-height: 1.45em;
+            margin: 10px 0 0;
+            color: var(--danger-dark);
+            font-size: 12px;
+            font-weight: 750;
+        }
+
+        .bulk-upload-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 19px;
         }
 
         .list-items {
@@ -435,6 +527,7 @@
         .field input:focus-visible,
         .field select:focus-visible,
         .add-item-button:focus-visible,
+        .bulk-upload-button:focus-visible,
         .remove-item-button:focus-visible,
         .additional-details summary:focus-visible,
         .cancel-button:focus-visible,
@@ -480,6 +573,17 @@
             .section-header {
                 align-items: stretch;
                 flex-direction: column;
+            }
+
+            .item-actions,
+            .bulk-upload-actions {
+                flex-direction: column;
+            }
+
+            .add-item-button,
+            .bulk-upload-button,
+            .bulk-upload-actions button {
+                width: 100%;
             }
 
             .list-item-card {
@@ -590,9 +694,14 @@
                     <section class="items-section">
                         <div class="section-header">
                             <h2>List Items</h2>
-                            <button type="button" class="add-item-button" id="add-item-button">
-                                + Add Item
-                            </button>
+                            <div class="item-actions">
+                                <button type="button" class="add-item-button" id="add-item-button">
+                                    + Add Item
+                                </button>
+                                <button type="button" class="bulk-upload-button" id="bulk-upload-button">
+                                    + Bulk Upload
+                                </button>
+                            </div>
                         </div>
 
                         <div class="list-items" id="list-items">
@@ -691,6 +800,22 @@
     </main>
 </div>
 
+<dialog class="bulk-upload-dialog" id="bulk-upload-dialog" aria-labelledby="bulk-upload-title">
+    <div class="bulk-upload-content">
+        <h2 id="bulk-upload-title">Bulk upload list items</h2>
+        <p>Paste your items below. Each new line or bullet becomes an item. If you paste one line without bullets, commas separate items.</p>
+        <textarea
+            id="bulk-upload-text"
+            placeholder="First item&#10;Second item&#10;Third item"
+        ></textarea>
+        <p class="bulk-upload-error" id="bulk-upload-error" role="alert"></p>
+        <div class="bulk-upload-actions">
+            <button type="button" class="cancel-button" id="bulk-upload-cancel">Cancel</button>
+            <button type="button" class="save-button" id="bulk-upload-confirm">Add Items</button>
+        </div>
+    </div>
+</dialog>
+
 <template id="list-item-template">
     <div class="list-item-card">
         <span class="item-number">1</span>
@@ -732,6 +857,12 @@
         const itemsContainer = document.getElementById("list-items");
         const itemTemplate = document.getElementById("list-item-template");
         const addItemButton = document.getElementById("add-item-button");
+        const bulkUploadButton = document.getElementById("bulk-upload-button");
+        const bulkUploadDialog = document.getElementById("bulk-upload-dialog");
+        const bulkUploadText = document.getElementById("bulk-upload-text");
+        const bulkUploadError = document.getElementById("bulk-upload-error");
+        const bulkUploadCancel = document.getElementById("bulk-upload-cancel");
+        const bulkUploadConfirm = document.getElementById("bulk-upload-confirm");
 
         function updateItemNumbers() {
             itemsContainer.querySelectorAll(".list-item-card").forEach(function (card, index) {
@@ -739,7 +870,7 @@
             });
         }
 
-        function addListItem() {
+        function addListItem(text, shouldFocus) {
             const newItem = itemTemplate.content.cloneNode(true);
             itemsContainer.appendChild(newItem);
             updateItemNumbers();
@@ -747,7 +878,85 @@
             const newestInput = itemsContainer.lastElementChild.querySelector(
                 'input[name="item_text"]'
             );
-            newestInput.focus();
+            newestInput.value = text || "";
+
+            if (shouldFocus !== false) {
+                newestInput.focus();
+            }
+        }
+
+        function parseBulkItems(value) {
+            const text = value.replace(/\r\n?/g, "\n").trim();
+
+            if (!text) {
+                return [];
+            }
+
+            const bulletPrefix = /^\s*(?:[-*+•◦▪‣]|\d+[.)])\s+/;
+            const lines = text
+                .split("\n")
+                .map(function (line) {
+                    return line.trim();
+                })
+                .filter(Boolean);
+
+            if (lines.length > 1 || lines.some(function (line) { return bulletPrefix.test(line); })) {
+                return lines
+                    .map(function (line) {
+                        return line.replace(bulletPrefix, "").trim();
+                    })
+                    .filter(Boolean);
+            }
+
+            return text
+                .split(",")
+                .map(function (item) {
+                    return item.trim();
+                })
+                .filter(Boolean);
+        }
+
+        function removeEmptyItems() {
+            itemsContainer.querySelectorAll(".list-item-card").forEach(function (card) {
+                const textInput = card.querySelector('input[name="item_text"]');
+                const descriptionInput = card.querySelector('input[name="item_description"]');
+
+                if (!textInput.value.trim() && !descriptionInput.value.trim()) {
+                    card.remove();
+                }
+            });
+        }
+
+        function openBulkUpload() {
+            bulkUploadError.textContent = "";
+            bulkUploadText.value = "";
+            bulkUploadDialog.showModal();
+            bulkUploadText.focus();
+        }
+
+        function closeBulkUpload() {
+            bulkUploadDialog.close();
+        }
+
+        function addBulkItems() {
+            const items = parseBulkItems(bulkUploadText.value);
+
+            if (!items.length) {
+                bulkUploadError.textContent = "Paste at least one list item first.";
+                bulkUploadText.focus();
+                return;
+            }
+
+            removeEmptyItems();
+            items.forEach(function (item) {
+                addListItem(item, false);
+            });
+            updateItemNumbers();
+            closeBulkUpload();
+
+            const firstNewItem = itemsContainer.lastElementChild
+                .querySelector('input[name="item_text"]');
+            firstNewItem.focus();
         }
 
         function removeListItem(button) {
@@ -766,7 +975,16 @@
             updateItemNumbers();
         }
 
-        addItemButton.addEventListener("click", addListItem);
+        addItemButton.addEventListener("click", function () {
+            addListItem("", true);
+        });
+        bulkUploadButton.addEventListener("click", openBulkUpload);
+        bulkUploadCancel.addEventListener("click", closeBulkUpload);
+        bulkUploadConfirm.addEventListener("click", addBulkItems);
+
+        bulkUploadText.addEventListener("input", function () {
+            bulkUploadError.textContent = "";
+        });
 
         itemsContainer.addEventListener("click", function (event) {
             const removeButton = event.target.closest("[data-remove-item]");
