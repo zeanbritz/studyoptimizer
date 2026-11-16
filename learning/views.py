@@ -2185,6 +2185,9 @@ def review_list(
                 "review_items":
                     [],
 
+                "shuffled_hidden_items":
+                    [],
+
                 "error":
                     (
                         "This list does not "
@@ -2318,7 +2321,7 @@ def review_list(
 
             expected_answers = []
 
-            student_answers = []
+            placed_item_ids = []
 
             for item in items:
 
@@ -2338,57 +2341,53 @@ def review_list(
                 )
 
                 # --------------------------------------------
-                # STUDENT ANSWER
+                # PLACED ITEM
+                #
+                # The browser sends the BulletItem ID dragged
+                # into this blank slot. We compare the complete
+                # set because list-item order is not assessed.
                 # --------------------------------------------
 
-                answer_name = (
-                    f"answer_{item.id}"
+                placed_item_id = None
+
+                if not gave_up:
+
+                    try:
+
+                        placed_item_id = int(
+                            request.POST.get(
+                                f"placed_item_id_{item.id}",
+                                "",
+                            )
+                        )
+
+                    except (
+                        TypeError,
+                        ValueError,
+                    ):
+
+                        placed_item_id = None
+
+                submitted_answers[item.id] = (
+                    str(placed_item_id)
+                    if placed_item_id is not None
+                    else ""
                 )
 
-                submitted_answer = (
-                    "No idea"
-                    if gave_up
-                    else request.POST.get(
-                        answer_name,
-                        ""
-                    )
-                )
-
-                submitted_answers[
-                    item.id
-                ] = submitted_answer
-
-                student_answers.append(
-                    submitted_answer
+                placed_item_ids.append(
+                    placed_item_id
                 )
 
             # =================================================
             # ORDER-INDEPENDENT COMPARISON
             # =================================================
 
-            normalized_expected = sorted(
-                normalize_list_answer(
-                    answer
-                )
-
-                for answer
-                in expected_answers
-            )
-
-            normalized_student = sorted(
-                normalize_list_answer(
-                    answer
-                )
-
-                for answer
-                in student_answers
-            )
-
             all_correct = (
                 not gave_up
-                and normalized_student
+                and None not in placed_item_ids
+                and sorted(placed_item_ids)
                 ==
-                normalized_expected
+                sorted(hidden_item_ids)
             )
 
             # =================================================
@@ -2735,6 +2734,16 @@ def review_list(
 
     review_items = []
 
+    shuffled_hidden_items = [
+        item
+        for item in items
+        if item.id in hidden_item_id_set
+    ]
+
+    random.shuffle(
+        shuffled_hidden_items
+    )
+
     for item in items:
 
         is_hidden = (
@@ -2798,6 +2807,9 @@ def review_list(
 
             "review_items":
                 review_items,
+
+            "shuffled_hidden_items":
+                shuffled_hidden_items,
 
             "error":
                 error,

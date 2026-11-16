@@ -793,6 +793,128 @@
             transform: translateY(-1px);
         }
         .no-idea-button:active { border-bottom-width: 2px; transform: translateY(2px); }
+
+        /* Drag-and-drop list recall */
+        .list-answer-bank {
+            margin: 0 0 18px;
+            padding: 17px;
+            border: 1px solid #dfcd96;
+            border-bottom: 4px solid #c8aa59;
+            border-radius: 15px;
+            background: linear-gradient(145deg, #fffdf7, #faf3df);
+        }
+
+        .list-answer-bank.is-over {
+            border-color: #c19f4d;
+            background: #f6e9bc;
+        }
+
+        .list-answer-bank-heading {
+            display: block;
+            color: #80601a;
+            font-size: 12px;
+            font-weight: 900;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .list-answer-bank-help,
+        .list-placement-count {
+            margin: 5px 0 0;
+            color: #766a4a;
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+
+        .list-answer-tokens {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .list-answer-token {
+            min-height: 42px;
+            padding: 10px 13px 8px;
+            border: 2px solid #ba9a4c;
+            border-bottom-width: 4px;
+            border-radius: 11px;
+            background: #ffffff;
+            color: #5f4a19;
+            cursor: grab;
+            font-size: 14px;
+            font-weight: 800;
+            line-height: 1.3;
+            transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+        }
+
+        .list-answer-token:hover,
+        .list-answer-token:focus-visible,
+        .list-answer-token.is-selected {
+            border-color: #856612;
+            background: #fff9e9;
+            box-shadow: 0 0 0 4px rgba(193, 159, 77, 0.17);
+            outline: none;
+            transform: translateY(-1px);
+        }
+
+        .list-answer-token:active {
+            cursor: grabbing;
+            border-bottom-width: 2px;
+            transform: translateY(2px);
+        }
+
+        .list-answer-token.is-dragging { opacity: .42; }
+
+        .list-drop-slot {
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            padding: 5px;
+            border: 2px dashed #8bbbd7;
+            border-radius: 11px;
+            background: #ffffff;
+            color: #628194;
+            cursor: pointer;
+            transition: background .15s ease, border-color .15s ease, box-shadow .15s ease;
+        }
+
+        .list-drop-slot:hover,
+        .list-drop-slot:focus-visible,
+        .list-drop-slot.is-over {
+            border-color: #278fd3;
+            background: #eaf6fc;
+            box-shadow: 0 0 0 4px rgba(39, 143, 211, .12);
+            outline: none;
+        }
+
+        .list-drop-placeholder {
+            padding: 7px 9px;
+            color: #6d91a6;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .list-drop-slot:has(.list-answer-token) .list-drop-placeholder {
+            display: none;
+        }
+
+        .list-drop-slot .list-answer-token {
+            width: 100%;
+            min-height: 36px;
+            padding: 8px 10px 6px;
+            font-size: 13px;
+        }
+
+        .submit-button:disabled {
+            border-color: #b8c6cd;
+            background: #b8c6cd;
+            color: #eef4f6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         @media (max-width: 700px) { .page { padding: 22px 18px 42px; } .page-header { align-items: flex-start; flex-direction: column; } .back-link { width: 100%; text-align: center; } .review-card { padding: 19px; } }
     </style>
 
@@ -913,15 +1035,15 @@
 
                     {% if mastery_level == 0 %}
 
-                        Beginning review — one random item is hidden.
+                        Beginning review — drag one missing item into place.
 
                     {% elif mastery_level == 6 %}
 
-                        Full recall — all items must be entered.
+                        Full recall — place every item.
 
                     {% else %}
 
-                        More items are hidden as mastery increases.
+                        More items need to be placed as mastery increases.
 
                     {% endif %}
 
@@ -1149,11 +1271,11 @@
 
                             {% if hidden_count == 1 %}
 
-                                Enter the missing list item.
+                                Drag the missing list item into place.
 
                             {% else %}
 
-                                Enter the
+                                Drag the
                                 {{ hidden_count }}
                                 missing list items.
                                 Their order does not matter.
@@ -1171,7 +1293,7 @@
                          FORM
                     ============================== -->
 
-                    <form method="POST">
+                    <form method="POST" id="list-review-form">
 
 
                         {% csrf_token %}{% review_hidden %}
@@ -1227,6 +1349,25 @@
                         {% endfor %}
 
 
+                        <section class="list-answer-bank" id="list-answer-bank">
+                            <span class="list-answer-bank-heading">Items to place</span>
+                            <p class="list-answer-bank-help">Drag an item into a blank space, or tap an item and then tap a blank space.</p>
+                            <div class="list-answer-tokens" id="list-answer-tokens">
+                                {% for item in shuffled_hidden_items %}
+                                    <div
+                                        class="list-answer-token"
+                                        draggable="true"
+                                        tabindex="0"
+                                        role="button"
+                                        aria-pressed="false"
+                                        data-list-item-id="{{ item.id }}"
+                                    >{{ item.text }}</div>
+                                {% endfor %}
+                            </div>
+                            <p class="list-placement-count" id="list-placement-count" aria-live="polite"></p>
+                        </section>
+
+
                         <!-- =========================
                              LIST ITEMS
                         ========================== -->
@@ -1256,15 +1397,22 @@
 
                                         {% if review_item.hidden %}
 
-
-                                            <input
-                                                type="text"
-                                                class="answer-input"
-                                                name="{{ review_item.input_name }}"
-                                                placeholder="Enter missing list item"
-                                                autocomplete="off"
-                                                required
+                                            <div
+                                                class="list-drop-slot"
+                                                data-list-drop-slot
+                                                data-expected-item-id="{{ review_item.item.id }}"
+                                                role="button"
+                                                tabindex="0"
+                                                aria-label="Blank list item {{ forloop.counter }}. Place an item here."
                                             >
+                                                <span class="list-drop-placeholder">Drop an item here</span>
+                                                <input
+                                                    type="hidden"
+                                                    class="list-placement-input"
+                                                    name="placed_item_id_{{ review_item.item.id }}"
+                                                    value=""
+                                                >
+                                            </div>
 
 
                                         <!-- =================
@@ -1319,6 +1467,8 @@
                             <button
                                 type="submit"
                                 class="submit-button review-check-answer"
+                                id="check-answer-button"
+                                disabled
                             >
                                 Check Answer
                             </button>
@@ -1641,6 +1791,192 @@
 
 </script>
 
+{% if not attempt_complete %}
+<script>
+    (function () {
+        const form = document.getElementById("list-review-form");
+        const answerBank = document.getElementById("list-answer-bank");
+        const tokenArea = document.getElementById("list-answer-tokens");
+        const placementCount = document.getElementById("list-placement-count");
+        const checkButton = document.getElementById("check-answer-button");
+        const tokens = Array.from(document.querySelectorAll(".list-answer-token"));
+        const slots = Array.from(document.querySelectorAll("[data-list-drop-slot]"));
+
+        if (!form || !answerBank || !tokenArea || !placementCount || !checkButton) {
+            return;
+        }
+
+        let draggedToken = null;
+        let selectedToken = null;
+
+        function clearSelectedToken() {
+            if (selectedToken) {
+                selectedToken.classList.remove("is-selected");
+                selectedToken.setAttribute("aria-pressed", "false");
+            }
+            selectedToken = null;
+        }
+
+        function selectToken(token) {
+            if (selectedToken === token) {
+                clearSelectedToken();
+                return;
+            }
+
+            clearSelectedToken();
+            selectedToken = token;
+            token.classList.add("is-selected");
+            token.setAttribute("aria-pressed", "true");
+        }
+
+        function syncPlacementInputs() {
+            slots.forEach(function (slot) {
+                const input = slot.querySelector(".list-placement-input");
+                const token = slot.querySelector(".list-answer-token");
+                input.value = token ? token.dataset.listItemId : "";
+            });
+        }
+
+        function updatePlacementState() {
+            const placedCount = document.querySelectorAll(
+                "[data-list-drop-slot] .list-answer-token"
+            ).length;
+
+            placementCount.textContent = placedCount + " / " + tokens.length + " placed";
+            checkButton.disabled = placedCount !== tokens.length;
+            syncPlacementInputs();
+        }
+
+        function returnTokenToBank(token) {
+            if (!token) {
+                return;
+            }
+            tokenArea.appendChild(token);
+            clearSelectedToken();
+            updatePlacementState();
+        }
+
+        function moveToken(token, slot) {
+            if (!token || !slot) {
+                return;
+            }
+
+            const existingToken = slot.querySelector(".list-answer-token");
+            if (existingToken && existingToken !== token) {
+                tokenArea.appendChild(existingToken);
+            }
+
+            slot.appendChild(token);
+            clearSelectedToken();
+            updatePlacementState();
+        }
+
+        tokens.forEach(function (token) {
+            token.addEventListener("dragstart", function (event) {
+                draggedToken = token;
+                event.dataTransfer.setData("text/plain", token.dataset.listItemId);
+                event.dataTransfer.effectAllowed = "move";
+                window.setTimeout(function () {
+                    token.classList.add("is-dragging");
+                }, 0);
+            });
+
+            token.addEventListener("dragend", function () {
+                token.classList.remove("is-dragging");
+                draggedToken = null;
+                slots.forEach(function (slot) {
+                    slot.classList.remove("is-over");
+                });
+                answerBank.classList.remove("is-over");
+            });
+
+            token.addEventListener("click", function (event) {
+                event.stopPropagation();
+                selectToken(token);
+            });
+
+            token.addEventListener("keydown", function (event) {
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    selectToken(token);
+                }
+            });
+
+            token.addEventListener("contextmenu", function (event) {
+                event.preventDefault();
+                if (token.closest("[data-list-drop-slot]")) {
+                    returnTokenToBank(token);
+                }
+            });
+        });
+
+        slots.forEach(function (slot) {
+            slot.addEventListener("dragover", function (event) {
+                event.preventDefault();
+                slot.classList.add("is-over");
+            });
+
+            slot.addEventListener("dragleave", function () {
+                slot.classList.remove("is-over");
+            });
+
+            slot.addEventListener("drop", function (event) {
+                event.preventDefault();
+                slot.classList.remove("is-over");
+                moveToken(draggedToken, slot);
+            });
+
+            slot.addEventListener("click", function () {
+                moveToken(selectedToken, slot);
+            });
+
+            slot.addEventListener("keydown", function (event) {
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    moveToken(selectedToken, slot);
+                }
+            });
+        });
+
+        answerBank.addEventListener("dragover", function (event) {
+            event.preventDefault();
+            answerBank.classList.add("is-over");
+        });
+
+        answerBank.addEventListener("dragleave", function () {
+            answerBank.classList.remove("is-over");
+        });
+
+        answerBank.addEventListener("drop", function (event) {
+            event.preventDefault();
+            answerBank.classList.remove("is-over");
+            returnTokenToBank(draggedToken);
+        });
+
+        answerBank.addEventListener("click", function (event) {
+            if (selectedToken && event.target === answerBank) {
+                returnTokenToBank(selectedToken);
+            }
+        });
+
+        form.addEventListener("submit", function (event) {
+            if (event.submitter && event.submitter.name === "no_idea") {
+                return;
+            }
+
+            const placedCount = document.querySelectorAll(
+                "[data-list-drop-slot] .list-answer-token"
+            ).length;
+            if (placedCount !== tokens.length) {
+                event.preventDefault();
+                placementCount.textContent = "Place every item before checking your answer.";
+            }
+        });
+
+        updatePlacementState();
+    }());
+</script>
+{% endif %}
 
 <script src="{% static 'js/review_feedback.js' %}"></script>
 
