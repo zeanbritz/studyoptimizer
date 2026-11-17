@@ -1,6 +1,185 @@
 from copy import deepcopy
 from datetime import date, datetime
 
+from django.db import DatabaseError
+from django.urls import Resolver404, resolve
+from django.utils import timezone
+
+from .models import UserActivity
+
+
+PAGE_ACTIVITY_LABELS = {
+    "dashboard": "Viewed Today's Plan",
+    "onboarding": "Viewed study setup",
+    "goals": "Viewed study goals",
+    "subject_detail": "Opened a subject",
+    "book_summary": "Opened Study",
+    "definition": "Viewed definitions",
+    "formula_list": "Viewed formulas",
+    "definition_list": "Viewed definitions",
+    "list_review_list": "Opened list review",
+    "step_review_list": "Opened steps review",
+    "note_list": "Opened notes",
+    "comparison_review_list": "Opened comparison review",
+    "review": "Opened Review",
+    "review_definitions": "Opened definition review",
+    "review_formulas": "Opened formula review",
+    "review_lists": "Opened list review",
+    "review_steps": "Opened steps review",
+    "review_notes": "Opened notes review",
+    "review_comparisons": "Opened comparison review",
+    "progress": "Viewed Progress",
+    "calendar": "Viewed Exams & Assessments",
+    "my_plan": "Viewed Profile",
+    "definition_pdf_lab": "Opened Auto Summarize",
+    "review_formula": "Opened a formula review",
+    "review_definition": "Opened a definition review",
+    "review_list": "Opened a list review",
+    "read_review_item": "Read a review item",
+}
+
+
+STUDY_ACTIVITY_LABELS = {
+    "create_formula": "Added a formula",
+    "edit_formula": "Updated a formula",
+    "delete_formula": "Deleted a formula",
+    "create_definition": "Added a definition",
+    "edit_definition": "Updated a definition",
+    "delete_definition": "Deleted a definition",
+    "create_list": "Added a list",
+    "edit_list": "Updated a list",
+    "delete_list": "Deleted a list",
+    "create_steps": "Added steps",
+    "edit_steps": "Updated steps",
+    "delete_steps": "Deleted steps",
+    "create_note": "Added a note",
+    "edit_note": "Updated a note",
+    "delete_note": "Deleted a note",
+    "create_comparison": "Added a comparison",
+    "edit_comparison": "Updated a comparison",
+    "delete_comparison": "Deleted a comparison",
+    "practice_formula": "Practised a formula",
+    "formula_reconstruction": "Practised a formula",
+    "practice_definition_review": "Practised a definition",
+    "practice_definition_match": "Practised a definition",
+    "practice_definition_term_match": "Practised a definition",
+    "practice_step_review": "Practised steps",
+    "practice_comparison_review": "Practised a comparison",
+    "review_formula": "Practised a formula",
+    "review_definition": "Practised a definition",
+    "review_list": "Practised a list",
+    "random_note_review": "Reviewed a note",
+    "calendar": "Updated Exams & Assessments",
+    "subject_detail": "Updated a subject",
+    "submit_support_query": "Sent a support request",
+    "download_subject_summary": "Exported a subject summary",
+    "definition_pdf_lab": "Used Auto Summarize",
+}
+
+
+class UserActivityMiddleware:
+    """Record a small, useful history of student activity for the admin."""
+
+    page_view_cooldown_seconds = 10 * 60
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        self._record_activity(request, response)
+        return response
+
+    @staticmethod
+    def _route_name(request):
+        try:
+            return resolve(request.path_info).url_name
+        except Resolver404:
+            return None
+
+    @staticmethod
+    def _is_trackable_user(request):
+        user = getattr(request, "user", None)
+        return bool(
+            user
+            and user.is_authenticated
+            and user.is_active
+            and not request.path_info.startswith(("/admin/", "/static/", "/media/"))
+        )
+
+    def _record_activity(self, request, response):
+        if response.status_code >= 400 or not self._is_trackable_user(request):
+            return
+
+        route_name = self._route_name(request)
+        if not route_name:
+            return
+
+        activity_type = None
+        label = None
+        if request.method == "GET":
+            label = PAGE_ACTIVITY_LABELS.get(route_name)
+            activity_type = UserActivity.ActivityType.PAGE_VIEW
+            if label is None:
+                label = STUDY_ACTIVITY_LABELS.get(route_name)
+                activity_type = UserActivity.ActivityType.STUDY_ACTION
+        elif request.method == "POST":
+            label = STUDY_ACTIVITY_LABELS.get(route_name)
+            activity_type = UserActivity.ActivityType.STUDY_ACTION
+
+        if not label:
+            return
+
+        if (
+            activity_type == UserActivity.ActivityType.PAGE_VIEW
+            and not self._allow_page_view(request)
+        ):
+            return
+
+        try:
+            UserActivity.objects.create(
+                user_id=request.user.pk,
+                activity_type=activity_type,
+                label=label,
+                # Do not keep query parameters or form contents in this log.
+                path=request.path_info[:255],
+            )
+        except DatabaseError:
+            # The timeline is informative only; it must not break a student's
+            # learning session if a migration is still being applied.
+            return
+
+    def _allow_page_view(self, request):
+        """Avoid filling the timeline when the same page is refreshed often."""
+        try:
+            recent = request.session.get("_recent_activity_pages", {})
+            if not isinstance(recent, dict):
+                recent = {}
+
+            now = timezone.now().timestamp()
+            recent = {
+                key: value
+                for key, value in recent.items()
+                if isinstance(value, (int, float))
+                and now - value < 24 * 60 * 60
+            }
+            page_key = request.path_info[:255]
+            last_seen = recent.get(page_key)
+            if (
+                isinstance(last_seen, (int, float))
+                and now - last_seen < self.page_view_cooldown_seconds
+            ):
+                return False
+
+            recent[page_key] = now
+            request.session["_recent_activity_pages"] = recent
+            request.session.modified = True
+        except (AttributeError, DatabaseError):
+            # A missing session should not prevent a useful activity record.
+            pass
+
+        return True
+
 
 class WorkspaceSessionPersistenceMiddleware:
     """

@@ -16,6 +16,50 @@ class User(AbstractUser):
 
     beta_lifetime_access = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True, editable=False)
+    login_count = models.PositiveIntegerField(
+        default=0,
+        editable=False,
+        help_text=(
+            "Successful logins recorded since activity tracking was enabled."
+        ),
+    )
+
+
+class UserActivity(models.Model):
+    """A compact, privacy-conscious timeline of a student's site activity."""
+
+    class ActivityType(models.TextChoices):
+        LOGIN = "login", "Signed in"
+        LOGOUT = "logout", "Signed out"
+        PAGE_VIEW = "page_view", "Page viewed"
+        STUDY_ACTION = "study_action", "Study activity"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="activity_events",
+    )
+    activity_type = models.CharField(
+        max_length=20,
+        choices=ActivityType.choices,
+    )
+    # Store only a fixed description and path, never submitted study content.
+    label = models.CharField(max_length=160)
+    path = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-pk"]
+        indexes = [
+            models.Index(
+                fields=["user", "-created_at"],
+                name="accounts_activity_user_recent",
+            ),
+        ]
+        verbose_name_plural = "User activity"
+
+    def __str__(self):
+        return f"{self.user_id}: {self.label}"
 
 
 class SupportQuery(models.Model):

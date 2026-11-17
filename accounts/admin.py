@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 
 from .models import (
     BetaInvite,
@@ -6,7 +7,93 @@ from .models import (
     StudyPlanChange,
     StudyRefund,
     SupportQuery,
+    User,
+    UserActivity,
 )
+
+
+class UserActivityInline(admin.TabularInline):
+    """Show a student's latest recorded activity on their admin profile."""
+
+    model = UserActivity
+    extra = 0
+    can_delete = False
+    show_change_link = True
+    fields = ("created_at", "activity_type", "label", "path")
+    readonly_fields = fields
+    ordering = ("-created_at", "-pk")
+    verbose_name = "recent website activity"
+    verbose_name_plural = "Recent website activity"
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(User)
+class UserAdmin(DjangoUserAdmin):
+    """Student accounts with a concise activity profile for support work."""
+
+    list_display = (
+        "email",
+        "username",
+        "date_joined",
+        "last_login",
+        "login_count",
+        "is_active",
+        "is_staff",
+    )
+    list_display_links = ("email",)
+    list_filter = ("is_active", "is_staff", "is_superuser", "date_joined")
+    search_fields = ("email", "username", "first_name", "last_name")
+    ordering = ("-date_joined",)
+    readonly_fields = ("date_joined", "last_login", "login_count", "deleted_at")
+    inlines = (UserActivityInline,)
+
+    fieldsets = (
+        (None, {"fields": ("username", "password")}),
+        (
+            "Personal info",
+            {"fields": ("first_name", "last_name", "email")},
+        ),
+        (
+            "Permissions",
+            {
+                "fields": (
+                    "is_active",
+                    "is_staff",
+                    "is_superuser",
+                    "groups",
+                    "user_permissions",
+                ),
+            },
+        ),
+        (
+            "Account activity",
+            {"fields": ("date_joined", "last_login", "login_count")},
+        ),
+        (
+            "StudiGarden access",
+            {"fields": ("beta_lifetime_access", "deleted_at")},
+        ),
+    )
+
+
+@admin.register(UserActivity)
+class UserActivityAdmin(admin.ModelAdmin):
+    list_display = ("created_at", "user", "activity_type", "label", "path")
+    list_filter = ("activity_type", "created_at")
+    search_fields = ("user__email", "user__username", "label", "path")
+    readonly_fields = ("user", "activity_type", "label", "path", "created_at")
+    fields = readonly_fields
+    list_select_related = ("user",)
+    date_hierarchy = "created_at"
+    ordering = ("-created_at", "-pk")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(SupportQuery)

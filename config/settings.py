@@ -72,7 +72,7 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
 
-    "accounts",
+    "accounts.apps.AccountsConfig",
     "dashboard",
     "learning",
     "subjects",
@@ -91,6 +91,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "allauth.account.middleware.AccountMiddleware",
     "accounts.middleware.WorkspaceSessionPersistenceMiddleware",
+    "accounts.middleware.UserActivityMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
