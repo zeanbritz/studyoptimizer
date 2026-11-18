@@ -64,6 +64,15 @@ class CreateFormulaTests(TestCase):
         )
         self.assertEqual(structure[5]["type"], "operator")
 
+    def test_create_formula_keeps_the_paste_dialog_closed_until_requested(self):
+        response = self.client.get(
+            reverse("create_formula", kwargs={"subject_id": self.subject.id})
+        )
+
+        self.assertContains(response, 'id="paste-formula-button"')
+        self.assertContains(response, 'id="paste-formula-modal"')
+        self.assertContains(response, "hidden")
+
     def test_pasted_formula_rejects_ambiguous_equations(self):
         response = self.client.post(
             reverse("parse_formula_structure"),

@@ -941,12 +941,13 @@
 #formula-canvas:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); outline: none; }
 .additional-details { border: 1px solid #dce2e5; border-bottom: 3px solid #cfd7da; border-radius: 13px; background: #fff; }
 .additional-details summary { padding: 15px 17px; color: #404649; font-size: 13px; font-weight: 850; cursor: pointer; }
-.formula-builder-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
-.formula-builder-heading .section-header { margin-bottom: 0; }
+.formula-canvas-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 10px; }
+.formula-canvas-heading .formula-label { margin-bottom: 0; }
 .paste-formula-button { min-height: 42px; flex: 0 0 auto; padding: 9px 15px 7px; border: 2px solid var(--green-dark); border-bottom-width: 4px; border-radius: 10px; background: var(--green); color: #fff; font: inherit; font-size: 13px; font-weight: 850; cursor: pointer; }
 .paste-formula-button:hover { background: #64c735; }
 .paste-formula-button:active { border-bottom-width: 2px; transform: translateY(2px); }
 .formula-paste-modal { position: fixed; z-index: 1300; inset: 0; display: grid; place-items: center; padding: 20px; background: rgba(29, 39, 59, .56); }
+.formula-paste-modal[hidden] { display: none !important; }
 .formula-paste-dialog { width: min(100%, 540px); padding: 24px; border: 2px solid #d8e0e3; border-bottom-width: 5px; border-radius: 16px; background: #fff; box-shadow: 0 20px 50px rgba(25, 34, 51, .28); }
 .formula-paste-dialog h2 { margin: 0 0 8px; color: #303a5a; font-size: 22px; }
 .formula-paste-dialog p { margin: 0 0 17px; color: #687278; font-size: 14px; line-height: 1.5; }
@@ -958,7 +959,7 @@
 .formula-paste-actions .formula-paste-submit { border-color: var(--green-dark); background: var(--green); color: #fff; }
 .formula-paste-actions .formula-paste-submit:hover { background: #64c735; }
 body.formula-paste-open { overflow: hidden; }
-@media (max-width: 520px) { .formula-builder-heading { align-items: stretch; flex-direction: column; } .paste-formula-button { width: 100%; } .formula-paste-actions { flex-direction: column-reverse; } .formula-paste-actions button { width: 100%; } }
+@media (max-width: 520px) { .formula-canvas-heading { align-items: stretch; flex-direction: column; } .paste-formula-button { width: 100%; } .formula-paste-actions { flex-direction: column-reverse; } .formula-paste-actions button { width: 100%; } }
 </style>
 </head>
 
@@ -1053,35 +1054,19 @@ body.formula-paste-open { overflow: hidden; }
                 <section class="section">
 
 
-                    <div class="formula-builder-heading">
+                    <div class="section-header">
 
 
-                        <div class="section-header">
+                        <h2>
+                            Build your formula
+                        </h2>
 
 
-                            <h2>
-                                Build your formula
-                            </h2>
-
-
-                            <p>
-                                Give your formula a name, then use
-                                variables, numbers, operators,
-                                symbols and fractions to build it.
-                            </p>
-
-
-                        </div>
-
-
-                        <button
-                            type="button"
-                            id="paste-formula-button"
-                            class="paste-formula-button"
-                            data-parse-url="{% url 'parse_formula_structure' %}"
-                        >
-                            Add Formula
-                        </button>
+                        <p>
+                            Give your formula a name, then use
+                            variables, numbers, operators,
+                            symbols and fractions to build it.
+                        </p>
 
 
                     </div>
@@ -1114,15 +1099,31 @@ body.formula-paste-open { overflow: hidden; }
                     </div>
 
 
-                    <span class="formula-label">
+                    <div class="formula-canvas-heading">
 
-                        Formula
 
-                        <span class="optional">
-                            Optional
+                        <span class="formula-label">
+
+                            Formula
+
+                            <span class="optional">
+                                Optional
+                            </span>
+
                         </span>
 
-                    </span>
+
+                        <button
+                            type="button"
+                            id="paste-formula-button"
+                            class="paste-formula-button"
+                            data-parse-url="{% url 'parse_formula_structure' %}"
+                        >
+                            Add Formula
+                        </button>
+
+
+                    </div>
 
 
                     <div class="toolbar">
