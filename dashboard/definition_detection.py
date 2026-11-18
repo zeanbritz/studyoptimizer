@@ -29,12 +29,118 @@ NOTE_CONTEXT = re.compile(
     r"decision rule|key judg(?:e)?ment|remember|warning)$",
     re.I,
 )
+TABLE_TERM_HEADERS = {
+    "term", "terms", "key term", "key terms", "concept", "concepts",
+    "word", "words", "vocabulary", "terminology",
+}
+TABLE_MEANING_HEADERS = {
+    "meaning", "meanings", "definition", "definitions", "description",
+    "descriptions", "explanation", "explanations", "what it means",
+}
+MAX_TABLE_ROWS = 40
 
 
 def _clean(line):
     line = line.replace("\u00ad", "").replace("\ufb01", "fi").replace("\ufb02", "fl")
     line = re.sub(r"^[\u2022\u25cf*]\s*", "", line)
     return re.sub(r"\s+", " ", line).strip()
+
+
+def _header_key(value):
+    """Normalise a short table heading without changing its visible content."""
+    return re.sub(r"[^a-z]+", " ", _clean(value).casefold()).strip()
+
+
+def _column_segments(raw):
+    """Return visible columns from pypdf's layout-preserving text output."""
+    if "|" in raw:
+        pieces = []
+        position = 0
+        for piece in raw.split("|"):
+            cleaned = _clean(piece)
+            if cleaned:
+                leading_space = len(piece) - len(piece.lstrip())
+                pieces.append((position + leading_space, cleaned))
+            position += len(piece) + 1
+        return pieces
+    return [
+        (match.start(), _clean(match.group()))
+        for match in re.finditer(r"\S(?:.*?\S)?(?=(?: {2,}|\t+)|$)", raw.rstrip())
+    ]
+
+
+def _definition_table_header(raw):
+    segments = _column_segments(raw)
+    if len(segments) != 2:
+        return None
+    headers = [_header_key(value) for _, value in segments]
+    if (
+        headers[0] not in TABLE_TERM_HEADERS
+        or headers[1] not in TABLE_MEANING_HEADERS
+    ):
+        return None
+    return segments
+
+
+def _table_definition_candidates(lines, page_number):
+    """Read explicit Term/Meaning tables without guessing at ordinary prose."""
+    found = []
+    for header_index, raw in enumerate(lines):
+        header = _definition_table_header(raw)
+        if not header:
+            continue
+
+        second_column_start = header[1][0]
+        delimiter = "\t" if "\t" in raw else "|" if "|" in raw else ""
+        current = None
+        rows = []
+        for row_raw in lines[header_index + 1:]:
+            line = _clean(row_raw)
+            if not line:
+                continue
+            if SECTION.match(line) or OTHER_SECTION.match(line):
+                break
+
+            if delimiter:
+                cells = row_raw.split(delimiter, 1)
+                term = _clean(cells[0])
+                meaning = _clean(cells[1]) if len(cells) == 2 else ""
+            else:
+                term = _clean(row_raw[:second_column_start])
+                meaning = _clean(row_raw[second_column_start:])
+            if term and meaning and _valid_term(term):
+                if current:
+                    rows.append(current)
+                current = {"term": term, "definition": meaning}
+                if len(rows) >= MAX_TABLE_ROWS:
+                    break
+                continue
+
+            # Long meanings sometimes wrap beneath their own column. Keep only
+            # a clearly indented continuation, never a new prose paragraph.
+            if current and not term and meaning:
+                combined = f"{current['definition']} {meaning}".strip()
+                if len(combined) <= 1200:
+                    current["definition"] = combined
+                    continue
+            break
+
+        if current and len(rows) < MAX_TABLE_ROWS:
+            rows.append(current)
+        valid_rows = [
+            row for row in rows
+            if _valid_term(row["term"]) and _valid_definition(row["definition"])
+        ]
+        # Two valid rows make it clear this is a genuine glossary-style table,
+        # rather than a one-off two-column layout elsewhere in the document.
+        if len(valid_rows) >= 2:
+            found.extend({
+                "term": row["term"],
+                "definition": row["definition"],
+                "page": page_number,
+                "confidence": "strong",
+            } for row in valid_rows)
+    return found
 
 
 def _valid_term(term):
@@ -82,7 +188,19 @@ def find_definition_candidates(page_text, page_number):
     lines = [_clean(line) for line in (page_text or "").splitlines()]
     if any(CONTENTS.fullmatch(line) for line in lines[:30]):
         return []
-    candidates = []
+    candidates = _table_definition_candidates(
+        (page_text or "").splitlines(), page_number
+    )
+    seen = {
+        (candidate["term"].casefold(), candidate["definition"].casefold())
+        for candidate in candidates
+    }
+
+    def add_candidate(candidate):
+        key = (candidate["term"].casefold(), candidate["definition"].casefold())
+        if key not in seen:
+            seen.add(key)
+            candidates.append(candidate)
     in_glossary = False
     index = 0
     while index < len(lines):
@@ -110,7 +228,7 @@ def find_definition_candidates(page_text, page_number):
             body, consumed = _extend_body(body, lines, index)
             index += consumed
             if _valid_definition(body):
-                candidates.append({
+                add_candidate({
                     "term": term, "definition": body, "page": page_number,
                     "confidence": "strong" if labelled or colon else "possible",
                 })
@@ -123,7 +241,7 @@ def find_definition_candidates(page_text, page_number):
             if next_index < len(lines):
                 body, consumed = _extend_body(lines[next_index], lines, next_index + 1)
                 if _valid_definition(body) and not _split_entry(lines[next_index]):
-                    candidates.append({
+                    add_candidate({
                         "term": line, "definition": body, "page": page_number,
                         "confidence": "strong" if labelled else "possible",
                     })
@@ -139,7 +257,7 @@ def find_definition_candidates(page_text, page_number):
                 and body.endswith((".", "!", "?"))
                 and _valid_definition(sentence.group("body"))
             ):
-                candidates.append({
+                add_candidate({
                     "term": sentence.group("term"), "definition": body,
                     "page": page_number, "confidence": "possible",
                 })

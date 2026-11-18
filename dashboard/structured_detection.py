@@ -44,6 +44,9 @@ TABLE_FIRST_COLUMNS = {
     "feature", "criterion", "criteria", "type", "component", "approach",
     "decision", "investment", "measure",
 }
+STEP_TABLE_FIRST_COLUMNS = {
+    "step", "steps", "step number", "step no", "number", "numbered step", "no",
+}
 MAX_ITEMS = 20
 
 
@@ -220,13 +223,113 @@ def _strip_section_number(title):
     return re.sub(r"^\d+(?:\.\d+)*[.)]?\s+", "", title).rstrip(":")
 
 
+def _table_header_key(value):
+    return re.sub(r"[^a-z]+", " ", _clean(value).casefold()).strip()
+
+
+def _step_table_header(raw):
+    """Return aligned header columns only for an explicitly numbered step table."""
+    segments = _segments(raw)
+    if len(segments) < 2:
+        return None
+    if _table_header_key(segments[0][1]) not in STEP_TABLE_FIRST_COLUMNS:
+        return None
+    return segments
+
+
+def _step_table_title(lines, header_index):
+    """Prefer the section name printed above a table, never its column labels."""
+    for raw in reversed(lines[max(0, header_index - 6):header_index]):
+        title = _strip_section_number(_clean(raw)).rstrip(":")
+        if not title or _is_furniture(title) or _step_table_header(raw):
+            continue
+        if STEPS_HEADING.fullmatch(title):
+            return title[:255]
+        if _is_boundary(title) or NUMBERED_STEP.fullmatch(title):
+            break
+        if title.endswith((".", "!", "?")) or len(title.split()) > 18:
+            continue
+        return title[:255]
+    return "Steps"
+
+
+def _table_step_candidate(lines, header_index, page_number):
+    """Turn a numbered Step/Action table into one editable steps suggestion."""
+    header = _step_table_header(lines[header_index])
+    if not header:
+        return None
+    starts = [position for position, _ in header]
+    second_start = starts[1]
+    third_start = starts[2] if len(starts) > 2 else None
+    delimiter = "\t" if "\t" in lines[header_index] else "|" if "|" in lines[header_index] else ""
+    steps, current = [], None
+    expected = 1
+
+    for raw in lines[header_index + 1:]:
+        line = _clean(raw)
+        if not line or _is_furniture(line):
+            continue
+        if _is_boundary(line):
+            break
+
+        if delimiter:
+            cells = [_clean(cell) for cell in raw.split(delimiter)]
+            number_cell = cells[0] if cells else ""
+            action = cells[1] if len(cells) > 1 else ""
+            detail = " ".join(cell for cell in cells[2:] if cell)
+        else:
+            number_cell = _clean(raw[:second_start])
+            action = _clean(
+                raw[second_start:third_start] if third_start is not None else raw[second_start:]
+            )
+            detail = _clean(raw[third_start:]) if third_start is not None else ""
+        number = ONLY_NUMBER.fullmatch(number_cell)
+        if number:
+            if int(number.group(1)) != expected or not action:
+                break
+            if current:
+                steps.append(current)
+            current = {"text": action[:255], "description": detail[:500]}
+            expected += 1
+            if len(steps) >= MAX_ITEMS:
+                break
+            continue
+
+        # A continuation should stay beneath the action columns. A line that
+        # starts in the number column marks the end of this compact table.
+        if current and not number_cell and (action or detail):
+            continuation = " ".join(part for part in (action, detail) if part)
+            current["description"] = (
+                f"{current['description']} {continuation}".strip()
+            )[:500]
+            continue
+        break
+
+    if current and len(steps) < MAX_ITEMS:
+        steps.append(current)
+    if len(steps) < 2:
+        return None
+    return _candidate(
+        _step_table_title(lines, header_index), page_number, steps=steps,
+    )
+
+
 def find_step_candidates(page_text, page_number):
     """Find numbered procedures while rejecting contents and formula banks."""
     lines = (page_text or "").splitlines()
     if _is_contents_page(lines):
         return []
     found, used_starts = [], set()
+    table_headers = set()
+    for index, raw in enumerate(lines):
+        if _step_table_header(raw):
+            table_headers.add(index)
+            table = _table_step_candidate(lines, index, page_number)
+            if table:
+                found.append(table)
     for heading_index, raw in enumerate(lines):
+        if heading_index in table_headers:
+            continue
         title = _clean(raw)
         if not title or LIST_HEADING.fullmatch(title):
             continue
@@ -327,7 +430,7 @@ def find_note_candidates(page_text, page_number):
 def _segments(raw):
     return [
         (match.start(), _clean(match.group()))
-        for match in re.finditer(r"\S(?:.*?\S)?(?=\s{2,}|$)", raw.rstrip())
+        for match in re.finditer(r"\S(?:.*?\S)?(?=(?: {2,}|\t+)|$)", raw.rstrip())
     ]
 
 

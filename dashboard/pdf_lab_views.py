@@ -281,7 +281,9 @@ def _scan_pdf(upload, start_page, pages_to_scan, *, allowance):
 
     def add_detected(text, layout_text, page_number, source):
         nonlocal truncated, formula_truncated
-        for candidate in find_definition_candidates(text[:100_000], page_number):
+        # Layout-preserving text retains the column spacing that identifies
+        # explicit Term/Meaning glossary tables.
+        for candidate in find_definition_candidates(layout_text[:100_000], page_number):
             key = (
                 candidate["term"].casefold(),
                 " ".join(candidate["definition"].casefold().split()),

@@ -75,6 +75,20 @@ class DefinitionDetectionTests(SimpleTestCase):
         candidates = find_definition_candidates(text, 5)
         self.assertEqual([item["term"] for item in candidates], ["Macro attribution"])
 
+    def test_term_and_meaning_table_rows_become_definitions(self):
+        table = (
+            "Key terminology\n"
+            "Term                         Meaning\n"
+            "Agency conflict              A conflict that arises when an agent's interests differ from a principal's interests.\n"
+            "Principal                    A party that delegates authority to another party to act on its behalf.\n"
+        )
+        candidates = find_definition_candidates(table, 4)
+        self.assertEqual(
+            [candidate["term"] for candidate in candidates],
+            ["Agency conflict", "Principal"],
+        )
+        self.assertTrue(all(candidate["confidence"] == "strong" for candidate in candidates))
+
 
 class FormulaDetectionTests(SimpleTestCase):
     def test_short_equations_are_editable(self):
@@ -160,6 +174,23 @@ class StructuredDetectionTests(SimpleTestCase):
         self.assertEqual(len(lists[0]["items"]), 3)
         self.assertEqual(steps[0]["title"], "A defensible evaluation of skill")
         self.assertEqual(len(steps[0]["steps"]), 4)
+
+    def test_step_table_uses_section_heading_not_column_headings(self):
+        page = (
+            "How to calculate a weighted result\n"
+            "Step       Action                         Why it matters\n"
+            "1          Multiply each value by weight  Creates each weighted contribution.\n"
+            "2          Add the contributions           Produces the combined result.\n"
+            "3          Check the total weight           Confirms the inputs are complete.\n"
+        )
+        steps = find_step_candidates(page, 10)
+        self.assertEqual(len(steps), 1)
+        self.assertEqual(steps[0]["title"], "How to calculate a weighted result")
+        self.assertEqual(steps[0]["steps"][0]["text"], "Multiply each value by weight")
+        self.assertEqual(
+            steps[0]["steps"][1]["description"],
+            "Produces the combined result.",
+        )
 
     def test_callouts_and_formula_guidance_become_notes(self):
         page = (
