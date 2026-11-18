@@ -11,6 +11,11 @@ from uuid import uuid4
 TOKEN = re.compile(r"\d+(?:\.\d+)?|[^\W\d][\w]*|[=+\-*/^()|<>]", re.UNICODE)
 FUNCTIONS = {"exp", "ln", "log", "sin", "cos", "tan", "sqrt"}
 HEADING = re.compile(r"^[A-Z][A-Z ]{2,39}$")
+SUPERSCRIPT_CHARACTERS = str.maketrans({
+    "⁰": "^0", "¹": "^1", "²": "^2", "³": "^3", "⁴": "^4",
+    "⁵": "^5", "⁶": "^6", "⁷": "^7", "⁸": "^8", "⁹": "^9",
+    "⁺": "^+", "⁻": "^-",
+})
 
 
 def equation_to_structure(equation):
@@ -19,6 +24,7 @@ def equation_to_structure(equation):
         equation.replace("−", "-").replace("–", "-")
         .replace("×", "*").replace("÷", "/").strip()
     )
+    equation = equation.translate(SUPERSCRIPT_CHARACTERS)
     if len(equation) > 160 or equation.count("=") != 1:
         raise ValueError("This equation needs manual entry in the formula editor.")
     lhs, rhs = (part.strip() for part in equation.split("=", 1))

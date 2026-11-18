@@ -12,6 +12,12 @@ urlpatterns = [
     # ========================================================
 
     path(
+        "formulas/parse/",
+        views.parse_formula_structure,
+        name="parse_formula_structure",
+    ),
+
+    path(
         "subjects/<int:subject_id>/formula/create/",
         views.create_formula,
         name="create_formula",

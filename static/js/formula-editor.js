@@ -3024,3 +3024,459 @@ if (
 // ============================================================
 
 renderFormula();
+
+
+// ============================================================
+// PASTE A FORMULA
+// ============================================================
+
+const pasteFormulaButton =
+    document.getElementById(
+        "paste-formula-button"
+    );
+
+
+const pasteFormulaModal =
+    document.getElementById(
+        "paste-formula-modal"
+    );
+
+
+const pasteFormulaEquation =
+    document.getElementById(
+        "paste-formula-equation"
+    );
+
+
+const pasteFormulaSubmit =
+    document.getElementById(
+        "paste-formula-submit"
+    );
+
+
+const pasteFormulaCancel =
+    document.getElementById(
+        "paste-formula-cancel"
+    );
+
+
+const pasteFormulaError =
+    document.getElementById(
+        "paste-formula-error"
+    );
+
+
+let pasteFormulaLastFocus =
+    null;
+
+
+function formulaCsrfToken() {
+
+    const token =
+        document.querySelector(
+            'input[name="csrfmiddlewaretoken"]'
+        );
+
+
+    return token
+        ?
+        token.value
+        :
+        "";
+
+}
+
+
+function showPasteFormulaError(
+    message
+) {
+
+    if (
+        !pasteFormulaError
+    ) {
+
+        return;
+
+    }
+
+
+    pasteFormulaError.textContent =
+        message;
+
+
+    pasteFormulaError.hidden =
+        !message;
+
+}
+
+
+function closePasteFormulaModal() {
+
+    if (
+        !pasteFormulaModal
+    ) {
+
+        return;
+
+    }
+
+
+    pasteFormulaModal.hidden =
+        true;
+
+
+    pasteFormulaModal.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+
+
+    document.body.classList.remove(
+        "formula-paste-open"
+    );
+
+
+    if (
+        pasteFormulaLastFocus
+    ) {
+
+        pasteFormulaLastFocus.focus();
+
+    }
+
+}
+
+
+function openPasteFormulaModal() {
+
+    if (
+        !pasteFormulaModal
+        ||
+        !pasteFormulaEquation
+    ) {
+
+        return;
+
+    }
+
+
+    pasteFormulaLastFocus =
+        document.activeElement;
+
+
+    pasteFormulaModal.hidden =
+        false;
+
+
+    pasteFormulaModal.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+
+
+    showPasteFormulaError(
+        ""
+    );
+
+
+    pasteFormulaEquation.focus();
+
+
+    document.body.classList.add(
+        "formula-paste-open"
+    );
+
+}
+
+
+async function pasteFormulaIntoBuilder() {
+
+    if (
+        !pasteFormulaButton
+        ||
+        !pasteFormulaEquation
+        ||
+        !pasteFormulaSubmit
+    ) {
+
+        return;
+
+    }
+
+
+    const equation =
+        pasteFormulaEquation.value.trim();
+
+
+    if (
+        !equation
+    ) {
+
+        showPasteFormulaError(
+            "Paste one equation to add it."
+        );
+
+
+        pasteFormulaEquation.focus();
+
+
+        return;
+
+    }
+
+
+    pasteFormulaSubmit.disabled =
+        true;
+
+
+    pasteFormulaSubmit.textContent =
+        "Adding…";
+
+
+    showPasteFormulaError(
+        ""
+    );
+
+
+    try {
+
+        const response =
+            await fetch(
+                pasteFormulaButton.dataset.parseUrl,
+                {
+                    method:
+                        "POST",
+
+                    credentials:
+                        "same-origin",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json",
+
+                        "Accept":
+                            "application/json",
+
+                        "X-CSRFToken":
+                            formulaCsrfToken(),
+                    },
+
+                    body:
+                        JSON.stringify(
+                            {
+                                equation:
+                                    equation,
+                            }
+                        ),
+                }
+            );
+
+
+        let data =
+            {};
+
+
+        try {
+
+            data =
+                await response.json();
+
+        }
+
+        catch (
+            error
+        ) {
+
+            data =
+                {};
+
+        }
+
+
+        if (
+            !response.ok
+            ||
+            !Array.isArray(
+                data.structure
+            )
+        ) {
+
+            showPasteFormulaError(
+                data.error
+                ||
+                "We could not read that equation. You can still build it manually."
+            );
+
+
+            return;
+
+        }
+
+
+        formulaElements =
+            data.structure;
+
+
+        ensureIds(
+            formulaElements
+        );
+
+
+        activeContainer =
+            formulaElements;
+
+
+        insertionIndex =
+            formulaElements.length;
+
+
+        clearSelectedFormulaElement();
+
+
+        renderFormula();
+
+
+        closePasteFormulaModal();
+
+
+        focusFormula();
+
+    }
+
+    catch (
+        error
+    ) {
+
+        showPasteFormulaError(
+            "There was a connection problem. Please try again."
+        );
+
+    }
+
+    finally {
+
+        pasteFormulaSubmit.disabled =
+            false;
+
+
+        pasteFormulaSubmit.textContent =
+            "Add to builder";
+
+    }
+
+}
+
+
+if (
+    pasteFormulaButton
+) {
+
+    pasteFormulaButton.addEventListener(
+        "click",
+        openPasteFormulaModal
+    );
+
+}
+
+
+if (
+    pasteFormulaCancel
+) {
+
+    pasteFormulaCancel.addEventListener(
+        "click",
+        closePasteFormulaModal
+    );
+
+}
+
+
+if (
+    pasteFormulaSubmit
+) {
+
+    pasteFormulaSubmit.addEventListener(
+        "click",
+        pasteFormulaIntoBuilder
+    );
+
+}
+
+
+if (
+    pasteFormulaEquation
+) {
+
+    pasteFormulaEquation.addEventListener(
+        "keydown",
+        function (
+            event
+        ) {
+
+            if (
+                event.key
+                ===
+                "Enter"
+                &&
+                (event.ctrlKey || event.metaKey)
+            ) {
+
+                event.preventDefault();
+
+
+                pasteFormulaIntoBuilder();
+
+            }
+
+        }
+    );
+
+}
+
+
+if (
+    pasteFormulaModal
+) {
+
+    pasteFormulaModal.addEventListener(
+        "click",
+        function (
+            event
+        ) {
+
+            if (
+                event.target
+                ===
+                pasteFormulaModal
+            ) {
+
+                closePasteFormulaModal();
+
+            }
+
+        }
+    );
+
+
+    document.addEventListener(
+        "keydown",
+        function (
+            event
+        ) {
+
+            if (
+                event.key
+                ===
+                "Escape"
+                &&
+                !pasteFormulaModal.hidden
+            ) {
+
+                closePasteFormulaModal();
+
+            }
+
+        }
+    );
+
+}

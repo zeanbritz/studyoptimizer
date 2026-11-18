@@ -110,6 +110,13 @@ class FormulaDetectionTests(SimpleTestCase):
         with self.assertRaises(ValueError):
             equation_to_structure("a = b = c")
 
+    def test_superscript_exponents_become_editable_caret_tokens(self):
+        structure = equation_to_structure("F = m*a²")
+        self.assertEqual(
+            [item["value"] for item in structure],
+            ["F", "=", "m", "*", "a", "^", "2"],
+        )
+
 
 class StructuredDetectionTests(SimpleTestCase):
     def test_sample_style_list_steps_note_and_comparison(self):

@@ -1,6 +1,8 @@
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 from datetime import date, datetime, timedelta
 from urllib.parse import urlencode
 from django.db import transaction
@@ -36,6 +38,7 @@ from dashboard.models import (
 )
 from dashboard.review_planner import get_daily_review_plan, remaining_review_ids
 from dashboard.pdf_lab_session import get_candidate, get_scan, mark_saved
+from dashboard.formula_detection import equation_to_structure
 from accounts.entitlements import accessible_subjects, can_use_pdf_summarizer, free_learning_item_limit
 from .review_navigation import definition_edit_resume_url, review_origin
 
@@ -79,6 +82,31 @@ def extract_variables(elements):
             )
 
     return variables
+
+
+# ============================================================
+# PASTE FORMULA PARSER
+# ============================================================
+
+@login_required
+@require_POST
+def parse_formula_structure(request):
+    """Return the same editable structure used by PDF formula suggestions."""
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except (AttributeError, UnicodeDecodeError, json.JSONDecodeError):
+        return JsonResponse({"error": "Paste one equation to add it."}, status=400)
+
+    equation = payload.get("equation", "") if isinstance(payload, dict) else ""
+    if not isinstance(equation, str):
+        return JsonResponse({"error": "Paste one equation to add it."}, status=400)
+
+    try:
+        structure = equation_to_structure(equation)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    return JsonResponse({"structure": structure})
 
 
 # ============================================================

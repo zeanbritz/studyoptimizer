@@ -1,3 +1,5 @@
+import json
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -46,6 +48,31 @@ class CreateFormulaTests(TestCase):
                 knowledge_unit__title="Area of a circle",
             ).exists()
         )
+
+    def test_pasted_formula_uses_the_pdf_formula_structure(self):
+        response = self.client.post(
+            reverse("parse_formula_structure"),
+            data=json.dumps({"equation": "F = m*a²"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        structure = response.json()["structure"]
+        self.assertEqual(
+            [item["value"] for item in structure],
+            ["F", "=", "m", "*", "a", "^", "2"],
+        )
+        self.assertEqual(structure[5]["type"], "operator")
+
+    def test_pasted_formula_rejects_ambiguous_equations(self):
+        response = self.client.post(
+            reverse("parse_formula_structure"),
+            data=json.dumps({"equation": "a = b = c"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("manual entry", response.json()["error"])
 
 
 class DefinitionTextbookTests(TestCase):
