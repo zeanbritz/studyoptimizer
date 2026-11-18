@@ -288,6 +288,10 @@ PAYSTACK_LIVE_PLAN_CODES = {
 # Temporary public support contact, approved by the operator. This is separate
 # from the Mailgun sender used for verification and password-reset emails.
 STUDIGARDEN_SUPPORT_EMAIL = os.getenv("STUDIGARDEN_SUPPORT_EMAIL", "zd.britz@icloud.com").strip()
+STUDIGARDEN_SIGNUP_NOTIFICATION_EMAIL = os.getenv(
+    "STUDIGARDEN_SIGNUP_NOTIFICATION_EMAIL",
+    STUDIGARDEN_SUPPORT_EMAIL,
+).strip()
 
 # Public company details used consistently across the legal and contact pages.
 # These are not secrets and may be overridden without changing templates.

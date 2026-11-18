@@ -228,8 +228,19 @@ class PublicSignupTests(TestCase):
         self.assertFalse(user.beta_lifetime_access)
         self.assertIsNone(invite.claimed_by)
         self.assertNotIn("_auth_user_id", self.client.session)
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertIn(user.email, mail.outbox[0].to)
+        self.assertEqual(len(mail.outbox), 2)
+        confirmation_email = next(
+            message for message in mail.outbox if user.email in message.to
+        )
+        notification_email = next(
+            message
+            for message in mail.outbox
+            if settings.STUDIGARDEN_SIGNUP_NOTIFICATION_EMAIL in message.to
+        )
+        self.assertIn(user.email, confirmation_email.to)
+        self.assertIn("New StudiGarden sign-up", notification_email.subject)
+        self.assertIn(user.email, notification_email.body)
+        self.assertEqual(notification_email.reply_to, [user.email])
 
         login_response = self.client.post(
             reverse("login"),
@@ -267,9 +278,12 @@ class PublicSignupTests(TestCase):
 
         user = get_user_model().objects.get(username="verifiedstudent")
         self.assertFalse(EmailAddress.objects.get(user=user).verified)
+        confirmation_email = next(
+            message for message in mail.outbox if user.email in message.to
+        )
         link = re.search(
             r"https?://[^\s]+/accounts/confirm-email/[^\s]+",
-            mail.outbox[0].body,
+            confirmation_email.body,
         )
         self.assertIsNotNone(link)
         path = urlsplit(link.group(0)).path
@@ -395,8 +409,11 @@ class AdultSignupTests(TestCase):
                 self.assertFalse(address.verified)
                 self.assertFalse(user.beta_lifetime_access)
                 self.assertNotIn("_auth_user_id", self.client.session)
-                self.assertIn(user.email, mail.outbox[-1].to)
-        self.assertEqual(len(mail.outbox), 2)
+                confirmation_email = next(
+                    message for message in mail.outbox if user.email in message.to
+                )
+                self.assertIn(user.email, confirmation_email.to)
+        self.assertEqual(len(mail.outbox), 4)
 
     def test_confirmation_stays_checked_after_an_unrelated_validation_error(self):
         response = self.client.post(

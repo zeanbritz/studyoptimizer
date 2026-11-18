@@ -1,12 +1,21 @@
-"""Account events that are useful to support staff in the Django admin."""
+"""Account events used for account administration and operator alerts."""
 
+import logging
+
+from allauth.account.signals import user_signed_up
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.signals import user_logged_in, user_logged_out
+from django.core.mail import EmailMessage
 from django.db import DatabaseError
 from django.db.models import F
 from django.dispatch import receiver
+from django.utils import timezone
 
 from .models import UserActivity
+
+
+logger = logging.getLogger(__name__)
 
 
 def _request_path(request):
@@ -14,6 +23,41 @@ def _request_path(request):
     if request is None:
         return ""
     return str(getattr(request, "path_info", ""))[:255]
+
+
+@receiver(user_signed_up, dispatch_uid="accounts.notify_operator_of_signup")
+def notify_operator_of_signup(sender, request, user, **kwargs):
+    """Email the configured operator when an account has been created."""
+    recipient = getattr(
+        settings,
+        "STUDIGARDEN_SIGNUP_NOTIFICATION_EMAIL",
+        "",
+    ).strip()
+    if not recipient or not getattr(user, "email", ""):
+        return
+
+    joined_at = timezone.localtime(user.date_joined).strftime(
+        "%d %B %Y, %H:%M %Z"
+    )
+    message = EmailMessage(
+        subject="New StudiGarden sign-up",
+        body=(
+            "A new StudiGarden account was created.\n\n"
+            f"Username: {user.get_username()}\n"
+            f"Email: {user.email}\n"
+            f"Signed up: {joined_at}\n\n"
+            "The student must still confirm their email address before using "
+            "their account."
+        ),
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[recipient],
+        reply_to=[user.email],
+    )
+    try:
+        message.send(fail_silently=False)
+    except Exception:
+        # The operator alert must never prevent a legitimate account signup.
+        logger.exception("Could not send StudiGarden signup notification")
 
 
 @receiver(user_logged_in, dispatch_uid="accounts.track_successful_login")
