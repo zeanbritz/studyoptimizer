@@ -22,6 +22,7 @@ from learning.models import (
     StudentKnowledge,
 )
 from dashboard.review_planner import get_daily_review_plan, remaining_review_ids
+from learning.review_navigation import definition_edit_resume_token
 
 
 # ============================================================
@@ -1068,6 +1069,15 @@ def practice_definition(
             and next_definition is None
         )
 
+        edit_resume_token = definition_edit_resume_token(
+            request,
+            definition,
+            next_definition,
+            review_scope,
+            subject_index,
+            review_mode,
+        )
+
 
         # ====================================================
         # SHOW RESULT
@@ -1132,6 +1142,8 @@ def practice_definition(
 
                 "subject_review_finished":
                     subject_review_finished,
+
+                "edit_resume_token": edit_resume_token,
             }
         )
 

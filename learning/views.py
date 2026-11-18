@@ -37,7 +37,7 @@ from dashboard.models import (
 from dashboard.review_planner import get_daily_review_plan, remaining_review_ids
 from dashboard.pdf_lab_session import get_candidate, get_scan, mark_saved
 from accounts.entitlements import accessible_subjects, can_use_pdf_summarizer, free_learning_item_limit
-from .review_navigation import review_origin
+from .review_navigation import definition_edit_resume_url, review_origin
 
 
 # ============================================================
@@ -4055,6 +4055,15 @@ def edit_definition(
     selected_book = definition.book_name
     chapter = definition.chapter
     error = None
+    review_resume_token = (
+        request.POST.get("review_resume")
+        or request.GET.get("review_resume", "")
+    )
+    review_resume_url = definition_edit_resume_url(
+        request,
+        definition,
+        review_resume_token,
+    )
 
     # ========================================================
     # POST
@@ -4152,10 +4161,10 @@ def edit_definition(
 
             definition.save()
 
-            return redirect(
-                "definition_list",
-                subject_id=subject.id
-            )
+            if review_resume_url:
+                return redirect(review_resume_url)
+
+            return redirect("definition_list", subject_id=subject.id)
 
     # ========================================================
     # DISPLAY EDIT PAGE
@@ -4180,6 +4189,8 @@ def edit_definition(
             "selected_book": selected_book,
             "chapter": chapter,
             "error": error,
+            "review_resume_token": review_resume_token,
+            "review_resume_url": review_resume_url,
         }
     )
 

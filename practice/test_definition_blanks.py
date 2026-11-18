@@ -3,6 +3,7 @@ import random
 from django.contrib.auth import get_user_model
 from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
+from urllib.parse import parse_qs, urlsplit
 
 from learning.models import Definition, KnowledgeUnit, StudentKnowledge, Subject
 from practice.views.definitions import (
@@ -199,3 +200,63 @@ class DefinitionQuestionViewTests(TestCase):
         self.assertTrue(response.context["no_testable_words"])
         self.assertIsNone(response.context["question_token"])
         self.assertNotContains(response, "Check Answer")
+
+    def test_editing_a_checked_definition_returns_to_the_next_review_item(self):
+        next_unit = KnowledgeUnit.objects.create(
+            subject=self.subject,
+            title="Cell wall",
+            knowledge_type=KnowledgeUnit.KnowledgeType.DEFINITION,
+        )
+        next_definition = Definition.objects.create(
+            knowledge_unit=next_unit,
+            term="Cell wall",
+            definition="The rigid layer protects and supports many cells",
+        )
+        session = self.client.session
+        session["onboarding_subjects"] = [
+            {"name": self.subject.name, "database_id": self.subject.pk},
+        ]
+        session.save()
+
+        question = self.client.get(
+            self.url,
+            {"review_scope": "subject", "subject_index": 0},
+        )
+        post_data = {
+            "question_token": question.context["question_token"],
+            "review_scope": "subject",
+            "subject_index": 0,
+        }
+        for part in question.context["question_parts"]:
+            if part["is_missing"]:
+                post_data[part["input_name"]] = part["text"]
+
+        result = self.client.post(self.url, post_data)
+        self.assertEqual(result.status_code, 200)
+        self.assertContains(result, "Edit Definition")
+        token = result.context["edit_resume_token"]
+        self.assertTrue(token)
+
+        edit_url = reverse("edit_definition", args=[self.definition.pk])
+        edit_page = self.client.get(edit_url, {"review_resume": token})
+        self.assertEqual(edit_page.status_code, 200)
+        self.assertContains(edit_page, "Continue Review")
+
+        saved = self.client.post(edit_url, {
+            "term": "Updated cell membrane",
+            "definition": self.definition.definition,
+            "book_name": "",
+            "chapter": "",
+            "difficulty": 1,
+            "estimated_minutes": 2,
+            "review_resume": token,
+        })
+        self.assertEqual(saved.status_code, 302)
+        self.assertEqual(
+            urlsplit(saved["Location"]).path,
+            reverse("practice_definition_review", args=[next_definition.pk]),
+        )
+        self.assertEqual(
+            parse_qs(urlsplit(saved["Location"]).query)["review_scope"],
+            ["subject"],
+        )

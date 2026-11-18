@@ -1516,6 +1516,17 @@
 
 <div class="review-actions">
 
+    {% if edit_resume_token %}
+
+        <a
+            href="{% url 'edit_definition' definition_id=definition.id %}?review_resume={{ edit_resume_token }}"
+            class="finish-review-button"
+        >
+            Edit Definition
+        </a>
+
+    {% endif %}
+
 
     {% if next_definition and review_mode != "random" %}
 

@@ -431,10 +431,10 @@
                 </div>
 
                 <a
-                    href="{% url 'definition_list' subject_id=subject.id %}"
+                    href="{{ review_resume_url|default_if_none:'' }}{% if not review_resume_url %}{% url 'definition_list' subject_id=subject.id %}{% endif %}"
                     class="back-button"
                 >
-                    ← Back to Definitions
+                    {% if review_resume_url %}Back to Review{% else %}← Back to Definitions{% endif %}
                 </a>
             </header>
 
@@ -455,6 +455,14 @@
 
                 <form method="POST">
                     {% csrf_token %}
+
+                    {% if review_resume_token %}
+                        <input
+                            type="hidden"
+                            name="review_resume"
+                            value="{{ review_resume_token }}"
+                        >
+                    {% endif %}
 
                     <div class="form-grid">
 
@@ -517,10 +525,10 @@
 
                     <div class="form-footer">
                         <a
-                            href="{% url 'definition_list' subject_id=subject.id %}"
+                            href="{{ review_resume_url|default_if_none:'' }}{% if not review_resume_url %}{% url 'definition_list' subject_id=subject.id %}{% endif %}"
                             class="cancel-button"
                         >
-                            Cancel
+                            {% if review_resume_url %}Continue Review{% else %}Cancel{% endif %}
                         </a>
 
                         <button type="submit" class="save-button">

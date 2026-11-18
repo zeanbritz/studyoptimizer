@@ -3,6 +3,7 @@
 from functools import wraps
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
+from django.core import signing
 from django.urls import Resolver404, resolve, reverse
 
 
@@ -15,6 +16,8 @@ REVIEW_ROUTES = {
     "practice_comparison_review", "read_review_item", "read_definition",
 }
 LIBRARY_ROUTES = {"review_definitions", "review_formulas", "review_lists", "review_steps", "review_comparisons", "review_notes"}
+DEFINITION_EDIT_RESUME_SALT = "studigarden.definition-edit-resume.v1"
+DEFINITION_EDIT_RESUME_MAX_AGE = 4 * 60 * 60
 
 
 def review_origin(request):
@@ -63,6 +66,143 @@ def return_url(request, subject=None, library_route=None):
     if index is not None:
         return reverse("subject_detail", kwargs={"subject_index": index}) + "?review_return=1"
     return reverse("dashboard")
+
+
+def definition_edit_resume_token(
+    request,
+    definition,
+    next_definition,
+    review_scope,
+    subject_index_value,
+    review_mode,
+):
+    """Sign the next step in a completed definition-review flow.
+
+    Editing must not accept a free-form return URL. This small signed payload
+    contains only IDs and validated review settings, so a student returns to
+    the next legitimate item in the same review flow after saving or cancelling.
+    """
+    return signing.dumps(
+        {
+            "user_id": request.user.pk,
+            "definition_id": definition.pk,
+            "subject_id": definition.knowledge_unit.subject_id,
+            "next_definition_id": (
+                next_definition.pk if next_definition is not None else None
+            ),
+            "review_scope": (
+                review_scope if review_scope in {"global", "subject"} else "global"
+            ),
+            "subject_index": subject_index_value,
+            "review_mode": "random" if review_mode == "random" else "",
+            "review_origin": review_origin(request),
+        },
+        salt=DEFINITION_EDIT_RESUME_SALT,
+        compress=True,
+    )
+
+
+def _definition_edit_finish_url(request, subject, origin, review_mode):
+    """Return to the correct review home if there is no following item."""
+    if review_mode == "random":
+        query = {"review_mode": "random"}
+        if origin:
+            query["review_origin"] = origin
+        return reverse(
+            "practice_definition_match",
+            kwargs={"subject_id": subject.pk},
+        ) + "?" + urlencode(query)
+
+    if origin in {"standard", "garden"}:
+        return reverse("dashboard") + "?" + urlencode(
+            {"view": origin, "review_return": "1"}
+        ) + "#today-plan"
+
+    if origin == "library":
+        return reverse("review_definitions")
+
+    current_subject_index = subject_index(request, subject)
+    if current_subject_index is not None:
+        return reverse(
+            "subject_detail",
+            kwargs={"subject_index": current_subject_index},
+        ) + "?" + urlencode({"review_return": "1"})
+    return reverse("dashboard")
+
+
+def definition_edit_resume_url(request, definition, token):
+    """Validate an edit-return token and resolve its next safe destination."""
+    if not token:
+        return None
+
+    try:
+        payload = signing.loads(
+            token,
+            salt=DEFINITION_EDIT_RESUME_SALT,
+            max_age=DEFINITION_EDIT_RESUME_MAX_AGE,
+        )
+    except signing.BadSignature:
+        return None
+
+    subject = definition.knowledge_unit.subject
+    if (
+        payload.get("user_id") != request.user.pk
+        or payload.get("definition_id") != definition.pk
+        or payload.get("subject_id") != subject.pk
+    ):
+        return None
+
+    review_scope = payload.get("review_scope")
+    if review_scope not in {"global", "subject"}:
+        return None
+
+    review_mode = "random" if payload.get("review_mode") == "random" else ""
+    origin = payload.get("review_origin")
+    if origin not in ORIGINS:
+        origin = ""
+
+    # Random definition review always returns to its random-question chooser.
+    if review_mode == "random":
+        return _definition_edit_finish_url(request, subject, origin, review_mode)
+
+    next_definition_id = payload.get("next_definition_id")
+    try:
+        next_definition_id = int(next_definition_id)
+    except (TypeError, ValueError):
+        next_definition_id = None
+
+    if next_definition_id:
+        from accounts.entitlements import accessible_subjects
+        from .models import Definition
+
+        next_definition = (
+            Definition.objects.filter(
+                pk=next_definition_id,
+                knowledge_unit__subject__in=accessible_subjects(request.user),
+                knowledge_unit__active=True,
+            )
+            .select_related("knowledge_unit", "knowledge_unit__subject")
+            .first()
+        )
+        if next_definition is not None:
+            if review_scope == "subject" and (
+                next_definition.knowledge_unit.subject_id != subject.pk
+            ):
+                return None
+
+            query = {"review_scope": review_scope}
+            if review_scope == "subject":
+                next_subject_index = subject_index(request, subject)
+                if next_subject_index is not None:
+                    query["subject_index"] = next_subject_index
+            if origin:
+                query["review_origin"] = origin
+            return reverse(
+                "practice_definition_review",
+                kwargs={"definition_id": next_definition.pk},
+            ) + "?" + urlencode(query)
+
+    return _definition_edit_finish_url(request, subject, origin, review_mode)
 
 
 def review_navigation(view):
