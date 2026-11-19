@@ -5024,6 +5024,23 @@ def review_notes(request):
 # PROGRESS
 # ============================================================
 
+def mastery_percentage(total_items, progress_records):
+    """Return average item mastery as a percentage of the six-level scale.
+
+    Items without a StudentKnowledge row have never been reviewed, so they
+    contribute zero points while still counting towards the subject total.
+    """
+    if total_items <= 0:
+        return 0
+
+    mastery_points = sum(
+        max(0, min(6, int(record.mastery_level or 0)))
+        for record in progress_records
+    )
+
+    return round((mastery_points / (total_items * 6)) * 100)
+
+
 @login_required
 def progress(request):
 
@@ -5150,21 +5167,10 @@ def progress(request):
     # OVERALL MASTERY
     # --------------------------------------------------------
 
-    if total_knowledge > 0:
-
-        overall_mastery = round(
-            (
-                mastered_count
-                /
-                total_knowledge
-            )
-            *
-            100
-        )
-
-    else:
-
-        overall_mastery = 0
+    overall_mastery = mastery_percentage(
+        total_knowledge,
+        progress_records,
+    )
 
     # ========================================================
     # OVERALL TEXTBOOK PAGE PROGRESS
@@ -5332,21 +5338,10 @@ def progress(request):
 
             subject_accuracy = 0
 
-        if subject_unit_count > 0:
-
-            subject_mastery = round(
-                (
-                    subject_mastered
-                    /
-                    subject_unit_count
-                )
-                *
-                100
-            )
-
-        else:
-
-            subject_mastery = 0
+        subject_mastery = mastery_percentage(
+            subject_unit_count,
+            subject_progress_records,
+        )
 
         # ====================================================
         # SUBJECT PAGE PROGRESS
