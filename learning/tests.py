@@ -49,6 +49,30 @@ class CreateFormulaTests(TestCase):
             ).exists()
         )
 
+    def test_repeated_variables_share_one_saved_meaning(self):
+        structure = [
+            {"id": "first-l", "type": "variable", "value": "L", "meaning": ""},
+            {"id": "equals", "type": "operator", "value": "=", "meaning": ""},
+            {"id": "second-l", "type": "variable", "value": "L", "meaning": "Length"},
+        ]
+        response = self.client.post(
+            reverse("create_formula", kwargs={"subject_id": self.subject.id}),
+            {
+                "subject_index": "0",
+                "title": "Length rule",
+                "formula_structure": json.dumps(structure),
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        formula = Formula.objects.get(knowledge_unit__title="Length rule")
+        saved = json.loads(formula.structure)
+        self.assertEqual(
+            [item["meaning"] for item in saved if item["type"] == "variable"],
+            ["Length", "Length"],
+        )
+        self.assertEqual(formula.variables.get(symbol="L").meaning, "Length")
+
     def test_pasted_formula_uses_the_pdf_formula_structure(self):
         response = self.client.post(
             reverse("parse_formula_structure"),

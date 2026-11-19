@@ -85,6 +85,37 @@ def extract_variables(elements):
 
 
 # ============================================================
+# SHARED VARIABLE MEANINGS
+# ============================================================
+
+def synchronise_variable_meanings(elements):
+    """Give repeated variables one saved meaning when it is unambiguous."""
+    meanings = {}
+    conflicting_symbols = set()
+
+    for element in extract_variables(elements):
+        symbol = str(element.get("value", "")).strip()
+        meaning = str(element.get("meaning", "")).strip()
+        if not symbol or not meaning:
+            continue
+
+        key = symbol.casefold()
+        previous = meanings.get(key)
+        if previous and previous.casefold() != meaning.casefold():
+            conflicting_symbols.add(key)
+            continue
+        meanings[key] = previous or meaning
+
+    for element in extract_variables(elements):
+        symbol = str(element.get("value", "")).strip()
+        key = symbol.casefold()
+        if symbol and key in meanings and key not in conflicting_symbols:
+            element["meaning"] = meanings[key]
+
+    return elements
+
+
+# ============================================================
 # PASTE FORMULA PARSER
 # ============================================================
 
@@ -648,6 +679,9 @@ def create_formula(
             structure_data = []
 
             formula_structure = "[]"
+
+        structure_data = synchronise_variable_meanings(structure_data)
+        formula_structure = json.dumps(structure_data, ensure_ascii=False)
 
         # ====================================================
         # CREATE
@@ -1774,6 +1808,9 @@ def edit_formula(
             structure_data = []
 
             formula_structure = "[]"
+
+        structure_data = synchronise_variable_meanings(structure_data)
+        formula_structure = json.dumps(structure_data, ensure_ascii=False)
 
         # ====================================================
         # SAVE
