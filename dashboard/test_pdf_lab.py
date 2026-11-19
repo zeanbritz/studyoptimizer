@@ -128,6 +128,16 @@ class FormulaDetectionTests(SimpleTestCase):
         self.assertTrue(result["partial"])
         self.assertIn("skipped", result["message"])
 
+    def test_comma_linked_function_parameters_stay_one_variable(self):
+        structure = equation_to_structure(
+            "PVIFA( k, n ) = [ 1 - ( 1 + k )-n ] / k"
+        )
+        self.assertIn("k,n", [item["value"] for item in structure])
+        self.assertEqual(
+            [item["type"] for item in structure if item["value"] in {"[", "]"}],
+            ["symbol", "symbol"],
+        )
+
 
 class StructuredDetectionTests(SimpleTestCase):
     def test_sample_style_list_steps_note_and_comparison(self):

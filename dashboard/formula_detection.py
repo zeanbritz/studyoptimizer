@@ -8,14 +8,19 @@ import re
 from uuid import uuid4
 
 
-TOKEN = re.compile(r"\d+(?:\.\d+)?|[^\W\d][\w]*|[=+\-*/^()|<>]", re.UNICODE)
+COMMA_LINKED_VARIABLE = r"[^\W\d][\w]*(?:\s*,\s*[^\W\d][\w]*)+"
+TOKEN = re.compile(
+    rf"\d+(?:\.\d+)?|{COMMA_LINKED_VARIABLE}|[^\W\d][\w]*|[=+\-*/^()|<>{{}}\[\]$%~≠]",
+    re.UNICODE,
+)
 PASTE_TOKEN = re.compile(
-    r"\d+(?:\.\d+)?|[^\W\d][\w]*|[=+\-*/^()|<>{}\[\]$%~≠]",
+    rf"\d+(?:\.\d+)?|{COMMA_LINKED_VARIABLE}|[^\W\d][\w]*|[=+\-*/^()|<>{{}}\[\]$%~≠]",
     re.UNICODE,
 )
 FUNCTIONS = {"exp", "ln", "log", "sin", "cos", "tan", "sqrt"}
 HEADING = re.compile(r"^[A-Z][A-Z ]{2,39}$")
 PROSE_MARKER = re.compile(r"\b(?:where|because|which|when|therefore|is|are)\b", re.I)
+SPACED_FUNCTION_LHS = re.compile(r"^[^\W\d][\w]*\([^()]*\)$", re.UNICODE)
 SUPERSCRIPT_CHARACTERS = str.maketrans({
     "⁰": "^0", "¹": "^1", "²": "^2", "³": "^3", "⁴": "^4",
     "⁵": "^5", "⁶": "^6", "⁷": "^7", "⁸": "^8", "⁹": "^9",
@@ -32,6 +37,7 @@ def _normalise_equation(equation):
 
 
 def _formula_element(value):
+    value = re.sub(r"\s*,\s*", ",", value)
     if value in {"=", "+", "-", "*", "/", "^", "<", ">"}:
         kind = "operator"
     elif re.fullmatch(r"\d+(?:\.\d+)?", value):
@@ -54,14 +60,27 @@ def equation_to_structure(equation):
     if len(equation) > 160 or equation.count("=") != 1:
         raise ValueError("This equation needs manual entry in the formula editor.")
     lhs, rhs = (part.strip() for part in equation.split("=", 1))
-    if not lhs or not rhs or len(lhs) > 24 or re.search(r"\s", lhs):
+    compact_lhs = re.sub(r"\s+", "", lhs)
+    if (
+        not lhs
+        or not rhs
+        or len(compact_lhs) > 24
+        or (
+            re.search(r"\s", lhs)
+            and not SPACED_FUNCTION_LHS.fullmatch(compact_lhs)
+        )
+    ):
         raise ValueError("This equation needs manual entry in the formula editor.")
     if not any(char.isalpha() for char in lhs + rhs):
         raise ValueError("This equation needs manual entry in the formula editor.")
     if re.search(r"\b(?:where|because|which|when|therefore|is|are)\b", rhs, re.I):
         raise ValueError("This equation includes prose and needs manual entry.")
     tokens = TOKEN.findall(equation)
-    if len(tokens) > 40 or "".join(tokens) != re.sub(r"\s+", "", equation):
+    compact_tokens = "".join(
+        re.sub(r"\s*,\s*", ",", value)
+        for value in tokens
+    )
+    if len(tokens) > 40 or compact_tokens != re.sub(r"\s+", "", equation):
         raise ValueError("This equation has symbols the formula editor cannot parse safely.")
 
     return [_formula_element(value) for value in tokens]
