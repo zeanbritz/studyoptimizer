@@ -1348,13 +1348,11 @@ def formula_detail(
     # VARIABLES
     # ========================================================
 
-    variables = (
-        formula.variables
-        .all()
-        .order_by(
-            "order"
-        )
-    )
+    variables = [
+        variable
+        for variable in formula.variables.all().order_by("order")
+        if variable.meaning.strip()
+    ]
 
     # ========================================================
     # FORMULA STRUCTURE

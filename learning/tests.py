@@ -6,7 +6,7 @@ from django.urls import reverse
 
 from dashboard.models import SubjectTextbook
 
-from .models import Definition, Formula, KnowledgeUnit, Subject
+from .models import Definition, Formula, FormulaVariable, KnowledgeUnit, Subject
 
 
 class CreateFormulaTests(TestCase):
@@ -111,6 +111,45 @@ class CreateFormulaTests(TestCase):
         )
         self.assertTrue(response.json()["partial"])
         self.assertIn("skipped", response.json()["message"])
+
+
+class FormulaDetailTests(TestCase):
+    def setUp(self):
+        user = get_user_model().objects.create_user(
+            username="formula_detail_student",
+            password="Safe-test-password-123!",
+        )
+        subject = Subject.objects.create(user=user, name="Physics")
+        unit = KnowledgeUnit.objects.create(
+            subject=subject,
+            title="Distance rule",
+            knowledge_type=KnowledgeUnit.KnowledgeType.FORMULA,
+        )
+        self.formula = Formula.objects.create(knowledge_unit=unit)
+        FormulaVariable.objects.create(
+            formula=self.formula,
+            symbol="d",
+            meaning="Distance travelled",
+            order=1,
+        )
+        FormulaVariable.objects.create(
+            formula=self.formula,
+            symbol="PVIFA(k,n)",
+            meaning="",
+            order=2,
+        )
+        self.client.force_login(user)
+
+    def test_formula_detail_only_shows_described_symbols(self):
+        response = self.client.get(reverse("formula_detail", args=[self.formula.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [variable.symbol for variable in response.context["variables"]],
+            ["d"],
+        )
+        self.assertContains(response, "Distance travelled")
+        self.assertNotContains(response, "No description")
 
 
 class DefinitionTextbookTests(TestCase):

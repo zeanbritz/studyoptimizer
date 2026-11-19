@@ -792,7 +792,7 @@
         }
 
         .variable-card {
-            grid-template-columns: 54px minmax(0, 1fr);
+            grid-template-columns: minmax(54px, 170px) minmax(0, 1fr);
             gap: 13px;
             min-height: 76px;
             padding: 12px;
@@ -804,14 +804,20 @@
 
         .variable-symbol {
             display: grid;
-            width: 48px;
+            width: 100%;
             min-height: 48px;
+            min-width: 0;
+            padding: 5px 8px;
             place-items: center;
             border: 2px solid #b6d8a9;
             border-radius: 11px;
             background: #eef9e9;
             color: #367d1a;
             font-size: 22px;
+            line-height: 1.15;
+            overflow-wrap: anywhere;
+            text-align: center;
+            word-break: break-word;
         }
 
         .variable-meaning {
@@ -1155,16 +1161,7 @@
 
 
                                 <div class="variable-meaning">
-
-                                    {% if variable.meaning %}
-
-                                        {{ variable.meaning }}
-
-                                    {% else %}
-
-                                        No description
-
-                                    {% endif %}
+                                    {{ variable.meaning }}
 
                                 </div>
 
