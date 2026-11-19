@@ -340,6 +340,10 @@
             box-shadow: inset 0 0 0 3px var(--blue);
         }
 
+        .drop-slot.revealed-slot {
+            background: #fbfefa;
+        }
+
         .drop-slot .answer-token {
             width: 100%;
         }
@@ -370,6 +374,21 @@
             border-color: #ffb7b7;
             background: var(--red-soft);
             color: #bd3535;
+        }
+
+        .revealed-answer {
+            min-height: 80px;
+            padding: 12px;
+
+            border: 2px solid #d5eac8;
+            border-radius: 11px;
+
+            background: #f3fbed;
+            color: #4d6c43;
+
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.45;
         }
 
         .empty-slot {
@@ -655,9 +674,10 @@
                                 {% for slot in review_row.slots %}
 
                                     <td
-                                        class="drop-slot"
+                                        class="drop-slot{% if slot.revealed and not attempt_complete %} revealed-slot{% endif %}"
                                         data-row-id="{{ review_row.row.id }}"
                                         data-column-id="{{ slot.column.id }}"
+                                        data-locked="{% if slot.revealed and not attempt_complete %}true{% else %}false{% endif %}"
                                     >
 
                                         {% if attempt_complete %}
@@ -677,6 +697,12 @@
                                                 </div>
 
                                             {% endif %}
+
+                                        {% elif slot.revealed %}
+
+                                            <div class="revealed-answer">
+                                                {{ slot.revealed.content }}
+                                            </div>
 
                                         {% endif %}
 
@@ -1014,6 +1040,10 @@
             return;
         }
 
+        if (destination.dataset.locked === "true") {
+            return;
+        }
+
         const previousParent =
             token.parentElement;
 
@@ -1270,6 +1300,10 @@
                 "dragover",
                 function(event) {
 
+                    if (slot.dataset.locked === "true") {
+                        return;
+                    }
+
                     event.preventDefault();
 
                     slot.classList.add(
@@ -1296,6 +1330,10 @@
 
                     event.preventDefault();
 
+                    if (slot.dataset.locked === "true") {
+                        return;
+                    }
+
                     slot.classList.remove(
                         "drag-over"
                     );
@@ -1311,6 +1349,10 @@
             slot.addEventListener(
                 "click",
                 function() {
+
+                    if (slot.dataset.locked === "true") {
+                        return;
+                    }
 
                     if (selectedToken) {
 

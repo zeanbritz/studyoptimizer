@@ -44,6 +44,34 @@ def get_review_interval(
 
 
 # ============================================================
+# COMPARISON DIFFICULTY
+# ============================================================
+
+def comparison_hidden_cell_count(total_cells, mastery_level):
+    """Increase the number of missing comparison cells from 0/6 to 6/6."""
+    if total_cells <= 0:
+        return 0
+
+    level = max(0, min(6, int(mastery_level or 0)))
+    # At 0/6, leave all but one answer visible.  As mastery rises, reveal
+    # fewer cells; reserve the fully blank board for the 6/6 challenge.
+    return min(
+        total_cells,
+        1 + ((total_cells - 1) * level) // 6,
+    )
+
+
+def comparison_hidden_cell_ids(comparison_id, cells, mastery_level):
+    """Choose a repeatable set of cells so GET and POST use the same task."""
+    cell_ids = [cell.id for cell in cells]
+    randomizer = random.Random(
+        f"comparison:{comparison_id}:mastery:{mastery_level}:cells:{','.join(map(str, cell_ids))}"
+    )
+    randomizer.shuffle(cell_ids)
+    return set(cell_ids[:comparison_hidden_cell_count(len(cell_ids), mastery_level)])
+
+
+# ============================================================
 # NORMALIZE CHARACTERISTIC
 # ============================================================
 
@@ -405,11 +433,32 @@ def practice_comparison_review(
 
     # Blank saved cells do not become draggable answers.
 
-    answer_cells = [
+    all_answer_cells = [
         cell
         for cell in cells
         if cell.content.strip()
     ]
+
+    hidden_cell_ids = comparison_hidden_cell_ids(
+        comparison.id,
+        all_answer_cells,
+        progress.mastery_level,
+    )
+
+    answer_cells = [
+        cell
+        for cell in all_answer_cells
+        if cell.id in hidden_cell_ids
+    ]
+
+    revealed_by_position = {
+        (cell.row_id, cell.column_id): {
+            "content": cell.content,
+            "is_correct": True,
+        }
+        for cell in all_answer_cells
+        if cell.id not in hidden_cell_ids
+    }
 
     cell_lookup = {
         cell.id:
@@ -446,7 +495,7 @@ def practice_comparison_review(
     attempt_complete = False
     next_comparison = None
 
-    placed_by_position = {}
+    placed_by_position = dict(revealed_by_position)
     incorrect_explanations = []
 
     # ========================================================
@@ -1025,6 +1074,13 @@ def practice_comparison_review(
 
                     "placed":
                         placed_by_position.get(
+                            (
+                                row.id,
+                                column.id,
+                            )
+                        ),
+                    "revealed":
+                        revealed_by_position.get(
                             (
                                 row.id,
                                 column.id,
