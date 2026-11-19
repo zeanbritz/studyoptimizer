@@ -73,15 +73,20 @@ class CreateFormulaTests(TestCase):
         self.assertContains(response, 'id="paste-formula-modal"')
         self.assertContains(response, "hidden")
 
-    def test_pasted_formula_rejects_ambiguous_equations(self):
+    def test_pasted_formula_keeps_recognised_parts_of_an_ambiguous_equation(self):
         response = self.client.post(
             reverse("parse_formula_structure"),
             data=json.dumps({"equation": "a = b = c"}),
             content_type="application/json",
         )
 
-        self.assertEqual(response.status_code, 400)
-        self.assertIn("manual entry", response.json()["error"])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [item["value"] for item in response.json()["structure"]],
+            ["a", "=", "b"],
+        )
+        self.assertTrue(response.json()["partial"])
+        self.assertIn("skipped", response.json()["message"])
 
 
 class DefinitionTextbookTests(TestCase):

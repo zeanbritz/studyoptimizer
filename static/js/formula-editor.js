@@ -3189,6 +3189,116 @@ function openPasteFormulaModal() {
 }
 
 
+let formulaImportToastTimeout =
+    null;
+
+
+function showFormulaImportToast(
+    message,
+    partial = false
+) {
+
+    if (
+        !message
+    ) {
+
+        return;
+
+    }
+
+
+    const existingToast =
+        document.getElementById(
+            "formula-import-toast"
+        );
+
+
+    if (
+        existingToast
+    ) {
+
+        existingToast.remove();
+
+    }
+
+
+    if (
+        formulaImportToastTimeout
+    ) {
+
+        clearTimeout(
+            formulaImportToastTimeout
+        );
+
+    }
+
+
+    const toast =
+        document.createElement(
+            "div"
+        );
+
+
+    toast.id =
+        "formula-import-toast";
+
+
+    toast.className =
+        "formula-import-toast"
+        +
+        (partial ? " formula-import-toast-partial" : "");
+
+
+    toast.setAttribute(
+        "role",
+        "status"
+    );
+
+
+    toast.textContent =
+        message;
+
+
+    document.body.appendChild(
+        toast
+    );
+
+
+    requestAnimationFrame(
+        function () {
+
+            toast.classList.add(
+                "is-visible"
+            );
+
+        }
+    );
+
+
+    formulaImportToastTimeout =
+        setTimeout(
+            function () {
+
+                toast.classList.remove(
+                    "is-visible"
+                );
+
+
+                setTimeout(
+                    function () {
+
+                        toast.remove();
+
+                    }, 220
+                );
+
+            },
+            4200
+        );
+
+}
+
+
 async function pasteFormulaIntoBuilder() {
 
     if (
@@ -3313,6 +3423,28 @@ async function pasteFormulaIntoBuilder() {
         }
 
 
+        if (
+            data.structure.length
+            ===
+            0
+        ) {
+
+            closePasteFormulaModal();
+
+
+            showFormulaImportToast(
+                data.message
+                ||
+                "No recognised formula parts were added.",
+                true
+            );
+
+
+            return;
+
+        }
+
+
         formulaElements =
             data.structure;
 
@@ -3340,6 +3472,16 @@ async function pasteFormulaIntoBuilder() {
 
 
         focusFormula();
+
+
+        showFormulaImportToast(
+            data.message
+            ||
+            "Added the formula to the builder.",
+            Boolean(
+                data.partial
+            )
+        );
 
     }
 

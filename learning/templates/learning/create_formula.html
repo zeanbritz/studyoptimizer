@@ -958,6 +958,9 @@
 .formula-paste-actions button { min-height: 42px; padding: 9px 15px 7px; border: 2px solid #cbd3d7; border-bottom-width: 4px; border-radius: 10px; background: #fff; color: #535b60; font: inherit; font-size: 13px; font-weight: 850; cursor: pointer; }
 .formula-paste-actions .formula-paste-submit { border-color: var(--green-dark); background: var(--green); color: #fff; }
 .formula-paste-actions .formula-paste-submit:hover { background: #64c735; }
+.formula-import-toast { position: fixed; z-index: 1400; right: 24px; bottom: 24px; width: min(420px, calc(100vw - 36px)); padding: 14px 16px; border: 2px solid #3f8f1d; border-bottom-width: 4px; border-radius: 12px; background: #eff9ea; color: #276e16; box-shadow: 0 12px 30px rgba(27, 48, 37, .18); font-size: 13px; font-weight: 800; line-height: 1.45; opacity: 0; transform: translateY(12px); transition: opacity .2s ease, transform .2s ease; pointer-events: none; }
+.formula-import-toast.formula-import-toast-partial { border-color: #b9872f; background: #fff8e8; color: #76520f; }
+.formula-import-toast.is-visible { opacity: 1; transform: translateY(0); }
 body.formula-paste-open { overflow: hidden; }
 @media (max-width: 520px) { .formula-canvas-heading { align-items: stretch; flex-direction: column; } .paste-formula-button { width: 100%; } .formula-paste-actions { flex-direction: column-reverse; } .formula-paste-actions button { width: 100%; } }
 </style>

@@ -38,7 +38,7 @@ from dashboard.models import (
 )
 from dashboard.review_planner import get_daily_review_plan, remaining_review_ids
 from dashboard.pdf_lab_session import get_candidate, get_scan, mark_saved
-from dashboard.formula_detection import equation_to_structure
+from dashboard.formula_detection import pasted_equation_to_structure
 from accounts.entitlements import accessible_subjects, can_use_pdf_summarizer, free_learning_item_limit
 from .review_navigation import definition_edit_resume_url, review_origin
 
@@ -91,7 +91,7 @@ def extract_variables(elements):
 @login_required
 @require_POST
 def parse_formula_structure(request):
-    """Return the same editable structure used by PDF formula suggestions."""
+    """Keep the editable pieces we can safely read from a pasted equation."""
     try:
         payload = json.loads(request.body.decode("utf-8"))
     except (AttributeError, UnicodeDecodeError, json.JSONDecodeError):
@@ -101,12 +101,7 @@ def parse_formula_structure(request):
     if not isinstance(equation, str):
         return JsonResponse({"error": "Paste one equation to add it."}, status=400)
 
-    try:
-        structure = equation_to_structure(equation)
-    except ValueError as exc:
-        return JsonResponse({"error": str(exc)}, status=400)
-
-    return JsonResponse({"structure": structure})
+    return JsonResponse(pasted_equation_to_structure(equation))
 
 
 # ============================================================

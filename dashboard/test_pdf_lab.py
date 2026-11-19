@@ -18,7 +18,9 @@ from learning.models import (
 )
 
 from .definition_detection import find_definition_candidates
-from .formula_detection import equation_to_structure, find_formula_candidates
+from .formula_detection import (
+    equation_to_structure, find_formula_candidates, pasted_equation_to_structure,
+)
 from .models import StudyAvailability, SubjectTextbook
 from .pdf_lab_session import SESSION_KEY
 from .pdf_image_ocr import scan_page_images
@@ -116,6 +118,15 @@ class FormulaDetectionTests(SimpleTestCase):
             [item["value"] for item in structure],
             ["F", "=", "m", "*", "a", "^", "2"],
         )
+
+    def test_pasted_formula_keeps_supported_tokens_when_a_symbol_is_unknown(self):
+        result = pasted_equation_to_structure("F = m*a² + √q")
+        self.assertEqual(
+            [item["value"] for item in result["structure"]],
+            ["F", "=", "m", "*", "a", "^", "2", "+", "q"],
+        )
+        self.assertTrue(result["partial"])
+        self.assertIn("skipped", result["message"])
 
 
 class StructuredDetectionTests(SimpleTestCase):
