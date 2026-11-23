@@ -151,6 +151,16 @@ class FormulaDetailTests(TestCase):
         self.assertContains(response, "Distance travelled")
         self.assertNotContains(response, "No description")
 
+    def test_edit_formula_uses_the_symbol_picker_instead_of_adding_a_bracket(self):
+        response = self.client.get(reverse("edit_formula", args=[self.formula.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="picker-toggle"')
+        self.assertContains(response, 'data-element-value="α"')
+        self.assertContains(response, 'id="add-variable-button"')
+        self.assertContains(response, 'id="add-fraction-button"')
+        self.assertNotContains(response, "onclick=\"addElement('symbol', '(')\"")
+
 
 class DefinitionTextbookTests(TestCase):
     def setUp(self):

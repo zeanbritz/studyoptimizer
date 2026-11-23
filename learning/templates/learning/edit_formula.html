@@ -423,8 +423,9 @@
         }
 
 
-        .toolbar button,
-        .toolbar select {
+        .toolbar > button,
+        .toolbar > select,
+        .toolbar .picker-toggle {
 
             min-height: 40px;
 
@@ -453,8 +454,9 @@
         }
 
 
-        .toolbar button:hover,
-        .toolbar select:hover {
+        .toolbar > button:hover,
+        .toolbar > select:hover,
+        .toolbar .picker-toggle:hover {
 
             background: #f5f5f5;
 
@@ -951,7 +953,8 @@
 
                         <button
                             type="button"
-                            onclick="addElement('variable')"
+                            class="toolbar-button"
+                            id="add-variable-button"
                         >
                             <span class="toolbar-icon" aria-hidden="true">𝑥</span>
                             Variable
@@ -960,79 +963,42 @@
 
                         <button
                             type="button"
-                            onclick="addElement('number')"
+                            class="toolbar-button"
+                            id="add-number-button"
                         >
                             <span class="toolbar-icon" aria-hidden="true">123</span>
                             Number
                         </button>
 
 
-                        <select id="operator-select">
+                        <div class="formula-picker">
+                            <button type="button" class="picker-toggle">
+                                <span class="toolbar-icon" aria-hidden="true">×</span>
+                                Operator
+                                <span class="picker-arrow">▼</span>
+                            </button>
+
+                            <div class="formula-picker-menu">
+                                <div class="picker-grid">
+                                    <button type="button" class="picker-choice" data-element-type="operator" data-element-value="+">+</button>
+                                    <button type="button" class="picker-choice" data-element-type="operator" data-element-value="-">−</button>
+                                    <button type="button" class="picker-choice" data-element-type="operator" data-element-value="×">×</button>
+                                    <button type="button" class="picker-choice" data-element-type="operator" data-element-value="÷">÷</button>
+                                    <button type="button" class="picker-choice" data-element-type="operator" data-element-value="=">=</button>
+                                    <button type="button" class="picker-choice" data-element-type="operator" data-element-value="<">&lt;</button>
+                                    <button type="button" class="picker-choice" data-element-type="operator" data-element-value=">">&gt;</button>
+                                </div>
+                            </div>
+                        </div>
 
 
-                            <option value="">
-                                × Operator
-                            </option>
-
-
-                            <option value="+">
-                                +
-                            </option>
-
-
-                            <option value="-">
-                                −
-                            </option>
-
-
-                            <option value="×">
-                                ×
-                            </option>
-
-
-                            <option value="÷">
-                                ÷
-                            </option>
-
-
-                            <option value="=">
-                                =
-                            </option>
-
-
-                            <option value="<">
-                                &lt;
-                            </option>
-
-
-                            <option value=">">
-                                &gt;
-                            </option>
-
-
-                        </select>
+                        {% include 'learning/partials/formula_symbol_picker.html' %}
 
 
                         <button
                             type="button"
-                            onclick="addSelectedOperator()"
-                        >
-                            Add
-                        </button>
-
-
-                        <button
-                            type="button"
-                            onclick="addElement('symbol', '(')"
-                        >
-                            <span class="toolbar-icon" aria-hidden="true">Ω</span>
-                            Symbol
-                        </button>
-
-
-                        <button
-                            type="button"
-                            onclick="addFraction()"
+                            class="toolbar-button"
+                            id="add-fraction-button"
                         >
                             <span class="toolbar-icon" aria-hidden="true">½</span>
                             Fraction
