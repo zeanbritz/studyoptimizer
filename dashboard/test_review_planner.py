@@ -5,7 +5,16 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from learning.models import BulletList, Definition, Formula, KnowledgeUnit, StudentKnowledge, Subject
+from learning.models import (
+    BulletList,
+    Comparison,
+    Definition,
+    Formula,
+    KnowledgeUnit,
+    StepList,
+    StudentKnowledge,
+    Subject,
+)
 
 from .models import StudyAvailability, SubjectRevisionPlan, SubjectTextbook
 from .review_planner import (
@@ -50,6 +59,29 @@ class ReviewPlannerTests(TestCase):
             )
             Formula.objects.create(knowledge_unit=unit)
 
+    def add_future_review_items(self, model, knowledge_type, count):
+        for number in range(count):
+            unit = KnowledgeUnit.objects.create(
+                subject=self.subject,
+                title=f"{knowledge_type} {number}",
+                knowledge_type=knowledge_type,
+                estimated_minutes=2,
+            )
+            if model is BulletList:
+                model.objects.create(knowledge_unit=unit, question=unit.title)
+            elif model is StepList:
+                model.objects.create(knowledge_unit=unit, question=unit.title)
+            else:
+                model.objects.create(knowledge_unit=unit, name=unit.title)
+            StudentKnowledge.objects.create(
+                student=self.user,
+                knowledge_unit=unit,
+                mastery_level=6,
+                review_count=6,
+                last_reviewed=timezone.now() - timedelta(days=1),
+                next_review=timezone.now() + timedelta(days=20),
+            )
+
     def test_longer_day_gets_twice_the_review_capacity(self):
         self.add_definitions(self.subject, 100)
         monday = timezone.localdate()
@@ -63,7 +95,7 @@ class ReviewPlannerTests(TestCase):
         self.assertEqual(len(tuesday_plan.knowledge_unit_ids), 60)
         self.assertEqual(monday_plan.overdue_count, 100)
 
-    def test_batch_does_not_refill_after_extra_practice(self):
+    def test_batch_keeps_an_item_until_it_is_answered_correctly(self):
         self.add_definitions(self.subject, 40)
         today = timezone.localdate()
         setattr(self.availability, f"{today.strftime('%A').lower()}_enabled", True)
@@ -80,6 +112,14 @@ class ReviewPlannerTests(TestCase):
             next_review=timezone.now() + timedelta(days=1),
         )
         self.assertEqual(get_daily_review_plan(self.user, today).knowledge_unit_ids, original)
+        self.assertIn(original[0], remaining_review_ids(self.user, plan))
+
+        progress = StudentKnowledge.objects.get(
+            student=self.user,
+            knowledge_unit_id=original[0],
+        )
+        progress.last_correct_review = timezone.now()
+        progress.save(update_fields=["last_correct_review"])
         self.assertNotIn(original[0], remaining_review_ids(self.user, plan))
         self.assertEqual(len(remaining_review_ids(self.user, plan)), len(original) - 1)
 
@@ -200,21 +240,58 @@ class ReviewPlannerTests(TestCase):
                 knowledge_type=KnowledgeUnit.KnowledgeType.DEFINITION,
             ).values_list("pk", flat=True)
         )
-        self.assertEqual(len(practice_ids), 10)
+        self.assertEqual(len(practice_ids), 12)
         formula_practice_count = KnowledgeUnit.objects.filter(
             pk__in=plan.knowledge_unit_ids,
             knowledge_type=KnowledgeUnit.KnowledgeType.FORMULA,
         ).count()
-        self.assertEqual(formula_practice_count, 10)
+        self.assertEqual(formula_practice_count, 12)
         self.assertEqual(remaining_review_ids(self.user, plan), plan.knowledge_unit_ids)
 
         first_progress = StudentKnowledge.objects.get(
             student=self.user,
             knowledge_unit_id=practice_ids[0],
         )
-        first_progress.last_reviewed = timezone.now()
-        first_progress.save(update_fields=["last_reviewed"])
+        first_progress.last_correct_review = timezone.now()
+        first_progress.save(update_fields=["last_correct_review"])
         self.assertEqual(len(remaining_review_ids(self.user, plan)), len(plan.knowledge_unit_ids) - 1)
+
+    def test_extra_time_can_schedule_more_than_ten_of_each_other_review_type(self):
+        self.add_future_review_items(
+            BulletList,
+            KnowledgeUnit.KnowledgeType.BULLET_LIST,
+            12,
+        )
+        self.add_future_review_items(
+            StepList,
+            KnowledgeUnit.KnowledgeType.STEPS,
+            12,
+        )
+        self.add_future_review_items(
+            Comparison,
+            KnowledgeUnit.KnowledgeType.COMPARISON,
+            12,
+        )
+        today = timezone.localdate()
+        weekday = today.strftime("%A").lower()
+        setattr(self.availability, f"{weekday}_enabled", True)
+        setattr(self.availability, f"{weekday}_time", "02:00")
+        self.availability.save()
+
+        plan = get_daily_review_plan(self.user, today)
+
+        for knowledge_type in (
+            KnowledgeUnit.KnowledgeType.BULLET_LIST,
+            KnowledgeUnit.KnowledgeType.STEPS,
+            KnowledgeUnit.KnowledgeType.COMPARISON,
+        ):
+            self.assertEqual(
+                KnowledgeUnit.objects.filter(
+                    pk__in=plan.knowledge_unit_ids,
+                    knowledge_type=knowledge_type,
+                ).count(),
+                12,
+            )
 
     def test_dashboard_and_subject_list_share_the_same_batch(self):
         self.add_definitions(self.subject, 40)

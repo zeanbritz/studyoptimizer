@@ -157,9 +157,7 @@ def find_next_due_comparison(
     subject,
     exclude_comparison_id=None,
 ):
-
     today = timezone.localdate()
-
     from dashboard.review_planner import get_daily_review_plan, remaining_review_ids
     planned_ids = remaining_review_ids(user, get_daily_review_plan(user, today))
 
@@ -185,39 +183,9 @@ def find_next_due_comparison(
             id=exclude_comparison_id
         )
 
-    for comparison in comparisons:
-
-        progress = (
-            StudentKnowledge.objects
-            .filter(
-                student=user,
-                knowledge_unit=(
-                    comparison.knowledge_unit
-                ),
-            )
-            .first()
-        )
-
-        if progress is None:
-
-            return comparison
-
-        if progress.next_review is None:
-
-            return comparison
-
-        next_review_date = (
-            timezone.localtime(
-                progress.next_review
-            )
-            .date()
-        )
-
-        if next_review_date <= today:
-
-            return comparison
-
-    return None
+    # The daily-plan filter keeps every item that is still awaiting a correct
+    # answer, including an item answered incorrectly a moment ago.
+    return comparisons.first()
 
 
 # ============================================================
@@ -963,6 +931,8 @@ def practice_comparison_review(
                     +
                     1
                 )
+
+                progress.last_correct_review = now
 
                 progress.mastery_level = min(
                     6,

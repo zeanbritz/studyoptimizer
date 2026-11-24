@@ -171,16 +171,10 @@ def find_next_due_step_list(user, subject, exclude_step_list_id=None):
     if exclude_step_list_id is not None:
         candidates = candidates.exclude(id=exclude_step_list_id)
 
-    for candidate in candidates:
-        candidate_progress = StudentKnowledge.objects.filter(
-            student=user,
-            knowledge_unit=candidate.knowledge_unit,
-        ).first()
-        if candidate_progress is None or candidate_progress.next_review is None:
-            return candidate
-        if timezone.localtime(candidate_progress.next_review).date() <= today:
-            return candidate
-    return None
+    # ``remaining_review_ids`` already excludes only answers that were
+    # correct today. Do not hide an incorrectly answered step just because
+    # its next spaced-review date is tomorrow.
+    return candidates.first()
 
 
 def find_next_global_step_list(user, current_step_list_id):
@@ -368,6 +362,7 @@ def practice_step_review(request, step_list_id):
     progress.last_reviewed = now
     if all_correct:
         progress.correct_count += 1
+        progress.last_correct_review = now
         progress.mastery_level = min(6, progress.mastery_level + 1)
         result = "correct"
     else:

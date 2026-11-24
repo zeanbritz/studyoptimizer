@@ -1913,6 +1913,10 @@ def practice_formula(
                 reviewed_at
             )
 
+            progress.last_correct_review = (
+                reviewed_at
+            )
+
             progress.next_review = (
                 get_next_formula_review_at_midnight(
                     progress.mastery_level,

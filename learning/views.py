@@ -2489,6 +2489,8 @@ def review_list(
                     1
                 )
 
+                progress.last_correct_review = now
+
                 progress.mastery_level = min(
                     6,
                     (
@@ -2653,55 +2655,10 @@ def review_list(
                     )
                 )
 
-                for candidate in (
-                    possible_next_lists
-                ):
-
-                    candidate_progress = (
-                        StudentKnowledge.objects
-                        .filter(
-                            student=request.user,
-                            knowledge_unit=(
-                                candidate
-                                .knowledge_unit
-                            ),
-                        )
-                        .first()
-                    )
-
-                    candidate_is_due = False
-
-                    if (
-                        candidate_progress
-                        is None
-                    ):
-
-                        candidate_is_due = True
-
-                    elif (
-                        candidate_progress
-                        .next_review
-                        is None
-                    ):
-
-                        candidate_is_due = True
-
-                    elif (
-                        candidate_progress
-                        .next_review
-                        .date()
-                        <= today
-                    ):
-
-                        candidate_is_due = True
-
-                    if candidate_is_due:
-
-                        next_list = (
-                            candidate
-                        )
-
-                        break
+                # The daily plan already contains only items awaiting a
+                # correct answer. Keep failed lists in the session even when
+                # their next spaced-review date is tomorrow.
+                next_list = possible_next_lists.first()
 
             # =================================================
             # UPDATED MASTERY
@@ -3450,51 +3407,10 @@ def list_review_list(
         )
         bullet_lists = bullet_lists.filter(knowledge_unit_id__in=planned_ids)
 
-    # ========================================================
-    # ONLY LISTS DUE TODAY
-    # ========================================================
-
-    due_lists = []
-
-    for bullet_list in bullet_lists:
-
-        if library_mode:
-            due_lists.append(bullet_list)
-            continue
-
-        progress = (
-            StudentKnowledge.objects
-            .filter(
-                student=request.user,
-                knowledge_unit=(
-                    bullet_list.knowledge_unit
-                ),
-            )
-            .first()
-        )
-
-        is_due = False
-
-        if progress is None:
-
-            is_due = True
-
-        elif progress.next_review is None:
-
-            is_due = True
-
-        elif (
-            progress.next_review.date()
-            <= today
-        ):
-
-            is_due = True
-
-        if is_due:
-
-            due_lists.append(
-                bullet_list
-            )
+    # In daily mode, ``remaining_review_ids`` has already removed only items
+    # answered correctly today. A wrong attempt stays in this list so the
+    # student can finish the day's target instead of losing the task.
+    due_lists = list(bullet_lists)
 
     # ========================================================
     # RENDER
@@ -3736,78 +3652,9 @@ def step_review_list(
         )
         step_lists = step_lists.filter(knowledge_unit_id__in=planned_ids)
 
-    # ========================================================
-    # DUE STEPS
-    # ========================================================
-
-    due_steps = []
-
-    for step_list in step_lists:
-
-        if library_mode:
-            due_steps.append(step_list)
-            continue
-
-        knowledge_unit = (
-            step_list.knowledge_unit
-        )
-
-        progress = (
-            StudentKnowledge.objects
-            .filter(
-                student=request.user,
-                knowledge_unit=knowledge_unit,
-            )
-            .first()
-        )
-
-        is_due = False
-
-        # ----------------------------------------------------
-        # NEVER REVIEWED
-        # ----------------------------------------------------
-
-        if progress is None:
-
-            is_due = True
-
-        # ----------------------------------------------------
-        # NO DATE
-        # ----------------------------------------------------
-
-        elif progress.next_review is None:
-
-            is_due = True
-
-        # ----------------------------------------------------
-        # DUE TODAY OR OVERDUE
-        # ----------------------------------------------------
-
-        else:
-
-            next_review_date = (
-                timezone.localtime(
-                    progress.next_review
-                )
-                .date()
-            )
-
-            if (
-                next_review_date
-                <= today
-            ):
-
-                is_due = True
-
-        # ----------------------------------------------------
-        # ADD
-        # ----------------------------------------------------
-
-        if is_due:
-
-            due_steps.append(
-                step_list
-            )
+    # The daily-plan filter above is the source of truth. It keeps an
+    # incorrectly answered step available until a correct answer is recorded.
+    due_steps = list(step_lists)
 
     # ========================================================
     # RENDER
@@ -9787,6 +9634,8 @@ def comparison_review_list(
                     1
                 )
 
+                progress.last_correct_review = progress.last_reviewed
+
                 progress.mastery_level = min(
                     6,
                     (
@@ -9875,45 +9724,6 @@ def comparison_review_list(
     due_comparisons = []
 
     for comparison in comparisons:
-
-        is_due = library_mode
-
-        if not library_mode:
-            progress = (
-                StudentKnowledge.objects
-                .filter(
-                    student=request.user,
-                    knowledge_unit=(
-                        comparison.knowledge_unit
-                    ),
-                )
-                .first()
-            )
-
-            if progress is None:
-
-                is_due = True
-
-            elif progress.next_review is None:
-
-                is_due = True
-
-            else:
-
-                next_review_date = (
-                    timezone.localtime(
-                        progress.next_review
-                    )
-                    .date()
-                )
-
-                if next_review_date <= today:
-
-                    is_due = True
-
-        if not is_due:
-
-            continue
 
         columns = list(
             comparison.columns.all()

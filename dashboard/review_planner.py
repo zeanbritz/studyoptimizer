@@ -131,7 +131,7 @@ def _settings_and_summary(user, day):
 
     units_stamp = list(_reviewable_units(user).order_by("pk").values_list("pk", "estimated_minutes"))
     signature_data = {
-        "planner_version": 4,
+        "planner_version": 5,
         "week": weekly,
         "subjects": [(s.pk, s.exam_date.isoformat() if s.exam_date else None, revision.get(s.pk, 0)) for s in subjects],
         "books": [(b.pk, b.subject_id, b.page_count) for b in books],
@@ -144,8 +144,12 @@ def _settings_and_summary(user, day):
 def _due(progress, day):
     if progress is None:
         return True
-    if progress.last_reviewed and timezone.localtime(progress.last_reviewed).date() >= day:
+    if completed_daily_review(progress, day):
         return False
+    # A failed attempt remains part of today's target, even if another change
+    # causes the persisted plan to be rebuilt later in the day.
+    if progress.last_reviewed and timezone.localtime(progress.last_reviewed).date() >= day:
+        return True
     if progress.review_count == 0 or progress.next_review is None:
         return True
     return timezone.localtime(progress.next_review).date() <= day
@@ -201,6 +205,61 @@ def _daily_practice_candidates(user, knowledge_type):
     return sorted(units, key=practice_priority)
 
 
+def _extra_practice_candidates(user, excluded_ids):
+    """Return additional practice in a fair rotation across review types.
+
+    The ten-item definition/formula floor is a minimum, not a ceiling. Once
+    that baseline is in the plan, unused study time is shared between every
+    available review type so a larger library can receive a larger target.
+    """
+    units = list(
+        _reviewable_units(user)
+        .select_related("subject")
+        .order_by("knowledge_type", "pk")
+    )
+    progress_by_unit_id = {
+        item.knowledge_unit_id: item
+        for item in StudentKnowledge.objects.filter(
+            student=user,
+            knowledge_unit_id__in=[unit.pk for unit in units],
+        )
+    }
+    groups = defaultdict(list)
+    for unit in units:
+        if unit.pk in excluded_ids:
+            continue
+        progress = progress_by_unit_id.get(unit.pk)
+        groups[unit.knowledge_type].append((unit, progress))
+
+    for knowledge_type, group in groups.items():
+        group.sort(
+            key=lambda pair: (
+                0 if not pair[1] or not pair[1].last_reviewed else 1,
+                pair[1].last_reviewed if pair[1] and pair[1].last_reviewed else timezone.now(),
+                pair[1].mastery_level if pair[1] else 0,
+                pair[0].pk,
+            )
+        )
+
+    queues = {
+        knowledge_type: deque(group)
+        for knowledge_type, group in groups.items()
+        if group
+    }
+    order = deque(
+        knowledge_type
+        for knowledge_type in REVIEW_TYPES
+        if knowledge_type in queues
+    )
+    candidates = []
+    while order:
+        knowledge_type = order.popleft()
+        candidates.append(queues[knowledge_type].popleft())
+        if queues[knowledge_type]:
+            order.append(knowledge_type)
+    return candidates
+
+
 def _priority(unit, progress, day):
     exam_days = (
         (unit.subject.exam_date - day).days
@@ -253,8 +312,8 @@ def get_daily_review_plan(user, day=None):
 
     # Definitions and Formulas have independent daily practice floors, so a
     # large definition library cannot crowd formulas out of Today's Plan (and
-    # vice versa). Lists, Steps and the other types remain independently due
-    # under their normal review intervals.
+    # vice versa). The floor is followed by extra, time-budgeted practice for
+    # every type; it is deliberately not a ten-item cap.
     if available > 0:
         for knowledge_type in DAILY_PRACTICE_TYPES:
             planned_count = sum(
@@ -273,6 +332,39 @@ def get_daily_review_plan(user, day=None):
                 if unit.pk not in ids
             ]
             ids.extend(practice_ids[:slots_needed])
+
+        all_units = list(
+            _reviewable_units(user)
+            .select_related("subject")
+            .order_by("pk")
+        )
+        all_progress = {
+            item.knowledge_unit_id: item
+            for item in StudentKnowledge.objects.filter(
+                student=user,
+                knowledge_unit_id__in=[unit.pk for unit in all_units],
+            )
+        }
+        all_candidates = {
+            unit.pk: (unit, progress)
+            for unit, progress in (
+                (unit, all_progress.get(unit.pk))
+                for unit in all_units
+            )
+        }
+
+        planned_cost = sum(
+            _attempt_minutes(*all_candidates[unit_id])
+            for unit_id in ids
+            if unit_id in all_candidates
+        )
+        remaining_budget = max(0, budget - planned_cost)
+        for unit, progress in _extra_practice_candidates(user, set(ids)):
+            cost = _attempt_minutes(unit, progress)
+            if cost > remaining_budget:
+                continue
+            ids.append(unit.pk)
+            remaining_budget -= cost
     with transaction.atomic():
         plan, _ = DailyReviewPlan.objects.update_or_create(
             user=user,
@@ -291,7 +383,7 @@ def get_daily_review_plan(user, day=None):
 
 
 def remaining_review_ids(user, plan):
-    """Keep today's batch until its items are completed; never refill it."""
+    """Keep today's batch until each item has a correct answer; never refill it."""
     progress = {
         item.knowledge_unit_id: item
         for item in StudentKnowledge.objects.filter(
@@ -303,12 +395,17 @@ def remaining_review_ids(user, plan):
         unit_id
         for unit_id in plan.knowledge_unit_ids
         if unit_id in allowed_ids
-        and not (
-            progress.get(unit_id)
-            and progress[unit_id].last_reviewed
-            and timezone.localtime(progress[unit_id].last_reviewed).date() >= plan.day
-        )
+        and not completed_daily_review(progress.get(unit_id), plan.day)
     ]
+
+
+def completed_daily_review(progress, day):
+    """Return whether this item has been answered correctly on ``day``."""
+    return bool(
+        progress
+        and progress.last_correct_review
+        and timezone.localtime(progress.last_correct_review).date() >= day
+    )
 
 
 def review_capacity_outlook(user, day=None):

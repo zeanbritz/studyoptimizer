@@ -991,6 +991,8 @@ def practice_definition(
 
             progress.correct_count += 1
 
+            progress.last_correct_review = progress.last_reviewed
+
 
             if progress.mastery_level < 6:
 
@@ -1263,6 +1265,7 @@ def _update_definition_match_progress(progress, is_correct):
 
     if is_correct:
         progress.correct_count += 1
+        progress.last_correct_review = now
         if progress.mastery_level < 6:
             progress.mastery_level += 1
         progress.next_review = now + timedelta(

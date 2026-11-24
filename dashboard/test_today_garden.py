@@ -253,7 +253,7 @@ class TodaysGardenTests(TestCase):
         state=response.json()
         self.assertEqual(state["garden"]["categories"][0]["leaves"][0]["count"],1)
         self.assertIn(reverse("definition_review_list",args=[0]),state["standard_html"])
-        StudentKnowledge.objects.create(student=self.user,knowledge_unit=unit,last_reviewed=timezone.now(),next_review=timezone.now()+timedelta(days=1),review_count=1)
+        StudentKnowledge.objects.create(student=self.user,knowledge_unit=unit,last_reviewed=timezone.now(),last_correct_review=timezone.now(),next_review=timezone.now()+timedelta(days=1),review_count=1)
         state=self.client.get(url).json()
         self.assertEqual(state["garden"]["categories"][0]["leaves"],[])
         self.assertNotIn('plan-definitions',state["standard_html"])

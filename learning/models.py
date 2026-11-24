@@ -728,6 +728,14 @@ class StudentKnowledge(models.Model):
         blank=True,
     )
 
+    # A daily plan is only complete once the learner answers correctly.
+    # ``last_reviewed`` still records every attempt, including an incorrect
+    # one, so keep the successful completion separate.
+    last_correct_review = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
     next_review = models.DateTimeField(
         null=True,
         blank=True,

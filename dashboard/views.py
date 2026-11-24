@@ -464,46 +464,6 @@ def dashboard(request):
                 bullet_list.knowledge_unit
             )
 
-            progress = (
-                StudentKnowledge.objects
-                .filter(
-                    student=request.user,
-                    knowledge_unit=knowledge_unit,
-                )
-                .first()
-            )
-
-            is_due = False
-
-            if progress is None:
-
-                is_due = True
-
-            elif progress.next_review is None:
-
-                is_due = True
-
-            else:
-
-                next_review_date = (
-                    timezone.localtime(
-                        progress.next_review
-                    )
-                    .date()
-                )
-
-                if (
-                    next_review_date
-                    <=
-                    today
-                ):
-
-                    is_due = True
-
-            if not is_due:
-
-                continue
-
             database_subject = (
                 knowledge_unit.subject
             )
@@ -589,46 +549,6 @@ def dashboard(request):
             knowledge_unit = (
                 step_list.knowledge_unit
             )
-
-            progress = (
-                StudentKnowledge.objects
-                .filter(
-                    student=request.user,
-                    knowledge_unit=knowledge_unit,
-                )
-                .first()
-            )
-
-            is_due = False
-
-            if progress is None:
-
-                is_due = True
-
-            elif progress.next_review is None:
-
-                is_due = True
-
-            else:
-
-                next_review_date = (
-                    timezone.localtime(
-                        progress.next_review
-                    )
-                    .date()
-                )
-
-                if (
-                    next_review_date
-                    <=
-                    today
-                ):
-
-                    is_due = True
-
-            if not is_due:
-
-                continue
 
             database_subject = (
                 knowledge_unit.subject
@@ -718,42 +638,6 @@ def dashboard(request):
             knowledge_unit = (
                 comparison.knowledge_unit
             )
-
-            progress = (
-                StudentKnowledge.objects
-                .filter(
-                    student=request.user,
-                    knowledge_unit=knowledge_unit,
-                )
-                .first()
-            )
-
-            is_due = False
-
-            if progress is None:
-
-                is_due = True
-
-            elif progress.next_review is None:
-
-                is_due = True
-
-            else:
-
-                next_review_date = (
-                    timezone.localtime(
-                        progress.next_review
-                    )
-                    .date()
-                )
-
-                if next_review_date <= today:
-
-                    is_due = True
-
-            if not is_due:
-
-                continue
 
             database_subject = (
                 knowledge_unit.subject
