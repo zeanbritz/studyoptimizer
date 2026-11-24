@@ -161,6 +161,29 @@ class FormulaDetailTests(TestCase):
         self.assertContains(response, 'id="add-fraction-button"')
         self.assertNotContains(response, "onclick=\"addElement('symbol', '(')\"")
 
+    def test_formula_detail_uses_clickable_symbol_cards_and_a_highlight_dialog(self):
+        self.formula.purpose = "Distance is the length travelled in a direction."
+        self.formula.structure = json.dumps(
+            [
+                {"type": "variable", "value": "d"},
+                {"type": "operator", "value": "="},
+                {"type": "variable", "value": "v"},
+                {"type": "operator", "value": "×"},
+                {"type": "variable", "value": "t"},
+            ]
+        )
+        self.formula.save(update_fields=["purpose", "structure"])
+
+        response = self.client.get(reverse("formula_detail", args=[self.formula.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="detail-value formula-purpose">Distance')
+        self.assertContains(response, 'id="formula-preview"')
+        self.assertContains(response, 'data-formula-variable="d"')
+        self.assertContains(response, 'data-symbol="d"')
+        self.assertContains(response, 'id="symbol-dialog"')
+        self.assertContains(response, 'class="formula-variable-highlight"')
+
 
 class DefinitionTextbookTests(TestCase):
     def setUp(self):

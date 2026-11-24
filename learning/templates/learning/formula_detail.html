@@ -783,28 +783,48 @@
             color: #3d484d;
             font-size: 15px;
             font-weight: 550;
+            overflow-wrap: anywhere;
+            white-space: pre-line;
+        }
+
+        .detail-value.formula-purpose {
+            font-size: clamp(17px, 2.2vw, 20px);
+            font-weight: 650;
+            line-height: 1.65;
         }
 
         .variables-list {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(94px, 1fr));
             gap: 11px;
         }
 
         .variable-card {
-            grid-template-columns: minmax(54px, 170px) minmax(0, 1fr);
-            gap: 13px;
-            min-height: 76px;
+            display: grid;
+            min-height: 82px;
+            min-width: 0;
             padding: 12px;
+            place-items: center;
             border: 2px solid #d5e7cf;
             border-bottom-width: 4px;
             border-radius: 13px;
             background: #fbfefa;
+            cursor: pointer;
+            font: inherit;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+        }
+
+        .variable-card:hover,
+        .variable-card:focus-visible {
+            border-color: #63a94b;
+            box-shadow: 0 6px 14px rgba(62, 126, 34, 0.14);
+            outline: none;
+            transform: translateY(-2px);
         }
 
         .variable-symbol {
             display: grid;
-            width: 100%;
+            width: min(100%, 170px);
             min-height: 48px;
             min-width: 0;
             padding: 5px 8px;
@@ -820,11 +840,154 @@
             word-break: break-word;
         }
 
-        .variable-meaning {
-            color: #455157;
-            font-size: 14px;
-            font-weight: 600;
+        .symbol-dialog[hidden] {
+            display: none;
+        }
+
+        .symbol-dialog {
+            position: fixed;
+            z-index: 2200;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            padding: 20px;
+        }
+
+        .symbol-dialog-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(27, 38, 55, 0.57);
+        }
+
+        .symbol-dialog-panel {
+            position: relative;
+            z-index: 1;
+            width: min(100%, 740px);
+            max-height: min(90vh, 780px);
+            overflow: auto;
+            padding: 26px;
+            border: 2px solid #d6e1e5;
+            border-bottom-width: 5px;
+            border-radius: 18px;
+            background: #ffffff;
+            box-shadow: 0 22px 55px rgba(20, 31, 46, 0.32);
+        }
+
+        .symbol-dialog-close {
+            position: absolute;
+            top: 13px;
+            right: 13px;
+            display: grid;
+            width: 37px;
+            height: 37px;
+            padding: 0;
+            place-items: center;
+            border: 2px solid #d1dce0;
+            border-bottom-width: 4px;
+            border-radius: 10px;
+            background: #ffffff;
+            color: #536168;
+            font: inherit;
+            font-size: 23px;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .symbol-dialog-close:hover,
+        .symbol-dialog-close:focus-visible {
+            border-color: #8fb9cb;
+            background: #eef8fc;
+            outline: none;
+        }
+
+        .symbol-dialog-eyebrow {
+            display: block;
+            margin: 0 48px 13px 0;
+            color: var(--blue-dark);
+            font-size: 11px;
+            font-weight: 850;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .symbol-dialog-formula {
+            display: flex;
+            min-height: 128px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            padding: 20px;
+            overflow-x: auto;
+            border: 2px solid #c6e0eb;
+            border-bottom-width: 5px;
+            border-radius: 14px;
+            background: #f8fcfe;
+            color: #1f3744;
+            font-size: clamp(25px, 5vw, 38px);
+            font-weight: 800;
             line-height: 1.45;
+            text-align: center;
+        }
+
+        .symbol-dialog-formula .formula-item {
+            margin: 0 8px;
+        }
+
+        .symbol-dialog-formula .formula-fraction {
+            margin: 0 13px;
+            font-size: 0.82em;
+        }
+
+        .formula-variable-highlight {
+            padding: 1px 8px;
+            border: 2px solid #58b82a;
+            border-radius: 9px;
+            background: #eaf8e4;
+            color: #347819;
+            box-shadow: 0 0 0 3px rgba(88, 184, 42, 0.14);
+        }
+
+        .symbol-dialog-explanation {
+            display: grid;
+            grid-template-columns: minmax(74px, 150px) minmax(0, 1fr);
+            gap: 17px;
+            align-items: center;
+            margin-top: 20px;
+            padding: 17px;
+            border: 2px solid #d8e8d0;
+            border-bottom-width: 4px;
+            border-radius: 14px;
+            background: #fbfefa;
+        }
+
+        .symbol-dialog-symbol {
+            display: grid;
+            min-height: 58px;
+            min-width: 0;
+            padding: 8px;
+            place-items: center;
+            border: 2px solid #b6d8a9;
+            border-radius: 11px;
+            background: #eef9e9;
+            color: #367d1a;
+            font-size: 25px;
+            font-weight: 850;
+            overflow-wrap: anywhere;
+            text-align: center;
+            word-break: break-word;
+        }
+
+        .symbol-dialog-meaning {
+            margin: 0;
+            color: #3d484d;
+            font-size: 17px;
+            font-weight: 600;
+            line-height: 1.6;
+            overflow-wrap: anywhere;
+        }
+
+        body.symbol-dialog-open {
+            overflow: hidden;
         }
 
         .actions {
@@ -858,6 +1021,9 @@
             .card { padding: 18px; }
             .formula-focus { padding: 16px; }
             .formula-preview { min-height: 125px; padding: 19px 13px; }
+            .symbol-dialog-panel { padding: 22px 18px; }
+            .symbol-dialog-explanation { grid-template-columns: 1fr; }
+            .symbol-dialog-symbol { width: min(100%, 150px); justify-self: center; }
         }
 
     </style>
@@ -941,7 +1107,7 @@
                 </p>
 
 
-                <div class="formula-preview">
+                <div id="formula-preview" class="formula-preview">
 
 
                     {% if formula_elements %}
@@ -953,7 +1119,7 @@
                             {% if element.type == "variable" %}
 
 
-                                <span class="formula-item">
+                                <span class="formula-item" data-formula-variable="{{ element.value }}">
                                     {{ element.value }}
                                 </span>
 
@@ -994,7 +1160,10 @@
                                         {% for item in element.numerator %}
 
 
-                                            <span class="fraction-item">
+                                            <span
+                                                class="fraction-item{% if item.type == 'variable' %} formula-variable-item{% endif %}"
+                                                {% if item.type == 'variable' %}data-formula-variable="{{ item.value }}"{% endif %}
+                                            >
                                                 {{ item.value }}
                                             </span>
 
@@ -1015,7 +1184,10 @@
                                         {% for item in element.denominator %}
 
 
-                                            <span class="fraction-item">
+                                            <span
+                                                class="fraction-item{% if item.type == 'variable' %} formula-variable-item{% endif %}"
+                                                {% if item.type == 'variable' %}data-formula-variable="{{ item.value }}"{% endif %}
+                                            >
                                                 {{ item.value }}
                                             </span>
 
@@ -1085,9 +1257,7 @@
                                 </span>
 
 
-                                <div class="detail-value">
-                                    {{ formula.purpose }}
-                                </div>
+                                <div class="detail-value formula-purpose">{{ formula.purpose }}</div>
 
 
                             </div>
@@ -1107,9 +1277,7 @@
                                 </span>
 
 
-                                <div class="detail-value">
-                                    {{ formula.when_to_use }}
-                                </div>
+                                <div class="detail-value">{{ formula.when_to_use }}</div>
 
 
                             </div>
@@ -1152,21 +1320,19 @@
                         {% for variable in variables %}
 
 
-                            <div class="variable-card">
-
-
-                                <div class="variable-symbol">
+                            <button
+                                type="button"
+                                class="variable-card"
+                                data-symbol="{{ variable.symbol }}"
+                                data-meaning="{{ variable.meaning }}"
+                                aria-haspopup="dialog"
+                                aria-controls="symbol-dialog"
+                                aria-label="Learn what {{ variable.symbol }} means"
+                            >
+                                <span class="variable-symbol">
                                     {{ variable.symbol }}
-                                </div>
-
-
-                                <div class="variable-meaning">
-                                    {{ variable.meaning }}
-
-                                </div>
-
-
-                            </div>
+                                </span>
+                            </button>
 
 
                         {% endfor %}
@@ -1298,11 +1464,127 @@
     </div>
 
 
+    </div>
+
+
+    </main>
+
+    <div
+        id="symbol-dialog"
+        class="symbol-dialog"
+        role="presentation"
+        hidden
+    >
+        <div class="symbol-dialog-backdrop" data-symbol-dialog-close></div>
+
+        <section
+            class="symbol-dialog-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="symbol-dialog-title"
+        >
+            <button
+                type="button"
+                class="symbol-dialog-close"
+                data-symbol-dialog-close
+                aria-label="Close symbol explanation"
+            >
+                ×
+            </button>
+
+            <span id="symbol-dialog-title" class="symbol-dialog-eyebrow">
+                Formula symbol
+            </span>
+
+            <div
+                id="symbol-dialog-formula"
+                class="symbol-dialog-formula"
+                aria-label="Formula with the selected symbol highlighted"
+            ></div>
+
+            <div class="symbol-dialog-explanation">
+                <div id="symbol-dialog-symbol" class="symbol-dialog-symbol"></div>
+                <p id="symbol-dialog-meaning" class="symbol-dialog-meaning"></p>
+            </div>
+        </section>
+    </div>
 </div>
 
-</main>
-</div>
+<script>
+    (function () {
+        const dialog = document.getElementById("symbol-dialog");
+        const formulaPreview = document.getElementById("formula-preview");
+        const dialogFormula = document.getElementById("symbol-dialog-formula");
+        const dialogSymbol = document.getElementById("symbol-dialog-symbol");
+        const dialogMeaning = document.getElementById("symbol-dialog-meaning");
+        const closeButton = dialog && dialog.querySelector(".symbol-dialog-close");
+        let activeTrigger = null;
 
+        if (!dialog || !dialogFormula || !dialogSymbol || !dialogMeaning) {
+            return;
+        }
+
+        function closeSymbolDialog() {
+            if (dialog.hidden) {
+                return;
+            }
+
+            dialog.hidden = true;
+            document.body.classList.remove("symbol-dialog-open");
+
+            if (activeTrigger) {
+                activeTrigger.focus();
+            }
+
+            activeTrigger = null;
+        }
+
+        function openSymbolDialog(trigger) {
+            const symbol = trigger.dataset.symbol || "";
+
+            activeTrigger = trigger;
+            dialogSymbol.textContent = symbol;
+            dialogMeaning.textContent = trigger.dataset.meaning || "";
+            dialogFormula.replaceChildren();
+
+            if (formulaPreview) {
+                formulaPreview.childNodes.forEach(function (node) {
+                    dialogFormula.appendChild(node.cloneNode(true));
+                });
+            }
+
+            dialogFormula
+                .querySelectorAll("[data-formula-variable]")
+                .forEach(function (item) {
+                    if (item.dataset.formulaVariable === symbol) {
+                        item.classList.add("formula-variable-highlight");
+                    }
+                });
+
+            dialog.hidden = false;
+            document.body.classList.add("symbol-dialog-open");
+            window.requestAnimationFrame(function () {
+                closeButton.focus();
+            });
+        }
+
+        document.querySelectorAll(".variable-card[data-symbol]").forEach(function (button) {
+            button.addEventListener("click", function () {
+                openSymbolDialog(button);
+            });
+        });
+
+        dialog.querySelectorAll("[data-symbol-dialog-close]").forEach(function (button) {
+            button.addEventListener("click", closeSymbolDialog);
+        });
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape" && !dialog.hidden) {
+                closeSymbolDialog();
+            }
+        });
+    }());
+</script>
 
 </body>
 
