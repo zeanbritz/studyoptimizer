@@ -1930,6 +1930,12 @@ def edit_formula(
     # RENDER
     # ========================================================
 
+    variable_suggestions = (
+        get_variable_meaning_suggestions(
+            request.user
+        )
+    )
+
     return render(
         request,
         "learning/edit_formula.html",
@@ -1963,6 +1969,9 @@ def edit_formula(
 
             "formula_structure":
                 formula_structure,
+
+            "variable_suggestions":
+                variable_suggestions,
 
             "error":
                 error,

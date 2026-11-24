@@ -161,6 +161,17 @@ class FormulaDetailTests(TestCase):
         self.assertContains(response, 'id="add-fraction-button"')
         self.assertNotContains(response, "onclick=\"addElement('symbol', '(')\"")
 
+    def test_edit_formula_offers_saved_meanings_for_matching_variables(self):
+        response = self.client.get(reverse("edit_formula", args=[self.formula.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.context["variable_suggestions"],
+            {"d": ["Distance travelled"]},
+        )
+        self.assertContains(response, 'id="formula-variable-suggestions-data"')
+        self.assertContains(response, "Distance travelled")
+
     def test_formula_detail_uses_clickable_symbol_cards_and_a_highlight_dialog(self):
         self.formula.purpose = "Distance is the length travelled in a direction."
         self.formula.structure = json.dumps(
