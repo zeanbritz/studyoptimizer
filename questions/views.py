@@ -1,6 +1,7 @@
 import uuid
 from datetime import timedelta
 from math import ceil
+from random import Random
 
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
@@ -153,7 +154,10 @@ def quiz(request, token):
         correct_choices = run.correct_choices(index)
         multiple_answers = len(correct_choices) > 1
         selected_choices = run.selected_choices(index) if feedback else set()
-        for number, label in enumerate(saved["choices"]):
+        ordered_choices = list(enumerate(saved["choices"]))
+        # Keep the same order on refresh and feedback while grading by saved index.
+        Random(f"{run.token}:{index}").shuffle(ordered_choices)
+        for number, label in ordered_choices:
             options.append({
                 "index": number,
                 "label": label,

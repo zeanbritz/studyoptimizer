@@ -1,4 +1,6 @@
 from datetime import timedelta
+from unittest.mock import patch
+from uuid import UUID
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -131,6 +133,30 @@ class QuestionQuizTests(TestCase):
         self.assertContains(page, "50%")
         self.assertContains(page, "2 of 2 answered")
         self.assertContains(page, f'href="{reverse("dashboard")}#today-plan"')
+
+    def test_choices_shuffle_for_new_quizzes_and_keep_their_order_for_feedback(self):
+        Question.objects.create(
+            subject=self.subject, prompt="Choose two", choices=list("ABCDEF"),
+            correct_indices=[0, 2],
+        )
+
+        def choice_indices(page):
+            return [option["index"] for option in page.context["options"]]
+
+        with patch("questions.views.uuid.uuid4", side_effect=[UUID(int=1), UUID(int=2)]):
+            url = self.start_quiz()
+            first = choice_indices(self.client.get(url))
+            self.assertCountEqual(first, range(6))
+            self.assertEqual(choice_indices(self.client.get(url)), first)
+
+            result = self.answer(url, 0, [2, 0])
+            feedback = self.client.get(result["Location"])
+            self.assertEqual(choice_indices(feedback), first)
+            self.assertTrue(feedback.context["answered_correctly"])
+
+            second = choice_indices(self.client.get(self.start_quiz()))
+            self.assertCountEqual(second, range(6))
+            self.assertNotEqual(second, first)
 
     def test_multiple_correct_answers_require_the_exact_set_in_any_order(self):
         for prompt in ("Exact match", "Partial match", "Extra choice"):
