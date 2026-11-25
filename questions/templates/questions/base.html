@@ -1,0 +1,22 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Questions{% endblock %} - StudiGarden</title>
+    <link rel="stylesheet" href="{% static 'dashboard/css/sidebar.css' %}">
+    <link rel="stylesheet" href="{% static 'questions/questions.css' %}">
+    <script src="{% static 'questions/questions.js' %}" defer></script>
+</head>
+<body>
+<div class="app questions-app">
+    {% include "partials/sidebar.html" %}
+    <main class="questions-main">
+        <div class="questions-page">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+</div>
+</body>
+</html>

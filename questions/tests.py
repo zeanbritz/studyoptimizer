@@ -1,0 +1,128 @@
+from datetime import timedelta
+
+from django.contrib.auth import get_user_model
+from django.test import TestCase
+from django.urls import reverse
+from django.utils import timezone
+
+from learning.models import Subject
+from .models import Question, QuizRun
+
+
+class QuestionQuizTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.student = get_user_model().objects.create_user(username="questions-student")
+        cls.subject = Subject.objects.create(user=cls.student, name="Physics")
+        cls.other_student = get_user_model().objects.create_user(username="other-learner")
+        cls.other_subject = Subject.objects.create(user=cls.other_student, name="Private subject")
+
+    def setUp(self):
+        self.client.force_login(self.student)
+        self.setup_url = reverse("questions:setup") + f"?subject={self.subject.pk}"
+        self.manage_url = reverse("questions:manage", args=[self.subject.pk])
+
+    def add_question(self, prompt, chapter=""):
+        return Question.objects.create(
+            subject=self.subject, chapter=chapter, prompt=prompt,
+            choices=["First choice", "Second choice"], correct_index=1,
+        )
+
+    def start_quiz(self, **data):
+        response = self.client.post(self.setup_url, data)
+        self.assertEqual(response.status_code, 302)
+        return response["Location"]
+
+    def answer(self, url, position, choice):
+        return self.client.post(url, {"action": "answer", "position": position, "answer": choice})
+
+    def test_create_edit_and_validate_answer_limits(self):
+        form = {"prompt": "Which quantity is a vector?", "chapter": "Motion",
+                "answer_count": "6", "correct": "6"}
+        form.update({f"answer_{n}": f"Choice {n}" for n in range(1, 7)})
+        for invalid in ({"answer_count": "1"}, {"answer_count": "7"}, {"answer_count": "2"},
+                        {"answer_6": " "}, {"answer_6": "Choice 1"}):
+            with self.subTest(invalid=invalid):
+                response = self.client.post(self.manage_url, {**form, **invalid})
+                self.assertTrue(response.context["form"].errors)
+                self.assertFalse(Question.objects.exists())
+
+        self.assertRedirects(self.client.post(self.manage_url, form), self.manage_url)
+        question = Question.objects.get()
+        self.assertEqual(question.choices, [form[f"answer_{n}"] for n in range(1, 7)])
+        self.assertEqual(question.correct_index, 5)
+
+        edit_url = reverse("questions:edit", args=[self.subject.pk, question.pk])
+        self.assertEqual(self.client.get(edit_url).context["form"].initial["correct"], 6)
+        self.assertRedirects(
+            self.client.post(edit_url, {**form, "answer_count": 2, "correct": 1}),
+            self.manage_url,
+        )
+        question.refresh_from_db()
+        self.assertEqual(question.choices, ["Choice 1", "Choice 2"])
+        self.assertEqual(question.correct_index, 0)
+
+    def test_chapter_quiz_scores_every_question_once(self):
+        self.add_question("Chapter question one", "Motion")
+        self.add_question("Chapter question two", "Motion")
+        self.add_question("Unfiled question")
+        self.add_question("Another chapter", "Energy")
+        url = self.start_quiz(chapter="Motion")
+
+        first = self.client.get(url)
+        self.assertContains(first, "Chapter question one")
+        self.assertNotContains(first, "Correct answer")
+        self.assertNotContains(first, "Unfiled question")
+        self.assertNotContains(first, "Chapter question two")
+
+        response = self.answer(url, 0, 1)
+        self.assertContains(self.client.get(response["Location"]), "Correct answer")
+        self.answer(url, 0, 1)
+        self.assertEqual(QuizRun.objects.get(student=self.student).answers, [1])
+
+        self.assertContains(self.client.get(url), "Chapter question two")
+        result = self.answer(url, 1, 0)
+        page = self.client.get(result["Location"])
+        self.assertContains(page, "Quiz complete")
+        self.assertContains(page, "1 correct")
+        self.assertContains(page, "2 of 2 answered")
+
+    def test_all_chapters_includes_unfiled_questions_and_can_stop(self):
+        self.add_question("First question", "Motion")
+        self.add_question("Unfiled question")
+        url = self.start_quiz()
+        run = QuizRun.objects.get(student=self.student)
+        self.assertEqual(len(run.questions), 2)
+        self.assertIsNone(run.deadline)
+        self.answer(url, 0, 1)
+        self.assertRedirects(self.client.post(url, {"action": "stop"}), url)
+        self.assertContains(self.client.get(url), "Quiz stopped")
+        self.assertContains(self.client.get(url), "1 of 2 answered")
+
+    def test_timer_survives_reload_and_rejects_late_answers(self):
+        self.add_question("Timed question")
+        url = self.start_quiz(minutes="5")
+        run = QuizRun.objects.get(student=self.student)
+        self.assertContains(self.client.get(url), "data-quiz-timer")
+        self.assertContains(self.client.get(url), "data-quiz-timer")
+        run.refresh_from_db()
+        self.assertLessEqual(run.deadline, timezone.now() + timedelta(minutes=5))
+        run.deadline = timezone.now() - timedelta(seconds=1)
+        run.save(update_fields=["deadline"])
+        self.assertRedirects(self.answer(url, 0, 1), url)
+        self.assertContains(self.client.get(url), "Time’s up")
+        run.refresh_from_db()
+        self.assertEqual(run.answers, [])
+
+    def test_questions_and_quiz_are_private(self):
+        question = self.add_question("Private question")
+        url = self.start_quiz()
+        self.client.force_login(self.other_student)
+        self.assertNotContains(self.client.get(reverse("questions:setup")), self.subject.name)
+        self.assertEqual(self.client.get(url).status_code, 404)
+        self.assertEqual(self.client.get(self.manage_url).status_code, 404)
+        self.assertEqual(
+            self.client.post(reverse("questions:delete", args=[self.subject.pk, question.pk])).status_code,
+            404,
+        )
+        self.assertTrue(Question.objects.filter(pk=question.pk).exists())

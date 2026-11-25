@@ -72,6 +72,20 @@
         </a>
 
         <a
+            href="{% url 'questions:setup' %}"
+            class="nav-link {% if active_page == 'questions' %}active{% endif %}"
+            {% if active_page == 'questions' %}aria-current="page"{% endif %}
+        >
+            <span class="nav-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" focusable="false">
+                    <circle cx="12" cy="12" r="9"></circle>
+                    <path d="M9.5 9a2.5 2.5 0 1 1 4 2c-1 .7-1.5 1-1.5 2.2M12 16.5h.01"></path>
+                </svg>
+            </span>
+            <span class="nav-text">Questions</span>
+        </a>
+
+        <a
             href="{% url 'exams:calendar' %}"
             class="nav-link {% if active_page == 'exams' or active_page == 'calendar' %}active{% endif %}"
             {% if active_page == 'exams' or active_page == 'calendar' %}aria-current="page"{% endif %}

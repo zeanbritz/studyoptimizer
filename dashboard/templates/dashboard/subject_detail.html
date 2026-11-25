@@ -2663,6 +2663,10 @@
             gap: 10px;
         }
 
+        .questions-summary-option {
+            grid-column: 1 / -1;
+        }
+
         .summary-option {
             --item-accent: var(--blue);
             --item-dark: var(--blue-dark);
@@ -4287,6 +4291,13 @@
         </p>
     </div>
 
+{% endif %}
+
+{% if database_subject %}
+    <a href="{% url 'questions:manage' subject_id=database_subject.id %}" class="summary-option questions-summary-option">
+        <h3>Questions</h3>
+        <p>Add and manage multiple-choice questions for this subject.</p>
+    </a>
 {% endif %}
 
 

@@ -1,0 +1,56 @@
+{% extends "questions/base.html" %}
+{% block content %}
+<header class="questions-header">
+    <h1>Questions</h1>
+    <p>Test yourself with the multiple-choice questions you’ve written.</p>
+</header>
+
+{% if current_run %}
+<section class="questions-panel questions-row" aria-label="Quiz in progress">
+    <div>
+        <h2>Quiz in progress</h2>
+        <p>{{ current_run.subject.name }}{% if current_run.chapter %} · {{ current_run.chapter }}{% endif %}</p>
+    </div>
+    <a class="questions-button secondary" href="{% url 'questions:quiz' token=current_run.token %}">Resume quiz</a>
+</section>
+{% endif %}
+
+<section class="questions-panel">
+    <h2>Set up a quiz</h2>
+    {% if subjects %}
+        <form method="get" action="{% url 'questions:setup' %}" class="questions-form" data-subject-picker>
+            <label for="quiz-subject">Subject</label>
+            <div class="questions-row">
+                <select id="quiz-subject" name="subject">
+                    {% for item in subjects %}
+                        <option value="{{ item.pk }}"{% if item.pk == subject.pk %} selected{% endif %}>{{ item.name }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="questions-button secondary" data-subject-submit>Choose subject</button>
+            </div>
+        </form>
+        {% if question_count or form.is_bound %}
+            <form method="post" action="{{ setup_url }}" class="questions-form">
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+                <div class="questions-grid">
+                    <div>{{ form.chapter.as_field_group }}</div>
+                    <div>{{ form.minutes.as_field_group }}</div>
+                </div>
+                <p class="questions-meta">{{ question_count }} saved question{{ question_count|pluralize }} in {{ subject.name }}.</p>
+                {% if current_run %}<p class="questions-meta">Starting a new quiz replaces your quiz in progress.</p>{% endif %}
+                <div class="questions-actions">
+                    <button type="submit" class="questions-button">Start quiz</button>
+                    <a class="questions-button secondary" href="{% url 'questions:manage' subject_id=subject.pk %}">Manage questions</a>
+                </div>
+            </form>
+        {% else %}
+            <p>{{ subject.name }} doesn’t have any questions yet.</p>
+            <a class="questions-button" href="{% url 'questions:manage' subject_id=subject.pk %}">Add questions</a>
+        {% endif %}
+    {% else %}
+        <p>Add a subject before creating questions or starting a quiz.</p>
+        <a class="questions-button" href="{% url 'goals' %}">Go to Subjects</a>
+    {% endif %}
+</section>
+{% endblock %}

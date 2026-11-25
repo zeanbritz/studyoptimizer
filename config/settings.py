@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     "exams",
     "planner",
     "practice",
+    "questions",
     "landing",
 ]
 

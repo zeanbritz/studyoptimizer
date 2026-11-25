@@ -14,4 +14,5 @@ urlpatterns = [
     path("exams/", include("exams.urls")),
     path("learning/", include("learning.urls")),
     path("practice/", include("practice.urls")),
+    path("questions/", include("questions.urls")),
 ]

@@ -1,0 +1,72 @@
+{% extends "questions/base.html" %}
+{% block title %}{{ run.subject.name }} Quiz{% endblock %}
+{% block content %}
+<header class="questions-header questions-row">
+    <div>
+        <h1>{{ run.subject.name }} quiz</h1>
+        {% if run.chapter %}<p>{{ run.chapter }}</p>{% endif %}
+    </div>
+    {% if seconds_left != None %}
+        <div class="questions-timer">
+            <span>Time left</span>
+            <output data-quiz-timer="{{ seconds_left }}" aria-live="off"></output>
+            <noscript><time datetime="{{ run.deadline|date:'c' }}">Ends at {{ run.deadline|time:"H:i" }}</time></noscript>
+        </div>
+    {% endif %}
+</header>
+
+{% if outcome %}
+<section class="questions-panel questions-result">
+    <h2>{% if outcome == "complete" %}Quiz complete{% elif outcome == "expired" %}Time’s up{% else %}Quiz stopped{% endif %}</h2>
+    <p><strong>{{ run.score }} correct</strong> · {{ run.answers|length }} of {{ run.questions|length }} answered</p>
+    <a class="questions-button" href="{{ setup_url }}">Back to Questions</a>
+</section>
+{% endif %}
+
+{% if question %}
+<section class="questions-panel">
+    <p class="questions-meta">Question {{ question_number }} of {{ run.questions|length }}</p>
+    <h2 class="questions-prompt" id="quiz-question">{{ question }}</h2>
+    {% if feedback %}
+        <p class="questions-feedback {% if answered_correctly %}correct{% else %}incorrect{% endif %}">
+            {% if answered_correctly %}Correct{% else %}Incorrect{% endif %}
+        </p>
+        <ul class="questions-options">
+            {% for option in options %}
+                <li class="questions-option {% if option.correct %}correct{% elif option.selected %}incorrect{% endif %}">
+                    <span>{{ option.label }}</span>
+                    {% if option.correct %}<small>Correct answer</small>{% endif %}
+                    {% if option.selected %}<small>Your answer</small>{% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <form method="post" class="questions-form" data-quiz-answer>
+            {% csrf_token %}
+            <input type="hidden" name="action" value="answer">
+            <input type="hidden" name="position" value="{{ position }}">
+            <fieldset class="questions-options" aria-labelledby="quiz-question">
+                {% for option in options %}
+                    <label class="questions-option">
+                        <input type="radio" name="answer" value="{{ option.index }}" required>
+                        <span>{{ option.label }}</span>
+                    </label>
+                {% endfor %}
+            </fieldset>
+            <button type="submit" class="questions-button">Check answer</button>
+        </form>
+    {% endif %}
+    {% if not outcome %}
+        <div class="questions-actions quiz-controls">
+            {% if feedback %}
+                <a class="questions-button" href="{% url 'questions:quiz' token=run.token %}">Next question</a>
+            {% endif %}
+            <form method="post" action="{% url 'questions:quiz' token=run.token %}">
+                {% csrf_token %}
+                <button type="submit" name="action" value="stop" class="questions-button secondary">Stop Quiz</button>
+            </form>
+        </div>
+    {% endif %}
+</section>
+{% endif %}
+{% endblock %}
