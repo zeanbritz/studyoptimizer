@@ -22,8 +22,11 @@ class QuestionForm(forms.ModelForm):
     class Meta:
         model = Question
         fields = ("prompt", "chapter")
-        labels = {"prompt": "Question", "chapter": "Chapter (optional)"}
-        widgets = {"prompt": forms.Textarea(attrs={"rows": 3})}
+        labels = {"prompt": "Question", "chapter": "Quiz / Chapter (optional)"}
+        widgets = {
+            "prompt": forms.Textarea(attrs={"rows": 3}),
+            "chapter": forms.TextInput(attrs={"list": "question-chapter-names"}),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -71,7 +74,7 @@ class QuestionForm(forms.ModelForm):
 
 
 class QuizSetupForm(forms.Form):
-    chapter = forms.ChoiceField(required=False)
+    chapter = forms.ChoiceField(label="Quiz / Chapter", required=False)
     minutes = forms.IntegerField(
         label="Time limit in minutes (optional)", required=False, min_value=1,
         max_value=1440, widget=forms.NumberInput(attrs={"placeholder": "No time limit"}),
@@ -79,4 +82,4 @@ class QuizSetupForm(forms.Form):
 
     def __init__(self, *args, chapters, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["chapter"].choices = [("", "All chapters"), *((name, name) for name in chapters)]
+        self.fields["chapter"].choices = [("", "All questions"), *((name, name) for name in chapters)]

@@ -11,6 +11,26 @@
     <a class="questions-button secondary" href="{{ setup_url }}">Set up a quiz</a>
 </div>
 
+<section class="questions-panel" aria-label="Quiz or chapter selection">
+    <form method="get" action="{% url 'questions:manage' subject_id=subject.pk %}" class="questions-form">
+        <label for="question-chapter-scope">Quiz / Chapter</label>
+        <div class="questions-row">
+            <select name="chapter" id="question-chapter-scope">
+                <option value="">All questions</option>
+                {% for chapter in chapters %}
+                    <option value="{{ chapter }}"{% if chapter == selected_chapter %} selected{% endif %}>{{ chapter }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="questions-button secondary">Select</button>
+        </div>
+        {% if selected_chapter %}
+            <p class="questions-meta">New questions will be added to <strong>{{ selected_chapter }}</strong>.</p>
+        {% else %}
+            <p class="questions-meta">To create a quiz or chapter, enter its name on the first question you save.</p>
+        {% endif %}
+    </form>
+</section>
+
 <section class="questions-panel">
     <div class="questions-row questions-editor-heading">
         <h2>{% if editing %}Edit question{% else %}Add a question{% endif %}</h2>
@@ -22,8 +42,16 @@
         {% csrf_token %}
         {{ form.non_field_errors }}
         <div>{{ form.prompt.as_field_group }}</div>
+        {% if form.chapter.field.disabled %}
+            {{ form.chapter.as_hidden }}
+        {% endif %}
         <div class="questions-grid">
-            <div>{{ form.chapter.as_field_group }}</div>
+            {% if not form.chapter.field.disabled %}
+                <div>{{ form.chapter.as_field_group }}</div>
+                <datalist id="question-chapter-names">
+                    {% for chapter in chapters %}<option value="{{ chapter }}">{% endfor %}
+                </datalist>
+            {% endif %}
             <div>{{ form.answer_count.as_field_group }}</div>
         </div>
         <noscript><p>Fill in the number of answers you selected above.</p></noscript>
@@ -46,7 +74,7 @@
         <div class="questions-actions">
             <button type="submit" class="questions-button">{% if editing %}Save changes{% else %}Add question{% endif %}</button>
             {% if editing %}
-                <a class="questions-button secondary" href="{% url 'questions:manage' subject_id=subject.pk %}">Cancel</a>
+                <a class="questions-button secondary" href="{{ library_url }}#saved-questions">Cancel</a>
             {% endif %}
         </div>
     </form>
@@ -75,18 +103,18 @@
     </dialog>
 {% endif %}
 
-<section class="questions-panel">
+<section class="questions-panel" id="saved-questions">
     <h2>Saved questions</h2>
     <ul class="questions-library">
-        {% for item in questions %}
+        {% for item in questions_page %}
             <li class="questions-row">
                 <div>
                     <strong>{{ item.prompt|truncatechars:180 }}</strong>
                     <p class="questions-meta">{% if item.chapter %}{{ item.chapter }} · {% endif %}{{ item.choices|length }} answers</p>
                 </div>
                 <div class="questions-actions">
-                    <a class="questions-button secondary" href="{% url 'questions:edit' subject_id=subject.pk question_id=item.pk %}">Edit</a>
-                    <form method="post" action="{% url 'questions:delete' subject_id=subject.pk question_id=item.pk %}" data-question-delete>
+                    <a class="questions-button secondary" href="{% url 'questions:edit' subject_id=subject.pk question_id=item.pk %}{% querystring chapter=selected_chapter page=questions_page.number %}">Edit</a>
+                    <form method="post" action="{% url 'questions:delete' subject_id=subject.pk question_id=item.pk %}{% querystring chapter=selected_chapter page=questions_page.number %}" data-question-delete>
                         {% csrf_token %}
                         <button type="submit" class="questions-button danger">Delete</button>
                     </form>
@@ -96,5 +124,18 @@
             <li class="questions-meta">No questions saved yet.</li>
         {% endfor %}
     </ul>
+    {% if questions_page.paginator.num_pages > 1 %}
+        <nav class="questions-pagination" aria-label="Saved question pages">
+            {% if questions_page.has_previous %}
+                <a class="questions-button secondary" rel="prev" aria-label="Previous page"
+                    href="{% url 'questions:manage' subject_id=subject.pk %}{% querystring chapter=selected_chapter page=questions_page.previous_page_number %}#saved-questions">←</a>
+            {% endif %}
+            <span class="questions-meta">Page {{ questions_page.number }} of {{ questions_page.paginator.num_pages }}</span>
+            {% if questions_page.has_next %}
+                <a class="questions-button secondary" rel="next" aria-label="Next page"
+                    href="{% url 'questions:manage' subject_id=subject.pk %}{% querystring chapter=selected_chapter page=questions_page.next_page_number %}#saved-questions">→</a>
+            {% endif %}
+        </nav>
+    {% endif %}
 </section>
 {% endblock %}

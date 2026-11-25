@@ -1,9 +1,9 @@
 import uuid
 from datetime import timedelta
 from math import ceil
-from urllib.parse import urlencode
 
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.db import transaction
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
@@ -22,8 +22,25 @@ def _chapters(questions):
     return questions.exclude(chapter="").order_by("chapter").values_list("chapter", flat=True).distinct()
 
 
-def _setup_url(subject_id):
-    return reverse("questions:setup") + "?" + urlencode({"subject": subject_id})
+def _setup_url(subject_id, chapter=""):
+    query = {"subject": subject_id}
+    if chapter:
+        query["chapter"] = chapter
+    return reverse("questions:setup", query=query)
+
+
+def _requested_chapter(request):
+    chapter = request.GET.get("chapter", "").strip()
+    return chapter if len(chapter) <= Question._meta.get_field("chapter").max_length else ""
+
+
+def _library_url(subject_id, chapter, page=None):
+    query = {}
+    if chapter:
+        query["chapter"] = chapter
+    if page and str(page) != "1":
+        query["page"] = page
+    return reverse("questions:manage", args=[subject_id], query=query)
 
 
 @login_required
@@ -38,9 +55,12 @@ def setup(request):
         subject = subjects[0]
 
     questions = Question.objects.filter(subject=subject) if subject else Question.objects.none()
+    chapters = list(_chapters(questions))
+    chapter = _requested_chapter(request)
     form = QuizSetupForm(
         request.POST if request.method == "POST" else None,
-        chapters=_chapters(questions),
+        chapters=chapters,
+        initial={"chapter": chapter} if chapter in chapters else None,
     )
     if request.method == "POST" and form.is_valid():
         chapter = form.cleaned_data["chapter"]
@@ -162,21 +182,36 @@ def quiz(request, token):
 def manage(request, subject_id, question_id=None):
     subject = get_object_or_404(accessible_subjects(request.user), pk=subject_id)
     questions = Question.objects.filter(subject=subject)
-    question = get_object_or_404(questions, pk=question_id) if question_id else Question(subject=subject)
+    chapter = _requested_chapter(request)
+    page = request.GET.get("page")
+    question = (
+        get_object_or_404(questions, pk=question_id)
+        if question_id else Question(subject=subject, chapter=chapter)
+    )
     form = QuestionForm(request.POST if request.method == "POST" else None, instance=question)
+    form.fields["chapter"].disabled = bool(chapter and not question_id)
     if request.method == "POST" and form.is_valid():
-        form.save()
-        return redirect("questions:manage", subject_id=subject.pk)
+        saved = form.save()
+        if question_id:
+            return redirect(_library_url(subject.pk, chapter, page))
+        return redirect(_library_url(subject.pk, saved.chapter))
 
     index = subject_index(request, subject)
+    chapters = list(_chapters(questions))
+    if chapter and chapter not in chapters:
+        chapters.append(chapter)
+    library = questions.filter(chapter=chapter) if chapter else questions
     return render(request, "questions/manage.html", {
         "active_page": "subjects",
         "subject": subject,
         "subject_url": reverse("subject_detail", args=[index]) if index is not None else reverse("goals"),
         "editing": question_id is not None,
-        "questions": questions,
+        "chapters": chapters,
+        "selected_chapter": chapter,
+        "questions_page": Paginator(library.order_by("-pk"), 10).get_page(page),
         "form": form,
-        "setup_url": _setup_url(subject.pk),
+        "setup_url": _setup_url(subject.pk, chapter),
+        "library_url": _library_url(subject.pk, chapter, page),
     })
 
 
@@ -188,4 +223,4 @@ def delete(request, subject_id, question_id):
         subject__in=accessible_subjects(request.user),
     )
     question.delete()
-    return redirect("questions:manage", subject_id=subject_id)
+    return redirect(_library_url(subject_id, _requested_chapter(request), request.GET.get("page")))

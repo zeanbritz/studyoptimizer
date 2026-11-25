@@ -51,7 +51,7 @@ class QuestionQuizTests(TestCase):
                 self.assertTrue(response.context["form"].errors)
                 self.assertFalse(Question.objects.exists())
 
-        self.assertRedirects(self.client.post(self.manage_url, form), self.manage_url)
+        self.assertRedirects(self.client.post(self.manage_url, form), self.manage_url + "?chapter=Motion")
         question = Question.objects.get()
         self.assertEqual(question.choices, [form[f"answer_{n}"] for n in range(1, 7)])
         self.assertEqual(question.correct_indices, [1, 5])
@@ -67,6 +67,43 @@ class QuestionQuizTests(TestCase):
         question.refresh_from_db()
         self.assertEqual(question.choices, ["Choice 1", "Choice 2"])
         self.assertEqual(question.correct_indices, [0])
+
+    def test_saved_questions_show_ten_newest_then_older_questions(self):
+        saved = [self.add_question(f"Motion question {n}", "Motion") for n in range(13)]
+        self.add_question("Energy question", "Energy")
+        scope_url = self.manage_url + "?chapter=Motion"
+
+        newest = self.client.get(scope_url)
+        self.assertEqual(list(newest.context["questions_page"]), list(reversed(saved[3:])))
+        self.assertContains(newest, "Page 1 of 2")
+        self.assertContains(newest, 'aria-label="Next page"')
+        self.assertNotContains(newest, 'aria-label="Previous page"')
+
+        older = self.client.get(scope_url + "&page=2")
+        self.assertEqual(list(older.context["questions_page"]), list(reversed(saved[:3])))
+        self.assertContains(older, "Page 2 of 2")
+        self.assertContains(older, 'aria-label="Previous page"')
+        self.assertNotContains(older, "Energy question")
+
+    def test_named_group_is_reused_for_new_questions_and_quiz_setup(self):
+        question = {
+            "prompt": "First question", "chapter": "Forces & Motion", "answer_count": 2,
+            "answer_1": "First choice", "answer_2": "Second choice", "correct": 2,
+        }
+        created = self.client.post(self.manage_url, question)
+        group_url = self.manage_url + "?chapter=Forces+%26+Motion"
+        self.assertRedirects(created, group_url)
+        group = self.client.get(group_url)
+        self.assertTrue(group.context["form"].fields["chapter"].disabled)
+        self.assertEqual(group.context["form"]["chapter"].value(), "Forces & Motion")
+
+        question.pop("chapter")
+        question["prompt"] = "Second question"
+        self.assertRedirects(self.client.post(group_url, question), group_url)
+        self.assertEqual(Question.objects.get(prompt="Second question").chapter, "Forces & Motion")
+
+        setup = self.client.get(group.context["setup_url"])
+        self.assertEqual(setup.context["form"]["chapter"].value(), "Forces & Motion")
 
     def test_chapter_quiz_scores_every_question_once(self):
         self.add_question("Chapter question one", "Motion")

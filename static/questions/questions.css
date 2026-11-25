@@ -82,6 +82,15 @@ body {
 .questions-library, .questions-options { margin: 0; padding: 0; list-style: none; }
 .questions-library li { padding: 12px 0; border-bottom: 1px solid #e2e9e9; }
 .questions-library li:last-child { border-bottom: 0; }
+.questions-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding-top: 12px;
+}
+.questions-pagination a { min-width: 44px; font-size: 1.15rem; }
+#saved-questions { scroll-margin-top: 70px; }
 .questions-library strong, .questions-prompt, .questions-option span { white-space: pre-wrap; overflow-wrap: anywhere; }
 .questions-panel .questions-prompt { margin-top: 7px; }
 .questions-options { display: grid; gap: 9px; border: 0; min-width: 0; }
