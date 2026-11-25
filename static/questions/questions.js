@@ -7,45 +7,30 @@ if (subjectPicker) {
 const editor = document.querySelector("[data-question-editor]");
 if (editor) {
     const countField = editor.elements.answer_count;
-    const correctField = editor.elements.correct;
-    const answerFields = editor.querySelectorAll("[data-answer-field]");
+    const answerRows = Array.from(editor.querySelectorAll("[data-answer-field]"), (field) => ({
+        field,
+        input: field.querySelector("textarea"),
+        correct: field.querySelector('input[name="correct"]'),
+    }));
 
     function updateAnswerFields() {
         const count = Number(countField.value);
-        for (const field of answerFields) {
-            const enabled = Number(field.dataset.answerField) <= count;
+        for (const [index, { field, input, correct }] of answerRows.entries()) {
+            const enabled = index < count;
             field.hidden = !enabled;
-            const input = field.querySelector("textarea");
             input.disabled = !enabled;
             input.required = enabled;
-        }
-        if (Number(correctField.value) > count) {
-            correctField.value = "";
-        }
-        for (const option of correctField.options) {
-            option.disabled = Number(option.value) > count;
-            option.hidden = option.disabled;
+            correct.disabled = !enabled;
+            if (!enabled) correct.checked = false;
         }
     }
 
     countField.addEventListener("change", updateAnswerFields);
     updateAnswerFields();
 
-    const answerInputs = Array.from(answerFields, (field) => field.querySelector("textarea"));
-    function updateCorrectLabels() {
-        for (const option of correctField.options) {
-            const number = Number(option.value);
-            if (!number) continue;
-            const text = answerInputs[number - 1].value.trim().replace(/\s+/g, " ");
-            option.textContent = text
-                ? number + ". " + (text.length > 60 ? text.slice(0, 59) + "…" : text)
-                : "Answer " + number;
-        }
+    for (const { input, correct } of answerRows) {
+        input.addEventListener("dblclick", () => { correct.checked = true; });
     }
-    editor.addEventListener("input", (event) => {
-        if (answerInputs.includes(event.target)) updateCorrectLabels();
-    });
-    updateCorrectLabels();
 
     const dialog = document.querySelector("[data-question-upload]");
     if (dialog && typeof dialog.showModal === "function") {
@@ -106,13 +91,14 @@ if (editor) {
             }
             editor.elements.prompt.value = draft.prompt;
             countField.value = String(draft.choices.length);
-            answerInputs.forEach((input, index) => { input.value = draft.choices[index] || ""; });
-            correctField.value = "";
+            answerRows.forEach(({ input, correct }, index) => {
+                input.value = draft.choices[index] || "";
+                correct.checked = false;
+            });
             updateAnswerFields();
-            updateCorrectLabels();
             pasteField.value = "";
             dialog.close();
-            correctField.focus();
+            answerRows[0].correct.focus();
         });
     }
 }
@@ -189,6 +175,17 @@ for (const form of document.querySelectorAll("[data-question-delete]")) {
     form.addEventListener("submit", (event) => {
         if (!window.confirm("Delete this question?")) event.preventDefault();
     });
+}
+
+const multipleAnswerForm = document.querySelector("[data-multiple-answers]");
+if (multipleAnswerForm) {
+    const choices = Array.from(multipleAnswerForm.querySelectorAll('input[name="answer"]'));
+    const checkButton = multipleAnswerForm.querySelector('button[type="submit"]');
+    const updateCheckButton = () => {
+        checkButton.disabled = !choices.some((choice) => choice.checked && !choice.disabled);
+    };
+    multipleAnswerForm.addEventListener("change", updateCheckButton);
+    updateCheckButton();
 }
 
 const timer = document.querySelector("[data-quiz-timer]");

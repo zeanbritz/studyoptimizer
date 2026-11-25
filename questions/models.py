@@ -9,7 +9,7 @@ class Question(models.Model):
     chapter = models.CharField(max_length=120, blank=True)
     prompt = models.TextField(max_length=2000)
     choices = models.JSONField()
-    correct_index = models.PositiveSmallIntegerField()
+    correct_indices = models.JSONField()
 
     class Meta:
         ordering = ("pk",)
@@ -40,9 +40,20 @@ class QuizRun(models.Model):
             return "expired"
         return None
 
+    def correct_choices(self, position):
+        question = self.questions[position]
+        # Quiz snapshots created before multiple answers had a single index.
+        if "correct_index" in question:
+            return {question["correct_index"]}
+        return set(question["correct_indices"])
+
+    def selected_choices(self, position):
+        answer = self.answers[position]
+        return {answer} if isinstance(answer, int) else set(answer)
+
+    def answered_correctly(self, position):
+        return self.selected_choices(position) == self.correct_choices(position)
+
     @property
     def score(self):
-        return sum(
-            answer == question["correct_index"]
-            for answer, question in zip(self.answers, self.questions)
-        )
+        return sum(self.answered_correctly(position) for position in range(len(self.answers)))

@@ -42,14 +42,17 @@
             {% endfor %}
         </ul>
     {% else %}
-        <form method="post" class="questions-form" data-quiz-answer>
+        <form method="post" class="questions-form" data-quiz-answer{% if multiple_answers %} data-multiple-answers{% endif %}>
             {% csrf_token %}
             <input type="hidden" name="action" value="answer">
             <input type="hidden" name="position" value="{{ position }}">
-            <fieldset class="questions-options" aria-labelledby="quiz-question">
+            {% if multiple_answers %}
+                <p class="questions-meta" id="quiz-answer-help">Select all correct answers.</p>
+            {% endif %}
+            <fieldset class="questions-options" aria-labelledby="quiz-question"{% if multiple_answers %} aria-describedby="quiz-answer-help"{% endif %}>
                 {% for option in options %}
                     <label class="questions-option">
-                        <input type="radio" name="answer" value="{{ option.index }}" required>
+                        <input type="{% if multiple_answers %}checkbox{% else %}radio{% endif %}" name="answer" value="{{ option.index }}"{% if not multiple_answers %} required{% endif %}>
                         <span>{{ option.label }}</span>
                     </label>
                 {% endfor %}

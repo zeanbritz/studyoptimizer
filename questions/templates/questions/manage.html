@@ -27,12 +27,22 @@
             <div>{{ form.answer_count.as_field_group }}</div>
         </div>
         <noscript><p>Fill in the number of answers you selected above.</p></noscript>
-        <div class="questions-grid">
-            {% for answer in form.answer_fields %}
-                <div data-answer-field="{{ forloop.counter }}">{{ answer.as_field_group }}</div>
-            {% endfor %}
-        </div>
-        <div>{{ form.correct.as_field_group }}</div>
+        <fieldset class="questions-answer-editor" aria-describedby="correct-answers-help">
+            <legend>Answer choices</legend>
+            <p id="correct-answers-help" class="questions-meta">Mark all answers that are correct. You can also double-click an answer to mark it.</p>
+            {{ form.correct.errors }}
+            <div class="questions-grid">
+                {% for answer, correct in form.answer_rows %}
+                    <div class="questions-answer-field" data-answer-field>
+                        {{ answer.as_field_group }}
+                        <label class="questions-correct-choice" for="{{ correct.id_for_label }}">
+                            {{ correct.tag }}
+                            <span>Mark answer {{ forloop.counter }} correct</span>
+                        </label>
+                    </div>
+                {% endfor %}
+            </div>
+        </fieldset>
         <div class="questions-actions">
             <button type="submit" class="questions-button">{% if editing %}Save changes{% else %}Add question{% endif %}</button>
             {% if editing %}

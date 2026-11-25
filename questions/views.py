@@ -45,7 +45,7 @@ def setup(request):
     if request.method == "POST" and form.is_valid():
         chapter = form.cleaned_data["chapter"]
         pool = questions.filter(chapter=chapter) if chapter else questions
-        snapshot = list(pool.values("prompt", "choices", "correct_index"))
+        snapshot = list(pool.values("prompt", "choices", "correct_indices"))
         if snapshot:
             minutes = form.cleaned_data["minutes"]
             run, _ = QuizRun.objects.update_or_create(
@@ -98,16 +98,21 @@ def quiz(request, token):
                 return HttpResponseBadRequest("Choose an answer or stop the quiz.")
 
             position = len(run.answers)
-            try:
-                answer = int(request.POST.get("answer", ""))
-            except ValueError:
-                return HttpResponseBadRequest("Choose one of the answers.")
             if request.POST.get("position") != str(position):
                 return redirect("questions:quiz", token=token)
-            if not 0 <= answer < len(run.questions[position]["choices"]):
-                return HttpResponseBadRequest("Choose one of the answers.")
+            submitted = request.POST.getlist("answer")
+            choice_count = len(run.questions[position]["choices"])
+            max_answers = 1 if len(run.correct_choices(position)) == 1 else choice_count
+            if not 1 <= len(submitted) <= max_answers:
+                return HttpResponseBadRequest("Choose from the answers shown.")
+            try:
+                selected = {int(value) for value in submitted}
+            except ValueError:
+                return HttpResponseBadRequest("Choose from the answers shown.")
+            if len(selected) != len(submitted) or any(not 0 <= n < choice_count for n in selected):
+                return HttpResponseBadRequest("Choose from the answers shown.")
 
-            run.answers.append(answer)
+            run.answers.append(sorted(selected))
             run.save(update_fields=["answers"])
         return redirect(reverse("questions:quiz", args=[token]) + "?feedback=1")
 
@@ -120,16 +125,20 @@ def quiz(request, token):
     position = len(run.answers)
     question = None
     options = []
+    multiple_answers = False
     if feedback or outcome is None:
         index = position - 1 if feedback else position
         saved = run.questions[index]
         question = saved["prompt"]
+        correct_choices = run.correct_choices(index)
+        multiple_answers = len(correct_choices) > 1
+        selected_choices = run.selected_choices(index) if feedback else set()
         for number, label in enumerate(saved["choices"]):
             options.append({
                 "index": number,
                 "label": label,
-                "selected": feedback and number == run.answers[index],
-                "correct": feedback and number == saved["correct_index"],
+                "selected": number in selected_choices,
+                "correct": feedback and number in correct_choices,
             })
     return render(request, "questions/quiz.html", {
         "active_page": "questions",
@@ -138,8 +147,9 @@ def quiz(request, token):
         "question_number": position if feedback else position + 1,
         "question": question,
         "options": options,
+        "multiple_answers": multiple_answers,
         "feedback": feedback,
-        "answered_correctly": feedback and run.answers[-1] == run.questions[position - 1]["correct_index"],
+        "answered_correctly": feedback and run.answered_correctly(position - 1),
         "outcome": outcome,
         "score": score,
         "percentage": 100 * score / len(run.questions) if outcome else None,

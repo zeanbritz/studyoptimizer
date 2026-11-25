@@ -25,7 +25,7 @@ class QuestionQuizTests(TestCase):
     def add_question(self, prompt, chapter=""):
         return Question.objects.create(
             subject=self.subject, chapter=chapter, prompt=prompt,
-            choices=["First choice", "Second choice"], correct_index=1,
+            choices=["First choice", "Second choice"], correct_indices=[1],
         )
 
     def start_quiz(self, **data):
@@ -40,8 +40,9 @@ class QuestionQuizTests(TestCase):
         management_page = self.client.get(self.manage_url)
         self.assertContains(management_page, "Upload Question")
         self.assertContains(management_page, "data-question-upload-form")
+        self.assertContains(management_page, 'type="checkbox" name="correct"', count=6)
         form = {"prompt": "Which quantity is a vector?", "chapter": "Motion",
-                "answer_count": "6", "correct": "6"}
+                "answer_count": "6", "correct": ["2", "6"]}
         form.update({f"answer_{n}": f"Choice {n}" for n in range(1, 7)})
         for invalid in ({"answer_count": "1"}, {"answer_count": "7"}, {"answer_count": "2"}, {"correct": ""},
                         {"answer_6": " "}, {"answer_6": "Choice 1"}):
@@ -53,17 +54,19 @@ class QuestionQuizTests(TestCase):
         self.assertRedirects(self.client.post(self.manage_url, form), self.manage_url)
         question = Question.objects.get()
         self.assertEqual(question.choices, [form[f"answer_{n}"] for n in range(1, 7)])
-        self.assertEqual(question.correct_index, 5)
+        self.assertEqual(question.correct_indices, [1, 5])
 
         edit_url = reverse("questions:edit", args=[self.subject.pk, question.pk])
-        self.assertEqual(self.client.get(edit_url).context["form"].initial["correct"], 6)
+        edit_page = self.client.get(edit_url)
+        self.assertEqual(edit_page.context["form"].initial["correct"], [2, 6])
+        self.assertContains(edit_page, 'value="6" id="id_correct_5" checked')
         self.assertRedirects(
             self.client.post(edit_url, {**form, "answer_count": 2, "correct": 1}),
             self.manage_url,
         )
         question.refresh_from_db()
         self.assertEqual(question.choices, ["Choice 1", "Choice 2"])
-        self.assertEqual(question.correct_index, 0)
+        self.assertEqual(question.correct_indices, [0])
 
     def test_chapter_quiz_scores_every_question_once(self):
         self.add_question("Chapter question one", "Motion")
@@ -81,7 +84,7 @@ class QuestionQuizTests(TestCase):
         response = self.answer(url, 0, 1)
         self.assertContains(self.client.get(response["Location"]), "Correct answer")
         self.answer(url, 0, 1)
-        self.assertEqual(QuizRun.objects.get(student=self.student).answers, [1])
+        self.assertEqual(QuizRun.objects.get(student=self.student).answers, [[1]])
 
         self.assertContains(self.client.get(url), "Chapter question two")
         result = self.answer(url, 1, 0)
@@ -91,6 +94,39 @@ class QuestionQuizTests(TestCase):
         self.assertContains(page, "50%")
         self.assertContains(page, "2 of 2 answered")
         self.assertContains(page, f'href="{reverse("dashboard")}#today-plan"')
+
+    def test_multiple_correct_answers_require_the_exact_set_in_any_order(self):
+        for prompt in ("Exact match", "Partial match", "Extra choice"):
+            Question.objects.create(
+                subject=self.subject, prompt=prompt, choices=["One", "Two", "Three"],
+                correct_indices=[0, 2],
+            )
+        url = self.start_quiz()
+        first = self.client.get(url)
+        self.assertContains(first, "Select all correct answers.")
+        self.assertContains(first, 'type="checkbox" name="answer"', count=3)
+        self.assertEqual(self.answer(url, 0, []).status_code, 400)
+        self.assertEqual(self.answer(url, 0, [0, 3]).status_code, 400)
+
+        for position, choices, expected in ((0, [2, 0], True), (1, [0], False), (2, [0, 1, 2], False)):
+            with self.subTest(choices=choices):
+                result = self.answer(url, position, choices)
+                page = self.client.get(result["Location"])
+                self.assertEqual(page.context["answered_correctly"], expected)
+                self.assertContains(page, "Correct answer", count=2)
+        self.assertContains(page, "1 / 3")
+        self.assertContains(page, "33.3%")
+
+    def test_existing_single_answer_quiz_can_resume_and_keep_its_score(self):
+        snapshot = {"prompt": "Legacy question", "choices": ["One", "Two"], "correct_index": 1}
+        run = QuizRun.objects.create(
+            student=self.student, subject=self.subject, questions=[snapshot, snapshot], answers=[1],
+        )
+        url = reverse("questions:quiz", args=[run.token])
+        self.assertContains(self.client.get(url + "?feedback=1"), "Correct answer")
+        self.assertContains(self.client.get(url), 'type="radio" name="answer"', count=2)
+        response = self.answer(url, 1, 1)
+        self.assertContains(self.client.get(response["Location"]), "2 / 2")
 
     def test_all_chapters_includes_unfiled_questions_and_can_stop(self):
         self.add_question("First question", "Motion")

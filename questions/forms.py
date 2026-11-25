@@ -11,10 +11,12 @@ class QuestionForm(forms.ModelForm):
         label="Number of answers", choices=[(n, n) for n in range(2, 7)], coerce=int,
         initial=2,
     )
-    correct = forms.TypedChoiceField(
-        label="Correct answer",
-        choices=[("", "Choose the correct answer"), *((n, f"Answer {n}") for n in ANSWER_NUMBERS)],
+    correct = forms.TypedMultipleChoiceField(
+        label="Correct answers",
+        choices=[(n, f"Answer {n}") for n in ANSWER_NUMBERS],
         coerce=int,
+        widget=forms.CheckboxSelectMultiple,
+        error_messages={"required": "Mark at least one answer as correct."},
     )
 
     class Meta:
@@ -32,13 +34,13 @@ class QuestionForm(forms.ModelForm):
             )
         if self.instance.pk:
             self.initial["answer_count"] = len(self.instance.choices)
-            self.initial["correct"] = self.instance.correct_index + 1
+            self.initial["correct"] = [index + 1 for index in self.instance.correct_indices]
             for number, answer in enumerate(self.instance.choices, start=1):
                 self.initial[f"answer_{number}"] = answer
 
     @property
-    def answer_fields(self):
-        return [self[f"answer_{number}"] for number in ANSWER_NUMBERS]
+    def answer_rows(self):
+        return zip((self[f"answer_{number}"] for number in ANSWER_NUMBERS), self["correct"])
 
     def clean(self):
         data = super().clean()
@@ -60,12 +62,11 @@ class QuestionForm(forms.ModelForm):
             seen.add(key)
             choices.append(choice)
 
-        correct = data.get("correct")
-        if correct is not None and correct > count:
-            self.add_error("correct", "Choose one of the answers shown.")
+        correct = set(data.get("correct", []))
+        if any(number > count for number in correct):
+            self.add_error("correct", "Mark only answers that are shown.")
         self.instance.choices = choices
-        if correct is not None:
-            self.instance.correct_index = correct - 1
+        self.instance.correct_indices = sorted(number - 1 for number in correct)
         return data
 
 
