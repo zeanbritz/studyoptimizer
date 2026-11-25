@@ -114,6 +114,7 @@ def quiz(request, token):
     run = get_object_or_404(runs.select_related("subject"), token=token)
     now = timezone.now()
     outcome = run.outcome(now)
+    score = run.score if outcome else None
     feedback = request.GET.get("feedback") == "1" and bool(run.answers)
     feedback = feedback and outcome in (None, "complete")
     position = len(run.answers)
@@ -140,8 +141,9 @@ def quiz(request, token):
         "feedback": feedback,
         "answered_correctly": feedback and run.answers[-1] == run.questions[position - 1]["correct_index"],
         "outcome": outcome,
+        "score": score,
+        "percentage": 100 * score / len(run.questions) if outcome else None,
         "seconds_left": ceil((run.deadline - now).total_seconds()) if run.deadline and outcome is None else None,
-        "setup_url": _setup_url(run.subject_id),
     })
 
 

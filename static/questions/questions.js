@@ -30,6 +30,159 @@ if (editor) {
 
     countField.addEventListener("change", updateAnswerFields);
     updateAnswerFields();
+
+    const answerInputs = Array.from(answerFields, (field) => field.querySelector("textarea"));
+    function updateCorrectLabels() {
+        for (const option of correctField.options) {
+            const number = Number(option.value);
+            if (!number) continue;
+            const text = answerInputs[number - 1].value.trim().replace(/\s+/g, " ");
+            option.textContent = text
+                ? number + ". " + (text.length > 60 ? text.slice(0, 59) + "…" : text)
+                : "Answer " + number;
+        }
+    }
+    editor.addEventListener("input", (event) => {
+        if (answerInputs.includes(event.target)) updateCorrectLabels();
+    });
+    updateCorrectLabels();
+
+    const dialog = document.querySelector("[data-question-upload]");
+    if (dialog && typeof dialog.showModal === "function") {
+        const openButton = document.querySelector("[data-question-upload-open]");
+        const uploadForm = dialog.querySelector("[data-question-upload-form]");
+        const pasteField = dialog.querySelector("#question-upload-text");
+        const fileField = dialog.querySelector("#question-upload-file");
+        const error = dialog.querySelector("[data-question-upload-error]");
+        const showError = (message) => {
+            error.textContent = message;
+            error.hidden = !message;
+        };
+
+        openButton.hidden = false;
+        openButton.addEventListener("click", () => {
+            showError("");
+            dialog.showModal();
+        });
+        dialog.querySelector("[data-question-upload-cancel]")
+            .addEventListener("click", () => dialog.close());
+        dialog.addEventListener("close", () => { fileField.value = ""; });
+        pasteField.addEventListener("input", () => {
+            fileField.value = "";
+            showError("");
+        });
+
+        fileField.addEventListener("change", async () => {
+            const file = fileField.files[0];
+            if (!file) return;
+            showError("");
+            if (!/\.txt$/i.test(file.name) || file.size > 40000) {
+                showError("Choose a text (.txt) file with one question and its answers.");
+                return;
+            }
+            try {
+                const text = await file.text();
+                if (!dialog.open || fileField.files[0] !== file) return;
+                if (text.length > 10000) {
+                    showError("Use up to 10,000 characters for one question.");
+                } else {
+                    pasteField.value = text;
+                }
+            } catch {
+                if (dialog.open && fileField.files[0] === file) {
+                    showError("Could not read that file. Try pasting the text instead.");
+                }
+            }
+        });
+
+        uploadForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            let draft;
+            try {
+                draft = parseQuestionText(pasteField.value);
+            } catch (failure) {
+                showError(failure.message);
+                return;
+            }
+            editor.elements.prompt.value = draft.prompt;
+            countField.value = String(draft.choices.length);
+            answerInputs.forEach((input, index) => { input.value = draft.choices[index] || ""; });
+            correctField.value = "";
+            updateAnswerFields();
+            updateCorrectLabels();
+            pasteField.value = "";
+            dialog.close();
+            correctField.focus();
+        });
+    }
+}
+
+function parseQuestionText(text) {
+    if (text.length > 10000) throw new Error("Use up to 10,000 characters for one question.");
+    let lines = text.split(/\r\n?|\n|\u2028|\u2029/).map((line) => line.trim()).filter(Boolean);
+    if (/^question(?:\s+\d+)?\s*:?\s*$/i.test(lines[0] || "")) lines.shift();
+    const footer = lines.findIndex((line, index) => index > 0
+        && /^(?:(?:correct\s+)?answer(?:\s+key)?|explanation)\s*:/i.test(line));
+    if (footer !== -1) lines = lines.slice(0, footer);
+
+    const heading = lines.findIndex((line, index) => index > 0
+        && /^(?:(?:possible\s+)?answers|(?:answer\s+)?(?:options|choices))\s*:?\s*$/i.test(line));
+    const firstOption = heading === -1 ? 1 : heading + 1;
+    const markedStart = lines.findIndex((line, index) => {
+        if (index < firstOption) return false;
+        const option = readOption(line);
+        return option && (option.style === "bullet" || option.number === 1);
+    });
+    const start = markedStart === -1 ? firstOption : markedStart;
+    const promptEnd = heading === -1 ? start : heading;
+    const prompt = lines.slice(0, promptEnd).join("\n")
+        .replace(/^(?:question(?:\s+\d+)?\s*:\s*|\d+[.)][ \t]+)/i, "").trim();
+    const choices = [];
+
+    if (markedStart === -1) {
+        choices.push(...lines.slice(start));
+    } else {
+        const style = readOption(lines[start]).style;
+        for (const line of lines.slice(start)) {
+            const option = readOption(line);
+            if (option && option.style === style) {
+                if (style !== "bullet" && option.number !== choices.length + 1) {
+                    throw new Error("Use one question and put the answer labels in order.");
+                }
+                choices.push(option.text);
+            } else {
+                const last = choices.length - 1;
+                choices[last] = (choices[last] + " " + line).trim();
+            }
+        }
+    }
+
+    if (!prompt || choices.length < 2 || choices.length > 6 || choices.some((choice) => !choice)) {
+        throw new Error("Include one question and two to six answers, each on its own line.");
+    }
+    if (prompt.length > 2000 || choices.some((choice) => choice.length > 1000)) {
+        throw new Error("Use up to 2,000 characters for the question and 1,000 per answer.");
+    }
+    if (new Set(choices.map((choice) => choice.replace(/\s+/g, " ").toLowerCase())).size !== choices.length) {
+        throw new Error("Each answer choice needs to be different.");
+    }
+    return { prompt, choices };
+}
+
+function readOption(line) {
+    const bullet = /^[-*•◦▪●]\s+(.*)$/.exec(line);
+    if (bullet) return { style: "bullet", text: bullet[1].trim() };
+
+    const marked = /^(?:\(([a-z]|\d{1,2})\)|([a-z]|\d{1,2})[.):])(?:\s+(.*)|$)/i.exec(line);
+    if (!marked) return null;
+
+    const label = marked[1] || marked[2];
+    const letter = /^[a-z]$/i.test(label);
+    return {
+        style: letter ? "letter" : "number",
+        number: letter ? label.toUpperCase().charCodeAt(0) - 64 : Number(label),
+        text: (marked[3] || "").trim(),
+    };
 }
 
 for (const form of document.querySelectorAll("[data-question-delete]")) {

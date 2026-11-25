@@ -12,7 +12,12 @@
 </div>
 
 <section class="questions-panel">
-    <h2>{% if editing %}Edit question{% else %}Add a question{% endif %}</h2>
+    <div class="questions-row questions-editor-heading">
+        <h2>{% if editing %}Edit question{% else %}Add a question{% endif %}</h2>
+        {% if not editing %}
+            <button type="button" class="questions-button secondary" data-question-upload-open hidden>Upload Question</button>
+        {% endif %}
+    </div>
     <form method="post" class="questions-form" data-question-editor>
         {% csrf_token %}
         {{ form.non_field_errors }}
@@ -36,6 +41,29 @@
         </div>
     </form>
 </section>
+
+{% if not editing %}
+    <dialog class="questions-upload" aria-labelledby="question-upload-title" data-question-upload>
+        <h2 id="question-upload-title">Upload Question</h2>
+        <p>Paste one question with its answers, or choose a text file. Put each answer on its own line.</p>
+        <form method="dialog" class="questions-form" data-question-upload-form>
+            <div>
+                <label for="question-upload-text">Question and answers</label>
+                <textarea id="question-upload-text" maxlength="10000" rows="8" required autofocus
+                    placeholder="Which planet is closest to the Sun?&#10;A. Venus&#10;B. Mercury&#10;C. Earth"></textarea>
+            </div>
+            <div>
+                <label for="question-upload-file">Text file (optional)</label>
+                <input type="file" id="question-upload-file" accept=".txt,text/plain">
+            </div>
+            <p class="questions-upload-error" data-question-upload-error role="alert" hidden></p>
+            <div class="questions-actions">
+                <button type="submit" class="questions-button">Fill in question</button>
+                <button type="button" class="questions-button secondary" data-question-upload-cancel>Cancel</button>
+            </div>
+        </form>
+    </dialog>
+{% endif %}
 
 <section class="questions-panel">
     <h2>Saved questions</h2>

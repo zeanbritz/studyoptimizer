@@ -37,10 +37,13 @@ class QuestionQuizTests(TestCase):
         return self.client.post(url, {"action": "answer", "position": position, "answer": choice})
 
     def test_create_edit_and_validate_answer_limits(self):
+        management_page = self.client.get(self.manage_url)
+        self.assertContains(management_page, "Upload Question")
+        self.assertContains(management_page, "data-question-upload-form")
         form = {"prompt": "Which quantity is a vector?", "chapter": "Motion",
                 "answer_count": "6", "correct": "6"}
         form.update({f"answer_{n}": f"Choice {n}" for n in range(1, 7)})
-        for invalid in ({"answer_count": "1"}, {"answer_count": "7"}, {"answer_count": "2"},
+        for invalid in ({"answer_count": "1"}, {"answer_count": "7"}, {"answer_count": "2"}, {"correct": ""},
                         {"answer_6": " "}, {"answer_6": "Choice 1"}):
             with self.subTest(invalid=invalid):
                 response = self.client.post(self.manage_url, {**form, **invalid})
@@ -84,8 +87,10 @@ class QuestionQuizTests(TestCase):
         result = self.answer(url, 1, 0)
         page = self.client.get(result["Location"])
         self.assertContains(page, "Quiz complete")
-        self.assertContains(page, "1 correct")
+        self.assertContains(page, "1 / 2")
+        self.assertContains(page, "50%")
         self.assertContains(page, "2 of 2 answered")
+        self.assertContains(page, f'href="{reverse("dashboard")}#today-plan"')
 
     def test_all_chapters_includes_unfiled_questions_and_can_stop(self):
         self.add_question("First question", "Motion")
@@ -98,6 +103,7 @@ class QuestionQuizTests(TestCase):
         self.assertRedirects(self.client.post(url, {"action": "stop"}), url)
         self.assertContains(self.client.get(url), "Quiz stopped")
         self.assertContains(self.client.get(url), "1 of 2 answered")
+        self.assertContains(self.client.get(url), "50%")
 
     def test_timer_survives_reload_and_rejects_late_answers(self):
         self.add_question("Timed question")

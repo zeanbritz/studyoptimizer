@@ -108,6 +108,41 @@ label.questions-option { cursor: pointer; }
 .questions-form .errorlist { margin: 0 0 6px; padding-left: 18px; }
 .quiz-controls { margin-top: 16px; }
 .questions-result { background: #f2f8ef; }
+.questions-result .questions-score {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0 0 4px;
+}
+.questions-score strong { font-size: 1.55rem; }
+.questions-score span {
+    padding: 3px 9px;
+    border-radius: 7px;
+    background: #dfefd7;
+    color: #305d22;
+    font-weight: 750;
+}
+.questions-result .questions-button { margin-top: 14px; }
+.questions-editor-heading { margin-bottom: 14px; }
+.questions-editor-heading h2 { margin: 0; }
+.questions-upload {
+    width: min(560px, calc(100% - 32px));
+    max-height: calc(100% - 32px);
+    padding: clamp(16px, 4vw, 26px);
+    border: 1px solid #cbd7d6;
+    border-top: 3px solid #6ba64b;
+    border-bottom: 4px solid #bbc8c9;
+    border-radius: 15px;
+    background: #fdfefe;
+    color: inherit;
+    box-shadow: 0 14px 34px #26313a42;
+}
+.questions-upload::backdrop { background: #1e293b86; }
+.questions-upload h2 { margin: 0; }
+.questions-upload p { line-height: 1.5; }
+.questions-upload input[type="file"] { max-width: 100%; font: inherit; font-size: .9rem; }
+.questions-upload-error { margin: 0; color: #8e3838; }
 .questions-timer {
     min-width: 105px;
     display: grid;

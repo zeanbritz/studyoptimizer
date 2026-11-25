@@ -18,8 +18,9 @@
 {% if outcome %}
 <section class="questions-panel questions-result">
     <h2>{% if outcome == "complete" %}Quiz complete{% elif outcome == "expired" %}Time’s up{% else %}Quiz stopped{% endif %}</h2>
-    <p><strong>{{ run.score }} correct</strong> · {{ run.answers|length }} of {{ run.questions|length }} answered</p>
-    <a class="questions-button" href="{{ setup_url }}">Back to Questions</a>
+    <p class="questions-score">Score <strong>{{ score }} / {{ run.questions|length }}</strong> <span>{{ percentage|floatformat:"-1" }}%</span></p>
+    <p class="questions-meta">{{ run.answers|length }} of {{ run.questions|length }} answered</p>
+    <a class="questions-button" href="{% url 'dashboard' %}#today-plan">Continue</a>
 </section>
 {% endif %}
 
