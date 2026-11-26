@@ -1,4 +1,5 @@
 {% extends "questions/base.html" %}
+{% load l10n %}
 {% block title %}{{ subject.name }} Questions{% endblock %}
 {% block content %}
 <header class="questions-header">
@@ -74,7 +75,7 @@
         <form method="dialog" class="questions-form" data-question-upload-form>
             <div>
                 <label for="question-upload-text">Question and answers</label>
-                <textarea id="question-upload-text" maxlength="10000" rows="8" required autofocus
+                <textarea id="question-upload-text" maxlength="{{ form.single_import_limit|unlocalize }}" rows="8" required autofocus
                     placeholder="Which planet is closest to the Sun?&#10;A. Venus&#10;B. Mercury&#10;C. Earth"></textarea>
             </div>
             <div>

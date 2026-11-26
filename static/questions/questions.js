@@ -58,6 +58,12 @@ if (editor) {
         const uploadForm = dialog.querySelector("[data-question-upload-form]");
         const pasteField = dialog.querySelector("#question-upload-text");
         const fileField = dialog.querySelector("#question-upload-file");
+        const limits = {
+            source: pasteField.maxLength,
+            prompt: editor.elements.prompt.maxLength,
+            answer: answerRows[0].input.maxLength,
+        };
+        const sourceLimitError = "Use up to " + limits.source.toLocaleString() + " characters for the pasted text.";
         const error = dialog.querySelector("[data-question-upload-error]");
         const showError = (message) => {
             error.textContent = message;
@@ -81,15 +87,19 @@ if (editor) {
             const file = fileField.files[0];
             if (!file) return;
             showError("");
-            if (!/\.txt$/i.test(file.name) || file.size > 40000) {
+            if (!/\.txt$/i.test(file.name)) {
                 showError("Choose a text (.txt) file with one question and its answers.");
+                return;
+            }
+            if (file.size > limits.source * 4) {
+                showError(sourceLimitError);
                 return;
             }
             try {
                 const text = await file.text();
                 if (!dialog.open || fileField.files[0] !== file) return;
-                if (text.length > 10000) {
-                    showError("Use up to 10,000 characters for one question.");
+                if (text.length > limits.source) {
+                    showError(sourceLimitError);
                 } else {
                     pasteField.value = text;
                 }
@@ -104,7 +114,7 @@ if (editor) {
             event.preventDefault();
             let draft;
             try {
-                draft = parseQuestionText(pasteField.value);
+                draft = parseQuestionText(pasteField.value, limits);
             } catch (failure) {
                 showError(failure.message);
                 return;
@@ -123,8 +133,10 @@ if (editor) {
     }
 }
 
-function parseQuestionText(text) {
-    if (text.length > 10000) throw new Error("Use up to 10,000 characters for one question.");
+function parseQuestionText(text, limits) {
+    if (text.length > limits.source) {
+        throw new Error("Use up to " + limits.source.toLocaleString() + " characters for the pasted text.");
+    }
     let lines = text.split(/\r\n?|\n|\u2028|\u2029/).map((line) => line.trim()).filter(Boolean);
     if (/^question(?:\s+\d+)?\s*:?\s*$/i.test(lines[0] || "")) lines.shift();
     const footer = lines.findIndex((line, index) => index > 0
@@ -166,8 +178,12 @@ function parseQuestionText(text) {
     if (!prompt || choices.length < 2 || choices.length > 6 || choices.some((choice) => !choice)) {
         throw new Error("Include one question and two to six answers, each on its own line.");
     }
-    if (prompt.length > 2000 || choices.some((choice) => choice.length > 1000)) {
-        throw new Error("Use up to 2,000 characters for the question and 1,000 per answer.");
+    if (prompt.length > limits.prompt) {
+        throw new Error("The question exceeds the " + limits.prompt.toLocaleString() + "-character limit.");
+    }
+    const longAnswer = choices.findIndex((choice) => choice.length > limits.answer);
+    if (longAnswer !== -1) {
+        throw new Error("Answer " + (longAnswer + 1) + " exceeds the " + limits.answer.toLocaleString() + "-character limit.");
     }
     if (new Set(choices.map((choice) => choice.replace(/\s+/g, " ").toLowerCase())).size !== choices.length) {
         throw new Error("Each answer choice needs to be different.");

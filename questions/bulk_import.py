@@ -1,5 +1,7 @@
 import re
 
+from .text_limits import MAX_ANSWER_LENGTH, MAX_PROMPT_LENGTH
+
 
 MAX_BATCH_QUESTIONS = 50
 MAX_PASTE_LENGTH = 200_000
@@ -105,8 +107,11 @@ def _parse_block(block, answer_key, index):
     text = "\n".join(prompt)
     if not 2 <= len(choices) <= 6 or not all(choices):
         raise ValueError(f"Question {index} needs two to six answers. Put each answer on its own line.")
-    if len(text) > 2000 or any(len(choice) > 1000 for choice in choices):
-        raise ValueError(f"Question {index} is too long. The limit is 2,000 characters per question and 1,000 per answer.")
+    if len(text) > MAX_PROMPT_LENGTH:
+        raise ValueError(f"Question {index} exceeds the {MAX_PROMPT_LENGTH:,}-character limit for question text.")
+    for number, choice in enumerate(choices, 1):
+        if len(choice) > MAX_ANSWER_LENGTH:
+            raise ValueError(f"Answer {number} in question {index} exceeds the {MAX_ANSWER_LENGTH:,}-character limit.")
 
     return {
         "prompt": text,

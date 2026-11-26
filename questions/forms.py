@@ -4,12 +4,15 @@ from django.forms import formset_factory
 from .bulk_import import MAX_BATCH_QUESTIONS, MAX_PASTE_LENGTH
 from .illustrations import prepare_image
 from .models import Question, QuestionImage
+from .text_limits import MAX_ANSWER_LENGTH, MAX_SINGLE_IMPORT_LENGTH
 
 
 ANSWER_NUMBERS = range(1, 7)
 
 
 class QuestionForm(forms.ModelForm):
+    single_import_limit = MAX_SINGLE_IMPORT_LENGTH
+
     image = forms.FileField(
         label="Image (optional)", required=False,
         help_text="PNG, JPEG or WebP, up to 5 MB.",
@@ -48,7 +51,7 @@ class QuestionForm(forms.ModelForm):
             self.initial["image_description"] = current_image["description"]
         for number in ANSWER_NUMBERS:
             self.fields[f"answer_{number}"] = forms.CharField(
-                label=f"Answer {number}", max_length=1000, required=False,
+                label=f"Answer {number}", max_length=MAX_ANSWER_LENGTH, required=False,
                 widget=forms.Textarea(attrs={"rows": 2}),
             )
         if self.instance.pk:

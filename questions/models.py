@@ -3,11 +3,13 @@ import uuid
 from django.conf import settings
 from django.db import models
 
+from .text_limits import MAX_PROMPT_LENGTH
+
 
 class Question(models.Model):
     subject = models.ForeignKey("learning.Subject", on_delete=models.CASCADE)
     chapter = models.CharField(max_length=120, blank=True)
-    prompt = models.TextField(max_length=2000)
+    prompt = models.TextField(max_length=MAX_PROMPT_LENGTH)
     choices = models.JSONField()
     correct_indices = models.JSONField()
 

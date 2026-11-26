@@ -230,6 +230,34 @@ class QuestionQuizTests(TestCase):
         other_url = reverse("questions:bulk_add", args=[self.other_subject.pk])
         self.assertEqual(self.client.post(other_url, {"action": "preview"}).status_code, 404)
 
+    def test_bulk_import_previews_and_saves_long_question_and_answer_text(self):
+        url = reverse("questions:bulk_add", args=[self.subject.pk])
+        prompt = "Read this case study. " * 160 + "What should happen next?"
+        answer = "Consider each of the proposed actions in context. " * 30 + "Select this action."
+        earlier = "\n".join(f"{i}. Short question {i}?\nA. Yes\nB. No\nAnswer: A" for i in range(1, 11))
+        source = f"{earlier}\n11. {prompt}\nA. {answer}\nB. Another answer\nAnswer: A"
+        preview = self.client.post(url, {"action": "preview", "chapter": "Case studies", "source": source})
+        drafts = preview.context["drafts"]
+        self.assertEqual(drafts.total_form_count(), 11)
+        self.assertEqual(drafts[10].initial["prompt"], prompt)
+        self.assertEqual(drafts[10].initial["answer_1"], answer)
+
+        data = {
+            "action": "save", "chapter": "Case studies",
+            "questions-TOTAL_FORMS": 11, "questions-INITIAL_FORMS": 11,
+        }
+        for index, draft in enumerate(drafts):
+            data.update({f"questions-{index}-{key}": value for key, value in draft.initial.items()})
+        self.assertRedirects(self.client.post(url, data), self.manage_url + "?chapter=Case+studies")
+        self.assertEqual(Question.objects.get(prompt=prompt).choices[0], answer)
+
+        editor = self.client.get(self.manage_url)
+        self.assertContains(editor, 'maxlength="10000"')
+        self.assertContains(editor, 'maxlength="5000"')
+        self.assertContains(editor, 'maxlength="42000"')
+        with self.assertRaisesRegex(ValueError, "Answer 1 in question 1 exceeds the 5,000-character limit"):
+            parse_quiz_text(f"1. Which option fits?\nA. {'a' * 5001}\nB. Other")
+
     def test_chapter_quiz_scores_every_question_once(self):
         self.add_question("Chapter question one", "Motion")
         self.add_question("Chapter question two", "Motion")
