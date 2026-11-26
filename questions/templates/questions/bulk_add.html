@@ -1,0 +1,65 @@
+{% extends "questions/base.html" %}
+{% block title %}Bulk add questions{% endblock %}
+{% block content %}
+<header class="questions-header">
+    <h1>Bulk add questions</h1>
+    <p>{{ subject.name }}</p>
+</header>
+<div class="questions-actions">
+    <a class="questions-button secondary" href="{{ library_url }}">Back to questions</a>
+</div>
+
+{% if drafts == None %}
+    <section class="questions-panel">
+        <h2>Paste your quiz</h2>
+        <p>Number each question and put its answer choices on separate lines. If you have an answer key, include it after the questions or write <strong>Answer: B</strong> below each question.</p>
+        <form method="post" class="questions-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="preview">
+            {{ form.non_field_errors }}
+            <div>{{ form.chapter.as_field_group }}</div>
+            <div>{{ form.source.as_field_group }}</div>
+            <p class="questions-meta">Up to {{ max_questions }} questions per batch.</p>
+            <button class="questions-button" type="submit">Add to preview</button>
+        </form>
+    </section>
+{% else %}
+    <form method="post" class="questions-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save">
+        {{ drafts.management_form }}
+        <section class="questions-panel">
+            <h2>Review question drafts</h2>
+            <p>Open a draft to edit it and check its correct answers, or mark it for removal before saving.</p>
+            <div>{{ form.chapter.as_field_group }}</div>
+            {{ drafts.non_form_errors }}
+        </section>
+
+        {% for draft in drafts %}
+            <section class="questions-panel questions-bulk-draft" data-bulk-draft>
+                <details data-draft-fields{% if draft.errors or not draft.correct.value %} open{% endif %}>
+                    <summary>
+                        <strong>Question {{ forloop.counter }}</strong>
+                        <span>{{ draft.prompt.value|default:"Untitled question"|truncatechars:110 }}</span>
+                    </summary>
+                    <div class="questions-form questions-draft-editor">
+                        {{ draft.non_field_errors }}
+                        <div>{{ draft.prompt.as_field_group }}</div>
+                        <div>{{ draft.answer_count.as_field_group }}</div>
+                        {% include "questions/partials/answer_fields.html" with form=draft %}
+                    </div>
+                </details>
+                <label class="questions-draft-delete">
+                    {{ draft.DELETE }}
+                    <span>Remove draft</span>
+                </label>
+            </section>
+        {% endfor %}
+
+        <div class="questions-actions">
+            <button class="questions-button" type="submit">Save quiz</button>
+            <a class="questions-button secondary" href="{{ request.path }}{% querystring %}">Start over</a>
+        </div>
+    </form>
+{% endif %}
+{% endblock %}

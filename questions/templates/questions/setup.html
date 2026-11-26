@@ -42,12 +42,14 @@
                 {% if current_run %}<p class="questions-meta">Starting a new quiz replaces your quiz in progress.</p>{% endif %}
                 <div class="questions-actions">
                     <button type="submit" class="questions-button">Start quiz</button>
+                    <a class="questions-button secondary" href="{% url 'questions:bulk_add' subject_id=subject.pk %}">Bulk add questions</a>
                     <a class="questions-button secondary" href="{% url 'questions:manage' subject_id=subject.pk %}">Manage questions</a>
                 </div>
             </form>
         {% else %}
             <p>{{ subject.name }} doesn’t have any questions yet.</p>
             <a class="questions-button" href="{% url 'questions:manage' subject_id=subject.pk %}">Add questions</a>
+            <a class="questions-button secondary" href="{% url 'questions:bulk_add' subject_id=subject.pk %}">Bulk add questions</a>
         {% endif %}
     {% else %}
         <p>Add a subject before creating questions or starting a quiz.</p>

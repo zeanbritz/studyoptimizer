@@ -30,6 +30,24 @@ body {
 }
 .questions-panel h2 { margin: 0 0 12px; font-size: clamp(19px, 3vw, 24px); }
 .questions-panel p { line-height: 1.5; }
+.questions-notice { background: #f2f8ef; color: #305d22; }
+.questions-bulk-draft { padding: clamp(14px, 3vw, 20px); }
+.questions-bulk-draft summary { cursor: pointer; overflow-wrap: anywhere; }
+.questions-bulk-draft summary strong { margin-right: 7px; }
+.questions-draft-editor { margin-top: 15px; }
+.questions-form .questions-draft-delete {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    width: fit-content;
+    min-height: 32px;
+    margin: 6px 0 0;
+    color: #8e3838;
+    cursor: pointer;
+}
+.questions-draft-delete input { margin: 0; accent-color: #8e3838; }
+.questions-bulk-draft .questions-draft-delete input:checked + span { color: #4f6069; }
+.questions-form .errorlist.nonform { margin-top: 10px; }
 .questions-row, .questions-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
 .questions-row { justify-content: space-between; }
 .questions-row > div { min-width: 0; overflow-wrap: anywhere; }

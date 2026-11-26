@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from learning.models import Subject
+from .bulk_import import parse_quiz_text
 from .models import Question, QuizRun
 
 
@@ -106,6 +107,69 @@ class QuestionQuizTests(TestCase):
 
         setup = self.client.get(group.context["setup_url"])
         self.assertEqual(setup.context["form"]["chapter"].value(), "Forces & Motion")
+
+    def test_bulk_preview_can_edit_remove_and_save_to_one_quiz(self):
+        url = reverse("questions:bulk_add", args=[self.subject.pk])
+        self.assertContains(self.client.get(self.setup_url), url)
+        self.assertContains(self.client.get(self.manage_url), url)
+
+        preview = self.client.post(url, {
+            "action": "preview", "chapter": "Practice Midterm",
+            "source": (
+                "1. Pick the even numbers.\nA. Two\nB. Three\nC. Four\n"
+                "2. A question to remove.\nA. Yes\nB. No\n"
+                "3. Find the slower object.\nA. Bicycle\nB. Train\n"
+                "Answer key:\n1. A and C\n2. B"
+            ),
+        })
+        self.assertContains(preview, "Review question drafts")
+        drafts = preview.context["drafts"]
+        self.assertEqual(drafts.total_form_count(), 3)
+        self.assertEqual(drafts[0].initial["correct"], [1, 3])
+        self.assertEqual(drafts[2].initial["correct"], [])
+        self.assertFalse(Question.objects.exists())
+
+        data = {
+            "action": "save", "chapter": "Motion Midterm",
+            "questions-TOTAL_FORMS": 3, "questions-INITIAL_FORMS": 3,
+        }
+        for index, draft in enumerate(drafts):
+            data.update({f"questions-{index}-{key}": value for key, value in draft.initial.items()})
+        data["questions-0-prompt"] = "Which numbers are even?"
+        data["questions-0-answer_1"] = "2"
+        for key in list(data):
+            if key.startswith("questions-1-"):
+                del data[key]
+        data["questions-1-DELETE"] = "on"
+
+        incomplete = self.client.post(url, data)
+        self.assertContains(incomplete, "Mark at least one answer as correct.")
+        self.assertFalse(Question.objects.exists())
+
+        data["questions-2-correct"] = 1
+        result = self.client.post(url, data)
+        self.assertRedirects(result, self.manage_url + "?chapter=Motion+Midterm")
+        saved = list(Question.objects.filter(subject=self.subject, chapter="Motion Midterm"))
+        self.assertEqual([question.prompt for question in saved], [
+            "Which numbers are even?", "Find the slower object.",
+        ])
+        self.assertEqual(saved[0].choices, ["2", "Three", "Four"])
+        self.assertEqual(saved[0].correct_indices, [0, 2])
+        self.assertEqual(saved[1].correct_indices, [0])
+        quiz = self.client.get(self.setup_url + "&chapter=Motion+Midterm")
+        self.assertEqual(quiz.context["form"]["chapter"].value(), "Motion Midterm")
+
+    def test_bulk_import_handles_separate_blocks_and_reports_invalid_drafts(self):
+        drafts = parse_quiz_text(
+            "Which survives a power cut?\n• Battery\n• Wired lamp\nAnswer: A\n\n"
+            "What travels faster?\n1. Bicycle\n2. Car\nAnswer: 2"
+        )
+        self.assertEqual([draft["correct"] for draft in drafts], [[1], [2]])
+        self.assertEqual(drafts[1]["prompt"], "What travels faster?")
+        with self.assertRaisesRegex(ValueError, "Question 1 needs two to six"):
+            parse_quiz_text("1. Seven options?\n" + "\n".join(f"{letter}. Choice {letter}" for letter in "ABCDEFG"))
+        other_url = reverse("questions:bulk_add", args=[self.other_subject.pk])
+        self.assertEqual(self.client.post(other_url, {"action": "preview"}).status_code, 404)
 
     def test_chapter_quiz_scores_every_question_once(self):
         self.add_question("Chapter question one", "Motion")

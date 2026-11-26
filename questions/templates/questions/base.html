@@ -14,6 +14,9 @@
     {% include "partials/sidebar.html" %}
     <main class="questions-main">
         <div class="questions-page">
+            {% for message in messages %}
+                <div class="questions-panel questions-notice" role="status">{{ message }}</div>
+            {% endfor %}
             {% block content %}{% endblock %}
         </div>
     </main>

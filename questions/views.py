@@ -3,6 +3,7 @@ from datetime import timedelta
 from math import ceil
 from random import Random
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db import transaction
@@ -15,7 +16,8 @@ from django.views.decorators.http import require_http_methods, require_POST
 
 from accounts.entitlements import accessible_subjects
 from learning.review_navigation import subject_index
-from .forms import QuestionForm, QuizSetupForm
+from .bulk_import import MAX_BATCH_QUESTIONS, parse_quiz_text
+from .forms import BulkQuestionFormSet, BulkQuizNameForm, BulkQuizPasteForm, QuestionForm, QuizSetupForm
 from .models import Question, QuizRun
 
 
@@ -216,6 +218,56 @@ def manage(request, subject_id, question_id=None):
         "form": form,
         "setup_url": _setup_url(subject.pk, chapter),
         "library_url": _library_url(subject.pk, chapter, page),
+    })
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def bulk_add(request, subject_id):
+    subject = get_object_or_404(accessible_subjects(request.user), pk=subject_id)
+    chapter = _requested_chapter(request)
+    form = BulkQuizPasteForm(initial={"chapter": chapter})
+    drafts = None
+
+    if request.method == "POST":
+        if request.POST.get("action") == "preview":
+            form = BulkQuizPasteForm(request.POST)
+            if form.is_valid():
+                try:
+                    initial = parse_quiz_text(form.cleaned_data["source"])
+                except ValueError as error:
+                    form.add_error("source", str(error))
+                else:
+                    form = BulkQuizNameForm(initial={"chapter": form.cleaned_data["chapter"]})
+                    drafts = BulkQuestionFormSet(initial=initial, prefix="questions")
+        elif request.POST.get("action") == "save":
+            form = BulkQuizNameForm(request.POST)
+            drafts = BulkQuestionFormSet(request.POST, prefix="questions")
+            name_valid = form.is_valid()
+            drafts_valid = drafts.is_valid()
+            if name_valid and drafts_valid:
+                name = form.cleaned_data["chapter"]
+                rows = []
+                for draft in drafts:
+                    if not draft.cleaned_data or draft.cleaned_data.get("DELETE"):
+                        continue
+                    question = draft.save(commit=False)
+                    question.subject = subject
+                    question.chapter = name
+                    rows.append(question)
+                Question.objects.bulk_create(rows)
+                messages.success(request, f"Saved {len(rows)} question{'s' if len(rows) != 1 else ''} to {name}.")
+                return redirect(_library_url(subject.pk, name))
+        else:
+            return HttpResponseBadRequest("Choose whether to preview or save questions.")
+
+    return render(request, "questions/bulk_add.html", {
+        "active_page": "questions",
+        "subject": subject,
+        "form": form,
+        "drafts": drafts,
+        "max_questions": MAX_BATCH_QUESTIONS,
+        "library_url": _library_url(subject.pk, chapter),
     })
 
 

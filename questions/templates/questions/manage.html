@@ -22,6 +22,7 @@
                 {% endfor %}
             </select>
             <button type="submit" class="questions-button secondary">Select</button>
+            <a class="questions-button secondary" href="{% url 'questions:bulk_add' subject_id=subject.pk %}{% querystring chapter=selected_chapter page=None %}">Bulk add questions</a>
         </div>
         {% if selected_chapter %}
             <p class="questions-meta">New questions will be added to <strong>{{ selected_chapter }}</strong>.</p>
@@ -55,22 +56,7 @@
             <div>{{ form.answer_count.as_field_group }}</div>
         </div>
         <noscript><p>Fill in the number of answers you selected above.</p></noscript>
-        <fieldset class="questions-answer-editor" aria-describedby="correct-answers-help">
-            <legend>Answer choices</legend>
-            <p id="correct-answers-help" class="questions-meta">Mark all answers that are correct. You can also double-click an answer to mark it.</p>
-            {{ form.correct.errors }}
-            <div class="questions-grid">
-                {% for answer, correct in form.answer_rows %}
-                    <div class="questions-answer-field" data-answer-field>
-                        {{ answer.as_field_group }}
-                        <label class="questions-correct-choice" for="{{ correct.id_for_label }}">
-                            {{ correct.tag }}
-                            <span>Mark answer {{ forloop.counter }} correct</span>
-                        </label>
-                    </div>
-                {% endfor %}
-            </div>
-        </fieldset>
+        {% include "questions/partials/answer_fields.html" %}
         <div class="questions-actions">
             <button type="submit" class="questions-button">{% if editing %}Save changes{% else %}Add question{% endif %}</button>
             {% if editing %}

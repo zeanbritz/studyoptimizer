@@ -1,0 +1,16 @@
+<fieldset class="questions-answer-editor" aria-describedby="{{ form.prefix|default:'question' }}-correct-answers-help">
+    <legend>Answer choices</legend>
+    <p id="{{ form.prefix|default:'question' }}-correct-answers-help" class="questions-meta">Mark all answers that are correct. You can also double-click an answer to mark it.</p>
+    {{ form.correct.errors }}
+    <div class="questions-grid">
+        {% for answer, correct in form.answer_rows %}
+            <div class="questions-answer-field" data-answer-field>
+                {{ answer.as_field_group }}
+                <label class="questions-correct-choice" for="{{ correct.id_for_label }}">
+                    {{ correct.tag }}
+                    <span>Mark answer {{ forloop.counter }} correct</span>
+                </label>
+            </div>
+        {% endfor %}
+    </div>
+</fieldset>

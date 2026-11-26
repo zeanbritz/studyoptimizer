@@ -1,5 +1,7 @@
 from django import forms
+from django.forms import formset_factory
 
+from .bulk_import import MAX_BATCH_QUESTIONS, MAX_PASTE_LENGTH
 from .models import Question
 
 
@@ -71,6 +73,32 @@ class QuestionForm(forms.ModelForm):
         self.instance.choices = choices
         self.instance.correct_indices = sorted(number - 1 for number in correct)
         return data
+
+
+class BulkQuizNameForm(forms.Form):
+    chapter = forms.CharField(label="Quiz name", max_length=Question._meta.get_field("chapter").max_length)
+
+
+class BulkQuizPasteForm(BulkQuizNameForm):
+    source = forms.CharField(
+        label="Quiz text", max_length=MAX_PASTE_LENGTH,
+        widget=forms.Textarea(attrs={
+            "rows": 14,
+            "placeholder": "1. Which planet is closest to the Sun?\nA. Venus\nB. Mercury\nC. Earth\nAnswer: B",
+        }),
+    )
+
+
+class BulkQuestionForm(QuestionForm):
+    class Meta(QuestionForm.Meta):
+        fields = ("prompt",)
+
+
+BulkQuestionFormSet = formset_factory(
+    BulkQuestionForm, extra=0, can_delete=True,
+    min_num=1, validate_min=True, max_num=MAX_BATCH_QUESTIONS,
+    validate_max=True, absolute_max=MAX_BATCH_QUESTIONS,
+)
 
 
 class QuizSetupForm(forms.Form):

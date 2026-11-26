@@ -4,13 +4,12 @@ if (subjectPicker) {
     subjectPicker.elements.subject.addEventListener("change", () => subjectPicker.requestSubmit());
 }
 
-const editor = document.querySelector("[data-question-editor]");
-if (editor) {
-    const countField = editor.elements.answer_count;
-    const answerRows = Array.from(editor.querySelectorAll("[data-answer-field]"), (field) => ({
+function prepareAnswerRows(container, requireAnswers) {
+    const countField = container.querySelector('[name$="answer_count"]');
+    const answerRows = Array.from(container.querySelectorAll("[data-answer-field]"), (field) => ({
         field,
         input: field.querySelector("textarea"),
-        correct: field.querySelector('input[name="correct"]'),
+        correct: field.querySelector(".questions-correct-choice input"),
     }));
 
     function updateAnswerFields() {
@@ -19,7 +18,7 @@ if (editor) {
             const enabled = index < count;
             field.hidden = !enabled;
             input.disabled = !enabled;
-            input.required = enabled;
+            input.required = requireAnswers && enabled;
             correct.disabled = !enabled;
             if (!enabled) correct.checked = false;
         }
@@ -31,6 +30,27 @@ if (editor) {
     for (const { input, correct } of answerRows) {
         input.addEventListener("dblclick", () => { correct.checked = true; });
     }
+    return { countField, answerRows, updateAnswerFields };
+}
+
+for (const draft of document.querySelectorAll("[data-bulk-draft]")) {
+    const fields = draft.querySelector("[data-draft-fields]");
+    const removal = draft.querySelector('[name$="-DELETE"]');
+    const { updateAnswerFields } = prepareAnswerRows(fields, false);
+    function updateRemoval() {
+        fields.hidden = removal.checked;
+        for (const control of fields.querySelectorAll("input, textarea, select")) {
+            control.disabled = removal.checked;
+        }
+        if (!removal.checked) updateAnswerFields();
+    }
+    removal.addEventListener("change", updateRemoval);
+    updateRemoval();
+}
+
+const editor = document.querySelector("[data-question-editor]");
+if (editor) {
+    const { countField, answerRows, updateAnswerFields } = prepareAnswerRows(editor, true);
 
     const dialog = document.querySelector("[data-question-upload]");
     if (dialog && typeof dialog.showModal === "function") {
