@@ -24,7 +24,7 @@
         </form>
     </section>
 {% else %}
-    <form method="post" class="questions-form">
+    <form method="post" enctype="multipart/form-data" class="questions-form">
         {% csrf_token %}
         <input type="hidden" name="action" value="save">
         {{ drafts.management_form }}
@@ -45,6 +45,7 @@
                     <div class="questions-form questions-draft-editor">
                         {{ draft.non_field_errors }}
                         <div>{{ draft.prompt.as_field_group }}</div>
+                        {% include "questions/partials/image_fields.html" with form=draft %}
                         <div>{{ draft.answer_count.as_field_group }}</div>
                         {% include "questions/partials/answer_fields.html" with form=draft %}
                     </div>

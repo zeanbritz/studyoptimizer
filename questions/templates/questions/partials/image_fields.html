@@ -1,0 +1,10 @@
+<div class="questions-image-editor" data-question-image-editor>
+    <div>{{ form.image.as_field_group }}</div>
+    <img class="questions-image questions-image-preview" data-question-image-preview
+         {% if illustration %}src="{% url 'questions:image' question_id=illustration.question_id %}"{% else %}hidden{% endif %}
+         alt="{{ illustration.description|default:'Question image preview' }}">
+    <div>{{ form.image_description.as_field_group }}</div>
+    {% if illustration %}
+        <label class="questions-image-remove">{{ form.remove_image }} {{ form.remove_image.label }}</label>
+    {% endif %}
+</div>

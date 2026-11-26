@@ -1,15 +1,18 @@
 from datetime import timedelta
+from io import BytesIO
 from unittest.mock import patch
 from uuid import UUID
 
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
+from PIL import Image
 
 from learning.models import Subject
 from .bulk_import import parse_quiz_text
-from .models import Question, QuizRun
+from .models import Question, QuestionImage, QuizRun
 
 
 class QuestionQuizTests(TestCase):
@@ -38,6 +41,57 @@ class QuestionQuizTests(TestCase):
 
     def answer(self, url, position, choice):
         return self.client.post(url, {"action": "answer", "position": position, "answer": choice})
+
+    def image_upload(self, color="green"):
+        image = BytesIO()
+        Image.new("RGB", (32, 16), color).save(image, format="PNG")
+        return SimpleUploadedFile("diagram.png", image.getvalue(), content_type="image/png")
+
+    def test_question_images_are_private_and_shown_during_the_quiz(self):
+        data = {
+            "prompt": "Which line is steeper?", "answer_count": 2,
+            "answer_1": "Line A", "answer_2": "Line B", "correct": 2,
+            "image": self.image_upload(),
+            "image_description": "Two lines marked A and B.",
+        }
+        self.assertRedirects(self.client.post(self.manage_url, data), self.manage_url)
+        question = Question.objects.get(prompt=data["prompt"])
+        image_url = reverse("questions:image", args=[question.pk])
+        image = self.client.get(image_url)
+        self.assertEqual(image["Content-Type"], "image/webp")
+        with Image.open(BytesIO(image.content)) as picture:
+            self.assertEqual(picture.size, (32, 16))
+
+        quiz_url = self.start_quiz()
+        self.assertContains(self.client.get(quiz_url), f'src="{image_url}"')
+        result = self.answer(quiz_url, 0, 1)
+        feedback = self.client.get(result["Location"])
+        self.assertContains(feedback, 'alt="Two lines marked A and B."')
+
+        self.client.force_login(self.other_student)
+        self.assertEqual(self.client.get(image_url).status_code, 404)
+        self.client.force_login(self.student)
+
+        edit_url = reverse("questions:edit", args=[self.subject.pk, question.pk])
+        self.assertContains(self.client.get(edit_url), f'src="{image_url}"')
+        data["image"] = self.image_upload("blue")
+        self.assertRedirects(self.client.post(edit_url, data), self.manage_url)
+        self.assertNotEqual(self.client.get(image_url).content, image.content)
+        data.pop("image")
+        data["remove_image"] = "on"
+        self.assertRedirects(self.client.post(edit_url, data), self.manage_url)
+        self.assertEqual(self.client.get(image_url).status_code, 404)
+        self.assertTrue(Question.objects.filter(pk=question.pk).exists())
+
+    def test_invalid_image_cannot_be_saved_as_an_attachment(self):
+        response = self.client.post(self.manage_url, {
+            "prompt": "Which line is steeper?", "answer_count": 2,
+            "answer_1": "Line A", "answer_2": "Line B", "correct": 2,
+            "image": SimpleUploadedFile("diagram.png", b"Not a PNG", content_type="image/png"),
+        })
+        self.assertContains(response, "Choose a valid PNG, JPEG, or WebP image.")
+        self.assertFalse(Question.objects.exists())
+        self.assertFalse(QuestionImage.objects.exists())
 
     def test_create_edit_and_validate_answer_limits(self):
         management_page = self.client.get(self.manage_url)
@@ -147,6 +201,9 @@ class QuestionQuizTests(TestCase):
         self.assertFalse(Question.objects.exists())
 
         data["questions-2-correct"] = 1
+        data["questions-0-image"] = self.image_upload()
+        data["questions-0-image_description"] = "Three numbered tiles."
+        data["questions-1-image"] = self.image_upload()
         result = self.client.post(url, data)
         self.assertRedirects(result, self.manage_url + "?chapter=Motion+Midterm")
         saved = list(Question.objects.filter(subject=self.subject, chapter="Motion Midterm"))
@@ -156,6 +213,8 @@ class QuestionQuizTests(TestCase):
         self.assertEqual(saved[0].choices, ["2", "Three", "Four"])
         self.assertEqual(saved[0].correct_indices, [0, 2])
         self.assertEqual(saved[1].correct_indices, [0])
+        self.assertEqual(QuestionImage.objects.get().question_id, saved[0].pk)
+        self.assertEqual(saved[0].illustration.description, "Three numbered tiles.")
         quiz = self.client.get(self.setup_url + "&chapter=Motion+Midterm")
         self.assertEqual(quiz.context["form"]["chapter"].value(), "Motion Midterm")
 

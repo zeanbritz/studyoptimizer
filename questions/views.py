@@ -7,18 +7,18 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.http import HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
-from django.views.decorators.http import require_http_methods, require_POST
+from django.views.decorators.http import require_http_methods, require_POST, require_safe
 
 from accounts.entitlements import accessible_subjects
 from learning.review_navigation import subject_index
 from .bulk_import import MAX_BATCH_QUESTIONS, parse_quiz_text
 from .forms import BulkQuestionFormSet, BulkQuizNameForm, BulkQuizPasteForm, QuestionForm, QuizSetupForm
-from .models import Question, QuizRun
+from .models import Question, QuestionImage, QuizRun
 
 
 def _chapters(questions):
@@ -68,7 +68,7 @@ def setup(request):
     if request.method == "POST" and form.is_valid():
         chapter = form.cleaned_data["chapter"]
         pool = questions.filter(chapter=chapter) if chapter else questions
-        snapshot = list(pool.values("prompt", "choices", "correct_indices"))
+        snapshot = list(pool.values("id", "prompt", "choices", "correct_indices"))
         if snapshot:
             minutes = form.cleaned_data["minutes"]
             run, _ = QuizRun.objects.update_or_create(
@@ -147,12 +147,17 @@ def quiz(request, token):
     feedback = feedback and outcome in (None, "complete")
     position = len(run.answers)
     question = None
+    illustration = None
     options = []
     multiple_answers = False
     if feedback or outcome is None:
         index = position - 1 if feedback else position
         saved = run.questions[index]
         question = saved["prompt"]
+        if question_id := saved.get("id"):
+            illustration = QuestionImage.objects.filter(
+                question_id=question_id, question__subject_id=run.subject_id,
+            ).values("question_id", "description").first()
         correct_choices = run.correct_choices(index)
         multiple_answers = len(correct_choices) > 1
         selected_choices = run.selected_choices(index) if feedback else set()
@@ -172,6 +177,7 @@ def quiz(request, token):
         "position": position,
         "question_number": position if feedback else position + 1,
         "question": question,
+        "illustration": illustration,
         "options": options,
         "multiple_answers": multiple_answers,
         "feedback": feedback,
@@ -194,15 +200,28 @@ def manage(request, subject_id, question_id=None):
         get_object_or_404(questions, pk=question_id)
         if question_id else Question(subject=subject, chapter=chapter)
     )
-    form = QuestionForm(request.POST if request.method == "POST" else None, instance=question)
+    illustration = (
+        QuestionImage.objects.filter(question=question).values("question_id", "description").first()
+        if question_id else None
+    )
+    form = QuestionForm(
+        request.POST if request.method == "POST" else None,
+        request.FILES if request.method == "POST" else None,
+        instance=question,
+        current_image=illustration,
+    )
     form.fields["chapter"].disabled = bool(chapter and not question_id)
     if request.method == "POST" and form.is_valid():
-        saved = form.save()
+        with transaction.atomic():
+            saved = form.save()
+            form.save_illustration()
         if question_id:
             return redirect(_library_url(subject.pk, chapter, page))
         return redirect(_library_url(subject.pk, saved.chapter))
 
     index = subject_index(request, subject)
+    if request.FILES:
+        messages.warning(request, "Reselect your image after correcting the errors below.")
     chapters = list(_chapters(questions))
     if chapter and chapter not in chapters:
         chapters.append(chapter)
@@ -216,6 +235,7 @@ def manage(request, subject_id, question_id=None):
         "selected_chapter": chapter,
         "questions_page": Paginator(library.order_by("-pk"), 10).get_page(page),
         "form": form,
+        "illustration": illustration,
         "setup_url": _setup_url(subject.pk, chapter),
         "library_url": _library_url(subject.pk, chapter, page),
     })
@@ -242,22 +262,29 @@ def bulk_add(request, subject_id):
                     drafts = BulkQuestionFormSet(initial=initial, prefix="questions")
         elif request.POST.get("action") == "save":
             form = BulkQuizNameForm(request.POST)
-            drafts = BulkQuestionFormSet(request.POST, prefix="questions")
+            drafts = BulkQuestionFormSet(request.POST, request.FILES, prefix="questions")
             name_valid = form.is_valid()
             drafts_valid = drafts.is_valid()
             if name_valid and drafts_valid:
                 name = form.cleaned_data["chapter"]
+                kept = [
+                    draft for draft in drafts
+                    if draft.cleaned_data and not draft.cleaned_data.get("DELETE")
+                ]
                 rows = []
-                for draft in drafts:
-                    if not draft.cleaned_data or draft.cleaned_data.get("DELETE"):
-                        continue
+                for draft in kept:
                     question = draft.save(commit=False)
                     question.subject = subject
                     question.chapter = name
                     rows.append(question)
-                Question.objects.bulk_create(rows)
+                with transaction.atomic():
+                    Question.objects.bulk_create(rows)
+                    for draft in kept:
+                        draft.save_illustration()
                 messages.success(request, f"Saved {len(rows)} question{'s' if len(rows) != 1 else ''} to {name}.")
                 return redirect(_library_url(subject.pk, name))
+            if request.FILES:
+                messages.warning(request, "Reselect any question images after correcting the errors below.")
         else:
             return HttpResponseBadRequest("Choose whether to preview or save questions.")
 
@@ -269,6 +296,19 @@ def bulk_add(request, subject_id):
         "max_questions": MAX_BATCH_QUESTIONS,
         "library_url": _library_url(subject.pk, chapter),
     })
+
+
+@login_required
+@require_safe
+@never_cache
+def question_image(request, question_id):
+    image = get_object_or_404(
+        QuestionImage, question_id=question_id,
+        question__subject__in=accessible_subjects(request.user),
+    )
+    response = HttpResponse(bytes(image.content), content_type="image/webp")
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
 
 
 @login_required

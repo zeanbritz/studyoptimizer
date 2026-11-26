@@ -39,10 +39,11 @@
             <button type="button" class="questions-button secondary" data-question-upload-open hidden>Upload Question</button>
         {% endif %}
     </div>
-    <form method="post" class="questions-form" data-question-editor>
+    <form method="post" enctype="multipart/form-data" class="questions-form" data-question-editor>
         {% csrf_token %}
         {{ form.non_field_errors }}
         <div>{{ form.prompt.as_field_group }}</div>
+        {% include "questions/partials/image_fields.html" %}
         {% if form.chapter.field.disabled %}
             {{ form.chapter.as_hidden }}
         {% endif %}

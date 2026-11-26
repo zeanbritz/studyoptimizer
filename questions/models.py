@@ -19,6 +19,15 @@ class Question(models.Model):
         return self.prompt[:80]
 
 
+class QuestionImage(models.Model):
+    question = models.OneToOneField(
+        Question, on_delete=models.CASCADE, primary_key=True, related_name="illustration",
+    )
+    # Keep uploads on the persistent database alongside their questions.
+    content = models.BinaryField()
+    description = models.CharField(max_length=250, blank=True)
+
+
 class QuizRun(models.Model):
     """Keep the latest quiz per student, with the questions as they were at Start."""
 

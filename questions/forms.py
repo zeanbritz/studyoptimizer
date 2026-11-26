@@ -2,13 +2,24 @@ from django import forms
 from django.forms import formset_factory
 
 from .bulk_import import MAX_BATCH_QUESTIONS, MAX_PASTE_LENGTH
-from .models import Question
+from .illustrations import prepare_image
+from .models import Question, QuestionImage
 
 
 ANSWER_NUMBERS = range(1, 7)
 
 
 class QuestionForm(forms.ModelForm):
+    image = forms.FileField(
+        label="Image (optional)", required=False,
+        help_text="PNG, JPEG or WebP, up to 5 MB.",
+        widget=forms.FileInput(attrs={"accept": "image/png,image/jpeg,image/webp"}),
+    )
+    image_description = forms.CharField(
+        label="Image description (optional)", max_length=250, required=False,
+        help_text="Describe the key details for students using a screen reader.",
+    )
+    remove_image = forms.BooleanField(label="Remove image", required=False)
     answer_count = forms.TypedChoiceField(
         label="Number of answers", choices=[(n, n) for n in range(2, 7)], coerce=int,
         initial=2,
@@ -30,8 +41,11 @@ class QuestionForm(forms.ModelForm):
             "chapter": forms.TextInput(attrs={"list": "question-chapter-names"}),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, current_image=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.current_image = current_image
+        if current_image is not None:
+            self.initial["image_description"] = current_image["description"]
         for number in ANSWER_NUMBERS:
             self.fields[f"answer_{number}"] = forms.CharField(
                 label=f"Answer {number}", max_length=1000, required=False,
@@ -46,6 +60,24 @@ class QuestionForm(forms.ModelForm):
     @property
     def answer_rows(self):
         return zip((self[f"answer_{number}"] for number in ANSWER_NUMBERS), self["correct"])
+
+    def clean_image(self):
+        upload = self.cleaned_data["image"]
+        return prepare_image(upload) if upload else None
+
+    def save_illustration(self):
+        content = self.cleaned_data["image"]
+        description = self.cleaned_data["image_description"]
+        if content:
+            QuestionImage.objects.update_or_create(
+                question=self.instance, defaults={"content": content, "description": description},
+            )
+        elif self.current_image is not None:
+            existing = QuestionImage.objects.filter(question=self.instance)
+            if self.cleaned_data["remove_image"]:
+                existing.delete()
+            elif "image_description" in self.changed_data:
+                existing.update(description=description)
 
     def clean(self):
         data = super().clean()

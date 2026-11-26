@@ -191,6 +191,41 @@ function readOption(line) {
     };
 }
 
+for (const panel of document.querySelectorAll("[data-question-image-editor]")) {
+    const file = panel.querySelector('input[type="file"]');
+    const preview = panel.querySelector("[data-question-image-preview]");
+    const description = panel.querySelector('[name$="image_description"]');
+    const remove = panel.querySelector('[name$="remove_image"]');
+    const original = preview.getAttribute("src");
+    let localUrl = null;
+
+    function showPreview() {
+        const source = remove?.checked ? null : localUrl || original;
+        if (source) preview.src = source;
+        else preview.removeAttribute("src");
+        preview.hidden = !source;
+    }
+
+    file.addEventListener("change", () => {
+        if (localUrl) URL.revokeObjectURL(localUrl);
+        localUrl = file.files[0] ? URL.createObjectURL(file.files[0]) : null;
+        if (localUrl && remove) remove.checked = false;
+        showPreview();
+    });
+    description.addEventListener("input", () => {
+        preview.alt = description.value.trim() || "Question image preview";
+    });
+    remove?.addEventListener("change", () => {
+        if (remove.checked) {
+            file.value = "";
+            if (localUrl) URL.revokeObjectURL(localUrl);
+            localUrl = null;
+        }
+        showPreview();
+    });
+    showPreview();
+}
+
 for (const form of document.querySelectorAll("[data-question-delete]")) {
     form.addEventListener("submit", (event) => {
         if (!window.confirm("Delete this question?")) event.preventDefault();

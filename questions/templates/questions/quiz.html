@@ -28,6 +28,11 @@
 <section class="questions-panel">
     <p class="questions-meta">Question {{ question_number }} of {{ run.questions|length }}</p>
     <h2 class="questions-prompt" id="quiz-question">{{ question }}</h2>
+    {% if illustration %}
+        <img class="questions-image questions-image-quiz"
+             src="{% url 'questions:image' question_id=illustration.question_id %}"
+             alt="{{ illustration.description|default:'Illustration for this question' }}">
+    {% endif %}
     {% if feedback %}
         <p class="questions-feedback {% if answered_correctly %}correct{% else %}incorrect{% endif %}">
             {% if answered_correctly %}Correct{% else %}Incorrect{% endif %}

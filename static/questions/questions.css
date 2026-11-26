@@ -111,6 +111,31 @@ body {
 #saved-questions { scroll-margin-top: 70px; }
 .questions-library strong, .questions-prompt, .questions-option span { white-space: pre-wrap; overflow-wrap: anywhere; }
 .questions-panel .questions-prompt { margin-top: 7px; }
+.questions-image {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+    padding: 4px;
+    border: 1px solid #d2dce0;
+    border-radius: 10px;
+    background: white;
+}
+.questions-image-quiz { max-height: min(54vh, 520px); margin: 0 0 16px; }
+.questions-image-preview { max-height: 240px; }
+.questions-image-editor {
+    display: grid;
+    gap: 10px;
+    padding: 12px;
+    min-width: 0;
+    border: 1px solid #d2dce0;
+    border-radius: 10px;
+    background: #f7fafb;
+}
+.questions-image-editor input[type="file"] { max-width: 100%; font: inherit; font-size: .9rem; }
+.questions-image-editor .helptext { margin-top: 4px; color: #4f6069; font-size: .85rem; }
+.questions-form .questions-image-remove { margin: 0; width: fit-content; cursor: pointer; }
+.questions-image-remove input { accent-color: #8e3838; }
 .questions-options { display: grid; gap: 9px; border: 0; min-width: 0; }
 .questions-options .questions-option {
     display: flex;
