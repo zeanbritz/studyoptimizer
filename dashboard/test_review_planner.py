@@ -16,7 +16,7 @@ from learning.models import (
     Subject,
 )
 
-from .models import StudyAvailability, SubjectRevisionPlan, SubjectTextbook
+from .models import DailyReviewPlan, StudyAvailability, SubjectRevisionPlan, SubjectTextbook
 from .review_planner import (
     get_daily_review_plan,
     remaining_review_ids,
@@ -128,14 +128,14 @@ class ReviewPlannerTests(TestCase):
         today = timezone.localdate()
         weekday = today.strftime("%A").lower()
         setattr(self.availability, f"{weekday}_enabled", True)
-        setattr(self.availability, f"{weekday}_time", "00:20")
-        self.availability.save()
-        small = get_daily_review_plan(self.user, today)
-        self.assertEqual(len(small.knowledge_unit_ids), 5)
         setattr(self.availability, f"{weekday}_time", "00:40")
         self.availability.save()
+        small = get_daily_review_plan(self.user, today)
+        self.assertEqual(len(small.knowledge_unit_ids), 10)
+        setattr(self.availability, f"{weekday}_time", "01:20")
+        self.availability.save()
         larger = get_daily_review_plan(self.user, today)
-        self.assertEqual(len(larger.knowledge_unit_ids), 10)
+        self.assertEqual(len(larger.knowledge_unit_ids), 20)
 
     def test_revision_days_release_textbook_time_for_reviews(self):
         self.add_definitions(self.subject, 100)
@@ -166,18 +166,15 @@ class ReviewPlannerTests(TestCase):
         self.assertGreater(selected_other, 0)
 
     def test_repeated_errors_reserve_two_retries_without_granting_mastery(self):
-        self.add_definitions(self.subject, 20)
+        self.add_future_review_items(BulletList, KnowledgeUnit.KnowledgeType.BULLET_LIST, 20)
         today = timezone.localdate()
         weekday = today.strftime("%A").lower()
         setattr(self.availability, f"{weekday}_enabled", True)
         setattr(self.availability, f"{weekday}_time", "00:20")
         self.availability.save()
-        for unit in KnowledgeUnit.objects.filter(subject=self.subject):
-            StudentKnowledge.objects.create(
-                student=self.user, knowledge_unit=unit, mastery_level=1,
-                review_count=4, incorrect_count=2,
-                next_review=timezone.now() - timedelta(days=1),
-            )
+        StudentKnowledge.objects.filter(student=self.user).update(
+            mastery_level=1, review_count=4, incorrect_count=2,
+        )
         plan = get_daily_review_plan(self.user, today)
         self.assertEqual(len(plan.knowledge_unit_ids), 3)  # 6 min each, not 2.
         self.assertEqual(
@@ -295,10 +292,11 @@ class ReviewPlannerTests(TestCase):
 
     def test_dashboard_and_subject_list_share_the_same_batch(self):
         self.add_definitions(self.subject, 40)
+        self.add_formulas(self.subject, 40)
         today = timezone.localdate()
         weekday = today.strftime("%A").lower()
         setattr(self.availability, f"{weekday}_enabled", True)
-        setattr(self.availability, f"{weekday}_time", "00:20")
+        setattr(self.availability, f"{weekday}_time", "02:00")
         self.availability.save()
         self.client.force_login(self.user)
         session = self.client.session
@@ -311,6 +309,60 @@ class ReviewPlannerTests(TestCase):
         subject_list = self.client.get(
             reverse("definition_review_list", kwargs={"subject_index": 0})
         )
-        self.assertEqual(dashboard.context["due_definition_total"], 5)
-        self.assertEqual(subject_list.context["due_definition_count"], 5)
-        self.assertEqual(dashboard.context["review_waiting_count"], 35)
+        self.assertEqual(dashboard.context["due_definition_total"], 15)
+        self.assertEqual(dashboard.context["due_formula_total"], 15)
+        self.assertEqual(subject_list.context["due_definition_count"], 15)
+        self.assertEqual(dashboard.context["review_waiting_count"], 50)
+
+    def test_full_due_assignment_is_visible_in_both_views_and_review_lists(self):
+        self.add_definitions(self.subject, 24)
+        self.add_formulas(self.subject, 13)
+        due_units = list(KnowledgeUnit.objects.filter(subject=self.subject).order_by("pk"))
+        now = timezone.now()
+        today = timezone.localdate(now)
+        weekday = today.strftime("%A").lower()
+        setattr(self.availability, f"{weekday}_enabled", True)
+        setattr(self.availability, f"{weekday}_time", "00:20")
+        self.availability.save()
+        StudentKnowledge.objects.bulk_create([
+            StudentKnowledge(
+                student=self.user, knowledge_unit=unit, mastery_level=2,
+                review_count=2, correct_count=2, last_reviewed=now - timedelta(days=2),
+                next_review=now - timedelta(days=1),
+            )
+            for unit in due_units
+        ])
+        # A short plan already cached for today must be replaced.
+        DailyReviewPlan.objects.create(
+            user=self.user, day=today, settings_signature="old-planner-version",
+            knowledge_unit_ids=[unit.pk for unit in due_units[:10] + due_units[24:29]],
+        )
+        self.client.force_login(self.user)
+        session = self.client.session
+        session["onboarding_complete"] = True
+        session["onboarding_subjects"] = [{"name": self.subject.name, "database_id": self.subject.pk}]
+        session.save()
+
+        def assert_review_counts(definitions, formulas):
+            dashboard = self.client.get(reverse("dashboard"))
+            self.assertEqual(dashboard.context["due_definition_total"], definitions)
+            self.assertEqual(dashboard.context["due_formula_total"], formulas)
+            garden = {
+                category["id"]: sum(leaf["count"] for leaf in category["leaves"])
+                for category in dashboard.context["garden_state"]["categories"]
+            }
+            self.assertEqual(garden["definitions"], definitions)
+            self.assertEqual(garden["formulas"], formulas)
+            for kind, count in (("definition", definitions), ("formula", formulas)):
+                response = self.client.get(
+                    reverse(f"{kind}_review_list", args=[0]), {"review_origin": "standard"},
+                )
+                self.assertEqual(response.context[f"due_{kind}_count"], count)
+
+        assert_review_counts(24, 13)
+        self.assertCountEqual(get_daily_review_plan(self.user, today).knowledge_unit_ids,
+                              [unit.pk for unit in due_units])
+        StudentKnowledge.objects.filter(
+            student=self.user, knowledge_unit__in=due_units[:10] + due_units[24:29],
+        ).update(last_correct_review=now)
+        assert_review_counts(14, 8)

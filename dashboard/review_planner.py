@@ -1,8 +1,7 @@
-"""One shared, conservative study-time budget for daily retrieval practice.
+"""Show scheduled reviews together and pace additional practice by study time.
 
-The stored batch does not refill as answers are submitted. A change to the
-student's timetable, exam/revision settings, or study material rebuilds it.
-Manual practice outside the batch remains available and still affects mastery.
+The daily assignment stays in place as answers are submitted. A change to
+the student's timetable, exam/revision settings, or material rebuilds it.
 """
 
 from collections import defaultdict, deque
@@ -131,7 +130,7 @@ def _settings_and_summary(user, day):
 
     units_stamp = list(_reviewable_units(user).order_by("pk").values_list("pk", "estimated_minutes"))
     signature_data = {
-        "planner_version": 5,
+        "planner_version": 6,
         "week": weekly,
         "subjects": [(s.pk, s.exam_date.isoformat() if s.exam_date else None, revision.get(s.pk, 0)) for s in subjects],
         "books": [(b.pk, b.subject_id, b.page_count) for b in books],
@@ -164,7 +163,7 @@ def _attempt_minutes(unit, progress):
     return max(1, unit.estimated_minutes) * (1 + retries)
 
 
-def _candidates(user, day):
+def _review_candidates(user):
     units = list(_reviewable_units(user).select_related("subject").order_by("pk"))
     progress = {
         item.knowledge_unit_id: item
@@ -172,74 +171,29 @@ def _candidates(user, day):
             student=user, knowledge_unit_id__in=[unit.pk for unit in units]
         )
     }
-    return [(unit, progress.get(unit.pk)) for unit in units if _due(progress.get(unit.pk), day)]
+    return [(unit, progress.get(unit.pk)) for unit in units]
 
 
-def _daily_practice_candidates(user, knowledge_type):
-    """Return stable material for one daily-practice review type."""
-    units = list(
-        _reviewable_units(user)
-        .filter(knowledge_type=knowledge_type)
-        .select_related("subject")
-        .order_by("pk")
-    )
-    progress_by_unit_id = {
-        item.knowledge_unit_id: item
-        for item in StudentKnowledge.objects.filter(
-            student=user,
-            knowledge_unit_id__in=[unit.pk for unit in units],
-        )
-    }
-
-    def practice_priority(unit):
-        progress = progress_by_unit_id.get(unit.pk)
-        # Rotate toward material practised least recently; weaker material wins
-        # ties so the floor remains useful instead of becoming random revision.
-        return (
-            0 if not progress or not progress.last_reviewed else 1,
-            progress.last_reviewed if progress and progress.last_reviewed else timezone.now(),
-            progress.mastery_level if progress else 0,
-            unit.pk,
-        )
-
-    return sorted(units, key=practice_priority)
+def _practice_priority(pair):
+    unit, progress = pair
+    last_reviewed = progress.last_reviewed if progress else None
+    return (last_reviewed is not None, last_reviewed, progress.mastery_level if progress else 0, unit.pk)
 
 
-def _extra_practice_candidates(user, excluded_ids):
+def _extra_practice_candidates(candidates, excluded_ids):
     """Return additional practice in a fair rotation across review types.
 
     The ten-item definition/formula floor is a minimum, not a ceiling. Once
     that baseline is in the plan, unused study time is shared between every
     available review type so a larger library can receive a larger target.
     """
-    units = list(
-        _reviewable_units(user)
-        .select_related("subject")
-        .order_by("knowledge_type", "pk")
-    )
-    progress_by_unit_id = {
-        item.knowledge_unit_id: item
-        for item in StudentKnowledge.objects.filter(
-            student=user,
-            knowledge_unit_id__in=[unit.pk for unit in units],
-        )
-    }
     groups = defaultdict(list)
-    for unit in units:
-        if unit.pk in excluded_ids:
-            continue
-        progress = progress_by_unit_id.get(unit.pk)
-        groups[unit.knowledge_type].append((unit, progress))
+    for unit, progress in candidates:
+        if unit.pk not in excluded_ids:
+            groups[unit.knowledge_type].append((unit, progress))
 
-    for knowledge_type, group in groups.items():
-        group.sort(
-            key=lambda pair: (
-                0 if not pair[1] or not pair[1].last_reviewed else 1,
-                pair[1].last_reviewed if pair[1] and pair[1].last_reviewed else timezone.now(),
-                pair[1].mastery_level if pair[1] else 0,
-                pair[0].pk,
-            )
-        )
+    for group in groups.values():
+        group.sort(key=_practice_priority)
 
     queues = {
         knowledge_type: deque(group)
@@ -275,25 +229,25 @@ def _priority(unit, progress, day):
 def _choose(candidates, budget, day):
     groups = defaultdict(list)
     for unit, progress in candidates:
-        groups[unit.subject_id].append((unit, progress))
+        groups[(unit.subject_id, unit.knowledge_type)].append((unit, progress))
     for group in groups.values():
         group.sort(key=lambda pair: _priority(*pair, day))
-    # Rotate subjects so a large library cannot crowd out a smaller one.
-    ordered_subjects = sorted(
-        groups, key=lambda subject_id: _priority(*groups[subject_id][0], day)
+    # Give each subject and learning type a turn to introduce new material.
+    order = sorted(
+        groups, key=lambda group_key: _priority(*groups[group_key][0], day)
     )
-    groups = {subject_id: deque(group) for subject_id, group in groups.items()}
-    queue = deque(ordered_subjects)
+    groups = {key: deque(group) for key, group in groups.items()}
+    queue = deque(order)
     selected = []
     while queue and budget > 0:
-        subject_id = queue.popleft()
-        unit, progress = groups[subject_id].popleft()
+        key = queue.popleft()
+        unit, progress = groups[key].popleft()
         cost = _attempt_minutes(unit, progress)
         if cost <= budget:
             selected.append(unit.pk)
             budget -= cost
-        if groups[subject_id]:
-            queue.append(subject_id)
+        if groups[key]:
+            queue.append(key)
     return selected
 
 
@@ -306,19 +260,37 @@ def get_daily_review_plan(user, day=None):
     if existing and existing.settings_signature == signature:
         return existing
 
-    candidates = _candidates(user, day)
+    review_items = _review_candidates(user)
+    due = [(unit, progress) for unit, progress in review_items if _due(progress, day)]
     budget = max(0, available - summary)
-    ids = _choose(candidates, budget, day)
+    ids = []
 
-    # Definitions and Formulas have independent daily practice floors, so a
-    # large definition library cannot crowd formulas out of Today's Plan (and
-    # vice versa). The floor is followed by extra, time-budgeted practice for
-    # every type; it is deliberately not a ten-item cap.
     if available > 0:
+        # Scheduled reviews already have a due date. Keep the entire set
+        # visible together, even when its estimated time exceeds today's budget.
+        scheduled = [(unit, progress) for unit, progress in due if progress and progress.next_review]
+        scheduled.sort(key=lambda pair: _priority(*pair, day))
+        ids = [unit.pk for unit, _ in scheduled]
+
+        # Count completed assignments if settings or material change mid-day.
+        prior_ids = set(existing.knowledge_unit_ids) if existing else set()
+        ids.extend(
+            unit.pk for unit, progress in review_items
+            if unit.pk in prior_ids and completed_daily_review(progress, day)
+        )
+        selected = set(ids)
+        costs = {unit.pk: _attempt_minutes(unit, progress) for unit, progress in review_items}
+        spare = max(0, budget - sum(costs[unit_id] for unit_id in ids))
+        new_items = [(unit, progress) for unit, progress in due if unit.pk not in selected]
+        ids.extend(_choose(new_items, spare, day))
+        selected = set(ids)
+
+        unfinished = [(unit, progress) for unit, progress in review_items if not completed_daily_review(progress, day)]
+        # Supplement definitions and formulas when there are fewer than ten.
         for knowledge_type in DAILY_PRACTICE_TYPES:
             planned_count = sum(
-                unit.pk in ids and unit.knowledge_type == knowledge_type
-                for unit, _progress in candidates
+                unit.pk in selected and unit.knowledge_type == knowledge_type
+                for unit, _ in review_items
             )
             slots_needed = max(
                 0,
@@ -326,45 +298,23 @@ def get_daily_review_plan(user, day=None):
             )
             if not slots_needed:
                 continue
-            practice_ids = [
-                unit.pk
-                for unit in _daily_practice_candidates(user, knowledge_type)
-                if unit.pk not in ids
-            ]
-            ids.extend(practice_ids[:slots_needed])
-
-        all_units = list(
-            _reviewable_units(user)
-            .select_related("subject")
-            .order_by("pk")
-        )
-        all_progress = {
-            item.knowledge_unit_id: item
-            for item in StudentKnowledge.objects.filter(
-                student=user,
-                knowledge_unit_id__in=[unit.pk for unit in all_units],
+            practice = sorted(
+                ((unit, progress) for unit, progress in unfinished
+                 if unit.knowledge_type == knowledge_type and unit.pk not in selected),
+                key=_practice_priority,
             )
-        }
-        all_candidates = {
-            unit.pk: (unit, progress)
-            for unit, progress in (
-                (unit, all_progress.get(unit.pk))
-                for unit in all_units
-            )
-        }
+            supplemental_ids = [unit.pk for unit, _ in practice[:slots_needed]]
+            ids.extend(supplemental_ids)
+            selected.update(supplemental_ids)
 
-        planned_cost = sum(
-            _attempt_minutes(*all_candidates[unit_id])
-            for unit_id in ids
-            if unit_id in all_candidates
-        )
-        remaining_budget = max(0, budget - planned_cost)
-        for unit, progress in _extra_practice_candidates(user, set(ids)):
-            cost = _attempt_minutes(unit, progress)
-            if cost > remaining_budget:
-                continue
-            ids.append(unit.pk)
-            remaining_budget -= cost
+        spare = max(0, budget - sum(costs[unit_id] for unit_id in ids))
+        if spare:
+            for unit, _ in _extra_practice_candidates(unfinished, selected):
+                if costs[unit.pk] <= spare:
+                    ids.append(unit.pk)
+                    spare -= costs[unit.pk]
+                if not spare:
+                    break
     with transaction.atomic():
         plan, _ = DailyReviewPlan.objects.update_or_create(
             user=user,
@@ -376,7 +326,7 @@ def get_daily_review_plan(user, day=None):
                 "summary_minutes": summary,
                 "summary_shortfall_minutes": max(0, summary_estimate - available),
                 "review_minutes": budget,
-                "overdue_count": len(candidates),
+                "overdue_count": len(due),
             },
         )
     return plan
