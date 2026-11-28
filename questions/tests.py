@@ -258,25 +258,29 @@ class QuestionQuizTests(TestCase):
         with self.assertRaisesRegex(ValueError, "Answer 1 in question 1 exceeds the 5,000-character limit"):
             parse_quiz_text(f"1. Which option fits?\nA. {'a' * 5001}\nB. Other")
 
-    def test_chapter_quiz_scores_every_question_once(self):
+    def test_chapter_quiz_shuffles_and_scores_every_question_once(self):
         self.add_question("Chapter question one", "Motion")
         self.add_question("Chapter question two", "Motion")
         self.add_question("Unfiled question")
         self.add_question("Another chapter", "Energy")
-        url = self.start_quiz(chapter="Motion")
+        with patch("questions.views.uuid.uuid4", return_value=UUID(int=3)):
+            url = self.start_quiz(chapter="Motion")
 
         first = self.client.get(url)
-        self.assertContains(first, "Chapter question one")
+        self.assertContains(first, "Chapter question two")
+        self.assertContains(self.client.get(url), "Chapter question two")
         self.assertNotContains(first, "Correct answer")
         self.assertNotContains(first, "Unfiled question")
-        self.assertNotContains(first, "Chapter question two")
+        self.assertNotContains(first, "Chapter question one")
 
         response = self.answer(url, 0, 1)
-        self.assertContains(self.client.get(response["Location"]), "Correct answer")
+        feedback = self.client.get(response["Location"])
+        self.assertContains(feedback, "Correct answer")
+        self.assertContains(feedback, "Chapter question two")
         self.answer(url, 0, 1)
         self.assertEqual(QuizRun.objects.get(student=self.student).answers, [[1]])
 
-        self.assertContains(self.client.get(url), "Chapter question two")
+        self.assertContains(self.client.get(url), "Chapter question one")
         result = self.answer(url, 1, 0)
         page = self.client.get(result["Location"])
         self.assertContains(page, "Quiz complete")
@@ -284,6 +288,10 @@ class QuestionQuizTests(TestCase):
         self.assertContains(page, "50%")
         self.assertContains(page, "2 of 2 answered")
         self.assertContains(page, f'href="{reverse("dashboard")}#today-plan"')
+
+        with patch("questions.views.uuid.uuid4", return_value=UUID(int=1)):
+            next_url = self.start_quiz(chapter="Motion")
+        self.assertContains(self.client.get(next_url), "Chapter question one")
 
     def test_choices_shuffle_for_new_quizzes_and_keep_their_order_for_feedback(self):
         Question.objects.create(

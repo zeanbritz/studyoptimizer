@@ -70,12 +70,14 @@ def setup(request):
         pool = questions.filter(chapter=chapter) if chapter else questions
         snapshot = list(pool.values("id", "prompt", "choices", "correct_indices"))
         if snapshot:
+            token = uuid.uuid4()
+            Random(f"{token}:questions").shuffle(snapshot)
             minutes = form.cleaned_data["minutes"]
             run, _ = QuizRun.objects.update_or_create(
                 student=request.user,
                 defaults={
                     "subject": subject,
-                    "token": uuid.uuid4(),
+                    "token": token,
                     "chapter": chapter,
                     "questions": snapshot,
                     "answers": [],
