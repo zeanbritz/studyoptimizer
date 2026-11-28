@@ -27,7 +27,7 @@ from .pdf_lab_session import (
 )
 from .structured_detection import (
     find_comparison_candidates, find_list_candidates,
-    find_note_candidates, find_step_candidates,
+    find_note_candidates, find_step_candidates, group_comparisons,
 )
 from .structured_import import KINDS, LABELS, import_candidate, normalize_candidate
 
@@ -374,6 +374,13 @@ def _scan_pdf(upload, start_page, pages_to_scan, *, allowance):
                 add_detected(image_text, image_text, page_number, "image")
         if truncated and formula_truncated and all(structured_truncated.values()):
             break
+
+    comparisons = structured[KIND_KEYS["comparison"][0]]
+    grouped = list(group_comparisons(structured[KIND_KEYS["list"][0]]))
+    remaining_comparisons = MAX_CANDIDATES - len(comparisons)
+    comparisons.extend(grouped[:remaining_comparisons])
+    comparisons.sort(key=lambda item: item["page"])
+    structured_truncated["comparison"] |= len(grouped) > remaining_comparisons
 
     allowance.add_summary_pages(scanned_through - start_page + 1)
     return {

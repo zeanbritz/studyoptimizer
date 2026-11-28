@@ -26,7 +26,7 @@ from .pdf_lab_session import SESSION_KEY
 from .pdf_image_ocr import scan_page_images
 from .structured_detection import (
     find_comparison_candidates, find_list_candidates,
-    find_note_candidates, find_step_candidates,
+    find_note_candidates, find_step_candidates, group_comparisons,
 )
 
 
@@ -91,6 +91,21 @@ class DefinitionDetectionTests(SimpleTestCase):
         )
         self.assertTrue(all(candidate["confidence"] == "strong" for candidate in candidates))
 
+    def test_slide_metadata_and_callouts_stay_out_of_definitions(self):
+        self.assertEqual(find_definition_candidates(
+            "ENG100: Core scientific measurements\nPresenter: Course teaching team\nDate: 2026/01/01", 1
+        ), [])
+        candidates = find_definition_candidates(
+            "Measurement Biases\n"
+            "Gravity Bias\n    \u2022 Relying on weight as the only measurement.\n"
+            "Pressure is critical to reproducing the result.\n"
+            "Exam Tip: Check the pressure before comparing recordings.\n"
+            "Step 1: Calculate the pressure from the following values.\n"
+            "Implication: Results from the chambers cannot be directly compared.",
+            2,
+        )
+        self.assertEqual([candidate["term"] for candidate in candidates], ["Gravity Bias"])
+
 
 class FormulaDetectionTests(SimpleTestCase):
     def test_short_equations_are_editable(self):
@@ -136,6 +151,32 @@ class FormulaDetectionTests(SimpleTestCase):
         self.assertEqual(
             [item["type"] for item in structure if item["value"] in {"[", "]"}],
             ["symbol", "symbol"],
+        )
+
+    def test_named_quantities_and_worked_examples(self):
+        candidates = find_formula_candidates(
+            "Nominal Growth = Real Growth + Inflation\n"
+            "Step 1: Calculate Total Cost\n"
+            "Total Cost = Unit Cost * Quantity = 4 * 7 = 28\n"
+            "28 = 4 * Example Quantity\n"
+            "Example Quantity = 7",
+            12,
+        )
+        self.assertEqual([item["equation"] for item in candidates], [
+            "Nominal Growth = Real Growth + Inflation",
+            "Total Cost = Unit Cost * Quantity",
+        ])
+        self.assertEqual(
+            [item["value"] for item in candidates[0]["structure"]],
+            ["Nominal Growth", "=", "Real Growth", "+", "Inflation"],
+        )
+
+    def test_algebra_still_supports_juxtaposition_and_zero_on_the_left(self):
+        candidates = find_formula_candidates("s = v t\n0 = A - B", 4)
+        self.assertEqual(len(candidates), 2)
+        self.assertEqual(
+            [item["value"] for item in candidates[0]["structure"]],
+            ["s", "=", "v", "t"],
         )
 
 
@@ -251,6 +292,83 @@ class StructuredDetectionTests(SimpleTestCase):
         self.assertEqual(comparisons[0]["columns"], ["Focus", "Typical question"])
         self.assertEqual(comparisons[0]["rows"][1]["name"], "Risk attribution")
         self.assertEqual(comparisons[1]["columns"], ["Macro attribution", "Micro attribution"])
+
+    def test_numbered_factors_and_explicit_steps_keep_separate_types(self):
+        page = (
+            "3. Pressure and Flow\n"
+            "Three causes:\n"
+            "  1. Heat.\n"
+            "  2. Elevation.\n"
+            "  3. Pipe diameter.\n"
+            "\n"
+            "Measure pipe flow\n"
+            "Step 1: Record fluid volume\n"
+            "    Record volume in litres.\n"
+            "Step 2: Calculate the flow rate\n"
+            "    Divide by the elapsed time.\n"
+            "Exam Tip: Use consistent units for volume and elapsed time."
+        )
+        steps = find_step_candidates(page, 8)
+        lists = find_list_candidates(page, 8)
+        notes = find_note_candidates(page, 8)
+        self.assertEqual(len(steps), 1)
+        self.assertEqual(steps[0]["title"], "Measure pipe flow")
+        self.assertEqual(steps[0]["steps"][1]["description"], "Divide by the elapsed time.")
+        self.assertEqual(len(lists), 1)
+        self.assertEqual([entry["text"] for entry in lists[0]["items"]], ["Heat.", "Elevation.", "Pipe diameter."])
+        self.assertEqual(len(notes), 1)
+        self.assertIn("consistent units", notes[0]["content"])
+
+    def test_locally_labelled_strengths_are_compared_across_pages(self):
+        pages = (
+            "2. Transport Models\n2.1. Passive Model\nStrengths\n"
+            "    \u2022 Requires few parameters.\n    \u2022 Is easy to calibrate.\n"
+            "Weaknesses\n    \u2022 Is sensitive to temperature.\n    \u2022 Has limited scope.",
+            "2. Transport Models\n2.2. Active Model\nUses:\n    \u2022 Direct measures\n    \u2022 Indirect measures\n"
+            "Strengths\n    \u2022 Represents more mechanisms.\n    \u2022 Allows changing rates.\n"
+            "Weaknesses\n    \u2022 Is costly to calibrate.\n    \u2022 Needs additional sensors.",
+        )
+        lists = [item for n, page in enumerate(pages, 1) for item in find_list_candidates(page, n)]
+        self.assertIn("Active Model \u2014 Strengths", [item["title"] for item in lists])
+        result = list(group_comparisons(lists))
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["columns"], ["Passive Model", "Active Model"])
+        self.assertEqual([row["name"] for row in result[0]["rows"]], ["Strengths", "Weaknesses"])
+
+    def test_wrapped_comparison_header_does_not_repeat_or_mix_columns(self):
+        def row(label, left, right):
+            return f"{label:20}{left:55}{right}"
+
+        page = "\n".join([
+            "Question 4: Diffusion Models",
+            row("", "Approach A (with steady", "Approach B (with variable"),
+            row("", "conditions)", "conditions)"),
+            row("Strengths", "\u2022 Simple to", "\u2022 Handles variation."),
+            row("", "implement.", "\u2022 Adapts to new data."),
+            row("Weaknesses", "\u2022 Assumes a fixed rate.", "\u2022 Requires more samples."),
+        ])
+        result = find_comparison_candidates(page, 9)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["columns"], [
+            "Approach A (with steady conditions)",
+            "Approach B (with variable conditions)",
+        ])
+        left, right = result[0]["rows"][0]["cells"]
+        self.assertEqual(left, "\u2022 Simple to implement.")
+        self.assertIn("Adapts to new data", right)
+
+    def test_outcome_table_can_have_vertical_gaps_between_rows(self):
+        page = (
+            "Question 6: Effects of Temperature\n"
+            "Variable                    Effect of warmer solution\n"
+            "Reaction speed              Increases\n\n"
+            "Dissolved gas               Decreases\n\n"
+            "Solution volume             Increases slightly"
+        )
+        result = find_comparison_candidates(page, 10)
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0]["columns"], ["Reaction speed", "Dissolved gas"])
+        self.assertEqual(result[0]["rows"][0]["cells"], ["Increases", "Decreases"])
 
 
 class PdfImageOcrLimitTests(SimpleTestCase):

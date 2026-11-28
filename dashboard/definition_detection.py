@@ -2,13 +2,17 @@
 
 import re
 
+from .pdf_text import (
+    CALLOUT, METADATA, ORDINAL, bullet_text, is_non_instructional_page, segments, short_heading,
+)
+
 
 LABEL = re.compile(r"^definition(?:\s+\d+(?:\.\d+)*)?\s*[:.\-]?\s*(.*)$", re.I)
 COLON = re.compile(r"^(?P<term>.{2,85}?)\s*:\s*(?P<body>.{15,})$")
 DASH = re.compile(r"^(?P<term>.{2,85}?)\s+[\u2013\u2014-]\s+(?P<body>.{15,})$")
 SENTENCE = re.compile(
     r"^(?P<term>[A-Z][\w'()/-]*(?:\s+[\w'()/-]+){0,5}?)\s+"
-    r"(?P<link>is|are|means|refers\s+to)\s+(?P<body>.{20,})$"
+    r"(?P<link>is|are|means|refers\s+to|describes|measures)\s+(?P<body>.+)$"
 )
 SECTION = re.compile(r"^(definitions|glossary|key terms|key vocabulary)\s*:?$", re.I)
 OTHER_SECTION = re.compile(
@@ -18,16 +22,33 @@ OTHER_SECTION = re.compile(
 EXCLUDED_TERMS = re.compile(
     r"^(?:example|exercise|chapter|figure|table|page|summary|note|tip|"
     r"question|answer|learning outcome|the|this|these|those|it|we|they|when|a|an|"
+    r"presenter|date|instructor|what matters|implication|step|exam (?:tip|point)|"
     r"tl;?dr|interpretation|exam trap|first pass|second pass|third pass|final pass|"
     r"return not)\b",
     re.I,
 )
-CONTENTS = re.compile(r"^(?:table of )?contents$", re.I)
-NOTE_CONTEXT = re.compile(
-    r"^(?:the chapter in one sentence|core relationship|exam shortcut|"
-    r"most to least accurate|best conclusion|calculation discipline|"
-    r"decision rule|key judg(?:e)?ment|remember|warning)$",
+DEFINITION_PREDICATE = re.compile(
+    r"^(?:the (?:process|movement|change|speed|amount|rate|time|value|measure|tendency|"
+    r"difference|ratio|total|sum|weighted|method|practice|ability|fraction|price|"
+    r"degree|return|result|distance|attractive|portion|risk|spread)|a|an|"
+    r"(?:(?:economic|statistical) )?forecasts?|expectations|estimates|"
+    r"defined as|calculated as|used to measure)\b", re.I,
+)
+GLOSS = re.compile(r"^(?:a |an |the |relying |preferring |seeking |overestimating |"
+                   r"being |overweighting |compensation |consistency )", re.I)
+TOPIC_LABEL = re.compile(r"^(?:characteristics|strengths|weaknesses|examples|uses|"
+                         r"tracks|formula|summary|objectives|challenges|benefits|"
+                         r"advantages|limitations|market implications|risks)$", re.I)
+INLINE_CONTEXT = re.compile(r"^(?:what (?:is|are)|how does|why is)\b", re.I)
+PARENTHETICAL_GLOSS = re.compile(r"^([^()]{3,80})\s+\(([^()]{10,})\)\s*[.]?$")
+LIST_DEFINITION = re.compile(
+    r"^(.{3,80}?)\s+(includes?|consists? of|is made up of|helps? evaluate)\s*:$",
     re.I,
+)
+NAMING = re.compile(r"^(?:this|that)(?: is| are) (?:known|called|referred to)(?: as)? (.+?)[.]?$", re.I)
+GLOSS_CLAUSE = re.compile(
+    r"^(?:compensation|the ability|the risk|the likelihood|"
+    r"a[n]? (?:currency|measure|method|process|value|rate|ratio))\b", re.I,
 )
 TABLE_TERM_HEADERS = {
     "term", "terms", "key term", "key terms", "concept", "concepts",
@@ -41,7 +62,7 @@ MAX_TABLE_ROWS = 40
 
 
 def _clean(line):
-    line = line.replace("\u00ad", "").replace("\ufb01", "fi").replace("\ufb02", "fl")
+    line = line.strip().replace("\u00ad", "").replace("\ufb01", "fi").replace("\ufb02", "fl")
     line = re.sub(r"^[\u2022\u25cf*]\s*", "", line)
     return re.sub(r"\s+", " ", line).strip()
 
@@ -150,13 +171,21 @@ def _valid_term(term):
         and len(term.split()) <= 8
         and any(char.isalpha() for char in term)
         and not EXCLUDED_TERMS.match(term)
+        and not TOPIC_LABEL.fullmatch(term)
+        and not CALLOUT.fullmatch(term)
+        and not re.fullmatch(r'[A-Z]{2,8}\s*\d{2,8}', term)
         and not re.search(r"[.!?]", term)
         and not re.search(r"[=<>±×÷^_]", term)
     )
 
 
 def _valid_definition(body):
-    return len(body) >= 20 and len(body.split()) >= 4 and len(body) <= 1200
+    return (
+        12 <= len(body) <= 1200
+        and len(body.split()) >= 3
+        and not re.search(r"[=→]", body)
+        and not METADATA.match(body)
+    )
 
 
 def _split_entry(line):
@@ -174,7 +203,12 @@ def _extend_body(body, lines, start):
         line = lines[start + consumed]
         if not line or body.rstrip().endswith((".", "!", "?")):
             break
-        if LABEL.match(line) or SECTION.match(line) or _split_entry(line):
+        if (
+            LABEL.match(line) or SECTION.match(line) or _split_entry(line)
+            or CALLOUT.fullmatch(line) or ORDINAL.fullmatch(line)
+            or bullet_text(line) or METADATA.match(line)
+            or (line[0].isupper() and short_heading(line))
+        ):
             break
         if len(body) + len(line) > 1200:
             break
@@ -185,82 +219,141 @@ def _extend_body(body, lines, start):
 
 def find_definition_candidates(page_text, page_number):
     """Return candidates, never authoritative definitions or database writes."""
-    lines = [_clean(line) for line in (page_text or "").splitlines()]
-    if any(CONTENTS.fullmatch(line) for line in lines[:30]):
+    raw_lines = (page_text or "").splitlines()
+    if is_non_instructional_page(raw_lines):
         return []
-    candidates = _table_definition_candidates(
-        (page_text or "").splitlines(), page_number
-    )
-    seen = {
-        (candidate["term"].casefold(), candidate["definition"].casefold())
-        for candidate in candidates
-    }
-
-    def add_candidate(candidate):
-        key = (candidate["term"].casefold(), candidate["definition"].casefold())
-        if key not in seen:
-            seen.add(key)
-            candidates.append(candidate)
+    candidates = _table_definition_candidates(raw_lines, page_number)
+    seen = {candidate["term"].casefold() for candidate in candidates}
+    lines = [(" ".join(raw.split()), _clean(raw)) for raw in raw_lines]
     in_glossary = False
+    previous = ""
+    group_entries = []
+
+    def add(term, body, confidence="possible"):
+        if _valid_term(term) and _valid_definition(body) and term.casefold() not in seen:
+            seen.add(term.casefold())
+            candidates.append({
+                "term": term, "definition": body, "page": page_number, "confidence": confidence,
+            })
+
     index = 0
     while index < len(lines):
-        line = lines[index]
+        marked, line = lines[index]
         index += 1
         if not line:
             continue
-        if SECTION.match(line):
+        context, previous = previous, line
+        if not bullet_text(marked) and not NAMING.fullmatch(line):
+            group_entries.clear()
+        elif bullet_text(marked):
+            group_entries.append(line.rstrip("."))
+        naming = NAMING.fullmatch(line)
+        if naming and 2 <= len(group_entries) <= 8:
+            # Use the visible lead-in, including constraints such as "cannot".
+            for raw, lead in reversed(lines[:index - 1]):
+                if lead and not bullet_text(raw):
+                    if lead.endswith(":"):
+                        definition = f"{lead[:-1]} {', '.join(group_entries)}."
+                        add(re.sub(r"^the\s+", "", naming.group(1), flags=re.I), definition)
+                    break
+            continue
+        if SECTION.fullmatch(line):
             in_glossary = True
             continue
         if OTHER_SECTION.match(line):
             in_glossary = False
             continue
+        if CALLOUT.fullmatch(line) or METADATA.match(line) or ORDINAL.fullmatch(line):
+            continue
 
         labelled = LABEL.match(line)
         if labelled:
-            line = labelled.group(1).strip()
-            if not line and index < len(lines):
-                line = lines[index]
+            line = labelled.group(1).strip() or next(
+                (value for _, value in lines[index:] if value), ""
+            )
+            if not labelled.group(1).strip():
+                while index < len(lines) and lines[index][1] != line:
+                    index += 1
                 index += 1
 
+        remaining = [raw for raw, _ in lines[index:index + 4]]
         entry = _split_entry(line)
         if entry:
             term, body, colon = entry
-            body, consumed = _extend_body(body, lines, index)
-            index += consumed
+            body, consumed = _extend_body(body, remaining, 0)
             if _valid_definition(body):
-                add_candidate({
-                    "term": term, "definition": body, "page": page_number,
-                    "confidence": "strong" if labelled or colon else "possible",
-                })
+                add(term, body, "strong" if labelled or colon else "possible")
+                index += consumed
             continue
 
-        if (labelled or in_glossary) and _valid_term(line):
-            next_index = index
-            while next_index < len(lines) and not lines[next_index]:
-                next_index += 1
-            if next_index < len(lines):
-                body, consumed = _extend_body(lines[next_index], lines, next_index + 1)
-                if _valid_definition(body) and not _split_entry(lines[next_index]):
-                    add_candidate({
-                        "term": line, "definition": body, "page": page_number,
-                        "confidence": "strong" if labelled else "possible",
-                    })
-                    index = next_index + 1 + consumed
+        following = next((i for i in range(index, len(lines)) if lines[i][1]), None)
+        if (labelled or in_glossary) and _valid_term(line) and following is not None:
+            tail = [raw for raw, _ in lines[following + 1:following + 4]]
+            body, consumed = _extend_body(lines[following][1], tail, 0)
+            if _valid_definition(body) and not _split_entry(lines[following][1]):
+                add(line, body, "strong" if labelled else "possible")
+                index = following + 1 + consumed
+                continue
+
+        gloss = PARENTHETICAL_GLOSS.fullmatch(line) if bullet_text(marked) else None
+        if gloss and GLOSS.match(gloss.group(2)):
+            add(gloss.group(1).strip(), gloss.group(2))
+            continue
+
+        composition = LIST_DEFINITION.fullmatch(line)
+        tracks = re.fullmatch(r"tracks\s*:", line, re.I) and short_heading(context)
+        if composition or tracks:
+            term, relation = composition.groups() if composition else (context, "tracks")
+            term = re.sub(r"^the\s+", "", term, flags=re.I)
+            entries = []
+            for raw, value in lines[index:index + 10]:
+                if not value:
                     continue
+                if not bullet_text(raw) or value[-1] == ":":
+                    break
+                if entries and short_heading(value) and not value.endswith("."):
+                    break
+                entries.append(value.rstrip("."))
+            if len(entries) >= 2:
+                add(term, f"{term} {relation} {'; '.join(entries)}.")
+            continue
 
         sentence = SENTENCE.match(line)
-        if sentence and _valid_term(sentence.group("term")):
-            body, consumed = _extend_body(line, lines, index)
-            previous = next((value for value in reversed(lines[:index - 1]) if value), "")
-            if (
-                not NOTE_CONTEXT.fullmatch(previous)
-                and body.endswith((".", "!", "?"))
-                and _valid_definition(sentence.group("body"))
+        if sentence and (
+            sentence.group("link") not in {"is", "are"}
+            or DEFINITION_PREDICATE.match(sentence.group("body"))
+        ):
+            if CALLOUT.fullmatch(context) or sentence.group("body").endswith(":") and not (
+                INLINE_CONTEXT.match(context) or "forecast" in sentence.group("body").casefold()
             ):
-                add_candidate({
-                    "term": sentence.group("term"), "definition": body,
-                    "page": page_number, "confidence": "possible",
-                })
-                index += consumed
+                continue
+            body, consumed = _extend_body(line, remaining, 0)
+            if sentence.group("body").endswith(":"):
+                entries, qualifier = [], ""
+                for offset in range(index, min(index + 8, len(lines))):
+                    item = bullet_text(lines[offset][0])
+                    if not lines[offset][1]:
+                        continue
+                    if not item:
+                        column = segments(raw_lines[offset])[-1][1]
+                        if entries and column.startswith("of ") and column.endswith(" such as:"):
+                            qualifier = " " + column.removesuffix(" such as:")
+                        break
+                    entries.append(item.rstrip("."))
+                if entries:
+                    lead = re.sub(r"\bthe:$", "", line, flags=re.I).rstrip(": ")
+                    body = lead + " " + ", ".join(entries) + qualifier + "."
+            add(sentence.group("term").strip(), body)
+            index += consumed
+            continue
+
+        if (
+            short_heading(context) and not CALLOUT.fullmatch(context)
+            and not _split_entry(context) and GLOSS.match(line)
+            and (GLOSS_CLAUSE.match(line) or bullet_text(marked))
+        ):
+            body, consumed = _extend_body(line, remaining, 0)
+            add(context.removesuffix(":"), body)
+            index += consumed
 
     return candidates

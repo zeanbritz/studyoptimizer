@@ -6,6 +6,13 @@ structured study material. Every result remains a draft for human review.
 """
 
 import re
+from bisect import bisect_right
+from itertools import combinations
+
+from .pdf_text import (
+    CALLOUT, FURNITURE, ORDINAL, QUESTION, SECTION, bullet_text,
+    clean as _clean, is_non_instructional_page, segments as _segments, short_heading,
+)
 
 
 LIST_HEADING = re.compile(
@@ -15,34 +22,33 @@ LIST_HEADING = re.compile(
     re.I,
 )
 STEPS_HEADING = re.compile(
-    r"^(?:worked (?:method|procedure|example)|(?:method|procedure|steps) (?:for|to|of)|how to)\b.{0,70}$",
+    r"^(?:worked (?:method|procedure|example)|(?:method|procedure|steps) (?:for|to|of|in)|how to)\b.{0,70}$",
     re.I,
 )
 COMPARISON_HEADING = re.compile(
-    r"^(?:comparison of .+|.{3,75} compared|.{3,75} versus .{3,75})$",
+    r"^(?:comparison of .+|.{3,75} compared|.{3,75} (?:versus|vs\.?) .{3,75})$",
     re.I,
 )
-NOTE_INLINE = re.compile(
-    r"^(Study note|Note|Important|TL;?DR|Interpretation|Exam trap)\s*[.:]\s*(.+)$",
-    re.I,
-)
-NOTE_HEADING = re.compile(
-    r"^(?:the chapter in one sentence|core relationship|exam shortcut|"
-    r"most to least accurate|best conclusion|calculation discipline|"
-    r"decision rule|key judg(?:e)?ment|remember|warning)$",
-    re.I,
-)
-FORMULA_TOPIC = re.compile(r"^\d{1,2}\.\s+(.{2,120})$")
-NUMBERED_STEP = re.compile(r"^(\d{1,2})[.)]?\s+(.+)$")
 ONLY_NUMBER = re.compile(r"^(\d{1,2})[.)]?$", re.I)
-BULLET_ITEM = re.compile(r"^[\u2022\u25cf*\ufffd]\s*(.+)$")
-CONTENTS = re.compile(r"^(?:table of )?contents$", re.I)
-PAGE_FURNITURE = re.compile(
-    r"^(?:page\s+\d+|exam study guide|.*\blearning unit\s+\d+.*)$", re.I,
+ACTION = re.compile(
+    r"^(?:add|adjust|analy[sz]e|apply|assess|calculate|check|choose|collect|compare|compute|"
+    r"confirm|create|decide|define|determine|divide|estimate|evaluate|find|formulate|gather|"
+    r"identify|interpret|list|measure|monitor|multiply|record|research|review|select|"
+    r"specify|subtract|sum|test|use|verify|weigh)\b", re.I,
+)
+SUBHEADING = re.compile(
+    r"^(?:strengths|weaknesses|characteristics|market implications|objectives|uses?|"
+    r"examples?|risks|tracks|advantages|disadvantages|limitations|benefits|"
+    r"best-performing assets|challenges|mainly|during (?:a |an |the )?\w+)$", re.I,
+)
+INTERPRETIVE = re.compile(
+    r"^(?:therefore,|what matters is|these reduce|trend growth serves as|"
+    r".{3,90}\b(?:therefore tend to|form the foundation|is intended to be|"
+    r"is typically linked to|is most useful for|depends on whether|result from)\b)", re.I,
 )
 TABLE_FIRST_COLUMNS = {
     "feature", "criterion", "criteria", "type", "component", "approach",
-    "decision", "investment", "measure",
+    "decision", "investment", "measure", "variable", "metric", "asset class",
 }
 STEP_TABLE_FIRST_COLUMNS = {
     "step", "steps", "step number", "step no", "number", "numbered step", "no",
@@ -50,28 +56,26 @@ STEP_TABLE_FIRST_COLUMNS = {
 MAX_ITEMS = 20
 
 
-def _clean(line):
-    return " ".join((line or "").replace("\u00ad", "").split()).strip()
-
-
-def _is_contents_page(lines):
-    cleaned = [_clean(line) for line in lines[:35]]
-    return any(CONTENTS.fullmatch(line) for line in cleaned)
-
-
 def _is_furniture(line):
-    return bool(PAGE_FURNITURE.fullmatch(_clean(line)))
+    return bool(FURNITURE.fullmatch(_clean(line)))
 
 
 def _is_boundary(line):
     line = _clean(line)
     return bool(
-        STEPS_HEADING.fullmatch(line)
-        or COMPARISON_HEADING.fullmatch(line)
-        or LIST_HEADING.fullmatch(line)
-        or NOTE_INLINE.match(line)
-        or NOTE_HEADING.fullmatch(line)
+        _is_furniture(line) or SECTION.fullmatch(line) or QUESTION.fullmatch(line)
+        or STEPS_HEADING.fullmatch(line) or COMPARISON_HEADING.fullmatch(line)
+        or CALLOUT.fullmatch(line)
+        or SUBHEADING.fullmatch(line.rstrip(":")) or line.endswith(":")
         or line.upper().startswith("CHAPTER ")
+    )
+
+
+def _is_question_page(lines):
+    first = [_clean(line) for line in lines if line.strip()][:5]
+    return (
+        any(re.fullmatch(r"activity\s+\d+", line, re.I) for line in first)
+        and not any(re.search(r"\bsolutions?\b", line, re.I) for line in first)
     )
 
 
@@ -90,47 +94,13 @@ def _entry(text):
 
 def _marker(raw):
     line = _clean(raw)
-    bullet = BULLET_ITEM.fullmatch(line)
+    bullet = bullet_text(line)
     if bullet:
-        return None, bullet.group(1)
-    numbered = NUMBERED_STEP.fullmatch(line)
+        return None, bullet
+    numbered = ORDINAL.fullmatch(line)
     if numbered:
-        return int(numbered.group(1)), numbered.group(2)
+        return int(numbered.group(2)), numbered.group(3)
     return None
-
-
-def _collect_list_entries(lines, start):
-    entries, current = [], ""
-    expected_number = None
-    for raw in lines[start + 1:]:
-        line = _clean(raw)
-        if not line or _is_furniture(line):
-            continue
-        marked = _marker(raw)
-        if marked:
-            number, text = marked
-            if number is not None:
-                if expected_number is None:
-                    expected_number = number
-                if number != expected_number:
-                    break
-                expected_number += 1
-            if current:
-                entries.append(_entry(current))
-            current = text
-            if len(entries) >= MAX_ITEMS:
-                break
-            continue
-        if _is_boundary(line) or ONLY_NUMBER.fullmatch(line):
-            break
-        if not current:
-            continue
-        if current.rstrip().endswith((".", "!", "?", ";")):
-            break
-        current += " " + line
-    if current and len(entries) < MAX_ITEMS:
-        entries.append(_entry(current))
-    return entries
 
 
 def _collect_plain_list_entries(lines, start):
@@ -140,7 +110,7 @@ def _collect_plain_list_entries(lines, start):
         line = _clean(raw)
         if not line or _is_furniture(line):
             continue
-        if _is_boundary(line) or ONLY_NUMBER.fullmatch(line) or _marker(raw):
+        if _is_boundary(line) or _marker(raw):
             break
         pending.append(line)
         joined = " ".join(pending)
@@ -152,21 +122,167 @@ def _collect_plain_list_entries(lines, start):
     return entries
 
 
+def _list_runs(lines):
+    """Read contiguous, visually marked groups without absorbing the next heading."""
+    index = 0
+    while index < len(lines):
+        start = index
+        marker = _marker(lines[index])
+        if not marker or len(_segments(lines[index])) >= 2 and _clean(lines[index]).count("\u2022") > 1:
+            index += 1
+            continue
+        first_number = marker[0]
+        indent = len(lines[index]) - len(lines[index].lstrip())
+        entries = []
+        while marker and marker[0] == (
+            None if first_number is None else first_number + len(entries)
+        ) and abs(len(lines[index]) - len(lines[index].lstrip()) - indent) <= 3:
+            text = marker[1]
+            if entries and short_heading(text) and index + 1 < len(lines):
+                next_line = next(
+                    (_clean(raw).rstrip(":") for raw in lines[index + 1:] if raw.strip()), ""
+                )
+                if text.istitle() and next_line.casefold() in {"example", "examples"}:
+                    break
+            index += 1
+            while index < len(lines) and lines[index].strip() and not _marker(lines[index]):
+                continuation = _clean(lines[index])
+                if (
+                    _is_boundary(continuation) or text.endswith((".", "!", "?", ";"))
+                    or not continuation[0].islower()
+                    or len(_segments(lines[index])) > 2
+                ):
+                    break
+                text += " " + continuation
+                index += 1
+            entries.append(text)
+            if index < len(lines) and not lines[index].strip():
+                next_index = index
+                while next_index < len(lines) and not lines[next_index].strip():
+                    next_index += 1
+                if next_index < len(lines) and _marker(lines[next_index]):
+                    index = next_index
+            marker = _marker(lines[index]) if index < len(lines) else None
+        yield start, [entry for entry in entries if not entry.endswith(":")], first_number
+
+
+def _list_context(lines, start):
+    """Get the nearest visible group label, subtopic and section in reading order."""
+    preceding = [raw for raw in lines[:start] if raw.strip()]
+    if not preceding:
+        return "", "", ""
+    last = preceding[-1]
+    label = _clean(last).rstrip(":")
+    parts = _segments(last)
+    if len(parts) == 2:
+        lead = re.fullmatch(r"of (?:various|different|several) (.+) such as:", parts[-1][1], re.I)
+        if lead:
+            label = lead.group(1).capitalize()
+    section, topic = "", ""
+    for index, raw in enumerate(preceding[:-1]):
+        next_raw = preceding[index + 1]
+        line, following = _clean(raw), _clean(next_raw)
+        same_margin = len(raw) - len(raw.lstrip()) <= len(next_raw) - len(next_raw.lstrip()) + 3
+        number = SECTION.fullmatch(line)
+        subnumber = re.match(r"^\d+\s*\.\s*\d", line)
+        if number and not subnumber and (not _marker(following) or not section):
+            if SUBHEADING.fullmatch(following.rstrip(":")) and section:
+                topic = number.group(1)
+            else:
+                section, topic = number.group(1), ""
+        elif number and subnumber:
+            topic = number.group(1)
+        elif (
+            same_margin and short_heading(line) and not _is_boundary(line) and not _marker(line)
+            and SUBHEADING.fullmatch(following.rstrip(":"))
+        ):
+            topic = line
+    label_section = SECTION.fullmatch(_clean(last))
+    if label_section:
+        return label_section.group(1), "", ""
+    if len(preceding) >= 2:
+        latest_topic = bullet_text(_clean(preceding[-2]))
+        if latest_topic and latest_topic.istitle() and short_heading(latest_topic) and label.casefold() in {"example", "examples"}:
+            topic = latest_topic
+    return section, topic, label
+
+
+def _sequence_is_procedure(entries, heading, *, explicit_labels=False):
+    title = _strip_section_number(heading)
+    if re.match(r"^how to use (?:this|the) (?:pdf|guide|document|book|chapter|manual)", title, re.I):
+        return False
+    if explicit_labels or STEPS_HEADING.fullmatch(title):
+        return len(entries) >= 2
+    return (
+        len(entries) >= 3 and not LIST_HEADING.fullmatch(title)
+        and all(ACTION.match(entry) for entry in entries)
+    )
+
+
+def _indented_list(lines, heading_index):
+    raw = lines[heading_index]
+    if not raw.strip().endswith(":") or not short_heading(_clean(raw)):
+        return []
+    indent = len(raw) - len(raw.lstrip())
+    entries = []
+    for raw in lines[heading_index + 1:]:
+        text = _clean(raw)
+        if not text or len(raw) - len(raw.lstrip()) < indent + 4:
+            break
+        if _marker(raw) or _is_boundary(text) or "=" in text:
+            return []
+        entries.append(text)
+    return entries
+
+
 def find_list_candidates(page_text, page_number):
-    """Find visibly marked lists under a list-like heading."""
+    """Use each marked list's local heading and preserve enclosing subtopics."""
     lines = (page_text or "").splitlines()
-    if _is_contents_page(lines):
+    if is_non_instructional_page(lines) or _is_question_page(lines):
         return []
     found = []
-    for start, raw in enumerate(lines):
-        title = _strip_section_number(_clean(raw)).rstrip(":")
+    runs = list(_list_runs(lines))
+    runs.extend(
+        (index + 1, entries, None)
+        for index in range(len(lines))
+        if len(entries := _indented_list(lines, index)) >= 2
+    )
+    for start, entries, number in sorted(runs):
+        section, topic, label = _list_context(lines, start)
+        if (
+            len(entries) < 2 or label and _is_furniture(label)
+            or number is not None and _sequence_is_procedure(entries, label)
+        ):
+            continue
+        if number is not None and (number != 1 or any(_step_table_header(line) for line in lines[:start])):
+            continue
+        previous_bullet = bullet_text(label)
+        if previous_bullet and next(
+            (raw.rstrip() for raw in reversed(lines[:start]) if raw.strip()), ""
+        ).endswith(":"):
+            label = previous_bullet
+        elif label.endswith((".", "!", "?", ";")) or _marker(label):
+            label = ""
+        if CALLOUT.fullmatch(label):
+            continue
+        label = _strip_section_number(label)
+        parent = topic or section
+        title = f"{parent} \u2014 {label}" if parent and label and parent != label else (label or parent)
+        if not title or label and "=" in label:
+            continue
+        item = _candidate(title, page_number, items=[_entry(entry) for entry in entries[:MAX_ITEMS]])
+        if section and label.casefold().startswith("during "):
+            item["_comparison_group"] = (section, label, "Response")
+        elif section and topic and label and SUBHEADING.fullmatch(label):
+            item["_comparison_group"] = (section, topic, label)
+        found.append(item)
+
+    for index, raw in enumerate(lines):
         if not LIST_HEADING.fullmatch(_clean(raw)):
             continue
-        items = _collect_list_entries(lines, start)
-        if len(items) < 2:
-            items = _collect_plain_list_entries(lines, start)
-        if 2 <= len(items) <= MAX_ITEMS:
-            found.append(_candidate(title, page_number, items=items))
+        items = _collect_plain_list_entries(lines, index)
+        if len(items) >= 2:
+            found.append(_candidate(_strip_section_number(_clean(raw)), page_number, items=items))
     return found
 
 
@@ -181,7 +297,7 @@ def _collect_numbered_steps(lines, start):
         index += 1
         if not line or _is_furniture(line):
             continue
-        match = NUMBERED_STEP.fullmatch(line)
+        match = ORDINAL.fullmatch(line)
         if match is None:
             only = ONLY_NUMBER.fullmatch(line)
             if only and index < len(lines):
@@ -202,7 +318,7 @@ def _collect_numbered_steps(lines, start):
                 )[:500]
                 continue
         else:
-            number, title = int(match.group(1)), match.group(2)
+            number, title = int(match.group(2)), match.group(3)
         if expected is None:
             expected = number
         if number != expected or len(title) > 255:
@@ -245,7 +361,7 @@ def _step_table_title(lines, header_index):
             continue
         if STEPS_HEADING.fullmatch(title):
             return title[:255]
-        if _is_boundary(title) or NUMBERED_STEP.fullmatch(title):
+        if _is_boundary(title) or ORDINAL.fullmatch(title):
             break
         if title.endswith((".", "!", "?")) or len(title.split()) > 18:
             continue
@@ -269,7 +385,7 @@ def _table_step_candidate(lines, header_index, page_number):
         line = _clean(raw)
         if not line or _is_furniture(line):
             continue
-        if _is_boundary(line):
+        if _is_boundary(line) and not ORDINAL.fullmatch(line):
             break
 
         if delimiter:
@@ -315,78 +431,70 @@ def _table_step_candidate(lines, header_index, page_number):
 
 
 def find_step_candidates(page_text, page_number):
-    """Find numbered procedures while rejecting contents and formula banks."""
+    """Keep actionable sequences and step tables apart from numbered lists."""
     lines = (page_text or "").splitlines()
-    if _is_contents_page(lines):
+    if is_non_instructional_page(lines) or _is_question_page(lines):
         return []
-    found, used_starts = [], set()
-    table_headers = set()
+    found = []
     for index, raw in enumerate(lines):
         if _step_table_header(raw):
-            table_headers.add(index)
             table = _table_step_candidate(lines, index, page_number)
             if table:
                 found.append(table)
-    for heading_index, raw in enumerate(lines):
-        if heading_index in table_headers:
-            continue
-        title = _clean(raw)
-        if not title or LIST_HEADING.fullmatch(title):
-            continue
-        next_index = heading_index + 1
-        while next_index < len(lines) and not _clean(lines[next_index]):
-            next_index += 1
-        if next_index >= len(lines):
-            continue
-        first = NUMBERED_STEP.fullmatch(_clean(lines[next_index]))
-        explicit = bool(STEPS_HEADING.fullmatch(title))
-        if first is None or int(first.group(1)) != 1:
-            continue
-        previous = next(
-            (_clean(value) for value in reversed(lines[:heading_index]) if _clean(value) and not _is_furniture(value)),
-            "",
-        )
-        if previous and LIST_HEADING.fullmatch(previous):
-            continue
-        steps = _collect_numbered_steps(lines, next_index)
-        minimum = 2 if explicit else 3
-        if len(steps) >= minimum:
-            found.append(_candidate(_strip_section_number(title), page_number, steps=steps))
-            used_starts.add(next_index)
 
-    # A numbered sequence can continue at the top of the following PDF page.
     for index, raw in enumerate(lines):
-        if index in used_starts:
+        first = ORDINAL.fullmatch(_clean(raw))
+        if first is None:
             continue
-        match = NUMBERED_STEP.fullmatch(_clean(raw))
-        if match is None or int(match.group(1)) <= 1:
-            continue
-        prior = [_clean(value) for value in lines[:index] if _clean(value) and not _is_furniture(value)]
-        if prior:
+        number = int(first.group(2))
+        previous = [_clean(line) for line in lines[:index] if line.strip() and not _is_furniture(line)]
+        if number > 1 and previous:
             continue
         steps = _collect_numbered_steps(lines, index)
-        if len(steps) >= 2:
-            item = _candidate("Continued steps", page_number, steps=steps)
-            item["_continuation_start"] = int(match.group(1))
-            found.append(item)
-        break
+        if number > 1:
+            if len(steps) >= 2 and all(ACTION.match(step["text"]) for step in steps):
+                found.append(_candidate(
+                    "Continued steps", page_number, steps=steps, _continuation_start=number,
+                ))
+            continue
+        title = next(
+            (
+                QUESTION.fullmatch(line).group(1) if QUESTION.fullmatch(line) else _strip_section_number(line)
+                for line in reversed(previous)
+                if (
+                    STEPS_HEADING.fullmatch(_strip_section_number(line))
+                    or short_heading(line) and not QUESTION.fullmatch(line)
+                    or QUESTION.fullmatch(line) and QUESTION.fullmatch(line).group(1)
+                ) and not CALLOUT.fullmatch(line)
+            ),
+            "Worked procedure",
+        )
+        if found and any(_step_table_header(line) for line in lines[:index]):
+            continue
+        if title == "Worked procedure" or title.casefold().startswith("using "):
+            title = steps[-1]["text"] if steps else title
+        if _sequence_is_procedure(
+            [step["text"] for step in steps], title, explicit_labels=bool(first.group(1)),
+        ):
+            found.append(_candidate(title, page_number, steps=steps))
     return found
 
 
 def _note_body(lines, start, initial=""):
     content = [initial] if initial else []
-    began = bool(initial)
     for raw in lines[start:]:
         line = _clean(raw)
         if not line:
-            if began:
+            if content:
                 break
             continue
-        if _is_furniture(line):
-            continue
-        if _is_boundary(line) or FORMULA_TOPIC.fullmatch(line):
+        if _is_boundary(line) and not (not content and line.endswith(":") and not CALLOUT.fullmatch(line)):
             break
-        began = True
+        if (
+            content and line[0].isupper() and short_heading(line)
+            and not bullet_text(line) and not content[-1].endswith(("→", ","))
+        ):
+            break
         content.append(line)
         if sum(len(part) for part in content) > 3000:
             break
@@ -394,98 +502,166 @@ def _note_body(lines, start, initial=""):
 
 
 def find_note_candidates(page_text, page_number):
-    """Find labelled callouts and group formula guidance into useful notes."""
+    """Keep contextual callouts and explicit interpretations as notes."""
     lines = (page_text or "").splitlines()
-    if _is_contents_page(lines):
+    if is_non_instructional_page(lines) or _is_question_page(lines):
         return []
     found = []
-    current_topic = ""
+    current_topic, local_topic = "", ""
     grouped = {}
+    previous = ""
     for index, raw in enumerate(lines):
         line = _clean(raw)
-        topic = FORMULA_TOPIC.fullmatch(line)
-        if topic:
-            current_topic = topic.group(1).strip()
+        if not line:
             continue
-        inline = NOTE_INLINE.match(line)
-        if inline:
-            label = inline.group(1).replace(";", ":")
-            body = _note_body(lines, index + 1, inline.group(2))
+        context, previous = previous, line
+        topic = SECTION.fullmatch(line)
+        if topic:
+            current_topic, local_topic = topic.group(1), ""
+            continue
+        match = CALLOUT.fullmatch(line)
+        if match:
+            label = match.group("label").replace(";", ":")
+            body = _note_body(lines, index + 1, match.group("body") or "")
             if len(body) < 20:
                 continue
             if current_topic and label.casefold() in {"tl:dr", "tldr", "interpretation", "exam trap"}:
                 grouped.setdefault(current_topic, []).append(f"{label}: {body}")
             else:
-                found.append(_candidate(label.capitalize(), page_number, content=body))
-            continue
-        if NOTE_HEADING.fullmatch(line):
-            body = _note_body(lines, index + 1)
-            if 20 <= len(body) <= 3000:
-                found.append(_candidate(line, page_number, content=body))
+                context = local_topic if label.casefold() == "implication" else current_topic
+                title = f"{context} \u2014 {label}" if context else label.capitalize()
+                found.append(_candidate(title, page_number, content=body))
+        elif INTERPRETIVE.match(bullet_text(line) or line) and not CALLOUT.fullmatch(context):
+            content = _note_body(lines, index + 1, bullet_text(line) or line)
+            if len(content) >= 20:
+                title = local_topic or current_topic or "Takeaway"
+                found.append(_candidate(title, page_number, content=content))
+        elif short_heading(line) and not _is_boundary(line) and not ORDINAL.fullmatch(line):
+            local_topic = line
     for topic, parts in grouped.items():
         found.append(_candidate(f"{topic} notes", page_number, content="\n\n".join(parts)))
     return found
 
 
-def _segments(raw):
-    return [
-        (match.start(), _clean(match.group()))
-        for match in re.finditer(r"\S(?:.*?\S)?(?=(?: {2,}|\t+)|$)", raw.rstrip())
-    ]
-
-
 def _table_title(lines, header_index, first_column):
     for raw in reversed(lines[max(0, header_index - 6):header_index]):
         title = _clean(raw)
+        question = QUESTION.fullmatch(title)
+        if question and question.group(1):
+            return question.group(1)
         if COMPARISON_HEADING.fullmatch(title):
             return title
-    return f"{first_column.capitalize()} comparison"
+    return f"{first_column.capitalize()} comparison" if first_column else "Comparison"
+
+
+def _comparison_cells(raw, starts):
+    """Split at visible column starts, tolerating slight layout rounding."""
+    parts = _segments(raw)
+    cells = [""] * (len(starts) + 1)
+    for position, value in parts:
+        index = bisect_right(starts, position + 2)
+        cells[index] = " ".join(filter(None, (cells[index], value)))
+    return cells
 
 
 def _table_candidate(lines, header_index, page_number):
     header_segments = _segments(lines[header_index])
-    if len(header_segments) != 3:
+    if any(bullet_text(part) or part.endswith(")") and "(" not in part for _, part in header_segments):
         return None
-    header = [text for _, text in header_segments]
-    if header[0].casefold() not in TABLE_FIRST_COLUMNS:
+    if len(header_segments) == 3:
+        first_column, *headers = [text for _, text in header_segments]
+        if _table_header_key(first_column) not in TABLE_FIRST_COLUMNS:
+            return None
+        starts = [position for position, _ in header_segments[1:]]
+    elif len(header_segments) == 2:
+        # A matrix can leave the row-header column blank. Require the two
+        # column titles to be indented above real row labels.
+        starts = [position for position, _ in header_segments]
+        if starts[0] < 5 or starts[1] - starts[0] < 12:
+            return None
+        first_column = ""
+        headers = [text for _, text in header_segments]
+    else:
         return None
-    starts = [position for position, _ in header_segments]
-    rows = []
-    current = None
+
+    rows, current = [], None
+    header_wrapped = False
     for raw in lines[header_index + 1:]:
-        if not raw.strip() or _is_furniture(raw):
-            continue
-        line = _clean(raw)
-        if _is_boundary(line):
-            break
-        parts = _segments(raw)
-        left = _clean(raw[starts[0]:starts[1]])
-        middle = _clean(raw[starts[1]:starts[2]])
-        right = _clean(raw[starts[2]:])
-        if left and len(parts) >= 2 and (middle or right):
+        if not raw.strip():
             if current:
-                rows.append(current)
-            current = {"name": left[:255], "cells": [middle, right]}
-            if len(rows) >= MAX_ITEMS:
                 break
             continue
-        if current and not left and (middle or right):
-            if middle:
-                current["cells"][0] = (current["cells"][0] + " " + middle).strip()[:2000]
-            if right:
-                current["cells"][1] = (current["cells"][1] + " " + right).strip()[:2000]
-            continue
-        if current:
+        left, middle, right = _comparison_cells(raw, starts)
+        if (left and _is_boundary(left) and not (middle or right)) or _step_table_header(raw):
             break
-    if current and len(rows) < MAX_ITEMS:
+        if left and (middle or right):
+            if current and all(current["cells"]):
+                rows.append(current)
+                if len(rows) >= MAX_ITEMS:
+                    current = None
+                    break
+            current = {"name": left[:255], "cells": [middle[:2000], right[:2000]]}
+        elif not left and (middle or right):
+            if current:
+                for index, segment in enumerate((middle, right)):
+                    if segment:
+                        current["cells"][index] = f"{current['cells'][index]} {segment}".strip()[:2000]
+            elif not rows and middle and right and not bullet_text(middle) and not bullet_text(right):
+                headers = [f"{name} {tail}" for name, tail in zip(headers, (middle, right))]
+                header_wrapped = True
+            else:
+                break
+        else:
+            break
+    if current and all(current["cells"]) and len(rows) < MAX_ITEMS:
         rows.append(current)
-    rows = [row for row in rows if row["name"] and all(row["cells"])]
     if len(rows) < 2:
         return None
+    if not first_column and not header_wrapped and not all(
+        SUBHEADING.fullmatch(row["name"].rstrip(":")) for row in rows
+    ):
+        return None
     return _candidate(
-        _table_title(lines, header_index, header[0]), page_number,
-        columns=header[1:], rows=rows,
+        _table_title(lines, header_index, first_column), page_number,
+        columns=[header[:255] for header in headers], rows=rows,
     )
+
+
+def group_comparisons(lists):
+    """Compare parallel groups under the same section, including across pages."""
+    sections = {}
+    for item in lists:
+        context = item.pop("_comparison_group", None)
+        if not context:
+            continue
+        section, topic, label = context
+        groups = sections.setdefault(section, {})
+        groups.setdefault(topic, {})[label] = item
+
+    for section, topics in sections.items():
+        pairs = (
+            zip(topics.items(), list(topics.items())[1:])
+            if len(topics) > 3 else combinations(topics.items(), 2)
+        )
+        for (left, first), (right, second) in pairs:
+            labels = [label for label in first if label in second]
+            if not labels:
+                continue
+            rows = []
+            for label in labels:
+                cells = [
+                    "\n".join(
+                        f"\u2022 {entry['text']}: {entry['description']}" if entry["description"]
+                        else f"\u2022 {entry['text']}" for entry in side[label]["items"]
+                    )[:2000] for side in (first, second)
+                ]
+                rows.append({"name": label[:255], "cells": cells})
+            items = [side[label] for side in (first, second) for label in labels]
+            yield _candidate(
+                f"{section}: {left} vs {right}", min(item["page"] for item in items),
+                columns=[left[:255], right[:255]], rows=rows,
+                **({"source": "image"} if any(item.get("source") == "image" for item in items) else {}),
+            )
 
 
 def _paired_comparison(lines, heading_index, page_number):
@@ -496,11 +672,11 @@ def _paired_comparison(lines, heading_index, page_number):
             continue
         if _is_boundary(line):
             break
-        bullet = BULLET_ITEM.fullmatch(line)
-        if bullet and ":" in bullet.group(1):
+        bullet = bullet_text(line)
+        if bullet and ":" in bullet:
             if current:
                 pairs.append(current)
-            name, body = bullet.group(1).split(":", 1)
+            name, body = bullet.split(":", 1)
             current = [name.strip(), body.strip()]
             if len(pairs) >= 2:
                 break
@@ -521,16 +697,50 @@ def _paired_comparison(lines, heading_index, page_number):
     )
 
 
+def _outcome_comparisons(lines, header_index, page_number):
+    """A labelled outcome table compares what happens to each entity."""
+    header = _segments(lines[header_index])
+    if len(header) != 2 or _table_header_key(header[0][1]) not in TABLE_FIRST_COLUMNS:
+        return []
+    position, outcome = header[1]
+    if not re.match(r"^(?:implications?|outcomes?|responses?|effects?)\b", outcome, re.I):
+        return []
+    values = {}
+    last = ""
+    for raw in lines[header_index + 1:]:
+        if not raw.strip():
+            continue
+        label, value = _comparison_cells(raw, (position,))
+        if not label and value and last:
+            values[last] = f"{values[last]} {value}"[:2000]
+            continue
+        if not label or not value or _is_boundary(label):
+            break
+        last = label[:255]
+        values[last] = value[:2000]
+        if len(values) == MAX_ITEMS:
+            break
+    title = _table_title(lines, header_index, header[0][1])
+    return [
+        _candidate(
+            f"{title}: {left} vs {right}", page_number, columns=[left, right],
+            rows=[{"name": outcome[:255], "cells": [values[left], values[right]]}],
+        )
+        for left, right in zip(values, list(values)[1:])
+    ]
+
+
 def find_comparison_candidates(layout_text, page_number):
     """Find aligned three-column tables and paired 'versus' explanations."""
     lines = (layout_text or "").splitlines()
-    if _is_contents_page(lines):
+    if is_non_instructional_page(lines) or _is_question_page(lines):
         return []
     found = []
     for index in range(len(lines)):
         table = _table_candidate(lines, index, page_number)
         if table:
             found.append(table)
+        found.extend(_outcome_comparisons(lines, index, page_number))
         if COMPARISON_HEADING.fullmatch(_clean(lines[index])):
             paired = _paired_comparison(lines, index, page_number)
             if paired:
